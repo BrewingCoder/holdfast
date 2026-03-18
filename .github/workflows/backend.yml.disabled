@@ -1,0 +1,142 @@
+name: Backend
+
+on:
+    push:
+        branches: ['main']
+    pull_request:
+        types: [opened, synchronize]
+
+concurrency: ${{ github.workflow }}-${{ github.ref }}
+jobs:
+    code-setup:
+        runs-on: codebuild-highlight-github-actions-runner-${{ github.run_id }}-${{ github.run_attempt }}-arm-3.0-large
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+            - name: Setup Go
+              uses: actions/setup-go@v5
+              with:
+                  go-version-file: 'backend/go.mod'
+                  cache-dependency-path: 'backend/go.sum'
+
+    code-quality-check:
+        needs: code-setup
+        runs-on: codebuild-highlight-github-actions-runner-${{ github.run_id }}-${{ github.run_attempt }}-arm-3.0-large
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+            - name: Setup Go
+              uses: actions/setup-go@v5
+              with:
+                  go-version-file: 'backend/go.mod'
+                  cache-dependency-path: 'backend/go.sum'
+            - name: Format
+              run: if [ "$(gofmt -l -d ./backend | wc -l)" -gt 0 ]; then gofmt -l -d ./backend && exit 1; fi
+            - name: Check for GORM Debug
+              run: if [ "$(grep --exclude-dir migrations -rE 'DB.[\s\n]*Debug\(\)' ./backend | wc -l)" -gt 0 ]; then grep --exclude-dir migrations -rE 'DB.[\s\n]*Debug\(\)' ./backend && exit 1; fi
+            - name: Check for os.Getenv
+              run: if [ "$(grep --exclude-dir migrations -rE 'os\.Getenv\(' ./backend | wc -l)" -gt 0 ]; then grep --exclude-dir migrations -rE 'os\.Getenv\(' ./backend && exit 1; fi
+            - name: Check for os.LookupEnv
+              run: if [ "$(grep --exclude-dir migrations -rE 'os\.LookupEnv\(' ./backend | wc -l)" -gt 0 ]; then grep --exclude-dir migrations -rE 'os\.LookupEnv\(' ./backend && exit 1; fi
+            - name: Check for GORM usage without context
+              run: if [ "$(grep --exclude="*_test.go" --exclude-dir={integrations,jobs,lambda-functions,migrations,model,oauth,retryables,zapier} -rEI '(?i:db)\.(Where|Model|Raw|Create|Update|Preload)' ./backend | grep -v 'WithContext' | wc -l)" -gt 0 ]; then grep --exclude="*_test.go" --exclude-dir={integrations,jobs,lambda-functions,migrations,model,oauth,retryables,zapier} -rEI '(?i:db)\.(Where|Model|Raw|Create|Update|Preload)' ./backend | grep -v 'WithContext' && exit 1; fi
+            - name: Check for logrus without context
+              run: if [ "$(grep --exclude-dir migrations --exclude main.go --exclude recovery.go --exclude logging.go -rE '\s+log\.(Debug|Info|Warn|Error|Fatal)' ./backend | grep -v 'WithContext' | grep -v 'Level' | wc -l)" -gt 0 ]; then grep --exclude-dir migrations --exclude main.go --exclude recovery.go --exclude logging.go -rE '\s+log\.(Debug|Info|Warn|Error|Fatal)' ./backend | grep -v 'WithContext' | grep -v 'Level' && exit 1; fi
+            - name: Run linter
+              uses: golangci/golangci-lint-action@v6.4.1
+              with:
+                  args: -v --config ./.golangci.yml
+                  working-directory: backend
+                  version: latest
+
+    make-check:
+        needs: [code-setup]
+        runs-on: codebuild-highlight-github-actions-runner-${{ github.run_id }}-${{ github.run_attempt }}-arm-3.0-large
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+            - name: Setup Go
+              uses: actions/setup-go@v5
+              with:
+                  go-version-file: 'backend/go.mod'
+                  cache-dependency-path: 'backend/go.sum'
+            - name: copy backend
+              run: |
+                  mkdir tmp
+                  cp -a backend/. tmp/
+            - name: Make private graph
+              run: |
+                  cd backend/
+                  make private-gen
+            - name: Make public graph
+              run: |
+                  cd backend/
+                  make public-gen
+            - name: Diff Check
+              run: |
+                  diff -r backend/ tmp/
+
+    build:
+        needs: code-quality-check
+        runs-on: codebuild-highlight-github-actions-runner-${{ github.run_id }}-${{ github.run_attempt }}-arm-3.0-large
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+            - name: Setup Go
+              uses: actions/setup-go@v5
+              with:
+                  go-version-file: 'backend/go.mod'
+                  cache-dependency-path: 'backend/go.sum'
+            - name: Build binary
+              run: cd backend/ && go build .
+
+    test:
+        needs: code-quality-check
+        runs-on: codebuild-highlight-github-actions-runner-${{ github.run_id }}-${{ github.run_attempt }}-arm-3.0-large
+        services:
+            postgres:
+                image: ankane/pgvector:v0.5.1
+                env:
+                    POSTGRES_PASSWORD: postgres
+                    POSTGRES_USER: postgres
+                    POSTGRES_DB: postgres
+                options: >-
+                    --health-cmd pg_isready
+                    --health-interval 10s
+                    --health-timeout 5s
+                    --health-retries 5
+                ports:
+                    - 5432:5432
+            clickhouse:
+                image: clickhouse/clickhouse-server:24.3.15.72-alpine
+                ports:
+                    - 9000:9000
+            redis:
+                image: redis:7.4.0
+                ports:
+                    - 6379:6379
+        env:
+            CLICKHOUSE_ADDRESS: 'localhost:9000'
+            CLICKHOUSE_DATABASE: 'default'
+            CLICKHOUSE_TEST_DATABASE: 'test'
+            CLICKHOUSE_USERNAME: 'default'
+            CLICKHOUSE_PASSWORD: ''
+            PSQL_HOST: 'localhost'
+            PSQL_DOCKER_HOST: 'postgres'
+            PSQL_PORT: '5432'
+            PSQL_USER: 'postgres'
+            PSQL_DB: 'postgres'
+            PSQL_PASSWORD: 'postgres'
+            ENVIRONMENT: 'test'
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+            - name: Setup Go
+              uses: actions/setup-go@v5
+              with:
+                  go-version-file: 'backend/go.mod'
+                  cache-dependency-path: 'backend/go.sum'
+            - name: Run tests
+              run: cd backend && go test -p 1 ./... -v
+            - name: Run fuzz tests
+              run: cd backend && make fuzz

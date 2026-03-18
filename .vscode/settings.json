@@ -1,0 +1,185 @@
+{
+	"sourcegraph.defaultBranch": "main",
+	"editor.formatOnSave": true,
+	"editor.defaultFormatter": "dbaeumer.vscode-eslint",
+	"editor.codeActionsOnSave": {
+		"source.fixAll.eslint": "explicit",
+		"source.fixAll.stylelint": "explicit"
+	},
+	"go.formatTool": "gofmt",
+	"go.useLanguageServer": true,
+	"go.autocompleteUnimportedPackages": true,
+	"go.lintTool": "golangci-lint",
+	"go.lintFlags": [
+		"--fast"
+	],
+	"typescript.preferences.importModuleSpecifier": "non-relative",
+	"[go]": {
+		"editor.defaultFormatter": "golang.go"
+	},
+	"go.testEnvVars": {
+		"CLICKHOUSE_ADDRESS": "localhost:9000",
+		"CLICKHOUSE_DATABASE": "default",
+		"CLICKHOUSE_TEST_DATABASE": "test",
+		"CLICKHOUSE_USERNAME": "default",
+		"CLICKHOUSE_PASSWORD": "",
+		"LOG_LEVEL": "debug",
+		"PSQL_HOST": "localhost",
+		"PSQL_DOCKER_HOST": "postgres",
+		"PSQL_PORT": "5432",
+		"PSQL_USER": "postgres",
+		"PSQL_PASSWORD": "postgres",
+		"ENVIRONMENT": "test"
+	},
+	"css.validate": false,
+	"less.validate": false,
+	"scss.validate": false,
+	"stylelint.enable": true,
+	"stylelint.validate": [
+		"css",
+		"less",
+		"postcss",
+		"scss"
+	],
+	"[graphql]": {
+		"editor.defaultFormatter": "esbenp.prettier-vscode"
+	},
+	"[json]": {
+		"editor.defaultFormatter": "esbenp.prettier-vscode",
+		"editor.quickSuggestions": {
+			"strings": true
+		},
+		"editor.suggest.insertMode": "replace",
+		"gitlens.codeLens.scopes": [
+			"document"
+		]
+	},
+	"[less]": {
+		"editor.defaultFormatter": "esbenp.prettier-vscode"
+	},
+	"[scss]": {
+		"editor.defaultFormatter": "esbenp.prettier-vscode"
+	},
+	"editor.hover.enabled": true,
+	"editor.colorDecorators": true,
+	"[typescriptreact]": {
+		"editor.defaultFormatter": "esbenp.prettier-vscode"
+	},
+	"openInGitHub.defaultBranch": "main",
+	"openInGitHub.defaultRemote": "origin",
+	"openInGithub.maxBuffer": 512000,
+	"openInGitHub.excludeCurrentRevision": false,
+	"liveshare.allowGuestDebugControl": true,
+	"liveshare.allowGuestTaskControl": true,
+	"files.exclude": {
+		"**/.turbo/*": true,
+		"**/.next/*": true,
+		"**/*.chunk.js": true,
+		"**/*.js.map": true,
+		"**/*.min.js": true,
+		"backend/errors/test-files/*": true,
+		"backend/private-graph/graph/generated/*": true,
+		"backend/public-graph/graph/generated/*": true,
+		"backend/go.sum": true,
+		"backend/event-parse/sample-events/*.json": true,
+		"frontend/build/assets/*": true,
+		"**/*.scss.d.ts": true,
+		"backend/payload/*": true,
+		"**/yarn-error.log": true
+	},
+	"cSpell.words": [
+		"alexdanilo",
+		"Algora",
+		"Allarahkia",
+		"autoinject",
+		"Autoinjected",
+		"Blocklist",
+		"Clickhouse",
+		"Danilowicz",
+		"Esplin",
+		"Gazit",
+		"Glauber",
+		"glcst",
+		"Hostnames",
+		"incentivizing",
+		"interactable",
+		"Livestream",
+		"magicpatterns",
+		"Metry",
+		"munge",
+		"onboarded",
+		"opentelemetry",
+		"otel",
+		"otlp",
+		"pino",
+		"Replo",
+		"runtimes",
+		"Sigelman",
+		"snapshotting",
+		"statfs",
+		"teddarific",
+		"Traceloop",
+		"traceparent",
+		"tracestate",
+		"Turso",
+		"unlisten",
+		"unobfuscated",
+		"Vadim",
+		"Yuxin",
+		"Zain"
+	],
+	"[yaml]": {
+		"editor.defaultFormatter": "esbenp.prettier-vscode"
+	},
+	"[sql]": {
+		"editor.defaultFormatter": "mtxr.sqltools"
+	},
+	"[shellscript]": {
+		"editor.defaultFormatter": "foxundermoon.shell-format"
+	},
+	"[markdown]": {
+		"editor.defaultFormatter": "esbenp.prettier-vscode"
+	},
+	"[css]": {
+		"editor.defaultFormatter": "vscode.css-language-features"
+	},
+	"typescript.tsdk": "node_modules/typescript/lib",
+	"[typescript]": {
+		"editor.defaultFormatter": "esbenp.prettier-vscode"
+	},
+	"[jsonc]": {
+		"editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+	"json.schemas": [{
+		"fileMatch": [".reflame.config.jsonc"],
+		"schema": {
+			"allowTrailingCommas": true
+		}
+	}],
+	"workbench.colorCustomizations": {
+		"activityBar.background": "#301e79",
+		"titleBar.activeBackground": "#0d0225",
+		"titleBar.activeForeground": "#bea8f1"
+	},
+	"sqltools.connections": [
+		{
+			"server": "localhost",
+			"port": 8123,
+			"useHTTPS": false,
+			"database": "default",
+			"username": "default",
+			"password": "",
+			"tls": {},
+			"previewLimit": 50,
+			"driver": "ClickHouse",
+			"name": "clickhouse-dev"
+		}
+	],
+	"sort-imports.on-save": false,
+	"[javascript]": {
+		"editor.defaultFormatter": "esbenp.prettier-vscode"
+	},
+	"[dotenv]": {
+		"editor.defaultFormatter": "foxundermoon.shell-format"
+	}
+}

@@ -1,0 +1,16 @@
+.emptyCardPlaceholder {
+	cursor: auto;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+}
+
+.graphicContainer {
+	margin-bottom: var(--size-xLarge);
+	margin-top: var(--size-xLarge);
+
+	&.compact {
+		margin-bottom: var(--size-small);
+		margin-top: var(--size-medium);
+	}
+}

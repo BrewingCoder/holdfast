@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<base href="/" />
+		<meta charset="utf-8" />
+		<link rel="icon" href="./src/icon.ico" />
+		<link
+			rel="apple-touch-icon"
+			sizes="180x180"
+			href="./src/apple-touch-icon.png"
+		/>
+		<link rel="apple-touch-icon" href="./src/logo192.png" />
+		<link
+			rel="icon"
+			type="image/png"
+			sizes="32x32"
+			href="./src/favicon-32x32.png"
+		/>
+		<link
+			rel="icon"
+			type="image/png"
+			sizes="16x16"
+			href="./src/favicon-16x16.png"
+		/>
+		<link
+			rel="mask-icon"
+			href="./src/safari-pinned-tab.svg"
+			color="#5629c6"
+		/>
+		<!--
+      manifest.json provides metadata used when your web app is installed on a
+      user's mobile device or desktop. See https://developers.google.com/web/fundamentals/web-app-manifest/
+    -->
+		<link rel="manifest" href="/manifest.json" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link
+			href="https://fonts.googleapis.com/css2?family=Roboto+Mono&display=swap"
+			rel="stylesheet"
+		/>
+		<meta name="msapplication-TileColor" content="#5629c6" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<meta name="theme-color" content="#5629c6" />
+
+		<link rel="stylesheet" href="./src/public.css" />
+		<link
+			rel="stylesheet"
+			href="https://unpkg.com/@highlight-run/rrweb@0.9.27/dist/index.css"
+		/>
+
+		<!-- Primary Meta Tags -->
+		<title>HoldFast</title>
+		<meta
+			name="title"
+			content="HoldFast | The Open Source, Fullstack Monitoring Platform"
+		/>
+		<meta
+			name="description"
+			content="HoldFast gives your team full transparency into the errors, interactions, and performance metrics of your application."
+		/>
+
+		<!-- Open Graph / Facebook -->
+		<meta property="og:type" content="website" />
+		<meta property="og:url" content="/" />
+		<meta property="og:site_name" content="HoldFast" />
+		<meta
+			property="og:title"
+			content="HoldFast | The Open Source, Fullstack Monitoring Platform"
+		/>
+		<meta
+			property="og:description"
+			content="HoldFast gives your team full transparency into the errors, interactions, and performance metrics of your application."
+		/>
+		<meta property="og:image" content="/hero.png" />
+
+		<!-- Twitter -->
+		<meta property="twitter:card" content="/hero.png" />
+		<meta property="twitter:url" content="/" />
+		<meta
+			property="twitter:title"
+			content="HoldFast | The Open Source, Fullstack Monitoring Platform"
+		/>
+		<meta
+			property="twitter:description"
+			content="HoldFast gives your team full transparency into the errors, interactions, and performance metrics of your application."
+		/>
+		<meta property="twitter:image" content="/hero.png" />
+
+		<!-- Google Tag Manager -->
+		<script type="module" src="./src/gtm.js" defer></script>
+		<!-- End Google Tag Manager -->
+		<script>
+			window._highlightFirebaseConfigString = `{{.FirebaseConfigString}}`
+		</script>
+		<!-- Start of HubSpot Embed Code -->
+		<script
+			type="text/javascript"
+			id="hs-script-loader"
+			async
+			defer
+			src="//js.hs-scripts.com/20473940.js"
+		></script>
+		<!-- End of HubSpot Embed Code -->
+		<script type="module" src="./src/canny.js" defer></script>
+		<script type="module" src="./src/index.tsx" defer></script>
+	</head>
+
+	<body class="highlight-light-theme">
+		<!-- Google Tag Manager (noscript) -->
+		<noscript
+			><iframe
+				src="https://www.googletagmanager.com/ns.html?id=GTM-PT4CCQ4"
+				height="0"
+				width="0"
+				style="display: none; visibility: hidden"
+			></iframe
+		></noscript>
+		<!-- End Google Tag Manager (noscript) -->
+		<noscript>You need to enable JavaScript to run this app.</noscript>
+		<div id="root"></div>
+		<!--
+      This HTML file is a template.
+      If you open it directly in the browser, you will see an empty page.
+
+      You can add webfonts, meta tags, or analytics to this file.
+      The build step will place the bundled scripts into the <body> tag.
+
+      To begin the development, run `npm start` or `yarn start`.
+      To create a production bundle, use `npm run build` or `yarn build`.
+    --></body>
+</html>

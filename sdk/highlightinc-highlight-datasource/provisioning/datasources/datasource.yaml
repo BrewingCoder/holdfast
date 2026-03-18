@@ -1,0 +1,12 @@
+apiVersion: 1
+
+datasources:
+  - name: HoldFast
+    type: highlightinc-highlight-datasource
+    jsonData:
+      clientID: ''
+      projectID: 1344
+      tokenURL: 'http://localhost:8082/private/oauth/token'
+      backendURL: 'http://localhost:8082/private'
+    version: 1
+    editable: true

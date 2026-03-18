@@ -1,0 +1,16 @@
+{
+	"extends": "../../tsconfig",
+	"include": ["src"],
+	"compilerOptions": {
+		"allowSyntheticDefaultImports": true,
+		"strict": true,
+		"rootDir": "src",
+		"outDir": "dist",
+		"declaration": true,
+		"types": ["vitest/globals"],
+		"baseUrl": "src",
+		"paths": {
+			"@/*": ["./*"],
+		}
+	}
+}

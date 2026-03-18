@@ -1,0 +1,40 @@
+{
+  "references": [
+    {
+      "path": "packages/rrdom"
+    },
+    {
+      "path": "packages/rrdom-nodejs"
+    },
+    {
+      "path": "packages/rrweb"
+    },
+    {
+      "path": "packages/rrweb-player"
+    },
+    {
+      "path": "packages/rrweb-snapshot"
+    },
+    {
+      "path": "packages/types"
+    },
+    {
+      "path": "packages/plugins/rrweb-plugin-console-replay"
+    },
+    {
+      "path": "packages/plugins/rrweb-plugin-console-record"
+    },
+    {
+      "path": "packages/rrvideo"
+    },
+    {
+      "path": "packages/web-extension"
+    }
+  ],
+  "files": [],
+  "include": [],
+  "exclude": [],
+  "compilerOptions": {
+    "rootDir": "."
+  }
+}

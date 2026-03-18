@@ -1,0 +1,85 @@
+{
+	"taskDefinitionArn": "arn:aws:ecs:us-east-2:173971919437:task-definition/public-worker-batched-service:119",
+	"containerDefinitions": [
+		{
+			"name": "highlight-backend",
+			"image": "173971919437.dkr.ecr.us-east-2.amazonaws.com/highlight-production-ecr-repo:542146948c0ec67f57d7952f2c441ce37f463d8c.arm64",
+			"cpu": 0,
+			"portMappings": [],
+			"essential": true,
+			"command": [
+				"doppler",
+				"run",
+				"--",
+				"/build/backend",
+				"-runtime=worker",
+				"-worker-handler=public-worker-batched"
+			],
+			"environment": [
+				{
+					"name": "GOMEMLIMIT",
+					"value": "3GiB"
+				}
+			],
+			"mountPoints": [],
+			"volumesFrom": [],
+			"secrets": [
+				{
+					"name": "DOPPLER_TOKEN",
+					"valueFrom": "DOPPLER_TOKEN"
+				}
+			],
+			"logConfiguration": {
+				"logDriver": "awslogs",
+				"options": {
+					"awslogs-group": "/ecs/public-worker-task",
+					"awslogs-region": "us-east-2",
+					"awslogs-stream-prefix": "ecs"
+				},
+				"secretOptions": []
+			}
+		}
+	],
+	"family": "public-worker-batched-service",
+	"taskRoleArn": "arn:aws:iam::173971919437:role/HighlightAppProd",
+	"executionRoleArn": "arn:aws:iam::173971919437:role/HighlightAppProd",
+	"networkMode": "bridge",
+	"revision": 119,
+	"volumes": [],
+	"status": "ACTIVE",
+	"requiresAttributes": [
+		{
+			"name": "com.amazonaws.ecs.capability.logging-driver.awslogs"
+		},
+		{
+			"name": "ecs.capability.execution-role-awslogs"
+		},
+		{
+			"name": "com.amazonaws.ecs.capability.ecr-auth"
+		},
+		{
+			"name": "com.amazonaws.ecs.capability.docker-remote-api.1.19"
+		},
+		{
+			"name": "com.amazonaws.ecs.capability.task-iam-role"
+		},
+		{
+			"name": "ecs.capability.execution-role-ecr-pull"
+		},
+		{
+			"name": "ecs.capability.secrets.ssm.environment-variables"
+		}
+	],
+	"placementConstraints": [],
+	"compatibilities": ["EXTERNAL", "EC2"],
+	"requiresCompatibilities": ["EC2"],
+	"cpu": "1024",
+	"memory": "4096",
+	"runtimePlatform": {
+		"cpuArchitecture": "ARM64",
+		"operatingSystemFamily": "LINUX"
+	},
+	"registeredAt": "2023-12-16T05:59:31.848Z",
+	"registeredBy": "arn:aws:iam::173971919437:user/vadim",
+	"tags": []
+}
