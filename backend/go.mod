@@ -1,6 +1,6 @@
 module github.com/highlight-run/highlight/backend
 
-go 1.23.8
+go 1.24.0
 
 replace golang.org/x/crypto => golang.org/x/crypto v0.17.0
 
@@ -30,14 +30,11 @@ require (
 	github.com/aws/aws-sdk-go-v2 v1.29.0
 	github.com/aws/aws-sdk-go-v2/config v1.27.11
 	github.com/aws/aws-sdk-go-v2/feature/cloudfront/sign v1.7.9
-	github.com/aws/aws-sdk-go-v2/service/marketplaceentitlementservice v1.20.2
-	github.com/aws/aws-sdk-go-v2/service/marketplacemetering v1.21.2
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.53.1
 	github.com/aws/smithy-go v1.20.2
 	github.com/bradleyfalzon/ghinstallation/v2 v2.10.0
-	github.com/clearbit/clearbit-go v1.1.0
 	github.com/cloudflare/cloudflare-go v0.97.0
-	github.com/coreos/go-oidc/v3 v3.10.0
+	github.com/coreos/go-oidc/v3 v3.17.0
 	github.com/dchest/uniuri v1.2.0
 	github.com/disintegration/imaging v1.6.2
 	github.com/go-chi/chi v4.1.2+incompatible
@@ -83,7 +80,6 @@ require (
 	github.com/sirupsen/logrus v1.9.3
 	github.com/slack-go/slack v0.12.5
 	github.com/speps/go-hashids v2.0.0+incompatible
-	github.com/stripe/stripe-go/v78 v78.5.0
 	github.com/urfave/cli/v2 v2.27.7
 	github.com/vektah/gqlparser/v2 v2.5.30
 	go.openly.dev/pointy v1.3.0
@@ -92,7 +88,7 @@ require (
 	go.opentelemetry.io/otel/sdk v1.33.0
 	go.opentelemetry.io/otel/trace v1.33.0
 	golang.org/x/mod v0.27.0
-	golang.org/x/oauth2 v0.24.0
+	golang.org/x/oauth2 v0.28.0
 	golang.org/x/sync v0.16.0
 	golang.org/x/text v0.27.0
 	google.golang.org/api v0.185.0
@@ -126,7 +122,7 @@ require (
 	github.com/go-chi/chi/v5 v5.0.12 // indirect
 	github.com/go-faster/city v1.0.1 // indirect
 	github.com/go-faster/errors v0.7.1 // indirect
-	github.com/go-jose/go-jose/v4 v4.0.5 // indirect
+	github.com/go-jose/go-jose/v4 v4.1.3 // indirect
 	github.com/go-logr/logr v1.4.2 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-ole/go-ole v1.3.0 // indirect
@@ -220,7 +216,6 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/sts v1.28.6
 	github.com/bwmarrin/discordgo v0.27.1
 	github.com/cpuguy83/go-md2man/v2 v2.0.7 // indirect
-	github.com/dghubble/sling v1.4.2 // indirect
 	github.com/go-chi/httplog v0.3.2
 	github.com/golang-migrate/migrate/v4 v4.17.0
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
