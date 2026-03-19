@@ -31,7 +31,7 @@ concurrency:
 jobs:
   build:
     name: Build all SDKs
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     timeout-minutes: 15
     steps:
       - name: Checkout
@@ -84,7 +84,7 @@ jobs:
     name: 'Tier 1: Leaf packages'
     needs: build
     if: inputs.tier == '1' || inputs.tier == 'all'
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -128,7 +128,7 @@ jobs:
     name: 'Tier 2: Node + React'
     needs: [build, publish-tier-1]
     if: inputs.tier == '2' || inputs.tier == 'all'
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -165,7 +165,7 @@ jobs:
     name: 'Tier 3: Framework integrations'
     needs: [build, publish-tier-2]
     if: inputs.tier == '3' || inputs.tier == 'all'
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -221,7 +221,7 @@ jobs:
     name: 'Tier 4: Next.js'
     needs: [build, publish-tier-3]
     if: inputs.tier == '4' || inputs.tier == 'all'
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
       - name: Checkout
         uses: actions/checkout@v4

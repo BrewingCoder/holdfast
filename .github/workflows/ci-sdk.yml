@@ -20,7 +20,7 @@ concurrency:
 jobs:
   build-and-test:
     name: Build & Test SDKs
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     timeout-minutes: 15
 
     steps:
