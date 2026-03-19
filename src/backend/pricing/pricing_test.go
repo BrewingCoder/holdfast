@@ -57,3 +57,26 @@ func TestGetLimitAmount(t *testing.T) {
 		}
 	}
 }
+
+func TestIncludedAmount_GraduatedPlan(t *testing.T) {
+	// Verify IncludedAmount returns expected values for the Graduated plan
+	// These are now the sole source of truth — no Monthly*Limit overrides
+	expected := map[model.PricingProductType]int64{
+		model.PricingProductTypeSessions: 500,
+		model.PricingProductTypeErrors:   1_000,
+	}
+	for productType, expectedAmount := range expected {
+		result := IncludedAmount(backend.PlanTypeGraduated, productType)
+		assert.Equal(t, expectedAmount, result, "product=%s should have included=%d", productType, expectedAmount)
+	}
+}
+
+func TestIncludedAmount_AllProductTypes(t *testing.T) {
+	// Every plan+product combo should return a non-negative included amount
+	for planType := range ProductPrices {
+		for productType := range ProductPrices[planType] {
+			result := IncludedAmount(planType, productType)
+			assert.GreaterOrEqual(t, result, int64(0), "plan=%s product=%s should be >= 0", planType, productType)
+		}
+	}
+}

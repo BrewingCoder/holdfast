@@ -1737,22 +1737,17 @@ type ComplexityRoot struct {
 		ClearbitEnabled             func(childComplexity int) int
 		CloudflareProxy             func(childComplexity int) int
 		EligibleForTrialExtension   func(childComplexity int) int
-		ErrorsMaxCents              func(childComplexity int) int
 		ErrorsRetentionPeriod       func(childComplexity int) int
 		ID                          func(childComplexity int) int
-		LogsMaxCents                func(childComplexity int) int
 		LogsRetentionPeriod         func(childComplexity int) int
-		MetricsMaxCents             func(childComplexity int) int
 		MetricsRetentionPeriod      func(childComplexity int) int
 		Name                        func(childComplexity int) int
 		NextInvoiceDate             func(childComplexity int) int
 		PlanTier                    func(childComplexity int) int
 		Projects                    func(childComplexity int) int
 		RetentionPeriod             func(childComplexity int) int
-		SessionsMaxCents            func(childComplexity int) int
 		SlackChannels               func(childComplexity int) int
 		SlackWebhookChannel         func(childComplexity int) int
-		TracesMaxCents              func(childComplexity int) int
 		TracesRetentionPeriod       func(childComplexity int) int
 		TrialEndDate                func(childComplexity int) int
 		TrialExtensionEnabled       func(childComplexity int) int
@@ -11738,13 +11733,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Workspace.EligibleForTrialExtension(childComplexity), true
 
-	case "Workspace.errors_max_cents":
-		if e.complexity.Workspace.ErrorsMaxCents == nil {
-			break
-		}
-
-		return e.complexity.Workspace.ErrorsMaxCents(childComplexity), true
-
 	case "Workspace.errors_retention_period":
 		if e.complexity.Workspace.ErrorsRetentionPeriod == nil {
 			break
@@ -11759,26 +11747,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Workspace.ID(childComplexity), true
 
-	case "Workspace.logs_max_cents":
-		if e.complexity.Workspace.LogsMaxCents == nil {
-			break
-		}
-
-		return e.complexity.Workspace.LogsMaxCents(childComplexity), true
-
 	case "Workspace.logs_retention_period":
 		if e.complexity.Workspace.LogsRetentionPeriod == nil {
 			break
 		}
 
 		return e.complexity.Workspace.LogsRetentionPeriod(childComplexity), true
-
-	case "Workspace.metrics_max_cents":
-		if e.complexity.Workspace.MetricsMaxCents == nil {
-			break
-		}
-
-		return e.complexity.Workspace.MetricsMaxCents(childComplexity), true
 
 	case "Workspace.metrics_retention_period":
 		if e.complexity.Workspace.MetricsRetentionPeriod == nil {
@@ -11822,13 +11796,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Workspace.RetentionPeriod(childComplexity), true
 
-	case "Workspace.sessions_max_cents":
-		if e.complexity.Workspace.SessionsMaxCents == nil {
-			break
-		}
-
-		return e.complexity.Workspace.SessionsMaxCents(childComplexity), true
-
 	case "Workspace.slack_channels":
 		if e.complexity.Workspace.SlackChannels == nil {
 			break
@@ -11842,13 +11809,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Workspace.SlackWebhookChannel(childComplexity), true
-
-	case "Workspace.traces_max_cents":
-		if e.complexity.Workspace.TracesMaxCents == nil {
-			break
-		}
-
-		return e.complexity.Workspace.TracesMaxCents(childComplexity), true
 
 	case "Workspace.traces_retention_period":
 		if e.complexity.Workspace.TracesRetentionPeriod == nil {
@@ -12806,11 +12766,6 @@ type Workspace {
 	logs_retention_period: RetentionPeriod!
 	traces_retention_period: RetentionPeriod!
 	metrics_retention_period: RetentionPeriod!
-	sessions_max_cents: Int
-	errors_max_cents: Int
-	logs_max_cents: Int
-	traces_max_cents: Int
-	metrics_max_cents: Int
 	cloudflare_proxy: String
 }
 
@@ -59212,16 +59167,6 @@ func (ec *executionContext) fieldContext_Mutation_createWorkspace(ctx context.Co
 				return ec.fieldContext_Workspace_traces_retention_period(ctx, field)
 			case "metrics_retention_period":
 				return ec.fieldContext_Workspace_metrics_retention_period(ctx, field)
-			case "sessions_max_cents":
-				return ec.fieldContext_Workspace_sessions_max_cents(ctx, field)
-			case "errors_max_cents":
-				return ec.fieldContext_Workspace_errors_max_cents(ctx, field)
-			case "logs_max_cents":
-				return ec.fieldContext_Workspace_logs_max_cents(ctx, field)
-			case "traces_max_cents":
-				return ec.fieldContext_Workspace_traces_max_cents(ctx, field)
-			case "metrics_max_cents":
-				return ec.fieldContext_Workspace_metrics_max_cents(ctx, field)
 			case "cloudflare_proxy":
 				return ec.fieldContext_Workspace_cloudflare_proxy(ctx, field)
 			}
@@ -59541,16 +59486,6 @@ func (ec *executionContext) fieldContext_Mutation_editWorkspace(ctx context.Cont
 				return ec.fieldContext_Workspace_traces_retention_period(ctx, field)
 			case "metrics_retention_period":
 				return ec.fieldContext_Workspace_metrics_retention_period(ctx, field)
-			case "sessions_max_cents":
-				return ec.fieldContext_Workspace_sessions_max_cents(ctx, field)
-			case "errors_max_cents":
-				return ec.fieldContext_Workspace_errors_max_cents(ctx, field)
-			case "logs_max_cents":
-				return ec.fieldContext_Workspace_logs_max_cents(ctx, field)
-			case "traces_max_cents":
-				return ec.fieldContext_Workspace_traces_max_cents(ctx, field)
-			case "metrics_max_cents":
-				return ec.fieldContext_Workspace_metrics_max_cents(ctx, field)
 			case "cloudflare_proxy":
 				return ec.fieldContext_Workspace_cloudflare_proxy(ctx, field)
 			}
@@ -64095,16 +64030,6 @@ func (ec *executionContext) fieldContext_Mutation_updateAllowMeterOverage(ctx co
 				return ec.fieldContext_Workspace_traces_retention_period(ctx, field)
 			case "metrics_retention_period":
 				return ec.fieldContext_Workspace_metrics_retention_period(ctx, field)
-			case "sessions_max_cents":
-				return ec.fieldContext_Workspace_sessions_max_cents(ctx, field)
-			case "errors_max_cents":
-				return ec.fieldContext_Workspace_errors_max_cents(ctx, field)
-			case "logs_max_cents":
-				return ec.fieldContext_Workspace_logs_max_cents(ctx, field)
-			case "traces_max_cents":
-				return ec.fieldContext_Workspace_traces_max_cents(ctx, field)
-			case "metrics_max_cents":
-				return ec.fieldContext_Workspace_metrics_max_cents(ctx, field)
 			case "cloudflare_proxy":
 				return ec.fieldContext_Workspace_cloudflare_proxy(ctx, field)
 			}
@@ -66822,16 +66747,6 @@ func (ec *executionContext) fieldContext_Project_workspace(_ context.Context, fi
 				return ec.fieldContext_Workspace_traces_retention_period(ctx, field)
 			case "metrics_retention_period":
 				return ec.fieldContext_Workspace_metrics_retention_period(ctx, field)
-			case "sessions_max_cents":
-				return ec.fieldContext_Workspace_sessions_max_cents(ctx, field)
-			case "errors_max_cents":
-				return ec.fieldContext_Workspace_errors_max_cents(ctx, field)
-			case "logs_max_cents":
-				return ec.fieldContext_Workspace_logs_max_cents(ctx, field)
-			case "traces_max_cents":
-				return ec.fieldContext_Workspace_traces_max_cents(ctx, field)
-			case "metrics_max_cents":
-				return ec.fieldContext_Workspace_metrics_max_cents(ctx, field)
 			case "cloudflare_proxy":
 				return ec.fieldContext_Workspace_cloudflare_proxy(ctx, field)
 			}
@@ -71516,16 +71431,6 @@ func (ec *executionContext) fieldContext_Query_workspaces(_ context.Context, fie
 				return ec.fieldContext_Workspace_traces_retention_period(ctx, field)
 			case "metrics_retention_period":
 				return ec.fieldContext_Workspace_metrics_retention_period(ctx, field)
-			case "sessions_max_cents":
-				return ec.fieldContext_Workspace_sessions_max_cents(ctx, field)
-			case "errors_max_cents":
-				return ec.fieldContext_Workspace_errors_max_cents(ctx, field)
-			case "logs_max_cents":
-				return ec.fieldContext_Workspace_logs_max_cents(ctx, field)
-			case "traces_max_cents":
-				return ec.fieldContext_Workspace_traces_max_cents(ctx, field)
-			case "metrics_max_cents":
-				return ec.fieldContext_Workspace_metrics_max_cents(ctx, field)
 			case "cloudflare_proxy":
 				return ec.fieldContext_Workspace_cloudflare_proxy(ctx, field)
 			}
@@ -71655,16 +71560,6 @@ func (ec *executionContext) fieldContext_Query_joinable_workspaces(_ context.Con
 				return ec.fieldContext_Workspace_traces_retention_period(ctx, field)
 			case "metrics_retention_period":
 				return ec.fieldContext_Workspace_metrics_retention_period(ctx, field)
-			case "sessions_max_cents":
-				return ec.fieldContext_Workspace_sessions_max_cents(ctx, field)
-			case "errors_max_cents":
-				return ec.fieldContext_Workspace_errors_max_cents(ctx, field)
-			case "logs_max_cents":
-				return ec.fieldContext_Workspace_logs_max_cents(ctx, field)
-			case "traces_max_cents":
-				return ec.fieldContext_Workspace_traces_max_cents(ctx, field)
-			case "metrics_max_cents":
-				return ec.fieldContext_Workspace_metrics_max_cents(ctx, field)
 			case "cloudflare_proxy":
 				return ec.fieldContext_Workspace_cloudflare_proxy(ctx, field)
 			}
@@ -74515,16 +74410,6 @@ func (ec *executionContext) fieldContext_Query_workspace(ctx context.Context, fi
 				return ec.fieldContext_Workspace_traces_retention_period(ctx, field)
 			case "metrics_retention_period":
 				return ec.fieldContext_Workspace_metrics_retention_period(ctx, field)
-			case "sessions_max_cents":
-				return ec.fieldContext_Workspace_sessions_max_cents(ctx, field)
-			case "errors_max_cents":
-				return ec.fieldContext_Workspace_errors_max_cents(ctx, field)
-			case "logs_max_cents":
-				return ec.fieldContext_Workspace_logs_max_cents(ctx, field)
-			case "traces_max_cents":
-				return ec.fieldContext_Workspace_traces_max_cents(ctx, field)
-			case "metrics_max_cents":
-				return ec.fieldContext_Workspace_metrics_max_cents(ctx, field)
 			case "cloudflare_proxy":
 				return ec.fieldContext_Workspace_cloudflare_proxy(ctx, field)
 			}
@@ -74924,16 +74809,6 @@ func (ec *executionContext) fieldContext_Query_workspace_for_project(ctx context
 				return ec.fieldContext_Workspace_traces_retention_period(ctx, field)
 			case "metrics_retention_period":
 				return ec.fieldContext_Workspace_metrics_retention_period(ctx, field)
-			case "sessions_max_cents":
-				return ec.fieldContext_Workspace_sessions_max_cents(ctx, field)
-			case "errors_max_cents":
-				return ec.fieldContext_Workspace_errors_max_cents(ctx, field)
-			case "logs_max_cents":
-				return ec.fieldContext_Workspace_logs_max_cents(ctx, field)
-			case "traces_max_cents":
-				return ec.fieldContext_Workspace_traces_max_cents(ctx, field)
-			case "metrics_max_cents":
-				return ec.fieldContext_Workspace_metrics_max_cents(ctx, field)
 			case "cloudflare_proxy":
 				return ec.fieldContext_Workspace_cloudflare_proxy(ctx, field)
 			}
@@ -94697,211 +94572,6 @@ func (ec *executionContext) fieldContext_Workspace_metrics_retention_period(_ co
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type RetentionPeriod does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Workspace_sessions_max_cents(ctx context.Context, field graphql.CollectedField, obj *model1.Workspace) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Workspace_sessions_max_cents(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.SessionsMaxCents, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*int)
-	fc.Result = res
-	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Workspace_sessions_max_cents(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Workspace",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Workspace_errors_max_cents(ctx context.Context, field graphql.CollectedField, obj *model1.Workspace) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Workspace_errors_max_cents(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.ErrorsMaxCents, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*int)
-	fc.Result = res
-	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Workspace_errors_max_cents(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Workspace",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Workspace_logs_max_cents(ctx context.Context, field graphql.CollectedField, obj *model1.Workspace) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Workspace_logs_max_cents(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.LogsMaxCents, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*int)
-	fc.Result = res
-	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Workspace_logs_max_cents(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Workspace",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Workspace_traces_max_cents(ctx context.Context, field graphql.CollectedField, obj *model1.Workspace) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Workspace_traces_max_cents(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.TracesMaxCents, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*int)
-	fc.Result = res
-	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Workspace_traces_max_cents(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Workspace",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Workspace_metrics_max_cents(ctx context.Context, field graphql.CollectedField, obj *model1.Workspace) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Workspace_metrics_max_cents(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.MetricsMaxCents, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*int)
-	fc.Result = res
-	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Workspace_metrics_max_cents(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Workspace",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
 		},
 	}
 	return fc, nil
@@ -114916,16 +114586,6 @@ func (ec *executionContext) _Workspace(ctx context.Context, sel ast.SelectionSet
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "sessions_max_cents":
-			out.Values[i] = ec._Workspace_sessions_max_cents(ctx, field, obj)
-		case "errors_max_cents":
-			out.Values[i] = ec._Workspace_errors_max_cents(ctx, field, obj)
-		case "logs_max_cents":
-			out.Values[i] = ec._Workspace_logs_max_cents(ctx, field, obj)
-		case "traces_max_cents":
-			out.Values[i] = ec._Workspace_traces_max_cents(ctx, field, obj)
-		case "metrics_max_cents":
-			out.Values[i] = ec._Workspace_metrics_max_cents(ctx, field, obj)
 		case "cloudflare_proxy":
 			out.Values[i] = ec._Workspace_cloudflare_proxy(ctx, field, obj)
 		default:

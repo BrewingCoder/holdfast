@@ -649,11 +649,6 @@ type Workspace {
 	logs_retention_period: RetentionPeriod!
 	traces_retention_period: RetentionPeriod!
 	metrics_retention_period: RetentionPeriod!
-	sessions_max_cents: Int
-	errors_max_cents: Int
-	logs_max_cents: Int
-	traces_max_cents: Int
-	metrics_max_cents: Int
 	cloudflare_proxy: String
 }
 

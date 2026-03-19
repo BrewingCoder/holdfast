@@ -1272,15 +1272,10 @@ func (r *mutationResolver) SaveBillingPlan(ctx context.Context, workspaceID int,
 	if err := r.DB.WithContext(ctx).Model(&workspace).
 		Select(columns[0], columns[1:]...).
 		Updates(&model.Workspace{
-			SessionsMaxCents:       sessionsLimitCents,
 			RetentionPeriod:        &sessionsRetention,
-			ErrorsMaxCents:         errorsLimitCents,
 			ErrorsRetentionPeriod:  &errorsRetention,
-			LogsMaxCents:           logsLimitCents,
 			LogsRetentionPeriod:    &logsRetention,
-			TracesMaxCents:         tracesLimitCents,
 			TracesRetentionPeriod:  &tracesRetention,
-			MetricsMaxCents:        metricsLimitCents,
 			MetricsRetentionPeriod: &metricsRetention,
 		}).Error; err != nil {
 		return nil, e.Wrap(err, "error updating workspace")
@@ -6401,33 +6396,10 @@ func (r *queryResolver) BillingDetails(ctx context.Context, workspaceID int) (*m
 	}
 
 	sessionsIncluded := pricing.IncludedAmount(planType, model.PricingProductTypeSessions)
-	// use monthly session limit if it exists
-	if workspace.MonthlySessionLimit != nil {
-		sessionsIncluded = int64(*workspace.MonthlySessionLimit)
-	}
-
 	membersLimit := pricing.TypeToMemberLimit(planType, workspace.UnlimitedMembers)
-	if membersLimit != nil && workspace.MonthlyMembersLimit != nil {
-		membersLimit = pointy.Int64(int64(*workspace.MonthlyMembersLimit))
-	}
-
 	errorsIncluded := pricing.IncludedAmount(planType, model.PricingProductTypeErrors)
-	// use monthly session limit if it exists
-	if workspace.MonthlyErrorsLimit != nil {
-		errorsIncluded = int64(*workspace.MonthlyErrorsLimit)
-	}
-
 	logsIncluded := pricing.IncludedAmount(planType, model.PricingProductTypeLogs)
-	// use monthly session limit if it exists
-	if workspace.MonthlyLogsLimit != nil {
-		logsIncluded = int64(*workspace.MonthlyLogsLimit)
-	}
-
 	tracesIncluded := pricing.IncludedAmount(planType, model.PricingProductTypeTraces)
-	// use monthly traces limit if it exists
-	if workspace.MonthlyTracesLimit != nil {
-		tracesIncluded = int64(*workspace.MonthlyTracesLimit)
-	}
 
 	sessionsRetentionPeriod := modelInputs.RetentionPeriodSixMonths
 	if workspace.RetentionPeriod != nil {
@@ -6449,10 +6421,10 @@ func (r *queryResolver) BillingDetails(ctx context.Context, workspaceID int) (*m
 	var sessionsLimit, errorsLimit, logsLimit, tracesLimit *int64
 	var sessionsRate, errorsRate, logsRate, tracesRate float64
 	if workspace.TrialEndDate == nil || workspace.TrialEndDate.Before(time.Now()) {
-		sessionsLimit = pricing.GetLimitAmount(workspace.SessionsMaxCents, model.PricingProductTypeSessions, planType, sessionsRetentionPeriod)
-		errorsLimit = pricing.GetLimitAmount(workspace.ErrorsMaxCents, model.PricingProductTypeErrors, planType, errorsRetentionPeriod)
-		logsLimit = pricing.GetLimitAmount(workspace.LogsMaxCents, model.PricingProductTypeLogs, planType, logsRetentionPeriod)
-		tracesLimit = pricing.GetLimitAmount(workspace.TracesMaxCents, model.PricingProductTypeTraces, planType, tracesRetentionPeriod)
+		sessionsLimit = pricing.GetLimitAmount(nil, model.PricingProductTypeSessions, planType, sessionsRetentionPeriod)
+		errorsLimit = pricing.GetLimitAmount(nil, model.PricingProductTypeErrors, planType, errorsRetentionPeriod)
+		logsLimit = pricing.GetLimitAmount(nil, model.PricingProductTypeLogs, planType, logsRetentionPeriod)
+		tracesLimit = pricing.GetLimitAmount(nil, model.PricingProductTypeTraces, planType, tracesRetentionPeriod)
 		sessionsRate = pricing.ProductToBasePriceCents(model.PricingProductTypeSessions, planType, sessionsMeter)
 		errorsRate = pricing.ProductToBasePriceCents(model.PricingProductTypeErrors, planType, errorsMeter)
 		logsRate = pricing.ProductToBasePriceCents(model.PricingProductTypeLogs, planType, logsMeter)
@@ -9718,16 +9690,3 @@ type sessionCommentResolver struct{ *Resolver }
 type subscriptionResolver struct{ *Resolver }
 type timelineIndicatorEventResolver struct{ *Resolver }
 type visualizationResolver struct{ *Resolver }
-
-// !!! WARNING !!!
-// The code below was going to be deleted when updating resolvers. It has been copied here so you have
-// one last chance to move it out of harms way if you want. There are two reasons this happens:
-//  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
-//    it when you're done.
-//  - You have helper methods in this file. Move them out to keep these resolver files clean.
-/*
-	func (r *Resolver) SystemConfiguration() generated.SystemConfigurationResolver {
-	return &systemConfigurationResolver{r}
-}
-type systemConfigurationResolver struct{ *Resolver }
-*/

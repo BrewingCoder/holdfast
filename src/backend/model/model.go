@@ -232,8 +232,6 @@ type Organization struct {
 	SlackWebhookChannel   *string
 	SlackWebhookChannelID *string
 	SlackChannels         *string
-	// Manual monthly session limit override
-	MonthlySessionLimit *int
 }
 
 type Workspace struct {
@@ -261,22 +259,11 @@ type Workspace struct {
 	BillingPeriodStart          *time.Time
 	BillingPeriodEnd            *time.Time
 	NextInvoiceDate             *time.Time
-	MonthlySessionLimit         *int
-	MonthlyMembersLimit         *int
-	MonthlyErrorsLimit          *int
-	MonthlyLogsLimit            *int
-	MonthlyTracesLimit          *int
-	MonthlyMetricsLimit         *int
 	RetentionPeriod             *modelInputs.RetentionPeriod `gorm:"default:SevenDays"`
 	ErrorsRetentionPeriod       *modelInputs.RetentionPeriod `gorm:"default:SevenDays"`
 	LogsRetentionPeriod         *modelInputs.RetentionPeriod `gorm:"default:ThirtyDays"`
 	TracesRetentionPeriod       *modelInputs.RetentionPeriod `gorm:"default:ThirtyDays"`
 	MetricsRetentionPeriod      *modelInputs.RetentionPeriod `gorm:"default:ThirtyDays"`
-	SessionsMaxCents            *int
-	ErrorsMaxCents              *int
-	LogsMaxCents                *int
-	TracesMaxCents              *int
-	MetricsMaxCents             *int
 	StripeSessionOveragePriceID *string
 	StripeErrorOveragePriceID   *string
 	StripeLogOveragePriceID     *string
@@ -367,15 +354,13 @@ type Project struct {
 	BillingEmail      *string
 	Secret            *string    `json:"-"`
 	TrialEndDate      *time.Time `json:"trial_end_date"`
-	// Manual monthly session limit override
-	MonthlySessionLimit *int
-	WorkspaceID         int
-	Workspace           *Workspace
-	FreeTier            bool           `gorm:"default:false"`
-	ExcludedUsers       pq.StringArray `json:"excluded_users" gorm:"type:text[]"`
-	ErrorFilters        pq.StringArray `gorm:"type:text[]"`
-	ErrorJsonPaths      pq.StringArray `gorm:"type:text[]"`
-	Platforms           pq.StringArray `gorm:"type:text[]"`
+	WorkspaceID       int
+	Workspace         *Workspace
+	FreeTier          bool           `gorm:"default:false"`
+	ExcludedUsers     pq.StringArray `json:"excluded_users" gorm:"type:text[]"`
+	ErrorFilters      pq.StringArray `gorm:"type:text[]"`
+	ErrorJsonPaths    pq.StringArray `gorm:"type:text[]"`
+	Platforms         pq.StringArray `gorm:"type:text[]"`
 
 	// BackendSetup will be true if this is the session where HighlightBackend is run for the first time
 	BackendSetup *bool         `json:"backend_setup"`
