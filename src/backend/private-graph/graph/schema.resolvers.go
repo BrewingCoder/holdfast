@@ -6325,11 +6325,6 @@ func (r *queryResolver) BillingDetails(ctx context.Context, workspaceID int) (*m
 		return nil, err
 	}
 
-	awsMPWorkspace, err := r.GetAWSMarketPlaceWorkspace(ctx, workspaceID)
-	if err != nil {
-		return nil, err
-	}
-
 	settings, err := r.Store.GetAllWorkspaceSettings(ctx, workspaceID)
 	if err != nil {
 		return nil, err
@@ -6506,12 +6501,6 @@ func (r *queryResolver) BillingDetails(ctx context.Context, workspaceID int) (*m
 		LogsBillingLimit:     logsLimit,
 		TracesBillingLimit:   tracesLimit,
 	}
-	if awsMPWorkspace != nil && awsMPWorkspace.AWSMarketplaceCustomer != nil {
-		details.Plan.AWSMpSubscription.CustomerIdentifier = pointy.StringValue(awsMPWorkspace.AWSMarketplaceCustomer.CustomerIdentifier, "")
-		details.Plan.AWSMpSubscription.CustomerAWSAccountID = pointy.StringValue(awsMPWorkspace.AWSMarketplaceCustomer.CustomerAWSAccountID, "")
-		details.Plan.AWSMpSubscription.ProductCode = pointy.StringValue(awsMPWorkspace.AWSMarketplaceCustomer.ProductCode, "")
-	}
-
 	return details, nil
 }
 

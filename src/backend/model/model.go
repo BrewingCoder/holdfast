@@ -123,7 +123,6 @@ var ContextKeys = struct {
 }
 
 var Models = []interface{}{
-	&AWSMarketplaceCustomer{},
 	&ErrorObject{},
 	&ErrorGroup{},
 	&ErrorGroupEmbeddings{},
@@ -257,9 +256,8 @@ type Workspace struct {
 	Projects                    []Project
 	MigratedFromProjectID       *int // Column can be removed after migration is done
 	StripeCustomerID            *string
-	AWSMarketplaceCustomer      *AWSMarketplaceCustomer `gorm:"foreignKey:WorkspaceID"`
-	PlanTier                    string                  `gorm:"default:Free"`
-	UnlimitedMembers            bool                    `gorm:"default:false"`
+	PlanTier                    string `gorm:"default:Free"`
+	UnlimitedMembers            bool   `gorm:"default:false"`
 	BillingPeriodStart          *time.Time
 	BillingPeriodEnd            *time.Time
 	NextInvoiceDate             *time.Time
@@ -361,14 +359,6 @@ type WorkspaceAccessRequest struct {
 	Model
 	AdminID                int `gorm:"uniqueIndex"`
 	LastRequestedWorkspace int
-}
-
-type AWSMarketplaceCustomer struct {
-	Model
-	WorkspaceID          int `gorm:"uniqueIndex"`
-	CustomerIdentifier   *string
-	CustomerAWSAccountID *string
-	ProductCode          *string
 }
 
 type Project struct {
