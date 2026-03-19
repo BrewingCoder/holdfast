@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/highlight-run/highlight/backend/env"
+	"github.com/BrewingCoder/holdfast/src/backend/env"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	v4 "github.com/aws/aws-sdk-go-v2/aws/signer/v4"
@@ -18,9 +18,9 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/aws/aws-sdk-go-v2/config"
-	"github.com/highlight-run/highlight/backend/lambda-functions/sessionInsights/utils"
-	"github.com/highlight-run/highlight/backend/model"
-	modelInputs "github.com/highlight-run/highlight/backend/private-graph/graph/model"
+	"github.com/BrewingCoder/holdfast/src/backend/lambda-functions/sessionInsights/utils"
+	"github.com/BrewingCoder/holdfast/src/backend/model"
+	modelInputs "github.com/BrewingCoder/holdfast/src/backend/private-graph/graph/model"
 	"github.com/pkg/errors"
 )
 

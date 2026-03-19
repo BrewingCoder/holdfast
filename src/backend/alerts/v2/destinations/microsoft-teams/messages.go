@@ -7,14 +7,14 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
-	microsoft_teams "github.com/highlight-run/highlight/backend/alerts/integrations/microsoft-teams"
-	destinationsV2 "github.com/highlight-run/highlight/backend/alerts/v2/destinations"
-	microsoftteamsV2_templates "github.com/highlight-run/highlight/backend/alerts/v2/destinations/microsoft-teams/templates"
-	"github.com/highlight-run/highlight/backend/env"
-	"github.com/highlight-run/highlight/backend/model"
-	modelInputs "github.com/highlight-run/highlight/backend/private-graph/graph/model"
-	"github.com/highlight-run/highlight/backend/routing"
-	"github.com/highlight-run/highlight/backend/util"
+	microsoft_teams "github.com/BrewingCoder/holdfast/src/backend/alerts/integrations/microsoft-teams"
+	destinationsV2 "github.com/BrewingCoder/holdfast/src/backend/alerts/v2/destinations"
+	microsoftteamsV2_templates "github.com/BrewingCoder/holdfast/src/backend/alerts/v2/destinations/microsoft-teams/templates"
+	"github.com/BrewingCoder/holdfast/src/backend/env"
+	"github.com/BrewingCoder/holdfast/src/backend/model"
+	modelInputs "github.com/BrewingCoder/holdfast/src/backend/private-graph/graph/model"
+	"github.com/BrewingCoder/holdfast/src/backend/routing"
+	"github.com/BrewingCoder/holdfast/src/backend/util"
 )
 
 func SendAlerts(ctx context.Context, microsoftTeamsTenantId *string, alertInput *destinationsV2.AlertInput, destinations []model.AlertDestination) {

@@ -3,12 +3,12 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"github.com/highlight-run/highlight/backend/env"
+	"github.com/BrewingCoder/holdfast/src/backend/env"
 	e "github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/highlight-run/highlight/backend/model"
-	modelInputs "github.com/highlight-run/highlight/backend/private-graph/graph/model"
+	"github.com/BrewingCoder/holdfast/src/backend/model"
+	modelInputs "github.com/BrewingCoder/holdfast/src/backend/private-graph/graph/model"
 )
 
 func main() {

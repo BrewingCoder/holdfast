@@ -3,9 +3,9 @@ package main
 import (
 	"math/rand"
 
-	"github.com/highlight/highlight/sdk/highlight-go"
-	hlog "github.com/highlight/highlight/sdk/highlight-go/log"
-	highlightEcho "github.com/highlight/highlight/sdk/highlight-go/middleware/echo"
+	"github.com/BrewingCoder/holdfast/sdk/highlight-go"
+	hlog "github.com/BrewingCoder/holdfast/sdk/highlight-go/log"
+	highlightEcho "github.com/BrewingCoder/holdfast/sdk/highlight-go/middleware/echo"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	e "github.com/pkg/errors"

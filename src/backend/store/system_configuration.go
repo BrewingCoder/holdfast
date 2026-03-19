@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/highlight-run/highlight/backend/model"
-	"github.com/highlight-run/highlight/backend/redis"
+	"github.com/BrewingCoder/holdfast/src/backend/model"
+	"github.com/BrewingCoder/holdfast/src/backend/redis"
 )
 
 func (store *Store) GetSystemConfiguration(ctx context.Context) (*model.SystemConfiguration, error) {

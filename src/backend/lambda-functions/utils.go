@@ -2,9 +2,9 @@ package lambda_functions
 
 import (
 	"context"
-	"github.com/highlight-run/highlight/backend/env"
-	"github.com/highlight/highlight/sdk/highlight-go"
-	hlog "github.com/highlight/highlight/sdk/highlight-go/log"
+	"github.com/BrewingCoder/holdfast/src/backend/env"
+	"github.com/BrewingCoder/holdfast/sdk/highlight-go"
+	hlog "github.com/BrewingCoder/holdfast/sdk/highlight-go/log"
 	log "github.com/sirupsen/logrus"
 )
 

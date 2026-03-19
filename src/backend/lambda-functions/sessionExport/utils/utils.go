@@ -1,7 +1,7 @@
 package utils
 
 import (
-	"github.com/highlight-run/highlight/backend/model"
+	"github.com/BrewingCoder/holdfast/src/backend/model"
 )
 
 type SessionExportInput struct {

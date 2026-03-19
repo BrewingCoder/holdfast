@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/highlight-run/highlight/backend/env"
+	"github.com/BrewingCoder/holdfast/src/backend/env"
 
 	"github.com/go-redis/cache/v9"
 	"github.com/go-redsync/redsync/v4"
@@ -18,9 +18,9 @@ import (
 	"github.com/pkg/errors"
 	"github.com/redis/go-redis/v9"
 
-	"github.com/highlight-run/highlight/backend/model"
-	"github.com/highlight-run/highlight/backend/util"
-	hmetric "github.com/highlight/highlight/sdk/highlight-go/metric"
+	"github.com/BrewingCoder/holdfast/src/backend/model"
+	"github.com/BrewingCoder/holdfast/src/backend/util"
+	hmetric "github.com/BrewingCoder/holdfast/sdk/highlight-go/metric"
 )
 
 const CacheKeySessionsToProcess = "sessions-to-process"

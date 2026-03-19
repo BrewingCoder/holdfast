@@ -2,12 +2,12 @@ package main
 
 import (
 	"context"
-	"github.com/highlight-run/highlight/backend/env"
+	"github.com/BrewingCoder/holdfast/src/backend/env"
 	"strconv"
 	"time"
 
-	kafka_queue "github.com/highlight-run/highlight/backend/kafka-queue"
-	"github.com/highlight-run/highlight/backend/model"
+	kafka_queue "github.com/BrewingCoder/holdfast/src/backend/kafka-queue"
+	"github.com/BrewingCoder/holdfast/src/backend/model"
 	"github.com/openlyinc/pointy"
 	log "github.com/sirupsen/logrus"
 )

@@ -1,8 +1,8 @@
 package webhook
 
 import (
-	"github.com/highlight-run/highlight/backend/model"
-	modelInputs "github.com/highlight-run/highlight/backend/private-graph/graph/model"
+	"github.com/BrewingCoder/holdfast/src/backend/model"
+	modelInputs "github.com/BrewingCoder/holdfast/src/backend/private-graph/graph/model"
 )
 
 func GQLInputToGo(webhooks []*modelInputs.WebhookDestinationInput) []*model.WebhookDestination {

@@ -9,8 +9,8 @@ import (
 
 	"github.com/aws/smithy-go/ptr"
 	github2 "github.com/google/go-github/v50/github"
-	"github.com/highlight-run/highlight/backend/model"
-	privateModel "github.com/highlight-run/highlight/backend/private-graph/graph/model"
+	"github.com/BrewingCoder/holdfast/src/backend/model"
+	privateModel "github.com/BrewingCoder/holdfast/src/backend/private-graph/graph/model"
 	"github.com/stretchr/testify/assert"
 )
 

@@ -7,13 +7,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/highlight-run/highlight/backend/parser"
-	"github.com/highlight-run/highlight/backend/parser/listener"
+	"github.com/BrewingCoder/holdfast/src/backend/parser"
+	"github.com/BrewingCoder/holdfast/src/backend/parser/listener"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
-	"github.com/highlight-run/highlight/backend/model"
-	modelInputs "github.com/highlight-run/highlight/backend/private-graph/graph/model"
-	model2 "github.com/highlight-run/highlight/backend/public-graph/graph/model"
+	"github.com/BrewingCoder/holdfast/src/backend/model"
+	modelInputs "github.com/BrewingCoder/holdfast/src/backend/private-graph/graph/model"
+	model2 "github.com/BrewingCoder/holdfast/src/backend/public-graph/graph/model"
 	"github.com/huandu/go-sqlbuilder"
 	"github.com/openlyinc/pointy"
 	"github.com/samber/lo"

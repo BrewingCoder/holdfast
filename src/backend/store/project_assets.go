@@ -7,8 +7,8 @@ import (
 	"gorm.io/gorm"
 	"time"
 
-	"github.com/highlight-run/highlight/backend/model"
-	"github.com/highlight-run/highlight/backend/redis"
+	"github.com/BrewingCoder/holdfast/src/backend/model"
+	"github.com/BrewingCoder/holdfast/src/backend/redis"
 )
 
 func (store *Store) GetProjectAssetTransform(ctx context.Context, projectID int, scheme string) (*model.ProjectAssetTransform, error) {

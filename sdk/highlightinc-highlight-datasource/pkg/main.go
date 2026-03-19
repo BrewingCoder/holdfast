@@ -5,7 +5,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
-	"github.com/highlight/highlightinc-highlight-datasource/pkg/plugin"
+	"github.com/BrewingCoder/holdfast/sdk/highlightinc-highlight-datasource/pkg/plugin"
 )
 
 func main() {

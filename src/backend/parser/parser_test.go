@@ -3,7 +3,7 @@ package parser
 import (
 	"testing"
 
-	"github.com/highlight-run/highlight/backend/model"
+	"github.com/BrewingCoder/holdfast/src/backend/model"
 	"github.com/huandu/go-assert"
 	"github.com/huandu/go-sqlbuilder"
 )

@@ -6,13 +6,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/highlight-run/highlight/backend/parser"
+	"github.com/BrewingCoder/holdfast/src/backend/parser"
 
-	modelInputs "github.com/highlight-run/highlight/backend/private-graph/graph/model"
-	"github.com/highlight-run/highlight/backend/util"
+	modelInputs "github.com/BrewingCoder/holdfast/src/backend/private-graph/graph/model"
+	"github.com/BrewingCoder/holdfast/src/backend/util"
 	"github.com/openlyinc/pointy"
 
-	"github.com/highlight-run/highlight/backend/model"
+	"github.com/BrewingCoder/holdfast/src/backend/model"
 	"github.com/stretchr/testify/assert"
 )
 

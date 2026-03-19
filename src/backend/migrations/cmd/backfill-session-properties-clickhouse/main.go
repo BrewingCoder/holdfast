@@ -2,12 +2,12 @@ package main
 
 import (
 	"context"
-	"github.com/highlight-run/highlight/backend/env"
-	kafka_queue "github.com/highlight-run/highlight/backend/kafka-queue"
-	"github.com/highlight-run/highlight/backend/model"
-	public "github.com/highlight-run/highlight/backend/public-graph/graph"
-	"github.com/highlight-run/highlight/backend/redis"
-	"github.com/highlight-run/highlight/backend/store"
+	"github.com/BrewingCoder/holdfast/src/backend/env"
+	kafka_queue "github.com/BrewingCoder/holdfast/src/backend/kafka-queue"
+	"github.com/BrewingCoder/holdfast/src/backend/model"
+	public "github.com/BrewingCoder/holdfast/src/backend/public-graph/graph"
+	"github.com/BrewingCoder/holdfast/src/backend/redis"
+	"github.com/BrewingCoder/holdfast/src/backend/store"
 	"github.com/openlyinc/pointy"
 	"github.com/samber/lo"
 

@@ -13,12 +13,12 @@ import (
 
 	"github.com/99designs/gqlgen/graphql/handler/transport"
 	"github.com/go-oauth2/oauth2/v4"
-	"github.com/highlight-run/highlight/backend/enterprise"
-	"github.com/highlight-run/highlight/backend/env"
-	"github.com/highlight-run/highlight/backend/model"
-	"github.com/highlight-run/highlight/backend/oauth"
-	"github.com/highlight-run/highlight/backend/store"
-	"github.com/highlight-run/highlight/backend/util"
+	"github.com/BrewingCoder/holdfast/src/backend/enterprise"
+	"github.com/BrewingCoder/holdfast/src/backend/env"
+	"github.com/BrewingCoder/holdfast/src/backend/model"
+	"github.com/BrewingCoder/holdfast/src/backend/oauth"
+	"github.com/BrewingCoder/holdfast/src/backend/store"
+	"github.com/BrewingCoder/holdfast/src/backend/util"
 	log "github.com/sirupsen/logrus"
 )
 

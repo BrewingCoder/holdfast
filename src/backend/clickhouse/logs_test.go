@@ -14,8 +14,8 @@ import (
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/highlight-run/highlight/backend/parser"
-	modelInputs "github.com/highlight-run/highlight/backend/private-graph/graph/model"
+	"github.com/BrewingCoder/holdfast/src/backend/parser"
+	modelInputs "github.com/BrewingCoder/holdfast/src/backend/private-graph/graph/model"
 )
 
 func TestMain(m *testing.M) {

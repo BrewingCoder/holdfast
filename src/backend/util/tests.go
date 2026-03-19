@@ -3,14 +3,14 @@ package util
 import (
 	"context"
 	"fmt"
-	"github.com/highlight-run/highlight/backend/env"
+	"github.com/BrewingCoder/holdfast/src/backend/env"
 	"testing"
 
 	e "github.com/pkg/errors"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 
-	"github.com/highlight-run/highlight/backend/model"
+	"github.com/BrewingCoder/holdfast/src/backend/model"
 )
 
 func RunTestWithDBWipe(t *testing.T, db *gorm.DB, f func(t *testing.T)) {

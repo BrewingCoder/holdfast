@@ -4,8 +4,8 @@ import (
 	"context"
 	cryptorand "crypto/rand"
 	"fmt"
-	"github.com/highlight-run/highlight/backend/env"
-	"github.com/highlight-run/highlight/backend/util"
+	"github.com/BrewingCoder/holdfast/src/backend/env"
+	"github.com/BrewingCoder/holdfast/src/backend/util"
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
 	"math/rand"
@@ -13,7 +13,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/highlight-run/highlight/backend/public-graph/graph/model"
+	"github.com/BrewingCoder/holdfast/src/backend/public-graph/graph/model"
 	"github.com/segmentio/kafka-go"
 	log "github.com/sirupsen/logrus"
 )

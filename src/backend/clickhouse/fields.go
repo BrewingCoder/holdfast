@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/highlight-run/highlight/backend/model"
-	"github.com/highlight-run/highlight/backend/util"
+	"github.com/BrewingCoder/holdfast/src/backend/model"
+	"github.com/BrewingCoder/holdfast/src/backend/util"
 	"github.com/huandu/go-sqlbuilder"
 )
 

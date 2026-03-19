@@ -1,12 +1,12 @@
-module github.com/highlight/highlight/e2e/go
+module github.com/BrewingCoder/holdfast/tests/e2e/go
 
 go 1.23.1
 
-replace github.com/highlight/highlight/sdk/highlight-go => ../../../sdk/highlight-go
+replace github.com/BrewingCoder/holdfast/sdk/highlight-go => ../../../sdk/highlight-go
 
 require (
 	github.com/gofiber/fiber/v2 v2.52.5
-	github.com/highlight/highlight/sdk/highlight-go v0.10.2
+	github.com/BrewingCoder/holdfast/sdk/highlight-go v0.10.2
 	github.com/labstack/echo/v4 v4.11.4
 	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.9.3

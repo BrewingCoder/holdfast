@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/aws/smithy-go/ptr"
-	"github.com/highlight-run/highlight/backend/model"
+	"github.com/BrewingCoder/holdfast/src/backend/model"
 	"github.com/stretchr/testify/assert"
 	_ "gorm.io/driver/postgres"
 )

@@ -11,17 +11,17 @@ import (
 	log "github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 
-	destinationsV2 "github.com/highlight-run/highlight/backend/alerts/v2/destinations"
-	discordV2 "github.com/highlight-run/highlight/backend/alerts/v2/destinations/discord"
-	emailV2 "github.com/highlight-run/highlight/backend/alerts/v2/destinations/email"
-	microsoftteamsV2 "github.com/highlight-run/highlight/backend/alerts/v2/destinations/microsoft-teams"
-	slackV2 "github.com/highlight-run/highlight/backend/alerts/v2/destinations/slack"
-	webhookV2 "github.com/highlight-run/highlight/backend/alerts/v2/destinations/webhook"
-	"github.com/highlight-run/highlight/backend/env"
-	"github.com/highlight-run/highlight/backend/lambda"
-	"github.com/highlight-run/highlight/backend/model"
-	modelInputs "github.com/highlight-run/highlight/backend/private-graph/graph/model"
-	"github.com/highlight-run/highlight/backend/util"
+	destinationsV2 "github.com/BrewingCoder/holdfast/src/backend/alerts/v2/destinations"
+	discordV2 "github.com/BrewingCoder/holdfast/src/backend/alerts/v2/destinations/discord"
+	emailV2 "github.com/BrewingCoder/holdfast/src/backend/alerts/v2/destinations/email"
+	microsoftteamsV2 "github.com/BrewingCoder/holdfast/src/backend/alerts/v2/destinations/microsoft-teams"
+	slackV2 "github.com/BrewingCoder/holdfast/src/backend/alerts/v2/destinations/slack"
+	webhookV2 "github.com/BrewingCoder/holdfast/src/backend/alerts/v2/destinations/webhook"
+	"github.com/BrewingCoder/holdfast/src/backend/env"
+	"github.com/BrewingCoder/holdfast/src/backend/lambda"
+	"github.com/BrewingCoder/holdfast/src/backend/model"
+	modelInputs "github.com/BrewingCoder/holdfast/src/backend/private-graph/graph/model"
+	"github.com/BrewingCoder/holdfast/src/backend/util"
 )
 
 func SendAlerts(ctx context.Context, db *gorm.DB, mailClient *sendgrid.Client, lambdaClient *lambda.Client, alert *model.Alert, alertGroup string, alertGroupValue string, value float64) error {

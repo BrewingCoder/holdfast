@@ -3,16 +3,16 @@ package log_alerts
 import (
 	"context"
 	"fmt"
-	"github.com/highlight-run/highlight/backend/env"
+	"github.com/BrewingCoder/holdfast/src/backend/env"
 	"time"
 
-	"github.com/highlight-run/highlight/backend/alerts"
-	"github.com/highlight-run/highlight/backend/clickhouse"
-	"github.com/highlight-run/highlight/backend/lambda"
-	modelInputs "github.com/highlight-run/highlight/backend/private-graph/graph/model"
-	"github.com/highlight-run/highlight/backend/redis"
-	tempalerts "github.com/highlight-run/highlight/backend/temp-alerts"
-	"github.com/highlight-run/highlight/backend/util"
+	"github.com/BrewingCoder/holdfast/src/backend/alerts"
+	"github.com/BrewingCoder/holdfast/src/backend/clickhouse"
+	"github.com/BrewingCoder/holdfast/src/backend/lambda"
+	modelInputs "github.com/BrewingCoder/holdfast/src/backend/private-graph/graph/model"
+	"github.com/BrewingCoder/holdfast/src/backend/redis"
+	tempalerts "github.com/BrewingCoder/holdfast/src/backend/temp-alerts"
+	"github.com/BrewingCoder/holdfast/src/backend/util"
 	"github.com/highlight-run/workerpool"
 	"github.com/openlyinc/pointy"
 
@@ -20,9 +20,9 @@ import (
 	"github.com/sendgrid/sendgrid-go"
 
 	"github.com/highlight-run/go-resthooks"
-	Email "github.com/highlight-run/highlight/backend/email"
-	"github.com/highlight-run/highlight/backend/model"
-	"github.com/highlight-run/highlight/backend/zapier"
+	Email "github.com/BrewingCoder/holdfast/src/backend/email"
+	"github.com/BrewingCoder/holdfast/src/backend/model"
+	"github.com/BrewingCoder/holdfast/src/backend/zapier"
 	log "github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 )

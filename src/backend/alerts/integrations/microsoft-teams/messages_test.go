@@ -3,14 +3,14 @@ package microsoft_teams
 import (
 	"context"
 	"fmt"
-	"github.com/highlight-run/highlight/backend/env"
+	"github.com/BrewingCoder/holdfast/src/backend/env"
 	"testing"
 	"time"
 
 	"github.com/aws/smithy-go/ptr"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/highlight-run/highlight/backend/alerts/integrations"
+	"github.com/BrewingCoder/holdfast/src/backend/alerts/integrations"
 	"github.com/stretchr/testify/suite"
 )
 

@@ -1,7 +1,7 @@
 package htrace
 
 import (
-	"github.com/highlight/highlight/sdk/highlight-go"
+	"github.com/BrewingCoder/holdfast/sdk/highlight-go"
 	"go.opentelemetry.io/otel/attribute"
 	"gorm.io/gorm"
 	"gorm.io/plugin/opentelemetry/tracing"

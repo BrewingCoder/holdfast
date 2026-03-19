@@ -4,7 +4,7 @@ go 1.23.1
 
 require (
 	github.com/go-chi/chi/v5 v5.0.12
-	github.com/highlight/highlight/sdk/highlight-go v0.10.2
+	github.com/BrewingCoder/holdfast/sdk/highlight-go v0.10.2
 	go.opentelemetry.io/otel v1.24.0
 	go.opentelemetry.io/otel/trace v1.24.0
 )

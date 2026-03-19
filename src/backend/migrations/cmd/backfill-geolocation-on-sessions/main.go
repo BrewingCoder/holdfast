@@ -5,15 +5,15 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/highlight-run/highlight/backend/env"
-	kafka_queue "github.com/highlight-run/highlight/backend/kafka-queue"
+	"github.com/BrewingCoder/holdfast/src/backend/env"
+	kafka_queue "github.com/BrewingCoder/holdfast/src/backend/kafka-queue"
 	"go.openly.dev/pointy"
 	"gorm.io/gorm"
 
 	log "github.com/sirupsen/logrus"
 
-	"github.com/highlight-run/highlight/backend/model"
-	publicGraph "github.com/highlight-run/highlight/backend/public-graph/graph"
+	"github.com/BrewingCoder/holdfast/src/backend/model"
+	publicGraph "github.com/BrewingCoder/holdfast/src/backend/public-graph/graph"
 )
 
 const batchSize = 100

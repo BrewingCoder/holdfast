@@ -3,7 +3,7 @@ package hlog
 import (
 	"context"
 	"fmt"
-	"github.com/highlight/highlight/sdk/highlight-go"
+	"github.com/BrewingCoder/holdfast/sdk/highlight-go"
 	"github.com/sirupsen/logrus"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"

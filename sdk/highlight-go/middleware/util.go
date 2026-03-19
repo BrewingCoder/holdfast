@@ -2,7 +2,7 @@ package middleware
 
 import (
 	"fmt"
-	"github.com/highlight/highlight/sdk/highlight-go"
+	"github.com/BrewingCoder/holdfast/sdk/highlight-go"
 	e "github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"go.opentelemetry.io/otel/attribute"

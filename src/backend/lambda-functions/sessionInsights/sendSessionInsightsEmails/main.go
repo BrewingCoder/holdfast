@@ -2,9 +2,9 @@ package main
 
 import (
 	"github.com/aws/aws-lambda-go/lambda"
-	lambdafunctions "github.com/highlight-run/highlight/backend/lambda-functions"
-	"github.com/highlight-run/highlight/backend/lambda-functions/sessionInsights/handlers"
-	"github.com/highlight/highlight/sdk/highlight-go"
+	lambdafunctions "github.com/BrewingCoder/holdfast/src/backend/lambda-functions"
+	"github.com/BrewingCoder/holdfast/src/backend/lambda-functions/sessionInsights/handlers"
+	"github.com/BrewingCoder/holdfast/sdk/highlight-go"
 )
 
 var h handlers.Handlers

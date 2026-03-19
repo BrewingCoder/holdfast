@@ -1,4 +1,4 @@
-module github.com/highlight/highlightinc-highlight-datasource
+module github.com/BrewingCoder/holdfast/sdk/highlightinc-highlight-datasource
 
 go 1.23.1
 

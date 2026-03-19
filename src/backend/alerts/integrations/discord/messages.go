@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/highlight-run/highlight/backend/alerts/integrations"
+	"github.com/BrewingCoder/holdfast/src/backend/alerts/integrations"
 )
 
 func newMessageEmbed() *discordgo.MessageEmbed {

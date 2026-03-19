@@ -10,10 +10,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/highlight-run/highlight/backend/env"
+	"github.com/BrewingCoder/holdfast/src/backend/env"
 
-	Email "github.com/highlight-run/highlight/backend/email"
-	modelInputs "github.com/highlight-run/highlight/backend/private-graph/graph/model"
+	Email "github.com/BrewingCoder/holdfast/src/backend/email"
+	modelInputs "github.com/BrewingCoder/holdfast/src/backend/private-graph/graph/model"
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5/pgconn"
 

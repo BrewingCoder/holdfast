@@ -2,8 +2,8 @@ package alerts
 
 import (
 	"fmt"
-	"github.com/highlight-run/highlight/backend/env"
-	"github.com/highlight-run/highlight/backend/model"
+	"github.com/BrewingCoder/holdfast/src/backend/env"
+	"github.com/BrewingCoder/holdfast/src/backend/model"
 )
 
 func getErrorURL(errorAlert *model.ErrorAlert, errorGroup *model.ErrorGroup, errorObject *model.ErrorObject) string {

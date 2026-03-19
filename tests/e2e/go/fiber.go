@@ -5,9 +5,9 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/logger"
-	"github.com/highlight/highlight/sdk/highlight-go"
-	hlog "github.com/highlight/highlight/sdk/highlight-go/log"
-	highlightFiber "github.com/highlight/highlight/sdk/highlight-go/middleware/fiber"
+	"github.com/BrewingCoder/holdfast/sdk/highlight-go"
+	hlog "github.com/BrewingCoder/holdfast/sdk/highlight-go/log"
+	highlightFiber "github.com/BrewingCoder/holdfast/sdk/highlight-go/middleware/fiber"
 	e "github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )

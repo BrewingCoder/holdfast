@@ -15,7 +15,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/highlight-run/highlight/backend/env"
+	"github.com/BrewingCoder/holdfast/src/backend/env"
 
 	"go.opentelemetry.io/otel/trace"
 
@@ -23,11 +23,11 @@ import (
 	github2 "github.com/google/go-github/v50/github"
 	"github.com/sashabaranov/go-openai"
 
-	parse "github.com/highlight-run/highlight/backend/event-parse"
-	"github.com/highlight-run/highlight/backend/integrations/github"
-	"github.com/highlight-run/highlight/backend/integrations/gitlab"
-	"github.com/highlight-run/highlight/backend/integrations/jira"
-	"github.com/highlight-run/highlight/backend/openai_client"
+	parse "github.com/BrewingCoder/holdfast/src/backend/event-parse"
+	"github.com/BrewingCoder/holdfast/src/backend/integrations/github"
+	"github.com/BrewingCoder/holdfast/src/backend/integrations/gitlab"
+	"github.com/BrewingCoder/holdfast/src/backend/integrations/jira"
+	"github.com/BrewingCoder/holdfast/src/backend/openai_client"
 
 	"gorm.io/gorm/clause"
 
@@ -36,19 +36,19 @@ import (
 
 	"github.com/highlight-run/go-resthooks"
 
-	"github.com/highlight-run/highlight/backend/alerts/integrations/discord"
-	microsoft_teams "github.com/highlight-run/highlight/backend/alerts/integrations/microsoft-teams"
-	"github.com/highlight-run/highlight/backend/clickhouse"
-	"github.com/highlight-run/highlight/backend/clickup"
-	"github.com/highlight-run/highlight/backend/integrations"
-	"github.com/highlight-run/highlight/backend/integrations/height"
-	kafka_queue "github.com/highlight-run/highlight/backend/kafka-queue"
-	"github.com/highlight-run/highlight/backend/lambda"
-	"github.com/highlight-run/highlight/backend/oauth"
-	"github.com/highlight-run/highlight/backend/redis"
-	"github.com/highlight-run/highlight/backend/stepfunctions"
-	"github.com/highlight-run/highlight/backend/store"
-	"github.com/highlight-run/highlight/backend/vercel"
+	"github.com/BrewingCoder/holdfast/src/backend/alerts/integrations/discord"
+	microsoft_teams "github.com/BrewingCoder/holdfast/src/backend/alerts/integrations/microsoft-teams"
+	"github.com/BrewingCoder/holdfast/src/backend/clickhouse"
+	"github.com/BrewingCoder/holdfast/src/backend/clickup"
+	"github.com/BrewingCoder/holdfast/src/backend/integrations"
+	"github.com/BrewingCoder/holdfast/src/backend/integrations/height"
+	kafka_queue "github.com/BrewingCoder/holdfast/src/backend/kafka-queue"
+	"github.com/BrewingCoder/holdfast/src/backend/lambda"
+	"github.com/BrewingCoder/holdfast/src/backend/oauth"
+	"github.com/BrewingCoder/holdfast/src/backend/redis"
+	"github.com/BrewingCoder/holdfast/src/backend/stepfunctions"
+	"github.com/BrewingCoder/holdfast/src/backend/store"
+	"github.com/BrewingCoder/holdfast/src/backend/vercel"
 
 	"github.com/pkg/errors"
 
@@ -64,13 +64,13 @@ import (
 	"github.com/slack-go/slack/slackevents"
 	"github.com/highlight-run/workerpool"
 
-	Email "github.com/highlight-run/highlight/backend/email"
-	"github.com/highlight-run/highlight/backend/embeddings"
-	"github.com/highlight-run/highlight/backend/model"
-	modelInputs "github.com/highlight-run/highlight/backend/private-graph/graph/model"
-	"github.com/highlight-run/highlight/backend/storage"
-	"github.com/highlight-run/highlight/backend/util"
-	"github.com/highlight/highlight/sdk/highlight-go"
+	Email "github.com/BrewingCoder/holdfast/src/backend/email"
+	"github.com/BrewingCoder/holdfast/src/backend/embeddings"
+	"github.com/BrewingCoder/holdfast/src/backend/model"
+	modelInputs "github.com/BrewingCoder/holdfast/src/backend/private-graph/graph/model"
+	"github.com/BrewingCoder/holdfast/src/backend/storage"
+	"github.com/BrewingCoder/holdfast/src/backend/util"
+	"github.com/BrewingCoder/holdfast/sdk/highlight-go"
 )
 
 // This file will not be regenerated automatically.

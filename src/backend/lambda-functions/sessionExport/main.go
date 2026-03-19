@@ -2,14 +2,14 @@ package main
 
 import (
 	"context"
-	"github.com/highlight-run/highlight/backend/env"
-	"github.com/highlight-run/highlight/backend/model"
+	"github.com/BrewingCoder/holdfast/src/backend/env"
+	"github.com/BrewingCoder/holdfast/src/backend/model"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/highlight-run/highlight/backend/lambda-functions/sessionExport/handlers"
-	"github.com/highlight-run/highlight/backend/lambda-functions/sessionExport/utils"
-	"github.com/highlight/highlight/sdk/highlight-go"
-	hlog "github.com/highlight/highlight/sdk/highlight-go/log"
+	"github.com/BrewingCoder/holdfast/src/backend/lambda-functions/sessionExport/handlers"
+	"github.com/BrewingCoder/holdfast/src/backend/lambda-functions/sessionExport/utils"
+	"github.com/BrewingCoder/holdfast/sdk/highlight-go"
+	hlog "github.com/BrewingCoder/holdfast/sdk/highlight-go/log"
 )
 
 // Meant for local invocation for testing the lambda handler stack

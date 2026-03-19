@@ -1,11 +1,11 @@
 package alerts
 
 import (
-	"github.com/highlight-run/highlight/backend/alerts/integrations/discord"
-	microsoft_teams "github.com/highlight-run/highlight/backend/alerts/integrations/microsoft-teams"
-	"github.com/highlight-run/highlight/backend/alerts/integrations/webhook"
-	"github.com/highlight-run/highlight/backend/model"
-	modelInputs "github.com/highlight-run/highlight/backend/private-graph/graph/model"
+	"github.com/BrewingCoder/holdfast/src/backend/alerts/integrations/discord"
+	microsoft_teams "github.com/BrewingCoder/holdfast/src/backend/alerts/integrations/microsoft-teams"
+	"github.com/BrewingCoder/holdfast/src/backend/alerts/integrations/webhook"
+	"github.com/BrewingCoder/holdfast/src/backend/model"
+	modelInputs "github.com/BrewingCoder/holdfast/src/backend/private-graph/graph/model"
 	"github.com/openlyinc/pointy"
 )
 

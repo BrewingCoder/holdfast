@@ -3,7 +3,7 @@ package microsoft_teams
 import (
 	"strings"
 
-	"github.com/highlight-run/highlight/backend/env"
+	"github.com/BrewingCoder/holdfast/src/backend/env"
 	"github.com/infracloudio/msbotbuilder-go/core"
 	"github.com/infracloudio/msbotbuilder-go/core/activity"
 	"github.com/infracloudio/msbotbuilder-go/schema"

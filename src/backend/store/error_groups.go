@@ -6,9 +6,9 @@ import (
 	"strconv"
 	"time"
 
-	kafka_queue "github.com/highlight-run/highlight/backend/kafka-queue"
-	"github.com/highlight-run/highlight/backend/model"
-	privateModel "github.com/highlight-run/highlight/backend/private-graph/graph/model"
+	kafka_queue "github.com/BrewingCoder/holdfast/src/backend/kafka-queue"
+	"github.com/BrewingCoder/holdfast/src/backend/model"
+	privateModel "github.com/BrewingCoder/holdfast/src/backend/private-graph/graph/model"
 	"gorm.io/gorm/clause"
 )
 

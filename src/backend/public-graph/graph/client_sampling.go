@@ -3,8 +3,8 @@ package graph
 import (
 	"encoding/json"
 
-	"github.com/highlight-run/highlight/backend/model"
-	customModels "github.com/highlight-run/highlight/backend/public-graph/graph/model"
+	"github.com/BrewingCoder/holdfast/src/backend/model"
+	customModels "github.com/BrewingCoder/holdfast/src/backend/public-graph/graph/model"
 )
 
 func UnmarshalClientSamplingConfig(dbConfig model.ProjectClientSamplingSettings, outConfig *customModels.SamplingConfig) error {

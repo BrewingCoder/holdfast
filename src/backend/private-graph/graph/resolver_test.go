@@ -2,22 +2,22 @@ package graph
 
 import (
 	"context"
-	"github.com/highlight-run/highlight/backend/email"
-	"github.com/highlight-run/highlight/backend/env"
+	"github.com/BrewingCoder/holdfast/src/backend/email"
+	"github.com/BrewingCoder/holdfast/src/backend/env"
 	"os"
 	"strconv"
 	"strings"
 	"testing"
 	"time"
 
-	"github.com/highlight-run/highlight/backend/clickhouse"
-	"github.com/highlight-run/highlight/backend/integrations"
-	kafka_queue "github.com/highlight-run/highlight/backend/kafka-queue"
-	"github.com/highlight-run/highlight/backend/openai_client"
-	modelInputs "github.com/highlight-run/highlight/backend/private-graph/graph/model"
-	"github.com/highlight-run/highlight/backend/redis"
-	"github.com/highlight-run/highlight/backend/storage"
-	"github.com/highlight-run/highlight/backend/store"
+	"github.com/BrewingCoder/holdfast/src/backend/clickhouse"
+	"github.com/BrewingCoder/holdfast/src/backend/integrations"
+	kafka_queue "github.com/BrewingCoder/holdfast/src/backend/kafka-queue"
+	"github.com/BrewingCoder/holdfast/src/backend/openai_client"
+	modelInputs "github.com/BrewingCoder/holdfast/src/backend/private-graph/graph/model"
+	"github.com/BrewingCoder/holdfast/src/backend/redis"
+	"github.com/BrewingCoder/holdfast/src/backend/storage"
+	"github.com/BrewingCoder/holdfast/src/backend/store"
 	"github.com/lib/pq"
 	"github.com/samber/lo"
 	"github.com/sashabaranov/go-openai"
@@ -32,8 +32,8 @@ import (
 	_ "gorm.io/driver/postgres"
 	"gorm.io/gorm"
 
-	"github.com/highlight-run/highlight/backend/model"
-	"github.com/highlight-run/highlight/backend/util"
+	"github.com/BrewingCoder/holdfast/src/backend/model"
+	"github.com/BrewingCoder/holdfast/src/backend/util"
 )
 
 var DB *gorm.DB

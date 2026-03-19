@@ -5,15 +5,15 @@ import (
 	"os"
 	"testing"
 
-	"github.com/highlight-run/highlight/backend/clickhouse"
-	"github.com/highlight-run/highlight/backend/integrations"
-	kafka_queue "github.com/highlight-run/highlight/backend/kafka-queue"
-	"github.com/highlight-run/highlight/backend/redis"
-	"github.com/highlight-run/highlight/backend/storage"
+	"github.com/BrewingCoder/holdfast/src/backend/clickhouse"
+	"github.com/BrewingCoder/holdfast/src/backend/integrations"
+	kafka_queue "github.com/BrewingCoder/holdfast/src/backend/kafka-queue"
+	"github.com/BrewingCoder/holdfast/src/backend/redis"
+	"github.com/BrewingCoder/holdfast/src/backend/storage"
 
 	log "github.com/sirupsen/logrus"
 
-	"github.com/highlight-run/highlight/backend/util"
+	"github.com/BrewingCoder/holdfast/src/backend/util"
 	e "github.com/pkg/errors"
 )
 

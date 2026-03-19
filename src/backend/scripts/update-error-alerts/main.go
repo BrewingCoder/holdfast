@@ -4,13 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"flag"
-	"github.com/highlight-run/highlight/backend/env"
+	"github.com/BrewingCoder/holdfast/src/backend/env"
 	"strings"
 
 	"github.com/aws/smithy-go/ptr"
-	"github.com/highlight-run/highlight/backend/model"
-	"github.com/highlight/highlight/sdk/highlight-go"
-	hlog "github.com/highlight/highlight/sdk/highlight-go/log"
+	"github.com/BrewingCoder/holdfast/src/backend/model"
+	"github.com/BrewingCoder/holdfast/sdk/highlight-go"
+	hlog "github.com/BrewingCoder/holdfast/sdk/highlight-go/log"
 	log "github.com/sirupsen/logrus"
 )
 

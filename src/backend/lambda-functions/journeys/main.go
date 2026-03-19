@@ -3,8 +3,8 @@ package main
 import (
 	"context"
 
-	"github.com/highlight-run/highlight/backend/lambda-functions/journeys/handlers"
-	"github.com/highlight-run/highlight/backend/lambda-functions/journeys/utils"
+	"github.com/BrewingCoder/holdfast/src/backend/lambda-functions/journeys/handlers"
+	"github.com/BrewingCoder/holdfast/src/backend/lambda-functions/journeys/utils"
 	log "github.com/sirupsen/logrus"
 )
 

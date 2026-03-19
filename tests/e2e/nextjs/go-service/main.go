@@ -11,9 +11,9 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/highlight/highlight/sdk/highlight-go"
+	"github.com/BrewingCoder/holdfast/sdk/highlight-go"
 
-	highlightChi "github.com/highlight/highlight/sdk/highlight-go/middleware/chi"
+	highlightChi "github.com/BrewingCoder/holdfast/sdk/highlight-go/middleware/chi"
 
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/propagation"

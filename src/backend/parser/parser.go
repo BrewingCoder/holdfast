@@ -4,11 +4,11 @@ import (
 	"strings"
 
 	"github.com/antlr4-go/antlr/v4"
-	"github.com/highlight-run/highlight/backend/model"
-	parser "github.com/highlight-run/highlight/backend/parser/antlr"
-	"github.com/highlight-run/highlight/backend/parser/listener"
-	modelInputs "github.com/highlight-run/highlight/backend/private-graph/graph/model"
-	"github.com/highlight-run/highlight/backend/util"
+	"github.com/BrewingCoder/holdfast/src/backend/model"
+	parser "github.com/BrewingCoder/holdfast/src/backend/parser/antlr"
+	"github.com/BrewingCoder/holdfast/src/backend/parser/listener"
+	modelInputs "github.com/BrewingCoder/holdfast/src/backend/private-graph/graph/model"
+	"github.com/BrewingCoder/holdfast/src/backend/util"
 	"github.com/huandu/go-sqlbuilder"
 )
 

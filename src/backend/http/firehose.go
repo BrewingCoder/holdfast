@@ -5,7 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"github.com/google/uuid"
-	model2 "github.com/highlight-run/highlight/backend/model"
+	model2 "github.com/BrewingCoder/holdfast/src/backend/model"
 	"io"
 	"net/http"
 	"strings"

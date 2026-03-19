@@ -5,13 +5,13 @@ import (
 	"strings"
 	"time"
 
-	hlog "github.com/highlight/highlight/sdk/highlight-go/log"
+	hlog "github.com/BrewingCoder/holdfast/sdk/highlight-go/log"
 
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 
-	modelInputs "github.com/highlight-run/highlight/backend/private-graph/graph/model"
+	modelInputs "github.com/BrewingCoder/holdfast/src/backend/private-graph/graph/model"
 )
 
 type LogRow struct {

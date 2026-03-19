@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/highlight-run/highlight/backend/model"
+	"github.com/BrewingCoder/holdfast/src/backend/model"
 )
 
 func PublicMiddleware(next http.Handler) http.Handler {

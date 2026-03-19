@@ -2,10 +2,10 @@ package handlers
 
 import (
 	"context"
-	Email "github.com/highlight-run/highlight/backend/email"
-	"github.com/highlight-run/highlight/backend/env"
-	"github.com/highlight-run/highlight/backend/lambda-functions/sessionExport/utils"
-	"github.com/highlight-run/highlight/backend/model"
+	Email "github.com/BrewingCoder/holdfast/src/backend/email"
+	"github.com/BrewingCoder/holdfast/src/backend/env"
+	"github.com/BrewingCoder/holdfast/src/backend/lambda-functions/sessionExport/utils"
+	"github.com/BrewingCoder/holdfast/src/backend/model"
 	"github.com/pkg/errors"
 	"github.com/sendgrid/sendgrid-go"
 	log "github.com/sirupsen/logrus"

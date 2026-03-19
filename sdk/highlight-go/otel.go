@@ -167,7 +167,7 @@ func CreateTracerProvider(ctx context.Context, endpoint string, opts ...sdktrace
 	}
 	conf.resourceAttributes = append(
 		conf.resourceAttributes,
-		semconv.TelemetryDistroName("github.com/highlight/highlight/sdk/highlight-go"),
+		semconv.TelemetryDistroName("github.com/BrewingCoder/holdfast/sdk/highlight-go"),
 		semconv.TelemetryDistroVersion(Version),
 		attribute.String(ProjectIDAttribute, conf.projectID),
 	)
@@ -203,7 +203,7 @@ func CreateLoggerProvider(ctx context.Context, endpoint string, opts ...sdklog.L
 	}
 	conf.resourceAttributes = append(
 		conf.resourceAttributes,
-		semconv.TelemetryDistroName("github.com/highlight/highlight/sdk/highlight-go"),
+		semconv.TelemetryDistroName("github.com/BrewingCoder/holdfast/sdk/highlight-go"),
 		semconv.TelemetryDistroVersion(Version),
 	)
 	resources, err := resource.New(ctx,
@@ -236,7 +236,7 @@ func CreateMeterProvider(ctx context.Context, endpoint string, opts ...sdkmetric
 	}
 	conf.resourceAttributes = append(
 		conf.resourceAttributes,
-		semconv.TelemetryDistroName("github.com/highlight/highlight/sdk/highlight-go"),
+		semconv.TelemetryDistroName("github.com/BrewingCoder/holdfast/sdk/highlight-go"),
 		semconv.TelemetryDistroVersion(Version),
 	)
 	resources, err := resource.New(ctx,
@@ -266,13 +266,13 @@ var defaultLoggerProvider *sdklog.LoggerProvider
 var defaultMeterProvider = otel.GetMeterProvider()
 
 var defaultTracer = defaultTracerProvider.Tracer(
-	"github.com/highlight/highlight/sdk/highlight-go",
+	"github.com/BrewingCoder/holdfast/sdk/highlight-go",
 	trace.WithInstrumentationVersion(Version),
 	trace.WithSchemaURL(semconv.SchemaURL),
 )
 var defaultLogger log.Logger
 var defaultMeter = defaultMeterProvider.Meter(
-	"github.com/highlight/highlight/sdk/highlight-go",
+	"github.com/BrewingCoder/holdfast/sdk/highlight-go",
 	metric.WithInstrumentationVersion(Version),
 	metric.WithSchemaURL(semconv.SchemaURL),
 )
@@ -309,17 +309,17 @@ func StartOTLP() (*OTLP, error) {
 	otel.SetMeterProvider(h.meterProvider)
 
 	defaultTracer = defaultTracerProvider.Tracer(
-		"github.com/highlight/highlight/sdk/highlight-go",
+		"github.com/BrewingCoder/holdfast/sdk/highlight-go",
 		trace.WithInstrumentationVersion(Version),
 		trace.WithSchemaURL(semconv.SchemaURL),
 	)
 	defaultLogger = defaultLoggerProvider.Logger(
-		"github.com/highlight/highlight/sdk/highlight-go",
+		"github.com/BrewingCoder/holdfast/sdk/highlight-go",
 		log.WithInstrumentationVersion(Version),
 		log.WithSchemaURL(semconv.SchemaURL),
 	)
 	defaultMeter = defaultMeterProvider.Meter(
-		"github.com/highlight/highlight/sdk/highlight-go",
+		"github.com/BrewingCoder/holdfast/sdk/highlight-go",
 		metric.WithInstrumentationVersion(Version),
 		metric.WithSchemaURL(semconv.SchemaURL),
 	)

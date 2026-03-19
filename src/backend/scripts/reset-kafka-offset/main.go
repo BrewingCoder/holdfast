@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	kafkaqueue "github.com/highlight-run/highlight/backend/kafka-queue"
+	kafkaqueue "github.com/BrewingCoder/holdfast/src/backend/kafka-queue"
 	log "github.com/sirupsen/logrus"
 )
 

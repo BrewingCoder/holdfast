@@ -4,7 +4,7 @@ import (
 	"os"
 	"runtime"
 
-	"github.com/highlight/highlight/sdk/highlight-go"
+	"github.com/BrewingCoder/holdfast/sdk/highlight-go"
 	log "github.com/sirupsen/logrus"
 )
 

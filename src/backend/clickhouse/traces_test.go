@@ -6,9 +6,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/highlight-run/highlight/backend/parser"
+	"github.com/BrewingCoder/holdfast/src/backend/parser"
 
-	modelInputs "github.com/highlight-run/highlight/backend/private-graph/graph/model"
+	modelInputs "github.com/BrewingCoder/holdfast/src/backend/private-graph/graph/model"
 
 	"github.com/stretchr/testify/assert"
 )

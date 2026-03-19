@@ -108,7 +108,7 @@
 					{
 						"key": "telemetry.distro.name",
 						"value": {
-							"stringValue": "github.com/highlight/highlight/sdk/highlight-go"
+							"stringValue": "github.com/BrewingCoder/holdfast/sdk/highlight-go"
 						}
 					},
 					{
@@ -122,7 +122,7 @@
 			"scopeMetrics": [
 				{
 					"scope": {
-						"name": "github.com/highlight/highlight/sdk/highlight-go",
+						"name": "github.com/BrewingCoder/holdfast/sdk/highlight-go",
 						"version": "v0.1.0"
 					},
 					"metrics": [

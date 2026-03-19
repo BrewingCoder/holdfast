@@ -15,7 +15,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/highlight-run/highlight/backend/env"
+	"github.com/BrewingCoder/holdfast/src/backend/env"
 
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
@@ -27,11 +27,11 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/slack-go/slack"
 
-	Email "github.com/highlight-run/highlight/backend/email"
-	"github.com/highlight-run/highlight/backend/lambda"
-	"github.com/highlight-run/highlight/backend/model"
-	modelInputs "github.com/highlight-run/highlight/backend/private-graph/graph/model"
-	"github.com/highlight-run/highlight/backend/routing"
+	Email "github.com/BrewingCoder/holdfast/src/backend/email"
+	"github.com/BrewingCoder/holdfast/src/backend/lambda"
+	"github.com/BrewingCoder/holdfast/src/backend/model"
+	modelInputs "github.com/BrewingCoder/holdfast/src/backend/private-graph/graph/model"
+	"github.com/BrewingCoder/holdfast/src/backend/routing"
 )
 
 type SendSlackAlertInput struct {

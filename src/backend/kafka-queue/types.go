@@ -5,9 +5,9 @@ import (
 	"math"
 	"time"
 
-	"github.com/highlight-run/highlight/backend/clickhouse"
+	"github.com/BrewingCoder/holdfast/src/backend/clickhouse"
 
-	customModels "github.com/highlight-run/highlight/backend/public-graph/graph/model"
+	customModels "github.com/BrewingCoder/holdfast/src/backend/public-graph/graph/model"
 	"github.com/segmentio/kafka-go"
 )
 

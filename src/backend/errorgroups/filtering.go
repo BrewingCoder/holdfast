@@ -3,8 +3,8 @@ package errorgroups
 import (
 	"strings"
 
-	"github.com/highlight-run/highlight/backend/model"
-	privateModel "github.com/highlight-run/highlight/backend/private-graph/graph/model"
+	"github.com/BrewingCoder/holdfast/src/backend/model"
+	privateModel "github.com/BrewingCoder/holdfast/src/backend/private-graph/graph/model"
 	"github.com/samber/lo"
 )
 

@@ -3,7 +3,7 @@ package store
 import (
 	"context"
 
-	"github.com/highlight-run/highlight/backend/model"
+	"github.com/BrewingCoder/holdfast/src/backend/model"
 )
 
 func (store *Store) CreateErrorGroupActivityLog(ctx context.Context,

@@ -1,8 +1,8 @@
 package chi
 
 import (
-	"github.com/highlight/highlight/sdk/highlight-go"
-	"github.com/highlight/highlight/sdk/highlight-go/middleware"
+	"github.com/BrewingCoder/holdfast/sdk/highlight-go"
+	"github.com/BrewingCoder/holdfast/sdk/highlight-go/middleware"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	"net/http"
@@ -30,7 +30,7 @@ func _middleware(next http.Handler, opts ...trace.SpanStartOption) http.Handler 
 // Middleware is a chi compatible middleware
 // use as follows:
 //
-// import highlightchi "github.com/highlight/highlight/sdk/highlight-go/middleware/chi"
+// import highlightchi "github.com/BrewingCoder/holdfast/sdk/highlight-go/middleware/chi"
 // ...
 // r.Use(highlightchi.Middleware)
 func Middleware(next http.Handler) http.Handler {

@@ -8,12 +8,12 @@ import (
 	"time"
 
 	"github.com/hashicorp/go-retryablehttp"
-	destinationsV2 "github.com/highlight-run/highlight/backend/alerts/v2/destinations"
-	"github.com/highlight-run/highlight/backend/env"
-	"github.com/highlight-run/highlight/backend/model"
-	modelInputs "github.com/highlight-run/highlight/backend/private-graph/graph/model"
-	"github.com/highlight-run/highlight/backend/routing"
-	"github.com/highlight-run/highlight/backend/util"
+	destinationsV2 "github.com/BrewingCoder/holdfast/src/backend/alerts/v2/destinations"
+	"github.com/BrewingCoder/holdfast/src/backend/env"
+	"github.com/BrewingCoder/holdfast/src/backend/model"
+	modelInputs "github.com/BrewingCoder/holdfast/src/backend/private-graph/graph/model"
+	"github.com/BrewingCoder/holdfast/src/backend/routing"
+	"github.com/BrewingCoder/holdfast/src/backend/util"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )

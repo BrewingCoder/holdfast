@@ -9,8 +9,8 @@ import (
 	"github.com/antlr4-go/antlr/v4"
 	"github.com/huandu/go-sqlbuilder"
 
-	"github.com/highlight-run/highlight/backend/model"
-	parser "github.com/highlight-run/highlight/backend/parser/antlr"
+	"github.com/BrewingCoder/holdfast/src/backend/model"
+	parser "github.com/BrewingCoder/holdfast/src/backend/parser/antlr"
 )
 
 type Operator string

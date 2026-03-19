@@ -1,17 +1,17 @@
 package gorillamux
 
 import (
-	"github.com/highlight/highlight/sdk/highlight-go/middleware"
+	"github.com/BrewingCoder/holdfast/sdk/highlight-go/middleware"
 	"go.opentelemetry.io/otel/attribute"
 	"net/http"
 
-	"github.com/highlight/highlight/sdk/highlight-go"
+	"github.com/BrewingCoder/holdfast/sdk/highlight-go"
 )
 
 // Middleware is a gorilla/mux compatible middleware
 // use as follows:
 //
-// import highlightgorilla "github.com/highlight/highlight/sdk/highlight-go/middleware/gorillamux"
+// import highlightgorilla "github.com/BrewingCoder/holdfast/sdk/highlight-go/middleware/gorillamux"
 // ...
 // r.Use(highlightgorilla.Middleware)
 func Middleware(next http.Handler) http.Handler {

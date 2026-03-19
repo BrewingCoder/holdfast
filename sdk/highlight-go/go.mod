@@ -1,4 +1,4 @@
-module github.com/highlight/highlight/sdk/highlight-go
+module github.com/BrewingCoder/holdfast/sdk/highlight-go
 
 go 1.23.1
 

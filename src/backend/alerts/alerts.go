@@ -6,15 +6,15 @@ import (
 	"strings"
 	"time"
 
-	microsoft_teams "github.com/highlight-run/highlight/backend/alerts/integrations/microsoft-teams"
-	"github.com/highlight-run/highlight/backend/alerts/integrations/webhook"
-	"github.com/highlight-run/highlight/backend/model"
-	"github.com/highlight-run/highlight/backend/routing"
-	tempalerts "github.com/highlight-run/highlight/backend/temp-alerts"
+	microsoft_teams "github.com/BrewingCoder/holdfast/src/backend/alerts/integrations/microsoft-teams"
+	"github.com/BrewingCoder/holdfast/src/backend/alerts/integrations/webhook"
+	"github.com/BrewingCoder/holdfast/src/backend/model"
+	"github.com/BrewingCoder/holdfast/src/backend/routing"
+	tempalerts "github.com/BrewingCoder/holdfast/src/backend/temp-alerts"
 	"golang.org/x/sync/errgroup"
 
-	"github.com/highlight-run/highlight/backend/alerts/integrations"
-	"github.com/highlight-run/highlight/backend/alerts/integrations/discord"
+	"github.com/BrewingCoder/holdfast/src/backend/alerts/integrations"
+	"github.com/BrewingCoder/holdfast/src/backend/alerts/integrations/discord"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 )

@@ -2,9 +2,9 @@ package main
 
 import (
 	"context"
-	"github.com/highlight-run/highlight/backend/clickhouse"
-	"github.com/highlight-run/highlight/backend/env"
-	"github.com/highlight-run/highlight/backend/model"
+	"github.com/BrewingCoder/holdfast/src/backend/clickhouse"
+	"github.com/BrewingCoder/holdfast/src/backend/env"
+	"github.com/BrewingCoder/holdfast/src/backend/model"
 	"github.com/samber/lo"
 	log "github.com/sirupsen/logrus"
 )

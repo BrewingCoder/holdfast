@@ -6,7 +6,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"time"
 
-	"github.com/highlight/highlight/sdk/highlight-go"
+	"github.com/BrewingCoder/holdfast/sdk/highlight-go"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 )

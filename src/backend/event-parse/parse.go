@@ -17,16 +17,16 @@ import (
 	"strings"
 	"time"
 
-	"github.com/highlight-run/highlight/backend/env"
+	"github.com/BrewingCoder/holdfast/src/backend/env"
 	"go.openly.dev/pointy"
 
 	"golang.org/x/sync/errgroup"
 	"gorm.io/gorm/clause"
 
-	"github.com/highlight-run/highlight/backend/model"
-	modelInputs "github.com/highlight-run/highlight/backend/private-graph/graph/model"
-	"github.com/highlight-run/highlight/backend/store"
-	"github.com/highlight-run/highlight/backend/util"
+	"github.com/BrewingCoder/holdfast/src/backend/model"
+	modelInputs "github.com/BrewingCoder/holdfast/src/backend/private-graph/graph/model"
+	"github.com/BrewingCoder/holdfast/src/backend/store"
+	"github.com/BrewingCoder/holdfast/src/backend/util"
 	"github.com/lukasbob/srcset"
 	"github.com/pkg/errors"
 	"github.com/samber/lo"

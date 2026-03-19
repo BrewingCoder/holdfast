@@ -8,13 +8,13 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/highlight-run/highlight/backend/model"
-	"github.com/highlight-run/highlight/backend/parser"
+	"github.com/BrewingCoder/holdfast/src/backend/model"
+	"github.com/BrewingCoder/holdfast/src/backend/parser"
 	"github.com/huandu/go-sqlbuilder"
 	"github.com/openlyinc/pointy"
 	"github.com/samber/lo"
 
-	modelInputs "github.com/highlight-run/highlight/backend/private-graph/graph/model"
+	modelInputs "github.com/BrewingCoder/holdfast/src/backend/private-graph/graph/model"
 )
 
 const SessionEventsTable = "session_events"

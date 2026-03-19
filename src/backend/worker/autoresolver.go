@@ -4,9 +4,9 @@ import (
 	"context"
 	"time"
 
-	"github.com/highlight-run/highlight/backend/model"
-	privateModel "github.com/highlight-run/highlight/backend/private-graph/graph/model"
-	"github.com/highlight-run/highlight/backend/store"
+	"github.com/BrewingCoder/holdfast/src/backend/model"
+	privateModel "github.com/BrewingCoder/holdfast/src/backend/private-graph/graph/model"
+	"github.com/BrewingCoder/holdfast/src/backend/store"
 	log "github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 )

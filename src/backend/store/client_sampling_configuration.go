@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/highlight-run/highlight/backend/model"
-	"github.com/highlight-run/highlight/backend/redis"
+	"github.com/BrewingCoder/holdfast/src/backend/model"
+	"github.com/BrewingCoder/holdfast/src/backend/redis"
 )
 
 // Span configuration which disables evaluation events for the flag `evals-test-a`.

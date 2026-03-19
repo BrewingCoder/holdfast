@@ -4,16 +4,16 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/highlight-run/highlight/backend/redis"
+	"github.com/BrewingCoder/holdfast/src/backend/redis"
 	"github.com/openlyinc/pointy"
 	"github.com/stretchr/testify/assert"
 	"testing"
 
 	"github.com/aws/smithy-go/ptr"
 	"github.com/go-test/deep"
-	modelInput "github.com/highlight-run/highlight/backend/private-graph/graph/model"
-	publicModelInput "github.com/highlight-run/highlight/backend/public-graph/graph/model"
-	"github.com/highlight-run/highlight/backend/storage"
+	modelInput "github.com/BrewingCoder/holdfast/src/backend/private-graph/graph/model"
+	publicModelInput "github.com/BrewingCoder/holdfast/src/backend/public-graph/graph/model"
+	"github.com/BrewingCoder/holdfast/src/backend/storage"
 	e "github.com/pkg/errors"
 )
 

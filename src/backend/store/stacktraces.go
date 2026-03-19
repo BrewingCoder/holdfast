@@ -15,12 +15,12 @@ import (
 	"github.com/aws/smithy-go/ptr"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/highlight-run/highlight/backend/integrations/github"
-	"github.com/highlight-run/highlight/backend/model"
-	privateModel "github.com/highlight-run/highlight/backend/private-graph/graph/model"
-	"github.com/highlight-run/highlight/backend/redis"
-	"github.com/highlight-run/highlight/backend/stacktraces"
-	"github.com/highlight-run/highlight/backend/util"
+	"github.com/BrewingCoder/holdfast/src/backend/integrations/github"
+	"github.com/BrewingCoder/holdfast/src/backend/model"
+	privateModel "github.com/BrewingCoder/holdfast/src/backend/private-graph/graph/model"
+	"github.com/BrewingCoder/holdfast/src/backend/redis"
+	"github.com/BrewingCoder/holdfast/src/backend/stacktraces"
+	"github.com/BrewingCoder/holdfast/src/backend/util"
 )
 
 const GITHUB_ERROR_CONTEXT_LINES = 5

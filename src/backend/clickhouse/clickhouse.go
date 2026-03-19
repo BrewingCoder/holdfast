@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/highlight-run/highlight/backend/env"
+	"github.com/BrewingCoder/holdfast/src/backend/env"
 	"github.com/samber/lo"
 	"go.opentelemetry.io/otel/attribute"
 
@@ -18,8 +18,8 @@ import (
 	"github.com/golang-migrate/migrate/v4"
 	clickhouseMigrate "github.com/golang-migrate/migrate/v4/database/clickhouse"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
-	"github.com/highlight-run/highlight/backend/projectpath"
-	hmetric "github.com/highlight/highlight/sdk/highlight-go/metric"
+	"github.com/BrewingCoder/holdfast/src/backend/projectpath"
+	hmetric "github.com/BrewingCoder/holdfast/sdk/highlight-go/metric"
 	log "github.com/sirupsen/logrus"
 )
 

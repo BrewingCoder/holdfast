@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/aws/smithy-go/ptr"
-	modelInputs "github.com/highlight-run/highlight/backend/private-graph/graph/model"
+	modelInputs "github.com/BrewingCoder/holdfast/src/backend/private-graph/graph/model"
 	"github.com/stretchr/testify/assert"
 )
 

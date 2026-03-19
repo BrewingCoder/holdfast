@@ -3,7 +3,7 @@ package github
 import (
 	"context"
 	"fmt"
-	"github.com/highlight-run/highlight/backend/env"
+	"github.com/BrewingCoder/holdfast/src/backend/env"
 	"net/http"
 	"strconv"
 	"strings"
@@ -11,7 +11,7 @@ import (
 
 	"github.com/bradleyfalzon/ghinstallation/v2"
 	"github.com/google/go-github/v50/github"
-	"github.com/highlight-run/highlight/backend/redis"
+	"github.com/BrewingCoder/holdfast/src/backend/redis"
 	"github.com/openlyinc/pointy"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"

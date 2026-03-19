@@ -2,16 +2,16 @@ package main
 
 import (
 	"context"
-	"github.com/highlight-run/highlight/backend/env"
+	"github.com/BrewingCoder/holdfast/src/backend/env"
 	"time"
 
 	log "github.com/sirupsen/logrus"
 
-	"github.com/highlight-run/highlight/backend/lambda-functions/deleteSessions/handlers"
-	"github.com/highlight-run/highlight/backend/lambda-functions/deleteSessions/utils"
-	"github.com/highlight-run/highlight/backend/private-graph/graph/model"
-	"github.com/highlight/highlight/sdk/highlight-go"
-	hlog "github.com/highlight/highlight/sdk/highlight-go/log"
+	"github.com/BrewingCoder/holdfast/src/backend/lambda-functions/deleteSessions/handlers"
+	"github.com/BrewingCoder/holdfast/src/backend/lambda-functions/deleteSessions/utils"
+	"github.com/BrewingCoder/holdfast/src/backend/private-graph/graph/model"
+	"github.com/BrewingCoder/holdfast/sdk/highlight-go"
+	hlog "github.com/BrewingCoder/holdfast/sdk/highlight-go/log"
 )
 
 // Meant for local invocation for testing the lambda handler stack

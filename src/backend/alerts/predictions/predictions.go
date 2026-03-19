@@ -10,11 +10,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/highlight-run/highlight/backend/env"
+	"github.com/BrewingCoder/holdfast/src/backend/env"
 	"github.com/samber/lo"
 	"go.openly.dev/pointy"
 
-	modelInputs "github.com/highlight-run/highlight/backend/private-graph/graph/model"
+	modelInputs "github.com/BrewingCoder/holdfast/src/backend/private-graph/graph/model"
 )
 
 type PredictionDataFrame struct {

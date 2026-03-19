@@ -2,7 +2,7 @@ package discord
 
 import (
 	"context"
-	"github.com/highlight-run/highlight/backend/env"
+	"github.com/BrewingCoder/holdfast/src/backend/env"
 	"github.com/pkg/errors"
 
 	"golang.org/x/oauth2"

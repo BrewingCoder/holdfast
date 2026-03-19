@@ -6,12 +6,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/highlight-run/highlight/backend/alerts/predictions"
-	alertsV2 "github.com/highlight-run/highlight/backend/alerts/v2"
-	"github.com/highlight-run/highlight/backend/clickhouse"
-	"github.com/highlight-run/highlight/backend/lambda"
-	modelInputs "github.com/highlight-run/highlight/backend/private-graph/graph/model"
-	"github.com/highlight-run/highlight/backend/util"
+	"github.com/BrewingCoder/holdfast/src/backend/alerts/predictions"
+	alertsV2 "github.com/BrewingCoder/holdfast/src/backend/alerts/v2"
+	"github.com/BrewingCoder/holdfast/src/backend/clickhouse"
+	"github.com/BrewingCoder/holdfast/src/backend/lambda"
+	modelInputs "github.com/BrewingCoder/holdfast/src/backend/private-graph/graph/model"
+	"github.com/BrewingCoder/holdfast/src/backend/util"
 	"github.com/highlight-run/workerpool"
 	"github.com/openlyinc/pointy"
 	"github.com/samber/lo"
@@ -19,7 +19,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sendgrid/sendgrid-go"
 
-	"github.com/highlight-run/highlight/backend/model"
+	"github.com/BrewingCoder/holdfast/src/backend/model"
 	log "github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 )

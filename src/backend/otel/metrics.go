@@ -4,9 +4,9 @@ import (
 	"context"
 	"time"
 
-	"github.com/highlight-run/highlight/backend/clickhouse"
-	"github.com/highlight/highlight/sdk/highlight-go"
-	hlog "github.com/highlight/highlight/sdk/highlight-go/log"
+	"github.com/BrewingCoder/holdfast/src/backend/clickhouse"
+	"github.com/BrewingCoder/holdfast/sdk/highlight-go"
+	hlog "github.com/BrewingCoder/holdfast/sdk/highlight-go/log"
 	log "github.com/sirupsen/logrus"
 	"go.opentelemetry.io/collector/pdata/pmetric"
 )

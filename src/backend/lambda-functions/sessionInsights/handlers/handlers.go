@@ -7,7 +7,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"github.com/highlight-run/highlight/backend/env"
+	"github.com/BrewingCoder/holdfast/src/backend/env"
 	"image/png"
 	"io"
 	"strconv"
@@ -23,10 +23,10 @@ import (
 	"github.com/sendgrid/sendgrid-go"
 	"github.com/sendgrid/sendgrid-go/helpers/mail"
 
-	"github.com/highlight-run/highlight/backend/email"
-	"github.com/highlight-run/highlight/backend/lambda"
-	"github.com/highlight-run/highlight/backend/lambda-functions/sessionInsights/utils"
-	"github.com/highlight-run/highlight/backend/model"
+	"github.com/BrewingCoder/holdfast/src/backend/email"
+	"github.com/BrewingCoder/holdfast/src/backend/lambda"
+	"github.com/BrewingCoder/holdfast/src/backend/lambda-functions/sessionInsights/utils"
+	"github.com/BrewingCoder/holdfast/src/backend/model"
 )
 
 type Handlers interface {

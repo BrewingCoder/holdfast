@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/highlight-run/highlight/backend/model"
-	customModels "github.com/highlight-run/highlight/backend/public-graph/graph/model"
+	"github.com/BrewingCoder/holdfast/src/backend/model"
+	customModels "github.com/BrewingCoder/holdfast/src/backend/public-graph/graph/model"
 	"github.com/stretchr/testify/assert"
 )
 

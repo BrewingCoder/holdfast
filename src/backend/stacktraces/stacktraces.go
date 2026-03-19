@@ -10,7 +10,7 @@ import (
 	"github.com/openlyinc/pointy"
 	log "github.com/sirupsen/logrus"
 
-	publicModel "github.com/highlight-run/highlight/backend/private-graph/graph/model"
+	publicModel "github.com/BrewingCoder/holdfast/src/backend/private-graph/graph/model"
 )
 
 type Language string

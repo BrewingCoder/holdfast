@@ -10,8 +10,8 @@ import (
 	e "github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/highlight-run/highlight/backend/alerts/integrations"
-	"github.com/highlight-run/highlight/backend/model"
+	"github.com/BrewingCoder/holdfast/src/backend/alerts/integrations"
+	"github.com/BrewingCoder/holdfast/src/backend/model"
 )
 
 type ErrorAlertWebhook struct {

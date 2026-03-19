@@ -11,7 +11,7 @@ ENV PATH=/usr/local/go/bin:${PATH}
 WORKDIR /highlight/e2e/go
 COPY ./go.mod .
 COPY ./go.sum .
-RUN go mod download github.com/highlight/highlight/sdk/highlight-go
+RUN go mod download github.com/BrewingCoder/holdfast/sdk/highlight-go
 RUN go mod download
 
 COPY . .

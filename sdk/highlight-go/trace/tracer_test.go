@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/99designs/gqlgen/graphql"
-	"github.com/highlight/highlight/sdk/highlight-go"
+	"github.com/BrewingCoder/holdfast/sdk/highlight-go"
 	"github.com/stretchr/testify/assert"
 	"github.com/vektah/gqlparser/v2/ast"
 	"testing"

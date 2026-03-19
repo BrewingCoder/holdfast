@@ -1,7 +1,7 @@
 package errorgroups
 
 import (
-	modelInputs "github.com/highlight-run/highlight/backend/private-graph/graph/model"
+	modelInputs "github.com/BrewingCoder/holdfast/src/backend/private-graph/graph/model"
 )
 
 type Buckets struct {

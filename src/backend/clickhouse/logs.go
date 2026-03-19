@@ -14,10 +14,10 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/google/uuid"
-	"github.com/highlight-run/highlight/backend/model"
-	"github.com/highlight-run/highlight/backend/parser/listener"
-	modelInputs "github.com/highlight-run/highlight/backend/private-graph/graph/model"
-	"github.com/highlight-run/highlight/backend/util"
+	"github.com/BrewingCoder/holdfast/src/backend/model"
+	"github.com/BrewingCoder/holdfast/src/backend/parser/listener"
+	modelInputs "github.com/BrewingCoder/holdfast/src/backend/private-graph/graph/model"
+	"github.com/BrewingCoder/holdfast/src/backend/util"
 	"github.com/huandu/go-sqlbuilder"
 	"github.com/samber/lo"
 )

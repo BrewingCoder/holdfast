@@ -4,8 +4,8 @@ import (
 	"context"
 	"strings"
 
-	"github.com/highlight/highlight/sdk/highlight-go"
-	"github.com/highlight/highlight/sdk/highlight-go/middleware"
+	"github.com/BrewingCoder/holdfast/sdk/highlight-go"
+	"github.com/BrewingCoder/holdfast/sdk/highlight-go/middleware"
 	"github.com/labstack/echo/v4"
 	"go.opentelemetry.io/otel/attribute"
 )
@@ -13,7 +13,7 @@ import (
 // Middleware is a echo compatible middleware
 // use as follows:
 //
-// import highlightecho "github.com/highlight/highlight/sdk/highlight-go/middleware/echo"
+// import highlightecho "github.com/BrewingCoder/holdfast/sdk/highlight-go/middleware/echo"
 // ...
 // r.Use(highlightecho.Middleware())
 

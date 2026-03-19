@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/highlight-run/highlight/backend/clickhouse"
+	"github.com/BrewingCoder/holdfast/src/backend/clickhouse"
 	log "github.com/sirupsen/logrus"
 )
 

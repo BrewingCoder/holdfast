@@ -6,8 +6,8 @@ import (
 	"crypto/tls"
 	"encoding/base64"
 	"fmt"
-	"github.com/highlight-run/highlight/backend/env"
-	"github.com/highlight-run/highlight/backend/redis"
+	"github.com/BrewingCoder/holdfast/src/backend/env"
+	"github.com/BrewingCoder/holdfast/src/backend/redis"
 	"io"
 	"net/http"
 	"net/url"
@@ -19,12 +19,12 @@ import (
 
 	"github.com/andybalholm/brotli"
 	"github.com/go-sourcemap/sourcemap"
-	privateModel "github.com/highlight-run/highlight/backend/private-graph/graph/model"
-	publicModel "github.com/highlight-run/highlight/backend/public-graph/graph/model"
-	"github.com/highlight-run/highlight/backend/storage"
+	privateModel "github.com/BrewingCoder/holdfast/src/backend/private-graph/graph/model"
+	publicModel "github.com/BrewingCoder/holdfast/src/backend/public-graph/graph/model"
+	"github.com/BrewingCoder/holdfast/src/backend/storage"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/highlight-run/highlight/backend/util"
+	"github.com/BrewingCoder/holdfast/src/backend/util"
 	"github.com/openlyinc/pointy"
 	e "github.com/pkg/errors"
 )

@@ -10,15 +10,15 @@ import (
 
 	e "github.com/pkg/errors"
 
-	"github.com/highlight-run/highlight/backend/parser"
-	"github.com/highlight-run/highlight/backend/parser/listener"
+	"github.com/BrewingCoder/holdfast/src/backend/parser"
+	"github.com/BrewingCoder/holdfast/src/backend/parser/listener"
 
 	"github.com/samber/lo"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
-	"github.com/highlight-run/highlight/backend/model"
-	modelInputs "github.com/highlight-run/highlight/backend/private-graph/graph/model"
+	"github.com/BrewingCoder/holdfast/src/backend/model"
+	modelInputs "github.com/BrewingCoder/holdfast/src/backend/private-graph/graph/model"
 	"github.com/huandu/go-sqlbuilder"
 	"github.com/openlyinc/pointy"
 	"golang.org/x/sync/errgroup"

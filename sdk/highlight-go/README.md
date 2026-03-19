@@ -1,5 +1,5 @@
-[![Go Report Card](https://goreportcard.com/badge/github.com/highlight/highlight/sdk/highlight-go)](https://goreportcard.com/report/github.com/highlight/highlight/sdk/highlight-go)
-[![GoDoc](https://godoc.org/github.com/highlight/highlight/sdk/highlight-go?status.svg)](https://godoc.org/github.com/highlight/highlight/sdk/highlight-go)
+[![Go Report Card](https://goreportcard.com/badge/github.com/BrewingCoder/holdfast/sdk/highlight-go)](https://goreportcard.com/report/github.com/BrewingCoder/holdfast/sdk/highlight-go)
+[![GoDoc](https://godoc.org/github.com/BrewingCoder/holdfast/sdk/highlight-go?status.svg)](https://godoc.org/github.com/BrewingCoder/holdfast/sdk/highlight-go)
 [![codecov](https://codecov.io/gh/highlight-run/highlight-go/branch/main/graph/badge.svg)](https://codecov.io/gh/highlight-run/highlight-go)
 
 # highlight-go
@@ -11,14 +11,14 @@ Official implementation of the Highlight backend client in Go.
 First, import the package
 
 ```
-go get -u github.com/highlight/highlight/sdk/highlight-go
+go get -u github.com/BrewingCoder/holdfast/sdk/highlight-go
 ```
 
 Then, add the following lines to your applications main function:
 
 ```go
 import (
-	"github.com/highlight/highlight/sdk/highlight-go"
+	"github.com/BrewingCoder/holdfast/sdk/highlight-go"
 )
 
 func main() {
@@ -35,7 +35,7 @@ if you're using `go-chi/chi`:
 
 ```go
 import (
-	highlightChi "github.com/highlight/highlight/sdk/highlight-go/middleware/chi"
+	highlightChi "github.com/BrewingCoder/holdfast/sdk/highlight-go/middleware/chi"
 )
 
 func main() {
@@ -50,7 +50,7 @@ if you're using `gin-gonic/gin`:
 
 ```go
 import (
-	highlightGin "github.com/highlight/highlight/sdk/highlight-go/middleware/gin"
+	highlightGin "github.com/BrewingCoder/holdfast/sdk/highlight-go/middleware/gin"
 )
 
 func main() {

@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/highlight-run/highlight/backend/env"
+	"github.com/BrewingCoder/holdfast/src/backend/env"
 	"net/http"
 	"time"
 
@@ -17,7 +17,7 @@ import (
 	e "github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/highlight-run/highlight/backend/model"
+	"github.com/BrewingCoder/holdfast/src/backend/model"
 )
 
 func getProjectForToken(parsedToken *ParsedZapierToken, db *gorm.DB) (*model.Project, error) {

@@ -4,8 +4,8 @@ import (
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/highlight/highlight/sdk/highlight-go"
-	"github.com/highlight/highlight/sdk/highlight-go/middleware"
+	"github.com/BrewingCoder/holdfast/sdk/highlight-go"
+	"github.com/BrewingCoder/holdfast/sdk/highlight-go/middleware"
 	"go.opentelemetry.io/otel/attribute"
 	semconv "go.opentelemetry.io/otel/semconv/v1.25.0"
 )
@@ -13,7 +13,7 @@ import (
 // Middleware is a fiber compatible middleware
 // use as follows:
 //
-// import highlightfiber "github.com/highlight/highlight/sdk/highlight-go/middleware/fiber"
+// import highlightfiber "github.com/BrewingCoder/holdfast/sdk/highlight-go/middleware/fiber"
 // ...
 // r.Use(highlightfiber.Middleware())
 

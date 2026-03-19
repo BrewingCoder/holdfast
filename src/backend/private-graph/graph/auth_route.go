@@ -2,7 +2,7 @@ package graph
 
 import (
 	"firebase.google.com/go/auth"
-	"github.com/highlight-run/highlight/backend/env"
+	"github.com/BrewingCoder/holdfast/src/backend/env"
 	"time"
 )
 

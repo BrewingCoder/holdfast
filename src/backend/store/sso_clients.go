@@ -2,7 +2,7 @@ package store
 
 import (
 	"context"
-	"github.com/highlight-run/highlight/backend/model"
+	"github.com/BrewingCoder/holdfast/src/backend/model"
 )
 
 func (store *Store) GetSSOClients(ctx context.Context) ([]*model.SSOClient, error) {

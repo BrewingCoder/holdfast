@@ -4,7 +4,7 @@ package kafka_queue
 
 import (
 	"encoding/json"
-	"github.com/highlight-run/highlight/backend/env"
+	"github.com/BrewingCoder/holdfast/src/backend/env"
 	"net/http"
 	"time"
 )

@@ -1,4 +1,4 @@
-module github.com/highlight-run/highlight/backend
+module github.com/BrewingCoder/holdfast/src/backend
 
 go 1.23.8
 
@@ -18,7 +18,7 @@ replace nhooyr.io/websocket => nhooyr.io/websocket v1.8.7
 
 replace github.com/lestrrat-go/jwx => github.com/lestrrat-go/jwx v1.2.29
 
-replace github.com/highlight/highlight/sdk/highlight-go => ../../sdk/highlight-go
+replace github.com/BrewingCoder/holdfast/sdk/highlight-go => ../../sdk/highlight-go
 
 require (
 	firebase.google.com/go v3.13.0+incompatible
@@ -58,7 +58,7 @@ require (
 	github.com/highlight-run/workerpool v1.3.0
 	github.com/highlight/clickhouse-sql-parser v1.0.1
 	github.com/highlight/go-oauth2-redis/v4 v4.1.4
-	github.com/highlight/highlight/sdk/highlight-go v0.10.2
+	github.com/BrewingCoder/holdfast/sdk/highlight-go v0.10.2
 	github.com/huandu/go-assert v1.1.6
 	github.com/influxdata/go-syslog/v3 v3.0.0
 	github.com/infracloudio/msbotbuilder-go v0.2.5

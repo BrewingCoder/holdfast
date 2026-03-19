@@ -3,12 +3,12 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"github.com/highlight-run/highlight/backend/env"
+	"github.com/BrewingCoder/holdfast/src/backend/env"
 	"gorm.io/gorm"
 
 	log "github.com/sirupsen/logrus"
 
-	"github.com/highlight-run/highlight/backend/model"
+	"github.com/BrewingCoder/holdfast/src/backend/model"
 )
 
 const batchSize = 100

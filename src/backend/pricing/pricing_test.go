@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/highlight-run/highlight/backend/model"
-	backend "github.com/highlight-run/highlight/backend/private-graph/graph/model"
+	"github.com/BrewingCoder/holdfast/src/backend/model"
+	backend "github.com/BrewingCoder/holdfast/src/backend/private-graph/graph/model"
 	"github.com/stretchr/testify/assert"
 )
 

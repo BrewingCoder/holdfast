@@ -36,7 +36,7 @@ resolver:
 # if they match it will use them, otherwise it will generate them.
 autobind:
     - 'github.com/99designs/gqlgen/graphql/introspection'
-    - 'github.com/highlight-run/highlight/backend/model'
+    - 'github.com/BrewingCoder/holdfast/src/backend/model'
 
 # This section declares type mapping between the GraphQL and go type systems
 #
@@ -46,7 +46,7 @@ autobind:
 models:
     Int64ID:
         model:
-            - github.com/highlight-run/highlight/backend/model.Int64ID
+            - github.com/BrewingCoder/holdfast/src/backend/model.Int64ID
             - github.com/99designs/gqlgen/graphql.ID
     ID:
         model:
@@ -68,10 +68,10 @@ models:
             - github.com/99designs/gqlgen/graphql.Float
     Timestamp:
         model:
-            - github.com/highlight-run/highlight/backend/model.Timestamp
+            - github.com/BrewingCoder/holdfast/src/backend/model.Timestamp
     StringArray:
         model:
-            - github.com/highlight-run/highlight/backend/model.StringArray
+            - github.com/BrewingCoder/holdfast/src/backend/model.StringArray
     Field:
         model:
-            - github.com/highlight-run/highlight/backend/model.Field
+            - github.com/BrewingCoder/holdfast/src/backend/model.Field

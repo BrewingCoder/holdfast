@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	resthooks "github.com/highlight-run/go-resthooks"
-	model "github.com/highlight-run/highlight/backend/model"
+	model "github.com/BrewingCoder/holdfast/src/backend/model"
 	e "github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"gorm.io/gorm"

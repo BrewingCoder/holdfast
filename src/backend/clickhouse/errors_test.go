@@ -1,8 +1,8 @@
 package clickhouse
 
 import (
-	"github.com/highlight-run/highlight/backend/parser"
-	modelInputs "github.com/highlight-run/highlight/backend/public-graph/graph/model"
+	"github.com/BrewingCoder/holdfast/src/backend/parser"
+	modelInputs "github.com/BrewingCoder/holdfast/src/backend/public-graph/graph/model"
 	"github.com/openlyinc/pointy"
 	"github.com/stretchr/testify/assert"
 	"testing"
