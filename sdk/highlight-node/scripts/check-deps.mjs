@@ -1,6 +1,6 @@
 import check from 'check-dependencies'
 
-const IGNORED_DEPENDENCIES = new Set(['highlight.run', 'typescript'])
+const IGNORED_DEPENDENCIES = new Set(['highlight.run', '@holdfast-io/browser', 'typescript'])
 
 const output = await check()
 
