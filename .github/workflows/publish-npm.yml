@@ -54,7 +54,7 @@ jobs:
       - name: Build rrweb (core + all plugins)
         run: |
           yarn turbo run build --filter='rrweb...'
-          yarn turbo run build --filter='@rrweb/*'
+          yarn turbo run build --filter='@rrweb/*' --filter='!@rrweb/web-extension'
 
       - name: Build all SDKs (tier order)
         run: |

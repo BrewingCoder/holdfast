@@ -42,7 +42,7 @@ jobs:
         run: |
           yarn workspace @holdfast-io/ui build
           yarn turbo run build --filter='rrweb...'
-          yarn turbo run build --filter='@rrweb/*'
+          yarn turbo run build --filter='@rrweb/*' --filter='!@rrweb/web-extension'
 
       - name: TypeScript check
         run: yarn workspace @holdfast-io/frontend types:check
