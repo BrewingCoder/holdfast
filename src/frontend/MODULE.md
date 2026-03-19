@@ -161,11 +161,26 @@ cd src/frontend && yarn test:coverage # With v8 coverage
 | `components/JsonViewer/utils.test.ts` | 2 | JSON formatting |
 | Others | 13 | Auth, string utils, player utils |
 
-### SonarQube Analysis
+### SonarQube Analysis (2026-03-19)
 
-Initial analysis pending — project `holdfast-frontend` created, workflow wired up. First scan will run on next push.
+| Metric | Value | Notes |
+|--------|-------|-------|
+| **Coverage** | 0.0% | 12 test files for 65 components and 29 pages — needs serious investment |
+| **Lines of Code** | 124,720 | Largest module in the platform. Includes generated GraphQL (25K lines excluded from analysis). |
+| **Bugs** | 50 | Needs triage — highest bug count across all projects |
+| **Vulnerabilities** | 0 | Clean |
+| **Code Smells** | 1,444 | Expected for a frontend this size with no prior static analysis |
+| **Duplication** | 18.6% | High — likely repeated patterns across pages/components |
+| **Security Hotspots** | 57 | Needs review — likely auth, cookie, and API handling patterns |
+| **Reliability Rating** | D | Driven by bug count |
+| **Security Rating** | A | |
+| **Maintainability Rating** | A | |
 
-**Expected baseline**: Low coverage (12 test files for 65 components and 29 pages). The generated GraphQL code (25K lines) should be excluded from coverage metrics.
+Priority areas for improvement:
+1. **Duplication** (18.6%) — identify repeated component patterns and extract shared abstractions
+2. **Security hotspots** (57) — triage and resolve, especially around auth and API calls
+3. **Bugs** (50) — triage by severity, fix critical path issues first
+4. **Coverage** — start with utility functions and hooks, then component render tests
 
 ## Gotchas
 

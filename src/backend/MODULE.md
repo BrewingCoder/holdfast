@@ -117,10 +117,13 @@ cd src/backend && go test -short ./parser/... ./queryparser/... ./env/... \
 | **Coverage** | 5.7% | Inherited from upstream. Embarrassing for a project this size. |
 | **Lines of Code** | 62,572 (198K total with tests/comments) | Large backend — GraphQL APIs, workers, storage, alerts |
 | **Bugs** | 12 | Needs triage |
-| **Vulnerabilities** | 1 | Needs immediate attention |
+| **Vulnerabilities** | 0 | Clean |
 | **Code Smells** | 1,098 | Expected for inherited code with no prior static analysis |
 | **Duplication** | 2.7% | Actually not bad |
 | **Security Hotspots** | 0 | Clean |
+| **Reliability Rating** | C | |
+| **Security Rating** | A | |
+| **Maintainability Rating** | A | |
 
 This is where we start. The quality gate is set, the ratchet is in place, and every PR from this point forward must maintain or improve these numbers. Picking away at 5.7% coverage on 62K lines of Go is a herculean effort, but it's the right thing to do. See [ROADMAP Phase 7](../../docs/ROADMAP.md) for the test coverage investment plan.
 

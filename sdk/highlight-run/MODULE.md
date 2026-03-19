@@ -195,9 +195,26 @@ Third-party SDK integrations in `src/integrations/`:
 
 Coverage is low — most tests are integration-level. Unit tests for individual listeners and the web worker are needed.
 
-### SonarQube Analysis
+### SonarQube Analysis (2026-03-19)
 
-Initial analysis pending — project `holdfast-browser` created, workflow to be wired up.
+| Metric | Value | Notes |
+|--------|-------|-------|
+| **Coverage** | 0.0% | 4 test files — needs unit tests for listeners and web worker |
+| **Lines of Code** | 8,769 | Moderate size for a browser SDK |
+| **Bugs** | 7 | Needs triage |
+| **Vulnerabilities** | 3 | **Needs immediate attention** — likely in network interception or data handling |
+| **Code Smells** | 365 | High relative to LOC — inherited patterns |
+| **Duplication** | 3.9% | Acceptable |
+| **Security Hotspots** | 4 | Review needed — likely around data capture and transmission |
+| **Reliability Rating** | D | Driven by bug count |
+| **Security Rating** | D | Driven by 3 vulnerabilities — priority fix |
+| **Maintainability Rating** | A | |
+
+Priority areas for improvement:
+1. **Vulnerabilities** (3) — immediate triage and fix, especially anything in network listener or data transmission
+2. **Security hotspots** (4) — review data capture privacy implications
+3. **Coverage** — unit tests for individual listeners, web worker, and OTEL integration
+4. **Bugs** (7) — triage by impact on recording accuracy
 
 ## Gotchas
 
