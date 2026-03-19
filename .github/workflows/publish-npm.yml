@@ -32,7 +32,7 @@ jobs:
   build:
     name: Build all SDKs
     runs-on: [self-hosted, holdfast]
-    timeout-minutes: 15
+    timeout-minutes: 30
     steps:
       - name: Checkout
         uses: actions/checkout@v4
