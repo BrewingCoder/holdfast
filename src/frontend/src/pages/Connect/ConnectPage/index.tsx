@@ -14,7 +14,7 @@ import {
 	Tag,
 	Text,
 } from '@holdfast-io/ui/components'
-import { quickStartContentReorganized, QuickStartContent } from 'highlight.io'
+import { quickStartContentReorganized, QuickStartContent } from '@/stubs/highlight-io'
 
 import { useProjectId } from '@/hooks/useProjectId'
 import { useGetProjectQuery } from '@/graph/generated/hooks'

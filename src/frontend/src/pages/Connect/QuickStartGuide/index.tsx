@@ -8,7 +8,7 @@ import {
 	IconSolidCheveronUp,
 	Text,
 } from '@holdfast-io/ui/components'
-import { type QuickStartContent } from 'highlight.io'
+import { type QuickStartContent } from '@/stubs/highlight-io'
 import * as React from 'react'
 import ReactMarkdown from 'react-markdown'
 

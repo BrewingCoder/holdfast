@@ -9,7 +9,7 @@ import {
 	Tooltip,
 } from '@holdfast-io/ui/components'
 import { vars } from '@holdfast-io/ui/vars'
-import { quickStartContentReorganized, QuickStartContent } from 'highlight.io'
+import { quickStartContentReorganized, QuickStartContent } from '@/stubs/highlight-io'
 
 import CollapsibleSection from '@/components/CollapsibleSection'
 import {

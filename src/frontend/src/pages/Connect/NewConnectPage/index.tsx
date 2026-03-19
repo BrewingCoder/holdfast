@@ -15,7 +15,7 @@ import {
 	Text,
 } from '@holdfast-io/ui/components'
 import { vars } from '@holdfast-io/ui/vars'
-import { QuickStartContent, quickStartContentReorganized } from 'highlight.io'
+import { QuickStartContent, quickStartContentReorganized } from '@/stubs/highlight-io'
 
 import { Button } from '@/components/Button'
 import LoadingBox from '@components/LoadingBox'
