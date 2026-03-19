@@ -1,0 +1,70 @@
+name: CI — Backend
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/backend/**'
+      - 'sdk/highlight-go/**'
+      - 'go.work'
+  pull_request:
+    paths:
+      - 'src/backend/**'
+      - 'sdk/highlight-go/**'
+      - 'go.work'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    name: Build, Lint & Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: 'src/backend/go.mod'
+          cache-dependency-path: 'src/backend/go.sum'
+
+      - name: Format check
+        run: |
+          if [ "$(gofmt -l -d ./src/backend | wc -l)" -gt 0 ]; then
+            gofmt -l -d ./src/backend
+            exit 1
+          fi
+
+      - name: Lint
+        uses: golangci/golangci-lint-action@v6
+        with:
+          args: -v --config ./.golangci.yml
+          working-directory: src/backend
+          version: latest
+
+      - name: Build
+        run: go build ./src/backend/...
+
+      - name: Unit tests with coverage
+        run: |
+          cd src/backend
+          go test -short -coverprofile=coverage.out -covermode=atomic \
+            ./parser/... ./queryparser/... ./env/... ./assets/... \
+            ./errorgroups/... ./vercel/... ./http/... ./alerts/... \
+            ./pricing/...
+        env:
+          ENVIRONMENT: test
+
+      - name: Upload coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-coverage
+          path: src/backend/coverage.out

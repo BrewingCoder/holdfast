@@ -1,0 +1,62 @@
+name: CI — Frontend
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/frontend/**'
+      - 'packages/ui/**'
+      - 'yarn.lock'
+  pull_request:
+    paths:
+      - 'src/frontend/**'
+      - 'packages/ui/**'
+      - 'yarn.lock'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    name: Build, Lint & Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: 'yarn'
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Build workspace deps
+        run: |
+          yarn workspace @holdfast-io/ui build
+          yarn turbo run build --filter='rrweb...'
+
+      - name: TypeScript check
+        run: yarn workspace @holdfast-io/frontend types:check
+
+      - name: Lint
+        run: yarn workspace @holdfast-io/frontend lint
+
+      - name: Test with coverage
+        run: yarn workspace @holdfast-io/frontend test --run --coverage
+        env:
+          TZ: UTC
+
+      - name: Upload coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-coverage
+          path: src/frontend/coverage/

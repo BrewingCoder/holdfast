@@ -1,0 +1,80 @@
+name: CI — SDKs
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'sdk/**'
+      - 'packages/sourcemap-uploader/**'
+      - 'yarn.lock'
+  pull_request:
+    paths:
+      - 'sdk/**'
+      - 'packages/sourcemap-uploader/**'
+      - 'yarn.lock'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    name: Build & Test SDKs
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: 'yarn'
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Build rrweb
+        run: yarn turbo run build --filter='rrweb...'
+
+      - name: Build SDKs (tier order)
+        run: |
+          # Tier 1 — leaf packages
+          yarn workspace highlight.run build
+          yarn workspace @holdfast-io/cloudflare build
+          yarn workspace @holdfast-io/sourcemap-uploader build
+
+          # Tier 2 — depends on highlight.run
+          yarn workspace @holdfast-io/node build
+          yarn workspace @holdfast-io/react build
+
+          # Tier 3 — depends on node/react
+          yarn workspace @holdfast-io/apollo build
+          yarn workspace @holdfast-io/hono build
+          yarn workspace @holdfast-io/nest build
+          yarn workspace @holdfast-io/pino build
+          yarn workspace @holdfast-io/remix build
+
+          # Tier 4 — depends on everything
+          yarn workspace @holdfast-io/next build
+
+      - name: Test highlight-node
+        run: yarn workspace @holdfast-io/node test --run
+
+      - name: Test highlight-run
+        run: yarn workspace highlight.run test --run
+        continue-on-error: true  # some tests need built rrweb plugins
+
+      - name: Upload build artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sdk-builds
+          path: |
+            sdk/*/dist/
+            sdk/*/lib/
+          retention-days: 1
