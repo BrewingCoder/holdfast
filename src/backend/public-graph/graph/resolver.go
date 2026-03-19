@@ -24,7 +24,6 @@ import (
 	hmetric "github.com/BrewingCoder/holdfast/sdk/highlight-go/metric"
 	"github.com/BrewingCoder/holdfast/src/backend/alerts"
 	"github.com/BrewingCoder/holdfast/src/backend/clickhouse"
-	"github.com/BrewingCoder/holdfast/src/backend/email"
 	"github.com/BrewingCoder/holdfast/src/backend/embeddings"
 	"github.com/BrewingCoder/holdfast/src/backend/env"
 	"github.com/BrewingCoder/holdfast/src/backend/errorgroups"
@@ -685,19 +684,7 @@ func (r *Resolver) GetTopErrorGroupMatch(ctx context.Context, event string, proj
 }
 
 func (r *Resolver) isWithinErrorQuota(ctx context.Context, workspace *model.Workspace) bool {
-	withinBillingQuota, quotaPercent := r.IsWithinQuota(ctx, model.PricingProductTypeErrors, workspace, time.Now())
-	go func() {
-		defer util.Recover()
-		if !withinBillingQuota || quotaPercent >= 1 {
-			if err := model.SendBillingNotifications(ctx, r.DB, r.MailClient, email.BillingErrorsUsage100Percent, workspace, nil); err != nil {
-				log.WithContext(ctx).Error(e.Wrap(err, "failed to send billing notifications"))
-			}
-		} else if quotaPercent >= .8 {
-			if err := model.SendBillingNotifications(ctx, r.DB, r.MailClient, email.BillingErrorsUsage80Percent, workspace, nil); err != nil {
-				log.WithContext(ctx).Error(e.Wrap(err, "failed to send billing notifications"))
-			}
-		}
-	}()
+	withinBillingQuota, _ := r.IsWithinQuota(ctx, model.PricingProductTypeErrors, workspace, time.Now())
 	return withinBillingQuota
 }
 
@@ -1126,7 +1113,7 @@ func (r *Resolver) InitializeSessionImpl(ctx context.Context, input *kafka_queue
 	}
 
 	// determine if session is within billing quota
-	withinBillingQuota, quotaPercent := r.IsWithinQuota(spanCtx, model.PricingProductTypeSessions, workspace, time.Now())
+	withinBillingQuota, _ := r.IsWithinQuota(spanCtx, model.PricingProductTypeSessions, workspace, time.Now())
 	setupSpan.Finish()
 
 	if err := r.Redis.SetBillingQuotaExceeded(ctx, projectID, model.PricingProductTypeSessions, !withinBillingQuota); err != nil {
@@ -1263,19 +1250,6 @@ func (r *Resolver) InitializeSessionImpl(ctx context.Context, input *kafka_queue
 	if err := r.IndexSessionClickhouse(ctx, session); err != nil {
 		return nil, err
 	}
-
-	go func() {
-		defer util.Recover()
-		if quotaPercent >= 1 {
-			if err := model.SendBillingNotifications(ctx, r.DB, r.MailClient, email.BillingSessionUsage100Percent, workspace, nil); err != nil {
-				log.WithContext(ctx).Error(e.Wrap(err, "failed to send billing notifications"))
-			}
-		} else if quotaPercent >= .8 {
-			if err := model.SendBillingNotifications(ctx, r.DB, r.MailClient, email.BillingSessionUsage80Percent, workspace, nil); err != nil {
-				log.WithContext(ctx).Error(e.Wrap(err, "failed to send billing notifications"))
-			}
-		}
-	}()
 
 	if session.ServiceName != "" {
 		// See: https://opentelemetry.io/docs/specs/otel/resource/semantic_conventions/process/#javascript-runtimes

@@ -1,41 +1,35 @@
-# options for analysis running
+version: "2"
+
 run:
     timeout: 5m
-    skip-dirs:
-        - private-graph/graph/generated
-        - public-graph/graph/generated
 
-# output configuration options
 output:
-    # sorts results by: filepath, line and column
-    sort-results: true
+    sort-order:
+        - file
 
 linters:
-    # enable all linters
+    exclusions:
+        paths:
+            - private-graph/graph/generated
+            - public-graph/graph/generated
     enable:
         - errcheck
-        - gosimple
         - govet
         - ineffassign
         - staticcheck
-        - typecheck
         - unused
         - depguard
         - exhaustruct
-
-# all available settings of specific linters
-linters-settings:
-    staticcheck:
-        checks: ['all']
-
-    exhaustruct:
-        include:
-            - 'backend/alerts'
-
-    depguard:
-        rules:
-            main:
-                list-mode: lax
-                deny:
-                    - pkg: 'log'
-                      desc: 'logging is allowed only by github.com/sirupsen/logrus'
+    settings:
+        staticcheck:
+            checks: ['all']
+        exhaustruct:
+            include:
+                - 'backend/alerts'
+        depguard:
+            rules:
+                main:
+                    list-mode: lax
+                    deny:
+                        - pkg: 'log'
+                          desc: 'logging is allowed only by github.com/sirupsen/logrus'

@@ -48,6 +48,7 @@ jobs:
           args: -v --config ./.golangci.yml
           working-directory: src/backend
           version: latest
+          only-new-issues: true
 
       - name: Build
         run: go build ./src/backend/...

@@ -10,7 +10,6 @@ import (
 
 	hmetric "github.com/BrewingCoder/holdfast/sdk/highlight-go/metric"
 	"github.com/BrewingCoder/holdfast/src/backend/clickhouse"
-	"github.com/BrewingCoder/holdfast/src/backend/email"
 	"github.com/BrewingCoder/holdfast/src/backend/env"
 	kafka_queue "github.com/BrewingCoder/holdfast/src/backend/kafka-queue"
 	kafkaqueue "github.com/BrewingCoder/holdfast/src/backend/kafka-queue"
@@ -351,37 +350,13 @@ func (k *KafkaBatchWorker) getQuotaExceededByProject(ctx context.Context, projec
 		}
 		workspace.Projects = projects
 
-		withinBillingQuota, quotaPercent := k.Worker.PublicResolver.IsWithinQuota(ctxW, productType, &workspace, time.Now())
+		withinBillingQuota, _ := k.Worker.PublicResolver.IsWithinQuota(ctxW, productType, &workspace, time.Now())
 		quotaExceededByProject[projectId] = !withinBillingQuota
 		if err := k.Worker.Resolver.Redis.SetBillingQuotaExceeded(ctxW, int(projectId), productType, !withinBillingQuota); err != nil {
 			log.WithContext(ctxW).Error(err)
 			return nil, err
 		}
 
-		// Send alert emails if above the relevant thresholds
-		go func() {
-			defer util.Recover()
-			var emailType email.EmailType
-			if quotaPercent >= 1 {
-				if productType == model.PricingProductTypeLogs {
-					emailType = email.BillingLogsUsage100Percent
-				} else if productType == model.PricingProductTypeTraces {
-					emailType = email.BillingTracesUsage100Percent
-				}
-			} else if quotaPercent >= .8 {
-				if productType == model.PricingProductTypeLogs {
-					emailType = email.BillingLogsUsage80Percent
-				} else if productType == model.PricingProductTypeTraces {
-					emailType = email.BillingTracesUsage80Percent
-				}
-			}
-
-			if emailType != "" {
-				if err := model.SendBillingNotifications(ctx, k.Worker.PublicResolver.DB, k.Worker.PublicResolver.MailClient, emailType, &workspace, nil); err != nil {
-					log.WithContext(ctx).Error(e.Wrap(err, "failed to send billing notifications"))
-				}
-			}
-		}()
 	}
 
 	spanW.Finish()

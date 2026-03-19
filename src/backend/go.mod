@@ -60,8 +60,6 @@ require (
 	github.com/huandu/go-assert v1.1.6
 	github.com/influxdata/go-syslog/v3 v3.0.0
 	github.com/infracloudio/msbotbuilder-go v0.2.5
-	github.com/jackc/pgerrcode v0.0.0-20220416144525-469b46aa5efa
-	github.com/jackc/pgx/v5 v5.5.5
 	github.com/kylelemons/godebug v1.1.0
 	github.com/lib/pq v1.10.9
 	github.com/lukasbob/srcset v0.0.0-20231122134231-06e7f27b6370
@@ -139,6 +137,7 @@ require (
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/huandu/xstrings v1.4.0 // indirect
 	github.com/imdario/mergo v0.3.16 // indirect
+	github.com/jackc/pgx/v5 v5.5.5 // indirect
 	github.com/jackc/puddle/v2 v2.2.2 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/lestrrat-go/backoff/v2 v2.0.8 // indirect
@@ -203,7 +202,6 @@ require (
 	cloud.google.com/go/firestore v1.15.0 // indirect
 	cloud.google.com/go/storage v1.41.0 // indirect
 	github.com/ClickHouse/clickhouse-go/v2 v2.30.1
-	github.com/ReneKroon/ttlcache v1.7.0
 	github.com/agnivade/levenshtein v1.2.1 // indirect
 	github.com/aws/aws-lambda-go v1.46.0
 	github.com/aws/aws-sdk-go-v2/credentials v1.17.11 // indirect

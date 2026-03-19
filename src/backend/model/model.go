@@ -12,16 +12,10 @@ import (
 
 	"github.com/BrewingCoder/holdfast/src/backend/env"
 
-	Email "github.com/BrewingCoder/holdfast/src/backend/email"
 	modelInputs "github.com/BrewingCoder/holdfast/src/backend/private-graph/graph/model"
-	"github.com/jackc/pgerrcode"
-	"github.com/jackc/pgx/v5/pgconn"
-
-	"github.com/ReneKroon/ttlcache"
 	"github.com/lib/pq"
 	"github.com/mitchellh/mapstructure"
 	"github.com/rs/xid"
-	"github.com/sendgrid/sendgrid-go"
 	"github.com/slack-go/slack"
 	"github.com/speps/go-hashids"
 
@@ -29,17 +23,15 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 
-	"github.com/pkg/errors"
 	e "github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
 
 var (
-	DB                *gorm.DB
-	HashID            *hashids.HashID
-	emailHistoryCache *ttlcache.Cache
-	F                 = false
-	T                 = true
+	DB     *gorm.DB
+	HashID *hashids.HashID
+	F      = false
+	T      = true
 )
 
 const (
@@ -182,7 +174,6 @@ var Models = []interface{}{
 	&IntegrationProjectMapping{},
 	&IntegrationWorkspaceMapping{},
 	&EmailOptOut{},
-	&BillingEmailHistory{},
 	&Service{},
 	&SetupEvent{},
 	&SessionAdminsView{},
@@ -213,9 +204,6 @@ func init() {
 	}
 	HashID = hid
 
-	emailHistoryCache = ttlcache.NewCache()
-	emailHistoryCache.SetTTL(15 * time.Minute)
-	emailHistoryCache.SkipTtlExtensionOnHit(true)
 }
 
 type Model struct {
@@ -1353,13 +1341,6 @@ const (
 	PayloadTypeWebSocketEvents RawPayloadType = "raw-web-socket-events"
 )
 
-type BillingEmailHistory struct {
-	Model
-	Active      bool
-	WorkspaceID int
-	Type        Email.EmailType
-}
-
 type UserJourneyStep struct {
 	CreatedAt time.Time `json:"created_at" deep:"-"`
 	ProjectID int
@@ -1990,61 +1971,6 @@ type ErrorAlertEvent struct {
 	ErrorAlertID  int   `gorm:"index:idx_error_alert_event"`
 	ErrorObjectID int   `gorm:"index:idx_error_alert_event"`
 	SentAt        time.Time
-}
-
-func SendBillingNotifications(ctx context.Context, db *gorm.DB, mailClient *sendgrid.Client, emailType Email.EmailType, workspace *Workspace, detail *string) error {
-	// Skip sending email if sending was attempted within the cache TTL
-	cacheKey := fmt.Sprintf("%s;%d", emailType, workspace.ID)
-	_, exists := emailHistoryCache.Get(cacheKey)
-	if exists {
-		return nil
-	}
-	emailHistoryCache.Set(cacheKey, true)
-
-	fields := log.Fields{
-		"cacheKey":    cacheKey,
-		"emailType":   emailType,
-		"workspaceID": workspace.ID,
-	}
-	if detail != nil {
-		fields["detail"] = *detail
-	}
-	log.WithContext(ctx).
-		WithFields(fields).
-		Info("sending billing notification")
-
-	history := BillingEmailHistory{
-		WorkspaceID: workspace.ID,
-		Type:        emailType,
-		Active:      true,
-	}
-	if err := db.Create(&history).Error; err != nil {
-		var pgErr *pgconn.PgError
-		// An active BillingEmailHistory may already exist -
-		// in this case, don't send users another email.
-		if errors.As(err, &pgErr) && pgErr.Code == pgerrcode.UniqueViolation {
-			return nil
-		}
-		return e.Wrap(err, "error creating BillingEmailHistory")
-	}
-
-	toAddrs, err := workspace.AdminEmailAddresses(db)
-	if err != nil {
-		return err
-	}
-	var errors []string
-	for _, toAddr := range toAddrs {
-		err := Email.SendBillingNotificationEmail(ctx, mailClient, workspace.ID, workspace.Name, emailType, toAddr.Email, toAddr.AdminID)
-		if err != nil {
-			errors = append(errors, err.Error())
-		}
-	}
-
-	if len(errors) > 0 {
-		return e.New(strings.Join(errors, "\n"))
-	}
-
-	return nil
 }
 
 func (obj *ErrorAlert) GetRegexGroups() ([]*string, error) {
