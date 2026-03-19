@@ -1,5 +1,39 @@
 # HoldFast
 
+[![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL--3.0-blue.svg)](LICENSE)
+
+### Backend
+![Quality Gate](https://sonar.brewingcoder.com/api/project_badges/measure?project=holdfast-backend&metric=alert_status&token=sqb_22a4eb22b3984d19c31629b856e828b01f2255e8)
+![Coverage](https://sonar.brewingcoder.com/api/project_badges/measure?project=holdfast-backend&metric=coverage&token=sqb_22a4eb22b3984d19c31629b856e828b01f2255e8)
+![Bugs](https://sonar.brewingcoder.com/api/project_badges/measure?project=holdfast-backend&metric=bugs&token=sqb_22a4eb22b3984d19c31629b856e828b01f2255e8)
+![Vulnerabilities](https://sonar.brewingcoder.com/api/project_badges/measure?project=holdfast-backend&metric=vulnerabilities&token=sqb_22a4eb22b3984d19c31629b856e828b01f2255e8)
+![Lines of Code](https://sonar.brewingcoder.com/api/project_badges/measure?project=holdfast-backend&metric=ncloc&token=sqb_22a4eb22b3984d19c31629b856e828b01f2255e8)
+
+### Frontend
+![Quality Gate](https://sonar.brewingcoder.com/api/project_badges/measure?project=holdfast-frontend&metric=alert_status&token=sqb_0ead45158289886244c6621ff8829cdf10bf118e)
+![Coverage](https://sonar.brewingcoder.com/api/project_badges/measure?project=holdfast-frontend&metric=coverage&token=sqb_0ead45158289886244c6621ff8829cdf10bf118e)
+![Bugs](https://sonar.brewingcoder.com/api/project_badges/measure?project=holdfast-frontend&metric=bugs&token=sqb_0ead45158289886244c6621ff8829cdf10bf118e)
+![Vulnerabilities](https://sonar.brewingcoder.com/api/project_badges/measure?project=holdfast-frontend&metric=vulnerabilities&token=sqb_0ead45158289886244c6621ff8829cdf10bf118e)
+![Lines of Code](https://sonar.brewingcoder.com/api/project_badges/measure?project=holdfast-frontend&metric=ncloc&token=sqb_0ead45158289886244c6621ff8829cdf10bf118e)
+
+### Browser SDK
+![Quality Gate](https://sonar.brewingcoder.com/api/project_badges/measure?project=holdfast-browser&metric=alert_status&token=sqb_1989da71d95593c6654cb88ec596ada796d9821c)
+![Coverage](https://sonar.brewingcoder.com/api/project_badges/measure?project=holdfast-browser&metric=coverage&token=sqb_1989da71d95593c6654cb88ec596ada796d9821c)
+![Bugs](https://sonar.brewingcoder.com/api/project_badges/measure?project=holdfast-browser&metric=bugs&token=sqb_1989da71d95593c6654cb88ec596ada796d9821c)
+![Vulnerabilities](https://sonar.brewingcoder.com/api/project_badges/measure?project=holdfast-browser&metric=vulnerabilities&token=sqb_1989da71d95593c6654cb88ec596ada796d9821c)
+
+### Node SDK
+![Quality Gate](https://sonar.brewingcoder.com/api/project_badges/measure?project=holdfast-node&metric=alert_status&token=sqb_f550bba4def8eed38f0a0b6b5c6db4392bf0386e)
+![Bugs](https://sonar.brewingcoder.com/api/project_badges/measure?project=holdfast-node&metric=bugs&token=sqb_f550bba4def8eed38f0a0b6b5c6db4392bf0386e)
+![Vulnerabilities](https://sonar.brewingcoder.com/api/project_badges/measure?project=holdfast-node&metric=vulnerabilities&token=sqb_f550bba4def8eed38f0a0b6b5c6db4392bf0386e)
+
+### SDK Integrations
+![Quality Gate](https://sonar.brewingcoder.com/api/project_badges/measure?project=holdfast-sdk-integrations&metric=alert_status&token=sqb_962fda2b9f5419934283429d8691b498a9973272)
+![Bugs](https://sonar.brewingcoder.com/api/project_badges/measure?project=holdfast-sdk-integrations&metric=bugs&token=sqb_962fda2b9f5419934283429d8691b498a9973272)
+![Vulnerabilities](https://sonar.brewingcoder.com/api/project_badges/measure?project=holdfast-sdk-integrations&metric=vulnerabilities&token=sqb_962fda2b9f5419934283429d8691b498a9973272)
+
+---
+
 **Full-stack observability that stays on your network.**
 
 HoldFast is an open-source, self-hosted observability platform — session replay, error monitoring, logging, and distributed tracing in a single UI. It runs entirely on your infrastructure. Your data never leaves your network.
