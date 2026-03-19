@@ -47,7 +47,7 @@ All in one UI, with OpenTelemetry-native ingestion. All features enabled — no 
 
 ### Quick Start
 ```bash
-git clone --recurse-submodules <your-holdfast-repo-url>
+git clone https://github.com/BrewingCoder/holdfast
 cd holdfast/infra/docker
 # Edit .env — set ADMIN_PASSWORD
 ./run-hobby.sh
@@ -142,7 +142,15 @@ See **[ROADMAP.md](ROADMAP.md)** for the full roadmap including rebranding, tech
 - [x] Rebrand user-facing text to HoldFast
 - [x] AGPL-3.0 license
 - [x] Governance and contribution guidelines
+- [x] NPM scope renamed to `@holdfast-io/*` (17 packages)
+- [x] SDK builds standardized on tsup (node, next converted from Rollup)
+- [x] Repo reorganized (`src/`, `docs/`, `tests/`, `tools/`, `infra/`, `packages/`)
+- [x] Repo pushed to GitHub: https://github.com/BrewingCoder/holdfast
+- [x] GitHub Actions CI workflows (backend, frontend, SDK, security)
+- [x] NPM publish workflow (tiered, dry-run support)
+- [x] Self-hosted GitHub Actions runner
+- [x] Deleted: blog-content, docs-content, internal-docs, enterprise directories
 
 ---
 
-## Last updated: 2026-03-18
+## Last updated: 2026-03-19

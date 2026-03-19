@@ -63,27 +63,43 @@ Packages must be published bottom-up — leaf dependencies first, then packages 
 
 ---
 
-## GitHub Actions Workflows (Planned)
+## GitHub Actions Workflows
+
+All workflows run on a self-hosted runner (dedicated Ubuntu 24.04 VM).
 
 ### CI Workflows (run on PR + push to main)
 
-| Workflow | Purpose | Runner |
-|----------|---------|--------|
-| `backend.yml` | Go build, lint (golangci-lint), format check, unit tests, coverage | `ubuntu-latest` |
-| `frontend.yml` | Yarn install, TypeScript check, Vitest, coverage | `ubuntu-latest` |
-| `sdk.yml` | Build all SDKs, run SDK tests, coverage | `ubuntu-latest` |
-| `sonarqube.yml` | SonarQube analysis for all 6 projects | `ubuntu-latest` |
-| `security.yml` | CodeQL + dependency audit + secret scanning | `ubuntu-latest` |
+| Workflow | File | Triggers | What It Does |
+|----------|------|----------|-------------|
+| Backend CI | `ci-backend.yml` | `src/backend/**`, `sdk/highlight-go/**` | Go format, golangci-lint, build, unit tests + coverage |
+| Frontend CI | `ci-frontend.yml` | `src/frontend/**`, `packages/ui/**` | Yarn install, build deps, TS check, lint, Vitest + coverage |
+| SDK CI | `ci-sdk.yml` | `sdk/**`, `packages/sourcemap-uploader/**` | Build all SDKs in tier order, run tests |
+| Security | `security.yml` | All pushes + weekly schedule | CodeQL (Go + JS/TS), npm audit, govulncheck, TruffleHog |
 
-### Release Workflows (manual or on tag)
+### Release Workflows (manual dispatch)
 
-| Workflow | Purpose | Runner |
-|----------|---------|--------|
-| `publish-npm.yml` | Publish SDKs to npm in tier order | `ubuntu-latest` |
-| `publish-docker.yml` | Build and push Docker images to GHCR | `ubuntu-latest` |
+| Workflow | File | Inputs | What It Does |
+|----------|------|--------|-------------|
+| NPM Publish | `publish-npm.yml` | tier (1-4/all), dry-run, version | Build all SDKs, publish in dependency order. Requires `NPM_TOKEN` secret. |
+
+### Planned (not yet implemented)
+
+| Workflow | Purpose |
+|----------|---------|
+| `sonarqube.yml` | SonarQube analysis for all 6 projects |
+| `publish-docker.yml` | Build and push Docker images to GHCR |
 
 ### Quality Gates
 
-- All PRs must pass: build, lint, tests, SonarQube quality gate
+- All PRs must pass: build, lint, tests
+- SonarQube quality gate (pending setup)
 - Coverage thresholds enforced (TBD — start with what exists, ratchet up)
 - No new security vulnerabilities (CodeQL + `npm audit` + `go vuln`)
+
+### Secrets Required
+
+| Secret | Purpose |
+|--------|---------|
+| `NPM_TOKEN` | npm automation token for `@holdfast-io` org publishing |
+| `SONAR_TOKEN` | SonarQube analysis token (pending) |
+| `SONAR_HOST_URL` | SonarQube server URL (pending) |

@@ -33,7 +33,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: lts/*
-          cache: 'yarn'
+          # cache handled by self-hosted runner
 
       - name: Install dependencies
         run: yarn install --immutable

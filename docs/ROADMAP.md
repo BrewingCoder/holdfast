@@ -255,7 +255,9 @@ These are not certifications (HoldFast is a tool, not a service) but guidance fo
 These are first-come-first-served and should be grabbed regardless of timeline:
 
 - [x] **npmjs.com** — `holdfast-io` org created
-- [ ] **GitHub** — create repo under BrewingCoder
+- [x] **GitHub** — repo created at `BrewingCoder/holdfast`
+- [x] **GitHub Actions** — CI (backend, frontend, SDK, security) + NPM publish workflows
+- [x] **Self-hosted runner** — dedicated Ubuntu 24.04 VM
 - [ ] **PyPI** — register `holdfast` package name
 - [ ] **crates.io** — register `holdfast` crate name
 - [ ] **Domain** — register `holdfast.dev` or preferred domain
