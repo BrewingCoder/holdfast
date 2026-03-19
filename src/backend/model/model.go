@@ -28,10 +28,10 @@ import (
 )
 
 var (
-	DB                *gorm.DB
-	HashID            *hashids.HashID
-	F = false
-	T                 = true
+	DB     *gorm.DB
+	HashID *hashids.HashID
+	F      = false
+	T      = true
 )
 
 const (
@@ -1972,7 +1972,6 @@ type ErrorAlertEvent struct {
 	ErrorObjectID int   `gorm:"index:idx_error_alert_event"`
 	SentAt        time.Time
 }
-
 
 func (obj *ErrorAlert) GetRegexGroups() ([]*string, error) {
 	var regexGroups []*string
