@@ -210,11 +210,32 @@ Coverage is low — most tests are integration-level. Unit tests for individual 
 | **Security Rating** | D | Driven by 3 vulnerabilities — priority fix |
 | **Maintainability Rating** | A | |
 
+#### Vulnerability Details (3 — all CRITICAL, rule S2819)
+
+All in `src/client/index.tsx` — `postMessage` cross-origin security:
+
+| Line | Issue | Fix |
+|------|-------|-----|
+| 888 | `postMessage` without target origin | Specify explicit origin instead of `'*'` |
+| 910 | `postMessage` without target origin | Specify explicit origin instead of `'*'` |
+| 920 | `addEventListener('message')` without origin check | Validate `event.origin` before processing |
+
+These are web worker communication calls. Since the worker is same-origin, the fix is straightforward: replace `'*'` with `window.location.origin` and add origin validation on the listener.
+
+#### Security Hotspot Breakdown (4 total)
+
+| Priority | Count | Category | Details |
+|----------|-------|----------|---------|
+| **P1 — Fix soon** | 2 | ReDoS-vulnerable regex | `listeners/network-listener/utils/utils.ts:23`, `utils/dom/index.ts:405` — backtracking regex patterns |
+| **P2 — Low risk** | 1 | `Math.random()` | `listeners/network-listener/utils/utils.ts:305` — non-crypto context (request ID generation) |
+| **P2 — Low risk** | 1 | `Math.random()` | `utils/secure-id.ts:21` — despite the filename, used for non-security session IDs; rename or switch to `crypto.getRandomValues()` |
+
 Priority areas for improvement:
-1. **Vulnerabilities** (3) — immediate triage and fix, especially anything in network listener or data transmission
-2. **Security hotspots** (4) — review data capture privacy implications
-3. **Coverage** — unit tests for individual listeners, web worker, and OTEL integration
-4. **Bugs** (7) — triage by impact on recording accuracy
+1. **P0 — Vulnerabilities** (3) — fix `postMessage` origin validation in `src/client/index.tsx`
+2. **P1 — ReDoS regex** (2) — rewrite backtracking patterns in network listener and DOM utils
+3. **`secure-id.ts`** — rename file or switch to `crypto.getRandomValues()` to match the implied security contract
+4. **Coverage** — unit tests for individual listeners, web worker, and OTEL integration
+5. **Bugs** (7) — triage by impact on recording accuracy
 
 ## Gotchas
 

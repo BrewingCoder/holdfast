@@ -176,11 +176,23 @@ cd src/frontend && yarn test:coverage # With v8 coverage
 | **Security Rating** | A | |
 | **Maintainability Rating** | A | |
 
+#### Security Hotspot Breakdown (57 total)
+
+| Priority | Count | Category | Details |
+|----------|-------|----------|---------|
+| **P0 — Fix immediately** | 1 | Hardcoded password | `pages/Auth/Firebase.tsx:117` — review/remove as part of Firebase dead code cleanup |
+| **P0 — Fix immediately** | 1 | Dynamic code injection | `util/auth.tsx:392` — dynamic execution in auth path, high risk |
+| **P1 — Fix soon** | 7 | ReDoS-vulnerable regex | `Search/LeftPanel/utils.ts`, `Connect/QuickStartGuide`, `Graphing/SqlEditor.tsx`, `util/string/index.ts` — backtracking regex patterns |
+| **P2 — Low risk** | 45 | `Math.random()` usage | ~30 in `pages/Buttons/` (test/demo page, safe to mark as reviewed), rest in Toaster, Player, Sessions, `util/random.tsx` — non-crypto context |
+| **P2 — Low risk** | 3 | Missing `noopener` | `Header.tsx:331,356`, `ErrorStackTrace.tsx:90` — add `rel="noopener noreferrer"` to external links |
+
 Priority areas for improvement:
-1. **Duplication** (18.6%) — identify repeated component patterns and extract shared abstractions
-2. **Security hotspots** (57) — triage and resolve, especially around auth and API calls
-3. **Bugs** (50) — triage by severity, fix critical path issues first
-4. **Coverage** — start with utility functions and hooks, then component render tests
+1. **P0 hotspots** — hardcoded password in Firebase.tsx and dynamic code injection in auth.tsx
+2. **Duplication** (18.6%) — identify repeated component patterns and extract shared abstractions
+3. **ReDoS regex** (7) — rewrite vulnerable patterns in search/string utils
+4. **Bugs** (50) — triage by severity, fix critical path issues first
+5. **Coverage** — start with utility functions and hooks, then component render tests
+6. **Buttons page cleanup** — `pages/Buttons/` appears to be a test/demo page with 30+ `Math.random()` hotspots; consider removing or excluding from analysis
 
 ## Gotchas
 
