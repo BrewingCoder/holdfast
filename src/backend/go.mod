@@ -23,6 +23,7 @@ replace github.com/BrewingCoder/holdfast/sdk/highlight-go => ../../sdk/highlight
 require (
 	firebase.google.com/go v3.13.0+incompatible
 	github.com/99designs/gqlgen v0.17.70
+	github.com/BrewingCoder/holdfast/sdk/highlight-go v0.10.2
 	github.com/DmitriyVTitov/size v1.5.0
 	github.com/PaesslerAG/jsonpath v0.1.1
 	github.com/andybalholm/brotli v1.1.1
@@ -30,12 +31,10 @@ require (
 	github.com/aws/aws-sdk-go-v2 v1.29.0
 	github.com/aws/aws-sdk-go-v2/config v1.27.11
 	github.com/aws/aws-sdk-go-v2/feature/cloudfront/sign v1.7.9
-	github.com/aws/aws-sdk-go-v2/service/marketplaceentitlementservice v1.20.2
-	github.com/aws/aws-sdk-go-v2/service/marketplacemetering v1.21.2
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.53.1
 	github.com/aws/smithy-go v1.20.2
 	github.com/bradleyfalzon/ghinstallation/v2 v2.10.0
-	github.com/clearbit/clearbit-go v1.1.0
+	github.com/brianvoe/gofakeit/v7 v7.14.1
 	github.com/cloudflare/cloudflare-go v0.97.0
 	github.com/coreos/go-oidc/v3 v3.10.0
 	github.com/dchest/uniuri v1.2.0
@@ -58,7 +57,6 @@ require (
 	github.com/highlight-run/workerpool v1.3.0
 	github.com/highlight/clickhouse-sql-parser v1.0.1
 	github.com/highlight/go-oauth2-redis/v4 v4.1.4
-	github.com/BrewingCoder/holdfast/sdk/highlight-go v0.10.2
 	github.com/huandu/go-assert v1.1.6
 	github.com/influxdata/go-syslog/v3 v3.0.0
 	github.com/infracloudio/msbotbuilder-go v0.2.5
@@ -83,7 +81,6 @@ require (
 	github.com/sirupsen/logrus v1.9.3
 	github.com/slack-go/slack v0.12.5
 	github.com/speps/go-hashids v2.0.0+incompatible
-	github.com/stripe/stripe-go/v78 v78.5.0
 	github.com/urfave/cli/v2 v2.27.7
 	github.com/vektah/gqlparser/v2 v2.5.30
 	go.openly.dev/pointy v1.3.0
@@ -220,7 +217,6 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/sts v1.28.6
 	github.com/bwmarrin/discordgo v0.27.1
 	github.com/cpuguy83/go-md2man/v2 v2.0.7 // indirect
-	github.com/dghubble/sling v1.4.2 // indirect
 	github.com/go-chi/httplog v0.3.2
 	github.com/golang-migrate/migrate/v4 v4.17.0
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect

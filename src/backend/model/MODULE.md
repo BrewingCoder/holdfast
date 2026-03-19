@@ -18,7 +18,7 @@ The foundational data layer for HoldFast. This package defines every database en
 | `timestamp.go` | 33 | RFC3339Nano timestamp serialization |
 | `id.go` | 28 | Int64ID GraphQL marshaling |
 | `pricing.go` | 20 | Product types and billing intervals (stubbed for HoldFast) |
-| `model_test.go` | 11 | Single test — VerboseID round-trip |
+| `model_test.go` | ~900 | 125 tests — scalars, custom types, hooks, serialization, fuzz |
 
 ## Entity Map
 
@@ -130,23 +130,44 @@ One row per workspace. Every feature flag **defaults to enabled** for HoldFast:
 
 ### Current State
 
-1 test file, 1 test — `TestVerboseID` round-trip conversion.
+125 tests, **51.1% statement coverage**, 0.1s runtime. Uses `gofakeit/v7` for randomized data generation.
 
-**Coverage is essentially zero.** This is a problem because:
-- 72 models with complex relationships
-- Migration logic with raw SQL
-- Helper methods (Slack formatting, email dedup, property serialization)
-- GORM hooks with side effects
-- Custom type marshaling (JSONB, Vector, Timestamp, Int64ID)
+**What's covered:**
+- GraphQL scalar marshalers (Int64ID, StringArray, Timestamp) — all edge cases
+- Custom SQL types (JSONB, Vector, DiscordChannels, MicrosoftTeamsChannels, WebhookDestinations) — roundtrip + fuzz
+- GORM BeforeCreate hooks (Project, Workspace, Session, SystemConfiguration)
+- VerboseID encode/decode roundtrip with boundary values
+- Session UserProperties JSON serialization (including special characters, unicode)
+- DecodeAndValidateParams — valid, duplicates, empty, mass data
+- GetEmailsToNotify — valid, nil, empty, invalid JSON
+- AlertDeprecated methods (environments, channels, emails, name)
+- ErrorAlert.GetRegexGroups — valid, nil, empty, invalid
+- SessionAlert methods (track properties, user properties, exclude rules, nil receivers)
+- MetricMonitor methods (channels, name, id, nil receiver)
+- Workspace.IntegratedSlackChannels — valid, nil, invalid, dedup, append
+- Workspace.GetRetentionPeriod — with value, nil defaults
+- GetAttributesColumn — prefix matching, empty, no match, first-match-wins
+- SendWelcomeSlackMessage — all 6 validation paths
+- Interface compliance (IAlert, HasSecret, Object, driver.Valuer)
+- Constants and type alias correctness
+- Fuzz-style random data tests (100+ iterations through custom types)
+- Concurrent factory safety
 
-### Priority Test Targets
+**What's NOT covered (needs DB or mocks):**
+- `SetupDB()` / `MigrateDB()` — requires live PostgreSQL
+- `SendBillingNotifications()` — requires DB + SendGrid client
+- `EnableAllWorkspaceSettings()` — requires DB
+- `LoadSSOClient()` — requires DB + env config
+- `GetSlackAttachment()` on Session/ErrorGroup — requires `env.Config.FrontendUri`
+- `AdminEmailAddresses()` — requires DB query
+- `GetDailyErrorEventFrequency()` / `GetDailySessionEventFrequency()` / `GetDailyLogEventFrequency()` — require DB
 
-1. **Custom types** — JSONB, Vector, Timestamp, Int64ID marshaling/unmarshaling
-2. **VerboseID** — already tested, but add edge cases
-3. **GORM hooks** — BeforeCreate on Project, Workspace, Session, SystemConfiguration
-4. **Helper methods** — `GetUserProperties`, `SetUserProperties`, `GetSlackAttachment`, `AdminEmailAddresses`
-5. **Migration** — verify `secure_id_generator()` function output format
-6. **AllWorkspaceSettings defaults** — ensure all flags default to enabled
+### Priority Test Targets (remaining)
+
+1. **Integration tests** — SetupDB/MigrateDB with test PostgreSQL
+2. **Slack formatting** — GetSlackAttachment on Session and ErrorGroup (needs env mock)
+3. **SendWelcomeSlackMessage** — full path with mocked Slack client
+4. **AllWorkspaceSettings defaults** — verify GORM creates with all features enabled
 
 ## Gotchas
 
