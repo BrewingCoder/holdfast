@@ -919,11 +919,6 @@ func TestCalculateOverages(t *testing.T) {
 		BillingPeriodStart: &now,
 		BillingPeriodEnd:   &end,
 		PlanTier:           string(model2.PlanTypeGraduated),
-		AWSMarketplaceCustomer: &model.AWSMarketplaceCustomer{
-			CustomerIdentifier:   pointy.String("customer"),
-			CustomerAWSAccountID: pointy.String("aws-account"),
-			ProductCode:          pointy.String("product"),
-		},
 	}
 	if err := DB.Create(&wMP).Error; err != nil {
 		t.Fatal(e.Wrap(err, "error inserting workspace"))

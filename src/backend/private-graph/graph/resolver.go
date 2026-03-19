@@ -372,19 +372,6 @@ func (r *Resolver) SetDefaultRetention(workspace *model.Workspace) {
 	}
 }
 
-func (r *Resolver) GetAWSMarketPlaceWorkspace(ctx context.Context, workspaceID int) (*model.Workspace, error) {
-	var workspace model.Workspace
-	if err := r.DB.WithContext(ctx).
-		Model(&workspace).
-		Joins("AWSMarketplaceCustomer").
-		Where(&model.Workspace{Model: model.Model{ID: workspaceID}}).
-		Take(&workspace).
-		Error; err != nil {
-		return nil, err
-	}
-	return &workspace, nil
-}
-
 func (r *Resolver) getAdminRole(ctx context.Context, adminID int, workspaceID int) (string, []int, error) {
 	var workspaceAdmin model.WorkspaceAdmin
 	if err := r.DB.WithContext(ctx).Where(&model.WorkspaceAdmin{AdminID: adminID, WorkspaceID: workspaceID}).Take(&workspaceAdmin).Error; err != nil {
