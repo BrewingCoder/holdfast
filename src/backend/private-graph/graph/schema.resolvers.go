@@ -4787,11 +4787,6 @@ func (r *queryResolver) AccountDetails(ctx context.Context, workspaceID int) (*m
 		sessionCountsPerDay = append(sessionCountsPerDay, &modelInputs.NamedCount{Name: s.Day, Count: s.Sum})
 	}
 
-	var stripeCustomerId string
-	if workspace.StripeCustomerID != nil {
-		stripeCustomerId = *workspace.StripeCustomerID
-	}
-
 	var members []*modelInputs.AccountDetailsMember
 	if err := r.DB.WithContext(ctx).Raw(`
 	select a.id as id, max(a.name) as name, max(a.email) as email, max(s.created_at) as last_active
@@ -4809,7 +4804,6 @@ func (r *queryResolver) AccountDetails(ctx context.Context, workspaceID int) (*m
 		SessionCountPerDay:   sessionCountsPerDay,
 		Name:                 *workspace.Name,
 		ID:                   workspace.ID,
-		StripeCustomerID:     stripeCustomerId,
 		Members:              members,
 	}
 	return details, nil
@@ -9718,16 +9712,3 @@ type sessionCommentResolver struct{ *Resolver }
 type subscriptionResolver struct{ *Resolver }
 type timelineIndicatorEventResolver struct{ *Resolver }
 type visualizationResolver struct{ *Resolver }
-
-// !!! WARNING !!!
-// The code below was going to be deleted when updating resolvers. It has been copied here so you have
-// one last chance to move it out of harms way if you want. There are two reasons this happens:
-//  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
-//    it when you're done.
-//  - You have helper methods in this file. Move them out to keep these resolver files clean.
-/*
-	func (r *Resolver) SystemConfiguration() generated.SystemConfigurationResolver {
-	return &systemConfigurationResolver{r}
-}
-type systemConfigurationResolver struct{ *Resolver }
-*/
