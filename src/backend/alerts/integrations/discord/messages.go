@@ -53,10 +53,10 @@ func (bot *Bot) SendErrorAlert(channelId string, payload integrations.ErrorAlert
 
 	embed := newMessageEmbed()
 	if payload.FirstTimeAlert {
-		embed.Title = "Highlight Error Alert (New Occurence ❇️)"
+		embed.Title = "HoldFast Error Alert (New Occurence ❇️)"
 		embed.Color = YELLOW_ALERT
 	} else {
-		embed.Title = "Highlight Error Alert"
+		embed.Title = "HoldFast Error Alert"
 		embed.Color = RED_ALERT
 	}
 
@@ -135,7 +135,7 @@ func (bot *Bot) SendNewUserAlert(channelId string, payload integrations.NewUserA
 	}
 
 	embed := newMessageEmbed()
-	embed.Title = "Highlight New User Alert"
+	embed.Title = "HoldFast New User Alert"
 	embed.Description = payload.UserIdentifier
 	embed.Fields = fields
 
@@ -188,7 +188,7 @@ func (bot *Bot) SendNewSessionAlert(channelId string, payload integrations.NewSe
 	}
 
 	embed := newMessageEmbed()
-	embed.Title = "Highlight New Session Alert"
+	embed.Title = "HoldFast New Session Alert"
 	embed.Description = payload.UserIdentifier
 	embed.Fields = fields
 
@@ -247,7 +247,7 @@ func (bot *Bot) SendTrackPropertiesAlert(channelId string, payload integrations.
 	}
 
 	embed := newMessageEmbed()
-	embed.Title = "Highlight Track Properties Alert"
+	embed.Title = "HoldFast Track Properties Alert"
 	embed.Description = payload.UserIdentifier
 	embed.Fields = fields
 
@@ -275,7 +275,7 @@ func (bot *Bot) SendUserPropertiesAlert(channelId string, payload integrations.U
 	})
 
 	embed := newMessageEmbed()
-	embed.Title = "Highlight User Properties Alert"
+	embed.Title = "HoldFast User Properties Alert"
 	embed.Description = payload.UserIdentifier
 	embed.Fields = fields
 
@@ -312,7 +312,7 @@ func (bot *Bot) SendErrorFeedbackAlert(channelId string, payload integrations.Er
 	})
 
 	embed := newMessageEmbed()
-	embed.Title = "Highlight Error Feedback Alert"
+	embed.Title = "HoldFast Error Feedback Alert"
 	embed.Description = payload.UserIdentifier
 	embed.Fields = fields
 
@@ -356,7 +356,7 @@ func (bot *Bot) SendRageClicksAlert(channelId string, payload integrations.RageC
 	})
 
 	embed := newMessageEmbed()
-	embed.Title = "Highlight Rage Clicks Alert"
+	embed.Title = "HoldFast Rage Clicks Alert"
 	embed.Description = payload.UserIdentifier
 	embed.Fields = fields
 
@@ -400,7 +400,7 @@ func (bot *Bot) SendMetricMonitorAlert(channelId string, payload integrations.Me
 	})
 
 	embed := newMessageEmbed()
-	embed.Title = "Highlight Metric Monitor Alert"
+	embed.Title = "HoldFast Metric Monitor Alert"
 	embed.Description = fmt.Sprintf("*%s* is currently %s %s over the threshold.", payload.MetricToMonitor, payload.DiffOverValue, payload.UnitsFormat)
 	embed.Fields = fields
 
@@ -457,7 +457,7 @@ func (bot *Bot) SendLogAlert(channelId string, payload integrations.LogAlertPayl
 	}
 
 	embed := newMessageEmbed()
-	embed.Title = "Highlight Log Alert"
+	embed.Title = "HoldFast Log Alert"
 	embed.Color = RED_ALERT
 	embed.Description = fmt.Sprintf("*%s* is currently %s the threshold.", payload.Name, aboveStr)
 	embed.Fields = fields

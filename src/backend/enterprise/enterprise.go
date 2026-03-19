@@ -47,7 +47,7 @@ func Start(ctx context.Context) (bool, error) {
 		isEnterprise = true
 		log.WithContext(ctx).
 			WithField("environment_valid_until", environ.EnterpriseEnvExpiration).
-			Info("welcome to highlight.io enterprise")
+			Info("welcome to HoldFast enterprise")
 		if env.IsEnterpriseDeploy() {
 			environ.CopyTo(&env.Config)
 			log.WithContext(ctx).
@@ -65,7 +65,7 @@ func RequireEnterprise(ctx context.Context) {
 }
 
 func HasUpdates(client *retryablehttp.Client) (bool, error) {
-	resp, err := client.Get("https://api.github.com/repos/highlight/highlight/releases/latest")
+	resp, err := client.Get("https://api.github.com/repos/BrewingCoder/holdfast/releases/latest")
 	if err != nil {
 		return false, err
 	}
@@ -92,13 +92,13 @@ func HasUpdates(client *retryablehttp.Client) (bool, error) {
 	log.WithContext(context.Background()).
 		WithField("latestVersion", latestVersion).
 		WithField("currentVersion", currentVersion).
-		Debug("checking highlight semvers")
+		Debug("checking HoldFast semvers")
 
 	if semver.Compare(currentVersion, latestVersion) > 0 {
 		log.WithContext(context.Background()).
 			WithField("latestVersion", latestVersion).
 			WithField("currentVersion", currentVersion).
-			Info("current highlight version is out of date")
+			Info("current HoldFast version is out of date")
 		return true, nil
 	}
 

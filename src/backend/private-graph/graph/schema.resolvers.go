@@ -4210,7 +4210,7 @@ func (r *mutationResolver) UpdateVercelProjectMappings(ctx context.Context, proj
 		}
 		if err := vercel.CreateLogDrain(ctx, workspace.VercelTeamID, lo.Map(configs, func(t *model.VercelIntegrationConfig, i int) string {
 			return t.VercelProjectID
-		}), project.VerboseID(), "Highlight Log Drain", *workspace.VercelAccessToken); err != nil {
+		}), project.VerboseID(), "HoldFast Log Drain", *workspace.VercelAccessToken); err != nil {
 			return false, err
 		}
 	}

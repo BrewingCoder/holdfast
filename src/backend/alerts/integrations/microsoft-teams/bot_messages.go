@@ -146,11 +146,11 @@ func (bot *MicrosoftTeamsBot) SendErrorAlert(channelId string, payload integrati
 		Value: strconv.FormatInt(payload.ErrorCount, 10),
 	})
 
-	title := "Highlight Error Alert"
+	title := "HoldFast Error Alert"
 	style := "warning"
 
 	if payload.FirstTimeAlert {
-		title = "Highlight Error Alert (New Occurence ❇️)"
+		title = "HoldFast Error Alert (New Occurence ❇️)"
 		style = "attention"
 	}
 
@@ -214,7 +214,7 @@ func (bot *MicrosoftTeamsBot) SendLogAlert(channelId string, payload integration
 	jsonFacts, _ := json.Marshal(facts)
 
 	templateData := BasicTemplatePayload{
-		Title:       "Highlight Log Alert",
+		Title:       "HoldFast Log Alert",
 		Description: description,
 		ActionURL:   payload.AlertURL,
 		Facts:       string(jsonFacts),
@@ -246,7 +246,7 @@ func (bot *MicrosoftTeamsBot) SendNewSessionAlert(channelId string, payload inte
 	jsonFacts, _ := json.Marshal(facts) // no need to handle errors here, we specify the json string - sort of
 
 	newSessionAlertPayload := NewSessionAlertPayload{
-		Title:          "Highlight New Session Alert",
+		Title:          "HoldFast New Session Alert",
 		SessionURL:     payload.SessionURL,
 		UserIdentifier: payload.UserIdentifier,
 		Facts:          string(jsonFacts),
@@ -266,7 +266,7 @@ func (bot *MicrosoftTeamsBot) SendTrackPropertiesAlert(channelId string, payload
 	}
 
 	templateData := map[string]interface{}{
-		"Title":         "Highlight Track Properties Alert",
+		"Title":         "HoldFast Track Properties Alert",
 		"Description":   payload.UserIdentifier,
 		"MatchedValues": matchedValue,
 	}
@@ -289,7 +289,7 @@ func (bot *MicrosoftTeamsBot) SendUserPropertiesAlert(channelId string, payload 
 	}
 
 	templateData := map[string]interface{}{
-		"Title":                 "Highlight Track Properties Alert",
+		"Title":                 "HoldFast Track Properties Alert",
 		"Description":           payload.UserIdentifier,
 		"MatchedUserProperties": matchedValue,
 		"ActionTitle":           "View Session",
@@ -313,7 +313,7 @@ func (bot *MicrosoftTeamsBot) SendNewUserAlert(channelId string, payload integra
 	jsonFacts, _ := json.Marshal(facts) // no need to handle errors here, we specify the json string - sort of
 
 	newSessionAlertPayload := NewSessionAlertPayload{
-		Title:          "Highlight New User Alert",
+		Title:          "HoldFast New User Alert",
 		SessionURL:     payload.SessionURL,
 		UserIdentifier: payload.UserIdentifier,
 		Facts:          string(jsonFacts),
@@ -337,7 +337,7 @@ func (bot *MicrosoftTeamsBot) SendErrorFeedbackAlert(channelId string, payload i
 	jsonFacts, _ := json.Marshal(facts)
 
 	templateData := BasicTemplatePayload{
-		Title:       "Highlight Error Feedback Alert",
+		Title:       "HoldFast Error Feedback Alert",
 		Description: payload.UserIdentifier,
 		ActionURL:   payload.SessionCommentURL,
 		Facts:       string(jsonFacts),
@@ -362,7 +362,7 @@ func (bot *MicrosoftTeamsBot) SendRageClicksAlert(channelId string, payload inte
 	jsonFacts, _ := json.Marshal(facts)
 
 	templateData := BasicTemplatePayload{
-		Title:       "Highlight Rage Clicks Alert",
+		Title:       "HoldFast Rage Clicks Alert",
 		Description: payload.UserIdentifier,
 		ActionURL:   payload.SessionURL,
 		Facts:       string(jsonFacts),
@@ -387,7 +387,7 @@ func (bot *MicrosoftTeamsBot) SendMetricMonitorAlert(channelId string, payload i
 	jsonFacts, _ := json.Marshal(facts)
 
 	templateData := BasicTemplatePayload{
-		Title:       "Highlight Metric Monitor Alert",
+		Title:       "HoldFast Metric Monitor Alert",
 		Description: fmt.Sprintf("*%s* is currently %s %s over the threshold.", payload.MetricToMonitor, payload.DiffOverValue, payload.UnitsFormat),
 		ActionURL:   payload.MonitorURL,
 		Facts:       string(jsonFacts),

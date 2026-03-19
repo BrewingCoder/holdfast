@@ -831,7 +831,7 @@ func (r *Resolver) SendEmailAlert(
 	asmGroupId *int,
 ) error {
 	m := mail.NewV3Mail()
-	from := mail.NewEmail("Highlight", Email.SendGridOutboundEmail)
+	from := mail.NewEmail("HoldFast", Email.SendGridOutboundEmail)
 	m.SetFrom(from)
 	m.SetTemplateID(templateID)
 
@@ -1041,7 +1041,7 @@ func (r *Resolver) SendSlackAlertToUser(ctx context.Context, workspace *model.Wo
 				// We can't send Slack a base64 string.
 				fileUploadParams := slack.FileUploadParameters{
 					Filetype: "image/png",
-					Filename: fmt.Sprintf("Highlight %s Image.png", subjectScope),
+					Filename: fmt.Sprintf("HoldFast %s Image.png", subjectScope),
 					// These are the channels that will have access to the uploaded file.
 					Channels: []string{*slackUser.WebhookChannelID},
 					File:     uploadedFileKey,
@@ -1212,7 +1212,7 @@ func (r *Resolver) SendAdminInviteImpl(adminName string, projectOrWorkspaceName 
 	to := &mail.Email{Address: email}
 
 	m := mail.NewV3Mail()
-	from := mail.NewEmail("Highlight", Email.SendGridOutboundEmail)
+	from := mail.NewEmail("HoldFast", Email.SendGridOutboundEmail)
 	m.SetFrom(from)
 	m.SetTemplateID(Email.SendAdminInviteEmailTemplateID)
 
@@ -1238,7 +1238,7 @@ func (r *Resolver) SendWorkspaceRequestEmail(fromName string, fromEmail string, 
 	to := &mail.Email{Address: toEmail}
 
 	m := mail.NewV3Mail()
-	from := mail.NewEmail("Highlight", Email.SendGridOutboundEmail)
+	from := mail.NewEmail("HoldFast", Email.SendGridOutboundEmail)
 	m.SetFrom(from)
 	m.SetTemplateID(Email.SendGridRequestAccessEmailTemplateID)
 

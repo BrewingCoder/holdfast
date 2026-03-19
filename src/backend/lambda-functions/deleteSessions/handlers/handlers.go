@@ -179,7 +179,7 @@ func (h *handlers) SendEmail(ctx context.Context, event utils.QuerySessionsInput
 	to := &mail.Email{Address: event.Email}
 
 	m := mail.NewV3Mail()
-	from := mail.NewEmail("Highlight", email.SendGridOutboundEmail)
+	from := mail.NewEmail("HoldFast", email.SendGridOutboundEmail)
 	m.SetFrom(from)
 	m.SetTemplateID(email.SessionsDeletedEmailTemplateID)
 
