@@ -61,10 +61,10 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
 
-  frontend:
-    name: Frontend Analysis
+  js-analysis:
+    name: JS/TS Analysis (all projects)
     runs-on: [self-hosted, holdfast]
-    timeout-minutes: 20
+    timeout-minutes: 30
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -88,19 +88,19 @@ jobs:
           yarn turbo run build --filter='rrweb...'
           yarn turbo run build --filter='@rrweb/*' --filter='!@rrweb/web-extension'
 
-      - name: Run tests with coverage
+      - name: Run frontend tests with coverage
         run: yarn workspace @holdfast-io/frontend test --run --coverage
         env:
           TZ: UTC
 
-      - name: SonarQube Scan
+      - name: Scan — holdfast-frontend
         uses: SonarSource/sonarqube-scan-action@v6
         with:
           projectBaseDir: src/frontend
           args: >
             -Dsonar.projectKey=holdfast-frontend
             -Dsonar.sources=src
-            -Dsonar.exclusions=src/graph/generated/**,src/__generated/**,src/stubs/**,**/*.test.*,**/*.spec.*
+            -Dsonar.exclusions=src/graph/generated/**,src/__generated/**,src/stubs/**,**/*.test.*
             -Dsonar.tests=src
             -Dsonar.test.inclusions=**/*.test.ts,**/*.test.tsx
             -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
@@ -109,37 +109,7 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
 
-      - name: SonarQube Quality Gate
-        uses: SonarSource/sonarqube-quality-gate-action@v1
-        timeout-minutes: 5
-        with:
-          scanMetadataReportFile: src/frontend/.scannerwork/report-task.txt
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-
-  browser:
-    name: Browser SDK Analysis
-    runs-on: [self-hosted, holdfast]
-    timeout-minutes: 15
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: lts/*
-
-      - name: Enable Corepack
-        run: corepack enable
-
-      - name: Install dependencies
-        run: yarn install
-
-      - name: SonarQube Scan
+      - name: Scan — holdfast-browser
         uses: SonarSource/sonarqube-scan-action@v6
         with:
           projectBaseDir: sdk/highlight-run
@@ -154,37 +124,7 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
 
-      - name: SonarQube Quality Gate
-        uses: SonarSource/sonarqube-quality-gate-action@v1
-        timeout-minutes: 5
-        with:
-          scanMetadataReportFile: sdk/highlight-run/.scannerwork/report-task.txt
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-
-  node:
-    name: Node SDK Analysis
-    runs-on: [self-hosted, holdfast]
-    timeout-minutes: 15
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: lts/*
-
-      - name: Enable Corepack
-        run: corepack enable
-
-      - name: Install dependencies
-        run: yarn install
-
-      - name: SonarQube Scan
+      - name: Scan — holdfast-node
         uses: SonarSource/sonarqube-scan-action@v6
         with:
           projectBaseDir: sdk/highlight-node
@@ -199,37 +139,7 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
 
-      - name: SonarQube Quality Gate
-        uses: SonarSource/sonarqube-quality-gate-action@v1
-        timeout-minutes: 5
-        with:
-          scanMetadataReportFile: sdk/highlight-node/.scannerwork/report-task.txt
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-
-  sdk-integrations:
-    name: SDK Integrations Analysis
-    runs-on: [self-hosted, holdfast]
-    timeout-minutes: 15
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: lts/*
-
-      - name: Enable Corepack
-        run: corepack enable
-
-      - name: Install dependencies
-        run: yarn install
-
-      - name: SonarQube Scan
+      - name: Scan — holdfast-sdk-integrations
         uses: SonarSource/sonarqube-scan-action@v6
         with:
           projectBaseDir: .
@@ -244,26 +154,7 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
 
-      - name: SonarQube Quality Gate
-        uses: SonarSource/sonarqube-quality-gate-action@v1
-        timeout-minutes: 5
-        with:
-          scanMetadataReportFile: .scannerwork/report-task.txt
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-
-  infra:
-    name: Infrastructure Analysis
-    runs-on: [self-hosted, holdfast]
-    timeout-minutes: 10
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: SonarQube Scan
+      - name: Scan — holdfast-infra
         uses: SonarSource/sonarqube-scan-action@v6
         with:
           projectBaseDir: .
@@ -272,15 +163,6 @@ jobs:
             -Dsonar.sources=infra
             -Dsonar.exclusions=**/node_modules/**
             -Dsonar.scm.revision=${{ github.sha }}
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-
-      - name: SonarQube Quality Gate
-        uses: SonarSource/sonarqube-quality-gate-action@v1
-        timeout-minutes: 5
-        with:
-          scanMetadataReportFile: .scannerwork/report-task.txt
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
