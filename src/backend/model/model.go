@@ -258,9 +258,6 @@ type Workspace struct {
 	StripeCustomerID            *string
 	PlanTier                    string `gorm:"default:Free"`
 	UnlimitedMembers            bool   `gorm:"default:false"`
-	BillingPeriodStart          *time.Time
-	BillingPeriodEnd            *time.Time
-	NextInvoiceDate             *time.Time
 	MonthlySessionLimit         *int
 	MonthlyMembersLimit         *int
 	MonthlyErrorsLimit          *int
