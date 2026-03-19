@@ -104,9 +104,9 @@ jobs:
 
       - name: Set versions
         run: |
-          cd sdk/highlight-run && npm version ${{ inputs.version }} --no-git-tag-version --allow-same-version
-          cd ../../sdk/highlight-cloudflare && npm version ${{ inputs.version }} --no-git-tag-version --allow-same-version
-          cd ../../packages/sourcemap-uploader && npm version ${{ inputs.version }} --no-git-tag-version --allow-same-version
+          for pkg in sdk/highlight-run sdk/highlight-cloudflare packages/sourcemap-uploader; do
+            node -e "const f='$pkg/package.json'; const p=JSON.parse(require('fs').readFileSync(f)); p.version='${{ inputs.version }}'; require('fs').writeFileSync(f, JSON.stringify(p, null, '\t')+'\n')"
+          done
 
       - name: Publish highlight.run
         working-directory: sdk/highlight-run
@@ -148,8 +148,9 @@ jobs:
 
       - name: Set versions
         run: |
-          cd sdk/highlight-node && npm version ${{ inputs.version }} --no-git-tag-version --allow-same-version
-          cd ../../sdk/highlight-react && npm version ${{ inputs.version }} --no-git-tag-version --allow-same-version
+          for pkg in sdk/highlight-node sdk/highlight-react; do
+            node -e "const f='$pkg/package.json'; const p=JSON.parse(require('fs').readFileSync(f)); p.version='${{ inputs.version }}'; require('fs').writeFileSync(f, JSON.stringify(p, null, '\t')+'\n')"
+          done
 
       - name: Publish @holdfast-io/node
         working-directory: sdk/highlight-node
@@ -185,8 +186,8 @@ jobs:
 
       - name: Set versions
         run: |
-          for pkg in highlight-apollo highlight-hono highlight-nest highlight-remix pino; do
-            cd sdk/$pkg && npm version ${{ inputs.version }} --no-git-tag-version --allow-same-version && cd ../..
+          for pkg in sdk/highlight-apollo sdk/highlight-hono sdk/highlight-nest sdk/highlight-remix sdk/pino; do
+            node -e "const f='$pkg/package.json'; const p=JSON.parse(require('fs').readFileSync(f)); p.version='${{ inputs.version }}'; require('fs').writeFileSync(f, JSON.stringify(p, null, '\t')+'\n')"
           done
 
       - name: Publish @holdfast-io/apollo
@@ -240,7 +241,7 @@ jobs:
           name: sdk-dist
 
       - name: Set version
-        run: cd sdk/highlight-next && npm version ${{ inputs.version }} --no-git-tag-version --allow-same-version
+        run: node -e "const f='sdk/highlight-next/package.json'; const p=JSON.parse(require('fs').readFileSync(f)); p.version='${{ inputs.version }}'; require('fs').writeFileSync(f, JSON.stringify(p, null, '\t')+'\n')"
 
       - name: Publish @holdfast-io/next
         working-directory: sdk/highlight-next
