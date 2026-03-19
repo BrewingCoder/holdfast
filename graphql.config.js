@@ -1,14 +1,14 @@
 module.exports = {
 	projects: {
 		backendPrivate: {
-			schema: './backend/private-graph/graph/schema.graphqls',
+			schema: './src/backend/private-graph/graph/schema.graphqls',
 		},
 		backendPublic: {
-			schema: './backend/public-graph/graph/schema.graphqls',
+			schema: './src/backend/public-graph/graph/schema.graphqls',
 		},
 		frontend: {
-			schema: './backend/private-graph/graph/schema.graphqls',
-			documents: './frontend/**/*.gql',
+			schema: './src/backend/private-graph/graph/schema.graphqls',
+			documents: './src/frontend/**/*.gql',
 		},
 	},
 }

@@ -1,0 +1,33 @@
+# HoldFast services for the hobby deployment.
+services:
+    backend:
+        container_name: backend
+        # TODO: Update registry path when HoldFast registry is set up
+        image: ${BACKEND_IMAGE_NAME-ghcr.io/highlight/highlight-backend:latest}
+        restart: on-failure
+        ports:
+            - '0.0.0.0:8082:8082'
+        volumes:
+            - highlight-data:/highlight-data
+            - ../../src/backend/env.enc:/build/env.enc
+            - ../../src/backend/env.enc.dgst:/build/env.enc.dgst
+            - ../../src/backend/localhostssl/server.key:/build/localhostssl/server.key
+            - ../../src/backend/localhostssl/server.crt:/build/localhostssl/server.crt
+        env_file: .env
+
+    frontend:
+        container_name: frontend
+        # TODO: Update registry path when HoldFast registry is set up
+        image: ${FRONTEND_IMAGE_NAME-ghcr.io/highlight/highlight-frontend:latest}
+        restart: on-failure
+        volumes:
+            - ../../src/backend/localhostssl/server.key:/etc/ssl/private/ssl-cert.key
+            - ../../src/backend/localhostssl/server.pem:/etc/ssl/certs/ssl-cert.pem
+        ports:
+            - '0.0.0.0:3000:3000'
+            - '0.0.0.0:6006:6006'
+            - '0.0.0.0:8080:8080'
+        env_file: .env
+
+volumes:
+    highlight-data:

@@ -28,7 +28,7 @@ jobs:
             - name: Setup Golang environment
               uses: buildjet/setup-go@v5
               with:
-                  go-version-file: 'backend/go.mod'
+                  go-version-file: 'src/backend/go.mod'
                   cache-dependency-path: '**/go.sum'
 
             - name: Install poetry
@@ -44,7 +44,7 @@ jobs:
               uses: dopplerhq/cli-action@v3
 
             - name: Install dependencies
-              working-directory: ./e2e/tests
+              working-directory: ./tests/e2e/tests
               run: poetry install --all-extras
 
             - name: Install ffmpeg
@@ -74,7 +74,7 @@ jobs:
                   fi
 
                   # start highlight
-                  pushd docker;
+                  pushd infra/docker;
                   source ./env.sh;
                   ./start-infra.sh > /tmp/highlight.log 2>&1;
                   docker compose exec -e PSQL_HOST -e PSQL_USER -e PSQL_DB postgres bash -c 'psql -h $PSQL_HOST -U $PSQL_USER $PSQL_DB < /root/init.sql' >> /tmp/highlight.log 2>&1;
@@ -89,7 +89,7 @@ jobs:
                   popd;
 
                   # run opentelemetry file watcher
-                  pushd e2e/opentelemetry/filelog;
+                  pushd tests/e2e/opentelemetry/filelog;
                   EXAMPLE_LOG_FILE_PATH=/tmp/highlight.log docker compose run -d file-collector;
                   popd;
 
@@ -97,10 +97,10 @@ jobs:
                   yarn dlx wait-on -l -s 3 http://127.0.0.1:3000/index.html http://127.0.0.1:8082/health;
 
                   # run cypress tests
-                  yarn cy:run --spec 'cypress/e2e/*.cy.js,!cypress/e2e/sso.cy.js';
+                  yarn cy:run --spec 'tests/cypress/e2e/*.cy.js,!tests/cypress/e2e/sso.cy.js';
 
                   # run python functional tests that ensure cypress session is correct
-                  pushd ./e2e/tests
+                  pushd ./tests/e2e/tests
                   export HIGHLIGHT_OAUTH_CLIENT_ID=abc123
                   export HIGHLIGHT_OAUTH_CLIENT_SECRET=def456
                   poetry run pytest -k cypress .
@@ -121,18 +121,18 @@ jobs:
             - name: Dump docker container logs on failure
               if: failure()
               run: |
-                  pushd docker;
+                  pushd infra/docker;
                   docker compose logs;
                   popd;
 
-                  pushd e2e/opentelemetry/filelog;
+                  pushd tests/e2e/opentelemetry/filelog;
                   docker compose logs;
                   popd;
 
             - name: Dump databases on failure
               if: failure()
               run: |
-                  cd docker;
+                  cd infra/docker;
                   mkdir backups
 
                   docker compose exec postgres bash -c "mkdir /backups";
@@ -150,14 +150,14 @@ jobs:
               uses: actions/upload-artifact@v4
               with:
                   name: db-dump
-                  path: docker/backups/*
+                  path: infra/docker/backups/*
 
             - name: Save videos
               uses: actions/upload-artifact@v4
               if: failure()
               with:
                   name: cypress-videos
-                  path: cypress/videos
+                  path: tests/cypress/videos
 
     e2e-frontend-backend:
         name: E2E Frontend / Backend
@@ -179,7 +179,7 @@ jobs:
             - name: Setup Golang environment
               uses: buildjet/setup-go@v5
               with:
-                  go-version-file: 'backend/go.mod'
+                  go-version-file: 'src/backend/go.mod'
                   cache-dependency-path: '**/go.sum'
 
             - name: Setup .NET environment
@@ -200,7 +200,7 @@ jobs:
               uses: dopplerhq/cli-action@v3
 
             - name: Install dependencies
-              working-directory: ./e2e/tests
+              working-directory: ./tests/e2e/tests
               run: poetry install --all-extras
 
             - name: Login to Docker Hub
@@ -213,7 +213,7 @@ jobs:
             - name: Start docker containers & run sdk e2e test
               run: |
                   # start highlight
-                  pushd docker;
+                  pushd infra/docker;
                   source ./env.sh;
                   ./start-infra.sh > /tmp/highlight.log 2>&1;
                   docker compose exec -e PSQL_HOST -e PSQL_USER -e PSQL_DB postgres bash -c 'psql -h $PSQL_HOST -U $PSQL_USER $PSQL_DB < /root/init.sql' >> /tmp/highlight.log 2>&1;
@@ -223,7 +223,7 @@ jobs:
                   popd;
 
                   # run python backend functional tests
-                  pushd ./e2e/tests
+                  pushd ./tests/e2e/tests
                   export HIGHLIGHT_OAUTH_CLIENT_ID=abc123
                   export HIGHLIGHT_OAUTH_CLIENT_SECRET=def456
                   poetry run pytest -k "not cypress" .
@@ -244,13 +244,13 @@ jobs:
             - name: Dump docker container logs on failure
               if: failure()
               run: |
-                  cd docker;
+                  cd infra/docker;
                   docker compose -f compose.yml -f compose.hobby.yml logs;
 
             - name: Dump databases on failure
               if: failure()
               run: |
-                  cd docker;
+                  cd infra/docker;
                   mkdir backups
 
                   docker compose exec postgres bash -c "mkdir /backups";
@@ -266,7 +266,7 @@ jobs:
               uses: actions/upload-artifact@v4
               with:
                   name: db-dump
-                  path: docker/backups/*
+                  path: infra/docker/backups/*
 
     e2e-docker:
         name: E2E Dockerized Apps
@@ -292,7 +292,7 @@ jobs:
                   cache: 'poetry'
 
             - name: Install dependencies
-              working-directory: ./e2e/tests
+              working-directory: ./tests/e2e/tests
               run: poetry install --all-extras
 
             - name: Login to Docker Hub
@@ -311,5 +311,5 @@ jobs:
                   password: ${{ secrets.GH_DOCKER_TOKEN }}
 
             - name: Start docker containers & run sdk e2e test
-              working-directory: ./e2e/tests/src
+              working-directory: ./tests/e2e/tests/src
               run: poetry run python app_runner.py ${{ matrix.app }}

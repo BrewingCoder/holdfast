@@ -41,14 +41,14 @@ Deploy a hobby instance on Linux with Docker (minimum: 8GB RAM, 4 CPUs, 64 GB di
 
 ```bash
 git clone --recurse-submodules https://github.com/BrewingCoder/holdfast
-cd holdfast/docker
+cd holdfast/infra/docker
 # Edit .env — set ADMIN_PASSWORD
 ./run-hobby.sh
 ```
 
 The app is accessible at `https://localhost`. Log in with any email address and the password you set in `.env`.
 
-All service endpoints are configurable via environment variables — deploy to any domain, IP, or localhost. See `docker/.env` and `HOLDFAST-NOTES.md` for configuration details.
+All service endpoints are configurable via environment variables — deploy to any domain, IP, or localhost. See `infra/docker/.env` and `docs/HOLDFAST-NOTES.md` for configuration details.
 
 ## Tech Stack
 
@@ -81,9 +81,9 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for full setup instructions.
 
 ```bash
 # Prerequisites: Go 1.23+, Node.js 18+, Docker
-cd docker && docker-compose up        # Start infrastructure
-cd backend && make migrate && make start  # Start backend
-cd frontend && yarn dev                   # Start frontend
+cd infra/docker && docker-compose up       # Start infrastructure
+cd src/backend && make migrate && make start  # Start backend
+cd src/frontend && yarn dev                   # Start frontend
 ```
 
 ## What Was Removed
@@ -97,13 +97,13 @@ HoldFast is lighter than upstream Highlight.io. We stripped everything that serv
 - **Marketing website** — The `highlight.io` Next.js site
 - **Feature gates** — All boolean flags defaulted to enabled
 
-See [CHANGELOG-FORK.md](CHANGELOG-FORK.md) for the detailed record of every change.
+See [CHANGELOG-FORK.md](docs/CHANGELOG-FORK.md) for the detailed record of every change.
 
 ## Security Posture
 
 Observability data is sensitive. Session replays capture user behavior. Error traces can contain environment variables and secrets. Logs may include PII, internal URLs, and infrastructure details. For many organizations, this data is subject to strict compliance requirements — FedRAMP, HIPAA, SOC 2, NIST 800-53.
 
-HoldFast takes this seriously. Our security roadmap (see [ROADMAP.md](ROADMAP.md) Phase 2) includes:
+HoldFast takes this seriously. Our security roadmap (see [ROADMAP.md](docs/ROADMAP.md) Phase 2) includes:
 
 - **Encryption at rest** — All stored data (PostgreSQL, ClickHouse, Redis, S3, Kafka) encrypted using configurable key management (AWS KMS, GCP KMS, HashiCorp Vault, or local keys)
 - **Field-level encryption** — Application-layer encryption for PII, credentials, and sensitive telemetry fields. Even database admins can't read them without the application key.
@@ -116,7 +116,7 @@ HoldFast takes this seriously. Our security roadmap (see [ROADMAP.md](ROADMAP.md
 
 ## Roadmap
 
-See [ROADMAP.md](ROADMAP.md) for the full plan. Highlights:
+See [ROADMAP.md](docs/ROADMAP.md) for the full plan. Highlights:
 
 - **Done:** SaaS/marketing strip, feature gate unlock, domain configurability, `@holdfast-io` npm scope, AGPL-3.0 licensing
 - **Next:** Security hardening (encryption at rest, TLS enforcement, OIDC auth, MFA), Go module rename, dependency updates
@@ -124,7 +124,7 @@ See [ROADMAP.md](ROADMAP.md) for the full plan. Highlights:
 
 ## Governance
 
-HoldFast is community-driven and maintained on a best-effort basis. Contributions from both humans and AI agents are welcome — the repository is seeded with documentation to support both. See [GOVERNANCE.md](GOVERNANCE.md) for details.
+HoldFast is community-driven and maintained on a best-effort basis. Contributions from both humans and AI agents are welcome — the repository is seeded with documentation to support both. See [GOVERNANCE.md](docs/GOVERNANCE.md) for details.
 
 If the project gains sufficient traction, a HoldFast Contributor Board will be formed to guide roadmap decisions. The license will remain AGPL-3.0 permanently.
 

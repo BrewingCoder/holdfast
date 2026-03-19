@@ -54,7 +54,7 @@ jobs:
             - name: Build and push docker container.
               id: image-build
               shell: bash
-              working-directory: ./docker
+              working-directory: ./infra/docker
               env:
                   DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
                   REACT_APP_COMMIT_SHA: ${{ github.sha }}
@@ -112,7 +112,7 @@ jobs:
                   cache: 'poetry'
 
             - name: Install dependencies
-              working-directory: ./e2e/tests
+              working-directory: ./tests/e2e/tests
               run: poetry install --all-extras
 
             - name: Install Doppler CLI
@@ -147,7 +147,7 @@ jobs:
                   export RELEASE=$IMAGE_TAG
                   export LICENSE_KEY
 
-                  pushd docker;
+                  pushd infra/docker;
 
                   # setup infra / db
                   # update to firebase auth mode for sso test
@@ -171,14 +171,14 @@ jobs:
                   yarn build:sdk >> /tmp/highlight.log 2>&1;
 
                   # run python backend functional tests
-                  pushd ./e2e/tests
+                  pushd ./tests/e2e/tests
                   export HIGHLIGHT_OAUTH_CLIENT_ID=abc123
                   export HIGHLIGHT_OAUTH_CLIENT_SECRET=def456
                   poetry run pytest -k "not cypress" .
                   popd
 
                   # run cypress tests for sso
-                  yarn cy:run --spec "cypress/e2e/sso.cy.js";
+                  yarn cy:run --spec "tests/cypress/e2e/sso.cy.js";
 
                   # look for containers that crashed
                   num_crashed=$(docker ps -a -f status=exited | grep -E '\(' | grep -cvE '\(\d+\)' || true)
@@ -195,5 +195,5 @@ jobs:
             - name: Dump docker container logs on failure
               if: failure()
               run: |
-                  cd docker;
+                  cd infra/docker;
                   docker compose -f compose.yml -f compose.enterprise.yml logs;

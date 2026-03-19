@@ -27,13 +27,13 @@ yalc.lock
 **/.nvmrc
 **/*.db
 
-backend/backend
-backend/__debug_bin
-backend/dump.rdb
-backend/.config
+src/backend/backend
+src/backend/__debug_bin
+src/backend/dump.rdb
+src/backend/.config
 
-docker/.telemetry
-docker/enterprise-private.pem
+infra/docker/.telemetry
+infra/docker/enterprise-private.pem
 
 # Editor Artifacts
 **/.idea
@@ -42,8 +42,8 @@ docker/enterprise-private.pem
 dump.rdb
 
 # Cypress artifacts
-cypress/screenshots/
-cypress/videos/
+tests/cypress/screenshots/
+tests/cypress/videos/
 
 *.tsbuildinfo
 **/.turbo
@@ -56,9 +56,9 @@ temp
 .env
 .rollup.cache
 
-scripts/emails.csv
-scripts/invoices.csv
-scripts/images
+tools/scripts/emails.csv
+tools/scripts/invoices.csv
+tools/scripts/images
 sdk/highlightinc-highlight-datasource/grafana/
 
 google-chrome*

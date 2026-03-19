@@ -15,23 +15,26 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **No marketing integrations.** HubSpot, Apollo.io, Clearbit, and similar lead-gen services have been removed. Do not reintroduce them.
 - **Deployment-agnostic.** Code must support Docker Compose, Helm charts, and other self-hosted deployment methods. Configuration is via environment variables, not hardcoded values.
 
-See `HOLDFAST-NOTES.md` for fork history, `CHANGELOG-FORK.md` for detailed changes from upstream, and `GOVERNANCE.md` for contribution rules.
+See `docs/HOLDFAST-NOTES.md` for fork history, `docs/CHANGELOG-FORK.md` for detailed changes from upstream, and `docs/GOVERNANCE.md` for contribution rules.
 
 ## Repository Overview
 
 HoldFast is a full-stack observability platform that provides session replay, error monitoring, logging, and distributed tracing capabilities. The repository is structured as a monorepo containing:
 
-- **Backend**: Go-based GraphQL API server with dual public/private GraphQL endpoints
-- **Frontend**: React/TypeScript dashboard application built with Vite
-- **SDKs**: Multi-language client libraries for integrating with HoldFast
-- **RRWeb**: Forked session replay recording library (submodule)
-- **Infrastructure**: Docker compose and deployment configurations
+- **Backend** (`src/backend/`): Go-based GraphQL API server with dual public/private GraphQL endpoints
+- **Frontend** (`src/frontend/`): React/TypeScript dashboard application built with Vite
+- **SDKs** (`sdk/`): Multi-language client libraries for integrating with HoldFast
+- **RRWeb** (`rrweb/`): Forked session replay recording library (submodule)
+- **Infrastructure** (`infra/docker/`, `infra/deploy/`): Docker compose and deployment configurations
+- **Tests** (`tests/cypress/`, `tests/e2e/`): End-to-end and integration tests
+- **Tools** (`tools/antlr/`, `tools/bin/`, `tools/scripts/`): Build and development utilities
+- **Packages** (`packages/`): Shared packages including render and sourcemap-uploader
 
 ## Key Development Commands
 
 ### Backend Development
 ```bash
-# In /backend directory
+# In /src/backend directory
 make start            # Start backend with doppler (recommended)
 make start-no-doppler # Start backend without doppler
 make debug            # Start with debugger attached
@@ -43,7 +46,7 @@ make private-gen      # Generate private GraphQL schema
 
 ### Frontend Development
 ```bash
-# In /frontend directory
+# In /src/frontend directory
 yarn dev              # Start development server
 yarn build            # Build production bundle
 yarn test             # Run tests
@@ -66,7 +69,7 @@ yarn lint             # Run linting across all packages
 
 ### Docker Development
 ```bash
-# In /docker directory
+# In /infra/docker directory
 docker-compose up     # Start all infrastructure services
 # or use the convenience script:
 ./run-hobby.sh        # Start hobby deployment
@@ -147,9 +150,9 @@ make migrate
 
 ### Getting Started
 1. **Prerequisites**: Go 1.23+, Node.js 18+, Docker, Doppler CLI
-2. **Start Infrastructure**: `cd docker && docker-compose up`
-3. **Backend Setup**: `cd backend && make migrate && make start`
-4. **Frontend Setup**: `cd frontend && yarn dev`
+2. **Start Infrastructure**: `cd infra/docker && docker-compose up`
+3. **Backend Setup**: `cd src/backend && make migrate && make start`
+4. **Frontend Setup**: `cd src/frontend && yarn dev`
 
 ### Making Changes
 1. **Backend GraphQL**: Modify schema → `make public-gen` or `make private-gen`
@@ -159,10 +162,10 @@ make migrate
 ### Testing
 ```bash
 # Run backend tests
-cd backend && make test
+cd src/backend && make test
 
 # Run frontend tests
-cd frontend && yarn test
+cd src/frontend && yarn test
 
 # Run all tests
 yarn test:all
@@ -182,9 +185,9 @@ yarn build:sdk
 ```
 
 ### Docker Deployment
-- **Hobby**: Single-node deployment with `docker/run-hobby.sh`
+- **Hobby**: Single-node deployment with `infra/docker/run-hobby.sh`
 - **Enterprise**: Scalable deployment with separate services
-- **Development**: Local services via `docker-compose up`
+- **Development**: Local services via `cd infra/docker && docker-compose up`
 
 ## Code Organization
 
@@ -211,7 +214,7 @@ yarn build:sdk
 
 ## What Was Removed From Upstream
 
-The following components were stripped from the original Highlight.io codebase (see `CHANGELOG-FORK.md` for details):
+The following components were stripped from the original Highlight.io codebase (see `docs/CHANGELOG-FORK.md` for details):
 
 - **HubSpot** — CRM tracking
 - **Apollo.io** — Lead enrichment / sales sequences

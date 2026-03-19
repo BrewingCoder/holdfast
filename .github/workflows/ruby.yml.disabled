@@ -55,7 +55,7 @@ jobs:
         runs-on: ubuntu-latest
         defaults:
             run:
-                working-directory: ./e2e/ruby/rails/demo
+                working-directory: ./tests/e2e/ruby/rails/demo
         steps:
             - uses: actions/checkout@v4
             - name: Install Ruby
@@ -74,7 +74,7 @@ jobs:
         runs-on: ubuntu-latest
         defaults:
             run:
-                working-directory: ./e2e/ruby/rails/api-only
+                working-directory: ./tests/e2e/ruby/rails/api-only
         steps:
             - uses: actions/checkout@v4
             - name: Install Ruby

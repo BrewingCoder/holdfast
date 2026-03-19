@@ -7,9 +7,9 @@ on:
         paths:
             - 'go.work'
             - 'go.work.sum'
-            - 'backend/**'
-            - 'deploy/**'
-            - 'docker/backend.Dockerfile'
+            - 'src/backend/**'
+            - 'infra/deploy/**'
+            - 'infra/docker/backend.Dockerfile'
             - 'sdk/highlight-go/**'
             - '.github/workflows/deploy.yml'
 
@@ -28,11 +28,11 @@ jobs:
             - name: Setup Go
               uses: actions/setup-go@v5
               with:
-                  go-version-file: 'backend/go.mod'
-                  cache-dependency-path: 'backend/go.sum'
+                  go-version-file: 'src/backend/go.mod'
+                  cache-dependency-path: 'src/backend/go.sum'
             - name: Migrate database
               run: |
-                  cd backend/
+                  cd src/backend/
                   make migrate
               env:
                   DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
@@ -51,11 +51,11 @@ jobs:
             - name: Setup Go
               uses: actions/setup-go@v5
               with:
-                  go-version-file: 'backend/go.mod'
-                  cache-dependency-path: 'backend/go.sum'
+                  go-version-file: 'src/backend/go.mod'
+                  cache-dependency-path: 'src/backend/go.sum'
             - name: Build and zip
               run: |
-                  cd backend/
+                  cd src/backend/
                   CGO_ENABLED=0 go build -o bootstrap ./lambda-functions/deleteSessions/getSessionIdsByQuery
                   zip getSessionIdsByQuery.zip bootstrap
                   CGO_ENABLED=0 go build -o bootstrap ./lambda-functions/deleteSessions/deleteSessionBatchFromPostgres
@@ -87,15 +87,15 @@ jobs:
                   aws lambda update-function-configuration --function-name sendEmail \
                     --environment "$(doppler secrets download --no-file | jq ". + {REACT_APP_COMMIT_SHA: \"$REACT_APP_COMMIT_SHA\" }" | jq '{Variables: .}')" >/dev/null 2>&1
             - name: Deploy getSessionIdsByQuery
-              run: aws lambda update-function-code --function-name getSessionIdsByQuery --zip-file fileb://backend/getSessionIdsByQuery.zip >/dev/null 2>&1
+              run: aws lambda update-function-code --function-name getSessionIdsByQuery --zip-file fileb://src/backend/getSessionIdsByQuery.zip >/dev/null 2>&1
             - name: Deploy deleteSessionBatchFromPostgres
-              run: aws lambda update-function-code --function-name deleteSessionBatchFromPostgres --zip-file fileb://backend/deleteSessionBatchFromPostgres.zip >/dev/null 2>&1
+              run: aws lambda update-function-code --function-name deleteSessionBatchFromPostgres --zip-file fileb://src/backend/deleteSessionBatchFromPostgres.zip >/dev/null 2>&1
             - name: Deploy deleteSessionBatchFromOpenSearch
-              run: aws lambda update-function-code --function-name deleteSessionBatchFromOpenSearch --zip-file fileb://backend/deleteSessionBatchFromOpenSearch.zip >/dev/null 2>&1
+              run: aws lambda update-function-code --function-name deleteSessionBatchFromOpenSearch --zip-file fileb://src/backend/deleteSessionBatchFromOpenSearch.zip >/dev/null 2>&1
             - name: Deploy deleteSessionBatchFromS3
-              run: aws lambda update-function-code --function-name deleteSessionBatchFromS3 --zip-file fileb://backend/deleteSessionBatchFromS3.zip >/dev/null 2>&1
+              run: aws lambda update-function-code --function-name deleteSessionBatchFromS3 --zip-file fileb://src/backend/deleteSessionBatchFromS3.zip >/dev/null 2>&1
             - name: Deploy sendEmail
-              run: aws lambda update-function-code --function-name sendEmail --zip-file fileb://backend/sendEmail.zip >/dev/null 2>&1
+              run: aws lambda update-function-code --function-name sendEmail --zip-file fileb://src/backend/sendEmail.zip >/dev/null 2>&1
 
     deploy-session-export-lambdas:
         needs: migrate-database
@@ -111,11 +111,11 @@ jobs:
             - name: Setup Go
               uses: actions/setup-go@v5
               with:
-                  go-version-file: 'backend/go.mod'
-                  cache-dependency-path: 'backend/go.sum'
+                  go-version-file: 'src/backend/go.mod'
+                  cache-dependency-path: 'src/backend/go.sum'
             - name: Build and zip
               run: |
-                  cd backend/
+                  cd src/backend/
                   CGO_ENABLED=0 go build -o bootstrap ./lambda-functions/sessionExport/saveSessionExport
                   zip saveSessionExport.zip bootstrap
                   CGO_ENABLED=0 go build -o bootstrap ./lambda-functions/sessionExport/sendEmail
@@ -135,9 +135,9 @@ jobs:
                   aws lambda update-function-configuration --function-name sendSessionExportEmail \
                     --environment "$(doppler secrets download --no-file | jq ". + {REACT_APP_COMMIT_SHA: \"$REACT_APP_COMMIT_SHA\" }" | jq '{Variables: .}')" >/dev/null 2>&1
             - name: Deploy saveSessionExport
-              run: aws lambda update-function-code --function-name saveSessionExport --zip-file fileb://backend/saveSessionExport.zip >/dev/null 2>&1
+              run: aws lambda update-function-code --function-name saveSessionExport --zip-file fileb://src/backend/saveSessionExport.zip >/dev/null 2>&1
             - name: Deploy sendSessionExportEmail
-              run: aws lambda update-function-code --function-name sendSessionExportEmail --zip-file fileb://backend/sendEmail.zip >/dev/null 2>&1
+              run: aws lambda update-function-code --function-name sendSessionExportEmail --zip-file fileb://src/backend/sendEmail.zip >/dev/null 2>&1
 
     deploy-digest-lambdas:
         needs: migrate-database
@@ -153,11 +153,11 @@ jobs:
             - name: Setup Go
               uses: actions/setup-go@v5
               with:
-                  go-version-file: 'backend/go.mod'
-                  cache-dependency-path: 'backend/go.sum'
+                  go-version-file: 'src/backend/go.mod'
+                  cache-dependency-path: 'src/backend/go.sum'
             - name: Build and zip
               run: |
-                  cd backend/
+                  cd src/backend/
                   CGO_ENABLED=0 go build -o bootstrap ./lambda-functions/digests/getProjectIds
                   zip getProjectIds.zip bootstrap
                   CGO_ENABLED=0 go build -o bootstrap ./lambda-functions/digests/getDigestData
@@ -181,11 +181,11 @@ jobs:
                   aws lambda update-function-configuration --function-name sendDigestEmails \
                     --environment "$(doppler secrets download --no-file | jq ". + {REACT_APP_COMMIT_SHA: \"$REACT_APP_COMMIT_SHA\" }" | jq '{Variables: .}')" >/dev/null 2>&1
             - name: Deploy getProjectIds
-              run: aws lambda update-function-code --function-name getProjectIds --zip-file fileb://backend/getProjectIds.zip >/dev/null 2>&1
+              run: aws lambda update-function-code --function-name getProjectIds --zip-file fileb://src/backend/getProjectIds.zip >/dev/null 2>&1
             - name: Deploy getDigestData
-              run: aws lambda update-function-code --function-name getDigestData --zip-file fileb://backend/getDigestData.zip >/dev/null 2>&1
+              run: aws lambda update-function-code --function-name getDigestData --zip-file fileb://src/backend/getDigestData.zip >/dev/null 2>&1
             - name: Deploy sendDigestEmails
-              run: aws lambda update-function-code --function-name sendDigestEmails --zip-file fileb://backend/sendDigestEmails.zip >/dev/null 2>&1
+              run: aws lambda update-function-code --function-name sendDigestEmails --zip-file fileb://src/backend/sendDigestEmails.zip >/dev/null 2>&1
 
     deploy-session-insights-lambdas:
         needs: migrate-database
@@ -201,11 +201,11 @@ jobs:
             - name: Setup Go
               uses: actions/setup-go@v5
               with:
-                  go-version-file: 'backend/go.mod'
-                  cache-dependency-path: 'backend/go.sum'
+                  go-version-file: 'src/backend/go.mod'
+                  cache-dependency-path: 'src/backend/go.sum'
             - name: Build and zip
               run: |
-                  cd backend/
+                  cd src/backend/
                   CGO_ENABLED=0 go build -o bootstrap ./lambda-functions/sessionInsights/getSessionInsightsData
                   zip getSessionInsightsData.zip bootstrap
                   CGO_ENABLED=0 go build -o bootstrap ./lambda-functions/sessionInsights/sendSessionInsightsEmails
@@ -225,9 +225,9 @@ jobs:
                   aws lambda update-function-configuration --function-name sendSessionInsightsEmails \
                     --environment "$(doppler secrets download --no-file | jq ". + {REACT_APP_COMMIT_SHA: \"$REACT_APP_COMMIT_SHA\" }" | jq '{Variables: .}')" >/dev/null 2>&1
             - name: Deploy getSessionInsightsData
-              run: aws lambda update-function-code --function-name getSessionInsightsData --zip-file fileb://backend/getSessionInsightsData.zip >/dev/null 2>&1
+              run: aws lambda update-function-code --function-name getSessionInsightsData --zip-file fileb://src/backend/getSessionInsightsData.zip >/dev/null 2>&1
             - name: Deploy sendSessionInsightsEmails
-              run: aws lambda update-function-code --function-name sendSessionInsightsEmails --zip-file fileb://backend/sendSessionInsightsEmails.zip >/dev/null 2>&1
+              run: aws lambda update-function-code --function-name sendSessionInsightsEmails --zip-file fileb://src/backend/sendSessionInsightsEmails.zip >/dev/null 2>&1
 
     deploy-metering-lambdas:
         needs: migrate-database
@@ -243,11 +243,11 @@ jobs:
             - name: Setup Go
               uses: actions/setup-go@v5
               with:
-                  go-version-file: 'backend/go.mod'
-                  cache-dependency-path: 'backend/go.sum'
+                  go-version-file: 'src/backend/go.mod'
+                  cache-dependency-path: 'src/backend/go.sum'
             - name: Build and zip
               run: |
-                  cd backend/
+                  cd src/backend/
                   GOARCH=arm64 GOOS=linux CGO_ENABLED=0 go build -o bootstrap ./lambda-functions/metering/awsMarketplaceListener
                   zip awsMarketplaceListener.zip bootstrap
             - name: Configure AWS Credentials
@@ -263,7 +263,7 @@ jobs:
                   aws lambda update-function-configuration --function-name awsMarketplaceListener \
                     --environment "$(doppler secrets download --no-file | jq ". + {REACT_APP_COMMIT_SHA: \"$REACT_APP_COMMIT_SHA\" }" | jq '{Variables: .}')" >/dev/null 2>&1
             - name: Deploy awsMarketplaceListener
-              run: aws lambda update-function-code --function-name awsMarketplaceListener --zip-file fileb://backend/awsMarketplaceListener.zip >/dev/null 2>&1
+              run: aws lambda update-function-code --function-name awsMarketplaceListener --zip-file fileb://src/backend/awsMarketplaceListener.zip >/dev/null 2>&1
 
     deploy-user-journey-lambdas:
         needs: migrate-database
@@ -279,11 +279,11 @@ jobs:
             - name: Setup Go
               uses: actions/setup-go@v5
               with:
-                  go-version-file: 'backend/go.mod'
-                  cache-dependency-path: 'backend/go.sum'
+                  go-version-file: 'src/backend/go.mod'
+                  cache-dependency-path: 'src/backend/go.sum'
             - name: Build and zip
               run: |
-                  cd backend/
+                  cd src/backend/
                   CGO_ENABLED=0 go build -o bootstrap ./lambda-functions/journeys/updateNormalnessScores
                   zip updateNormalnessScores.zip bootstrap
             - name: Configure AWS Credentials
@@ -299,7 +299,7 @@ jobs:
                   aws lambda update-function-configuration --function-name updateNormalnessScores \
                     --environment "$(doppler secrets download --no-file | jq ". + {REACT_APP_COMMIT_SHA: \"$REACT_APP_COMMIT_SHA\" }" | jq '{Variables: .}')" >/dev/null 2>&1
             - name: Deploy updateNormalnessScores
-              run: aws lambda update-function-code --function-name updateNormalnessScores --zip-file fileb://backend/updateNormalnessScores.zip >/dev/null 2>&1
+              run: aws lambda update-function-code --function-name updateNormalnessScores --zip-file fileb://src/backend/updateNormalnessScores.zip >/dev/null 2>&1
 
     deploy_backend:
         needs: migrate-database
@@ -329,7 +329,7 @@ jobs:
                   ECR_REPOSITORY: highlight-production-ecr-repo
                   IMAGE_TAG: ${{ github.sha }}
               run: |
-                  docker buildx build --build-arg REACT_APP_COMMIT_SHA=${{ github.sha }} --build-arg RELEASE=${{ github.ref_name }} --platform linux/arm64 -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG.arm64 -f docker/backend.Dockerfile .
+                  docker buildx build --build-arg REACT_APP_COMMIT_SHA=${{ github.sha }} --build-arg RELEASE=${{ github.ref_name }} --platform linux/arm64 -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG.arm64 -f infra/docker/backend.Dockerfile .
                   docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG.arm64
 
             # Edit and deploy private-graph
@@ -337,7 +337,7 @@ jobs:
               id: image-private-graph
               uses: aws-actions/amazon-ecs-render-task-definition@v1
               with:
-                  task-definition: deploy/private-graph-task.json
+                  task-definition: infra/deploy/private-graph-task.json
                   container-name: highlight-backend
                   image: ${{ steps.login-ecr.outputs.registry }}/highlight-production-ecr-repo:${{ github.sha }}.arm64
             - name: Deploy to Amazon ECS private-graph service
@@ -351,7 +351,7 @@ jobs:
               id: image-public-graph
               uses: aws-actions/amazon-ecs-render-task-definition@v1
               with:
-                  task-definition: deploy/public-graph-task.json
+                  task-definition: infra/deploy/public-graph-task.json
                   container-name: highlight-backend
                   image: ${{ steps.login-ecr.outputs.registry }}/highlight-production-ecr-repo:${{ github.sha }}.arm64
             - name: Deploy to Amazon ECS public-graph service
@@ -365,7 +365,7 @@ jobs:
               id: image-worker
               uses: aws-actions/amazon-ecs-render-task-definition@v1
               with:
-                  task-definition: deploy/worker-task.json
+                  task-definition: infra/deploy/worker-task.json
                   container-name: highlight-backend
                   image: ${{ steps.login-ecr.outputs.registry }}/highlight-production-ecr-repo:${{ github.sha }}.arm64
             - name: Deploy to Amazon ECS worker service
@@ -379,7 +379,7 @@ jobs:
               id: image-metric-monitor
               uses: aws-actions/amazon-ecs-render-task-definition@v1
               with:
-                  task-definition: deploy/metric-monitor-task.json
+                  task-definition: infra/deploy/metric-monitor-task.json
                   container-name: highlight-backend
                   image: ${{ steps.login-ecr.outputs.registry }}/highlight-production-ecr-repo:${{ github.sha }}.arm64
             - name: Deploy to Amazon ECS metric monitor service
@@ -393,7 +393,7 @@ jobs:
               id: image-log-alerts
               uses: aws-actions/amazon-ecs-render-task-definition@v1
               with:
-                  task-definition: deploy/log-alerts-task.json
+                  task-definition: infra/deploy/log-alerts-task.json
                   container-name: highlight-backend
                   image: ${{ steps.login-ecr.outputs.registry }}/highlight-production-ecr-repo:${{ github.sha }}.arm64
             - name: Deploy to Amazon ECS log alerts service
@@ -407,7 +407,7 @@ jobs:
               id: image-public-worker-main
               uses: aws-actions/amazon-ecs-render-task-definition@v1
               with:
-                  task-definition: deploy/public-worker-main-service.json
+                  task-definition: infra/deploy/public-worker-main-service.json
                   container-name: highlight-backend
                   image: ${{ steps.login-ecr.outputs.registry }}/highlight-production-ecr-repo:${{ github.sha }}.arm64
             - name: Deploy to Amazon ECS public worker (main topic) service
@@ -421,7 +421,7 @@ jobs:
               id: image-public-worker-batched
               uses: aws-actions/amazon-ecs-render-task-definition@v1
               with:
-                  task-definition: deploy/public-worker-batched-service.json
+                  task-definition: infra/deploy/public-worker-batched-service.json
                   container-name: highlight-backend
                   image: ${{ steps.login-ecr.outputs.registry }}/highlight-production-ecr-repo:${{ github.sha }}.arm64
             - name: Deploy to Amazon ECS public worker (batched topic) service
@@ -435,7 +435,7 @@ jobs:
               id: image-public-worker-datasync
               uses: aws-actions/amazon-ecs-render-task-definition@v1
               with:
-                  task-definition: deploy/public-worker-datasync-service.json
+                  task-definition: infra/deploy/public-worker-datasync-service.json
                   container-name: highlight-backend
                   image: ${{ steps.login-ecr.outputs.registry }}/highlight-production-ecr-repo:${{ github.sha }}.arm64
             - name: Deploy to Amazon ECS public worker (datasync topic) service
@@ -449,7 +449,7 @@ jobs:
               id: image-public-worker-traces
               uses: aws-actions/amazon-ecs-render-task-definition@v1
               with:
-                  task-definition: deploy/public-worker-traces-service.json
+                  task-definition: infra/deploy/public-worker-traces-service.json
                   container-name: highlight-backend
                   image: ${{ steps.login-ecr.outputs.registry }}/highlight-production-ecr-repo:${{ github.sha }}.arm64
             - name: Deploy to Amazon ECS public worker (traces topic) service
@@ -495,7 +495,7 @@ jobs:
               id: image-predictions
               uses: aws-actions/amazon-ecs-render-task-definition@v1
               with:
-                  task-definition: deploy/predictions-task.json
+                  task-definition: infra/deploy/predictions-task.json
                   container-name: highlight-predictions
                   image: ${{ steps.login-ecr.outputs.registry }}/highlight-predictions:${{ github.sha }}.arm64
             - name: Deploy to Amazon ECS private-graph service
@@ -525,8 +525,8 @@ jobs:
                   filters: |
                       otel-changed:
                         - '.github/workflows/deploy.yml'
-                        - 'deploy/opentelemetry-collector.Dockerfile'
-                        - 'deploy/otel-collector.yaml'
+                        - 'infra/deploy/opentelemetry-collector.Dockerfile'
+                        - 'infra/deploy/otel-collector.yaml'
 
             # Edit and deploy opentelemetry collector
             - name: Build, tag, and push arm64 image to Amazon ECR
@@ -536,7 +536,7 @@ jobs:
                   ECR_REPOSITORY: highlight-collector
                   IMAGE_TAG: ${{ github.sha }}
               run: |
-                  cd deploy
+                  cd infra/deploy
                   docker buildx build --platform linux/arm64 -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG.arm64 -f opentelemetry-collector.Dockerfile .
                   docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG.arm64
             - name: Replace image label for opentelemetry collector
@@ -544,7 +544,7 @@ jobs:
               id: image-opentelemetry-collector
               uses: aws-actions/amazon-ecs-render-task-definition@v1
               with:
-                  task-definition: deploy/collector-task.json
+                  task-definition: infra/deploy/collector-task.json
                   container-name: highlight-collector
                   image: ${{ steps.login-ecr.outputs.registry }}/highlight-collector:${{ github.sha }}.arm64
             - name: Deploy to Amazon ECS opentelemetry collector service
@@ -559,7 +559,7 @@ jobs:
               id: image-opentelemetry-firehose-collector
               uses: aws-actions/amazon-ecs-render-task-definition@v1
               with:
-                  task-definition: deploy/collector-firehose-service.json
+                  task-definition: infra/deploy/collector-firehose-service.json
                   container-name: highlight-collector
                   image: ${{ steps.login-ecr.outputs.registry }}/highlight-collector:${{ github.sha }}.arm64
             - name: Deploy to Amazon ECS opentelemetry firehose collector service
@@ -590,7 +590,7 @@ jobs:
                   filters: |
                       kafka-changed:
                         - '.github/workflows/deploy.yml'
-                        - 'deploy/kafka-connect.Dockerfile'
+                        - 'infra/deploy/kafka-connect.Dockerfile'
 
             # Edit and deploy kafka connect
             - name: Build, tag, and push arm64 image to Amazon ECR
@@ -600,7 +600,7 @@ jobs:
                   ECR_REPOSITORY: highlight-kafka-connect
                   IMAGE_TAG: ${{ github.sha }}
               run: |
-                  cd deploy
+                  cd infra/deploy
                   docker buildx build --platform linux/arm64 -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG.arm64 -f kafka-connect.Dockerfile .
                   docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG.arm64
             - name: Replace image label for kafka connect
@@ -608,7 +608,7 @@ jobs:
               id: image-kafka-connect
               uses: aws-actions/amazon-ecs-render-task-definition@v1
               with:
-                  task-definition: deploy/kafka-connect-task.json
+                  task-definition: infra/deploy/kafka-connect-task.json
                   container-name: kafka-connect
                   image: ${{ steps.login-ecr.outputs.registry }}/highlight-kafka-connect:${{ github.sha }}.arm64
             - name: Deploy to Amazon ECS kafka connect service

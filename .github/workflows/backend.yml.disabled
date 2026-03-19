@@ -16,8 +16,8 @@ jobs:
             - name: Setup Go
               uses: actions/setup-go@v5
               with:
-                  go-version-file: 'backend/go.mod'
-                  cache-dependency-path: 'backend/go.sum'
+                  go-version-file: 'src/backend/go.mod'
+                  cache-dependency-path: 'src/backend/go.sum'
 
     code-quality-check:
         needs: code-setup
@@ -28,25 +28,25 @@ jobs:
             - name: Setup Go
               uses: actions/setup-go@v5
               with:
-                  go-version-file: 'backend/go.mod'
-                  cache-dependency-path: 'backend/go.sum'
+                  go-version-file: 'src/backend/go.mod'
+                  cache-dependency-path: 'src/backend/go.sum'
             - name: Format
-              run: if [ "$(gofmt -l -d ./backend | wc -l)" -gt 0 ]; then gofmt -l -d ./backend && exit 1; fi
+              run: if [ "$(gofmt -l -d ./src/backend | wc -l)" -gt 0 ]; then gofmt -l -d ./src/backend && exit 1; fi
             - name: Check for GORM Debug
-              run: if [ "$(grep --exclude-dir migrations -rE 'DB.[\s\n]*Debug\(\)' ./backend | wc -l)" -gt 0 ]; then grep --exclude-dir migrations -rE 'DB.[\s\n]*Debug\(\)' ./backend && exit 1; fi
+              run: if [ "$(grep --exclude-dir migrations -rE 'DB.[\s\n]*Debug\(\)' ./src/backend | wc -l)" -gt 0 ]; then grep --exclude-dir migrations -rE 'DB.[\s\n]*Debug\(\)' ./src/backend && exit 1; fi
             - name: Check for os.Getenv
-              run: if [ "$(grep --exclude-dir migrations -rE 'os\.Getenv\(' ./backend | wc -l)" -gt 0 ]; then grep --exclude-dir migrations -rE 'os\.Getenv\(' ./backend && exit 1; fi
+              run: if [ "$(grep --exclude-dir migrations -rE 'os\.Getenv\(' ./src/backend | wc -l)" -gt 0 ]; then grep --exclude-dir migrations -rE 'os\.Getenv\(' ./src/backend && exit 1; fi
             - name: Check for os.LookupEnv
-              run: if [ "$(grep --exclude-dir migrations -rE 'os\.LookupEnv\(' ./backend | wc -l)" -gt 0 ]; then grep --exclude-dir migrations -rE 'os\.LookupEnv\(' ./backend && exit 1; fi
+              run: if [ "$(grep --exclude-dir migrations -rE 'os\.LookupEnv\(' ./src/backend | wc -l)" -gt 0 ]; then grep --exclude-dir migrations -rE 'os\.LookupEnv\(' ./src/backend && exit 1; fi
             - name: Check for GORM usage without context
-              run: if [ "$(grep --exclude="*_test.go" --exclude-dir={integrations,jobs,lambda-functions,migrations,model,oauth,retryables,zapier} -rEI '(?i:db)\.(Where|Model|Raw|Create|Update|Preload)' ./backend | grep -v 'WithContext' | wc -l)" -gt 0 ]; then grep --exclude="*_test.go" --exclude-dir={integrations,jobs,lambda-functions,migrations,model,oauth,retryables,zapier} -rEI '(?i:db)\.(Where|Model|Raw|Create|Update|Preload)' ./backend | grep -v 'WithContext' && exit 1; fi
+              run: if [ "$(grep --exclude="*_test.go" --exclude-dir={integrations,jobs,lambda-functions,migrations,model,oauth,retryables,zapier} -rEI '(?i:db)\.(Where|Model|Raw|Create|Update|Preload)' ./src/backend | grep -v 'WithContext' | wc -l)" -gt 0 ]; then grep --exclude="*_test.go" --exclude-dir={integrations,jobs,lambda-functions,migrations,model,oauth,retryables,zapier} -rEI '(?i:db)\.(Where|Model|Raw|Create|Update|Preload)' ./src/backend | grep -v 'WithContext' && exit 1; fi
             - name: Check for logrus without context
-              run: if [ "$(grep --exclude-dir migrations --exclude main.go --exclude recovery.go --exclude logging.go -rE '\s+log\.(Debug|Info|Warn|Error|Fatal)' ./backend | grep -v 'WithContext' | grep -v 'Level' | wc -l)" -gt 0 ]; then grep --exclude-dir migrations --exclude main.go --exclude recovery.go --exclude logging.go -rE '\s+log\.(Debug|Info|Warn|Error|Fatal)' ./backend | grep -v 'WithContext' | grep -v 'Level' && exit 1; fi
+              run: if [ "$(grep --exclude-dir migrations --exclude main.go --exclude recovery.go --exclude logging.go -rE '\s+log\.(Debug|Info|Warn|Error|Fatal)' ./src/backend | grep -v 'WithContext' | grep -v 'Level' | wc -l)" -gt 0 ]; then grep --exclude-dir migrations --exclude main.go --exclude recovery.go --exclude logging.go -rE '\s+log\.(Debug|Info|Warn|Error|Fatal)' ./src/backend | grep -v 'WithContext' | grep -v 'Level' && exit 1; fi
             - name: Run linter
               uses: golangci/golangci-lint-action@v6.4.1
               with:
                   args: -v --config ./.golangci.yml
-                  working-directory: backend
+                  working-directory: src/backend
                   version: latest
 
     make-check:
@@ -58,23 +58,23 @@ jobs:
             - name: Setup Go
               uses: actions/setup-go@v5
               with:
-                  go-version-file: 'backend/go.mod'
-                  cache-dependency-path: 'backend/go.sum'
+                  go-version-file: 'src/backend/go.mod'
+                  cache-dependency-path: 'src/backend/go.sum'
             - name: copy backend
               run: |
                   mkdir tmp
-                  cp -a backend/. tmp/
+                  cp -a src/backend/. tmp/
             - name: Make private graph
               run: |
-                  cd backend/
+                  cd src/backend/
                   make private-gen
             - name: Make public graph
               run: |
-                  cd backend/
+                  cd src/backend/
                   make public-gen
             - name: Diff Check
               run: |
-                  diff -r backend/ tmp/
+                  diff -r src/backend/ tmp/
 
     build:
         needs: code-quality-check
@@ -85,10 +85,10 @@ jobs:
             - name: Setup Go
               uses: actions/setup-go@v5
               with:
-                  go-version-file: 'backend/go.mod'
-                  cache-dependency-path: 'backend/go.sum'
+                  go-version-file: 'src/backend/go.mod'
+                  cache-dependency-path: 'src/backend/go.sum'
             - name: Build binary
-              run: cd backend/ && go build .
+              run: cd src/backend/ && go build .
 
     test:
         needs: code-quality-check
@@ -134,9 +134,9 @@ jobs:
             - name: Setup Go
               uses: actions/setup-go@v5
               with:
-                  go-version-file: 'backend/go.mod'
-                  cache-dependency-path: 'backend/go.sum'
+                  go-version-file: 'src/backend/go.mod'
+                  cache-dependency-path: 'src/backend/go.sum'
             - name: Run tests
-              run: cd backend && go test -p 1 ./... -v
+              run: cd src/backend && go test -p 1 ./... -v
             - name: Run fuzz tests
-              run: cd backend && make fuzz
+              run: cd src/backend && make fuzz

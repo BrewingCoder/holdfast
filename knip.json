@@ -1,3 +1,3 @@
 {
-	"ignore": ["frontend/src/__generated/**", "frontend/src/static/**"]
+	"ignore": ["src/frontend/src/__generated/**", "src/frontend/src/static/**"]
 }
