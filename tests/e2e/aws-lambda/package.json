@@ -4,7 +4,7 @@
 	"version": "0.0.1",
 	"private": true,
 	"dependencies": {
-		"@holdfast-io/node": "latest"
+		"@holdfast-io/node": "workspace:*"
 	},
 	"scripts": {
 		"build": "sam build",
