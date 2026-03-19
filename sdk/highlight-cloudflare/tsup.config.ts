@@ -6,4 +6,5 @@ export default defineConfig({
 	dts: true,
 	sourcemap: true,
 	treeshake: 'smallest',
+	external: ['pino-abstract-transport'],
 })
