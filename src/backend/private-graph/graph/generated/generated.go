@@ -60,7 +60,6 @@ type ResolverRoot interface {
 	SessionAlert() SessionAlertResolver
 	SessionComment() SessionCommentResolver
 	Subscription() SubscriptionResolver
-	SystemConfiguration() SystemConfigurationResolver
 	TimelineIndicatorEvent() TimelineIndicatorEventResolver
 	Visualization() VisualizationResolver
 }
@@ -918,7 +917,7 @@ type ComplexityRoot struct {
 		CreateSavedSegment                    func(childComplexity int, projectID int, name string, entityType model.SavedSegmentEntityType, query string) int
 		CreateSessionComment                  func(childComplexity int, projectID int, sessionSecureID string, sessionTimestamp int, text string, textForEmail string, xCoordinate float64, yCoordinate float64, taggedAdmins []*model.SanitizedAdminInput, taggedSlackUsers []*model.SanitizedSlackChannelInput, sessionURL string, time float64, authorName string, sessionImage *string, issueTitle *string, issueDescription *string, issueTeamID *string, issueTypeID *string, integrations []*model.IntegrationType, tags []*model.SessionCommentTagInput, additionalContext *string) int
 		CreateSessionCommentWithExistingIssue func(childComplexity int, projectID int, sessionSecureID string, sessionTimestamp int, text string, textForEmail string, xCoordinate float64, yCoordinate float64, taggedAdmins []*model.SanitizedAdminInput, taggedSlackUsers []*model.SanitizedSlackChannelInput, sessionURL string, time float64, authorName string, sessionImage *string, tags []*model.SessionCommentTagInput, integrations []*model.IntegrationType, issueTitle *string, issueURL string, issueID string, additionalContext *string) int
-		CreateWorkspace                       func(childComplexity int, name string, promoCode *string) int
+		CreateWorkspace                       func(childComplexity int, name string) int
 		DeleteAdminFromWorkspace              func(childComplexity int, workspaceID int, adminID int) int
 		DeleteAlert                           func(childComplexity int, projectID int, alertID int) int
 		DeleteDashboard                       func(childComplexity int, id int) int
@@ -1855,7 +1854,7 @@ type MutationResolver interface {
 	UpdateAdminAboutYouDetails(ctx context.Context, adminDetails model.AdminAboutYouDetails) (bool, error)
 	CreateAdmin(ctx context.Context) (*model1.Admin, error)
 	CreateProject(ctx context.Context, name string, workspaceID int) (*model1.Project, error)
-	CreateWorkspace(ctx context.Context, name string, promoCode *string) (*model1.Workspace, error)
+	CreateWorkspace(ctx context.Context, name string) (*model1.Workspace, error)
 	EditProject(ctx context.Context, id int, name *string, billingEmail *string) (*model1.Project, error)
 	EditProjectSettings(ctx context.Context, projectID int, excludedUsers pq.StringArray, errorFilters pq.StringArray, errorJSONPaths pq.StringArray, rageClickWindowSeconds *int, rageClickRadiusPixels *int, rageClickCount *int, filterChromeExtension *bool, filterSessionsWithoutError *bool, autoResolveStaleErrorsDayInterval *int, sampling *model.SamplingInput) (*model.AllProjectSettings, error)
 	EditProjectPlatforms(ctx context.Context, projectID int, platforms pq.StringArray) (bool, error)
@@ -2154,8 +2153,6 @@ type SessionCommentResolver interface {
 }
 type SubscriptionResolver interface {
 	SessionPayloadAppended(ctx context.Context, sessionSecureID string, initialEventsCount int) (<-chan *model1.SessionPayload, error)
-}
-type SystemConfigurationResolver interface {
 }
 type TimelineIndicatorEventResolver interface {
 	Data(ctx context.Context, obj *model1.TimelineIndicatorEvent) (any, error)
@@ -6268,7 +6265,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CreateWorkspace(childComplexity, args["name"].(string), args["promo_code"].(*string)), true
+		return e.complexity.Mutation.CreateWorkspace(childComplexity, args["name"].(string)), true
 
 	case "Mutation.deleteAdminFromWorkspace":
 		if e.complexity.Mutation.DeleteAdminFromWorkspace == nil {
@@ -13581,7 +13578,6 @@ input AdminAndWorkspaceDetails {
 	# Workspace
 	workspace_name: String!
 	allowed_auto_join_email_origins: String
-	promo_code: String
 }
 
 input SessionAlertInput {
@@ -14908,7 +14904,7 @@ type Mutation {
 	updateAdminAboutYouDetails(adminDetails: AdminAboutYouDetails!): Boolean!
 	createAdmin: Admin!
 	createProject(name: String!, workspace_id: ID!): Project
-	createWorkspace(name: String!, promo_code: String): Workspace
+	createWorkspace(name: String!): Workspace
 	editProject(id: ID!, name: String, billing_email: String): Project
 	editProjectSettings(
 		projectId: ID!
@@ -15455,7 +15451,7 @@ func (ec *executionContext) field_Mutation_addIntegrationToProject_argsIntegrati
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("integration_type"))
 	if tmp, ok := rawArgs["integration_type"]; ok {
-		return ec.unmarshalOIntegrationType2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐIntegrationType(ctx, tmp)
+		return ec.unmarshalOIntegrationType2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐIntegrationType(ctx, tmp)
 	}
 
 	var zeroVal *model.IntegrationType
@@ -15529,7 +15525,7 @@ func (ec *executionContext) field_Mutation_addIntegrationToWorkspace_argsIntegra
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("integration_type"))
 	if tmp, ok := rawArgs["integration_type"]; ok {
-		return ec.unmarshalOIntegrationType2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐIntegrationType(ctx, tmp)
+		return ec.unmarshalOIntegrationType2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐIntegrationType(ctx, tmp)
 	}
 
 	var zeroVal *model.IntegrationType
@@ -15847,7 +15843,7 @@ func (ec *executionContext) field_Mutation_createAlert_argsProductType(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("product_type"))
 	if tmp, ok := rawArgs["product_type"]; ok {
-		return ec.unmarshalNProductType2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐProductType(ctx, tmp)
+		return ec.unmarshalNProductType2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐProductType(ctx, tmp)
 	}
 
 	var zeroVal model.ProductType
@@ -15865,7 +15861,7 @@ func (ec *executionContext) field_Mutation_createAlert_argsFunctionType(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("function_type"))
 	if tmp, ok := rawArgs["function_type"]; ok {
-		return ec.unmarshalNMetricAggregator2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricAggregator(ctx, tmp)
+		return ec.unmarshalNMetricAggregator2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricAggregator(ctx, tmp)
 	}
 
 	var zeroVal model.MetricAggregator
@@ -16009,7 +16005,7 @@ func (ec *executionContext) field_Mutation_createAlert_argsThresholdType(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("threshold_type"))
 	if tmp, ok := rawArgs["threshold_type"]; ok {
-		return ec.unmarshalOThresholdType2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐThresholdType(ctx, tmp)
+		return ec.unmarshalOThresholdType2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐThresholdType(ctx, tmp)
 	}
 
 	var zeroVal *model.ThresholdType
@@ -16027,7 +16023,7 @@ func (ec *executionContext) field_Mutation_createAlert_argsThresholdCondition(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("threshold_condition"))
 	if tmp, ok := rawArgs["threshold_condition"]; ok {
-		return ec.unmarshalOThresholdCondition2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐThresholdCondition(ctx, tmp)
+		return ec.unmarshalOThresholdCondition2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐThresholdCondition(ctx, tmp)
 	}
 
 	var zeroVal *model.ThresholdCondition
@@ -16045,7 +16041,7 @@ func (ec *executionContext) field_Mutation_createAlert_argsDestinations(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("destinations"))
 	if tmp, ok := rawArgs["destinations"]; ok {
-		return ec.unmarshalNAlertDestinationInput2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐAlertDestinationInputᚄ(ctx, tmp)
+		return ec.unmarshalNAlertDestinationInput2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐAlertDestinationInputᚄ(ctx, tmp)
 	}
 
 	var zeroVal []*model.AlertDestinationInput
@@ -16269,7 +16265,7 @@ func (ec *executionContext) field_Mutation_createErrorCommentForExistingIssue_ar
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("tagged_admins"))
 	if tmp, ok := rawArgs["tagged_admins"]; ok {
-		return ec.unmarshalNSanitizedAdminInput2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSanitizedAdminInput(ctx, tmp)
+		return ec.unmarshalNSanitizedAdminInput2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSanitizedAdminInput(ctx, tmp)
 	}
 
 	var zeroVal []*model.SanitizedAdminInput
@@ -16287,7 +16283,7 @@ func (ec *executionContext) field_Mutation_createErrorCommentForExistingIssue_ar
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("tagged_slack_users"))
 	if tmp, ok := rawArgs["tagged_slack_users"]; ok {
-		return ec.unmarshalNSanitizedSlackChannelInput2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSanitizedSlackChannelInput(ctx, tmp)
+		return ec.unmarshalNSanitizedSlackChannelInput2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSanitizedSlackChannelInput(ctx, tmp)
 	}
 
 	var zeroVal []*model.SanitizedSlackChannelInput
@@ -16395,7 +16391,7 @@ func (ec *executionContext) field_Mutation_createErrorCommentForExistingIssue_ar
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("integrations"))
 	if tmp, ok := rawArgs["integrations"]; ok {
-		return ec.unmarshalNIntegrationType2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐIntegrationType(ctx, tmp)
+		return ec.unmarshalNIntegrationType2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐIntegrationType(ctx, tmp)
 	}
 
 	var zeroVal []*model.IntegrationType
@@ -16555,7 +16551,7 @@ func (ec *executionContext) field_Mutation_createErrorComment_argsTaggedAdmins(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("tagged_admins"))
 	if tmp, ok := rawArgs["tagged_admins"]; ok {
-		return ec.unmarshalNSanitizedAdminInput2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSanitizedAdminInput(ctx, tmp)
+		return ec.unmarshalNSanitizedAdminInput2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSanitizedAdminInput(ctx, tmp)
 	}
 
 	var zeroVal []*model.SanitizedAdminInput
@@ -16573,7 +16569,7 @@ func (ec *executionContext) field_Mutation_createErrorComment_argsTaggedSlackUse
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("tagged_slack_users"))
 	if tmp, ok := rawArgs["tagged_slack_users"]; ok {
-		return ec.unmarshalNSanitizedSlackChannelInput2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSanitizedSlackChannelInput(ctx, tmp)
+		return ec.unmarshalNSanitizedSlackChannelInput2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSanitizedSlackChannelInput(ctx, tmp)
 	}
 
 	var zeroVal []*model.SanitizedSlackChannelInput
@@ -16699,7 +16695,7 @@ func (ec *executionContext) field_Mutation_createErrorComment_argsIntegrations(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("integrations"))
 	if tmp, ok := rawArgs["integrations"]; ok {
-		return ec.unmarshalNIntegrationType2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐIntegrationType(ctx, tmp)
+		return ec.unmarshalNIntegrationType2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐIntegrationType(ctx, tmp)
 	}
 
 	var zeroVal []*model.IntegrationType
@@ -16985,7 +16981,7 @@ func (ec *executionContext) field_Mutation_createIssueForErrorComment_argsIntegr
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("integrations"))
 	if tmp, ok := rawArgs["integrations"]; ok {
-		return ec.unmarshalNIntegrationType2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐIntegrationType(ctx, tmp)
+		return ec.unmarshalNIntegrationType2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐIntegrationType(ctx, tmp)
 	}
 
 	var zeroVal []*model.IntegrationType
@@ -17243,7 +17239,7 @@ func (ec *executionContext) field_Mutation_createIssueForSessionComment_argsInte
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("integrations"))
 	if tmp, ok := rawArgs["integrations"]; ok {
-		return ec.unmarshalNIntegrationType2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐIntegrationType(ctx, tmp)
+		return ec.unmarshalNIntegrationType2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐIntegrationType(ctx, tmp)
 	}
 
 	var zeroVal []*model.IntegrationType
@@ -17362,7 +17358,7 @@ func (ec *executionContext) field_Mutation_createMetricMonitor_argsAggregator(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("aggregator"))
 	if tmp, ok := rawArgs["aggregator"]; ok {
-		return ec.unmarshalNMetricAggregator2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricAggregator(ctx, tmp)
+		return ec.unmarshalNMetricAggregator2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricAggregator(ctx, tmp)
 	}
 
 	var zeroVal model.MetricAggregator
@@ -17452,7 +17448,7 @@ func (ec *executionContext) field_Mutation_createMetricMonitor_argsSlackChannels
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("slack_channels"))
 	if tmp, ok := rawArgs["slack_channels"]; ok {
-		return ec.unmarshalNSanitizedSlackChannelInput2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSanitizedSlackChannelInput(ctx, tmp)
+		return ec.unmarshalNSanitizedSlackChannelInput2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSanitizedSlackChannelInput(ctx, tmp)
 	}
 
 	var zeroVal []*model.SanitizedSlackChannelInput
@@ -17470,7 +17466,7 @@ func (ec *executionContext) field_Mutation_createMetricMonitor_argsDiscordChanne
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("discord_channels"))
 	if tmp, ok := rawArgs["discord_channels"]; ok {
-		return ec.unmarshalNDiscordChannelInput2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDiscordChannelInputᚄ(ctx, tmp)
+		return ec.unmarshalNDiscordChannelInput2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDiscordChannelInputᚄ(ctx, tmp)
 	}
 
 	var zeroVal []*model.DiscordChannelInput
@@ -17488,7 +17484,7 @@ func (ec *executionContext) field_Mutation_createMetricMonitor_argsWebhookDestin
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("webhook_destinations"))
 	if tmp, ok := rawArgs["webhook_destinations"]; ok {
-		return ec.unmarshalNWebhookDestinationInput2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐWebhookDestinationInputᚄ(ctx, tmp)
+		return ec.unmarshalNWebhookDestinationInput2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐWebhookDestinationInputᚄ(ctx, tmp)
 	}
 
 	var zeroVal []*model.WebhookDestinationInput
@@ -17524,7 +17520,7 @@ func (ec *executionContext) field_Mutation_createMetricMonitor_argsFilters(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("filters"))
 	if tmp, ok := rawArgs["filters"]; ok {
-		return ec.unmarshalOMetricTagFilterInput2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricTagFilterInputᚄ(ctx, tmp)
+		return ec.unmarshalOMetricTagFilterInput2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricTagFilterInputᚄ(ctx, tmp)
 	}
 
 	var zeroVal []*model.MetricTagFilterInput
@@ -17682,7 +17678,7 @@ func (ec *executionContext) field_Mutation_createSavedSegment_argsEntityType(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("entity_type"))
 	if tmp, ok := rawArgs["entity_type"]; ok {
-		return ec.unmarshalNSavedSegmentEntityType2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSavedSegmentEntityType(ctx, tmp)
+		return ec.unmarshalNSavedSegmentEntityType2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSavedSegmentEntityType(ctx, tmp)
 	}
 
 	var zeroVal model.SavedSegmentEntityType
@@ -17944,7 +17940,7 @@ func (ec *executionContext) field_Mutation_createSessionCommentWithExistingIssue
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("tagged_admins"))
 	if tmp, ok := rawArgs["tagged_admins"]; ok {
-		return ec.unmarshalNSanitizedAdminInput2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSanitizedAdminInput(ctx, tmp)
+		return ec.unmarshalNSanitizedAdminInput2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSanitizedAdminInput(ctx, tmp)
 	}
 
 	var zeroVal []*model.SanitizedAdminInput
@@ -17962,7 +17958,7 @@ func (ec *executionContext) field_Mutation_createSessionCommentWithExistingIssue
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("tagged_slack_users"))
 	if tmp, ok := rawArgs["tagged_slack_users"]; ok {
-		return ec.unmarshalNSanitizedSlackChannelInput2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSanitizedSlackChannelInput(ctx, tmp)
+		return ec.unmarshalNSanitizedSlackChannelInput2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSanitizedSlackChannelInput(ctx, tmp)
 	}
 
 	var zeroVal []*model.SanitizedSlackChannelInput
@@ -18052,7 +18048,7 @@ func (ec *executionContext) field_Mutation_createSessionCommentWithExistingIssue
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("tags"))
 	if tmp, ok := rawArgs["tags"]; ok {
-		return ec.unmarshalNSessionCommentTagInput2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSessionCommentTagInput(ctx, tmp)
+		return ec.unmarshalNSessionCommentTagInput2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSessionCommentTagInput(ctx, tmp)
 	}
 
 	var zeroVal []*model.SessionCommentTagInput
@@ -18070,7 +18066,7 @@ func (ec *executionContext) field_Mutation_createSessionCommentWithExistingIssue
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("integrations"))
 	if tmp, ok := rawArgs["integrations"]; ok {
-		return ec.unmarshalNIntegrationType2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐIntegrationType(ctx, tmp)
+		return ec.unmarshalNIntegrationType2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐIntegrationType(ctx, tmp)
 	}
 
 	var zeroVal []*model.IntegrationType
@@ -18391,7 +18387,7 @@ func (ec *executionContext) field_Mutation_createSessionComment_argsTaggedAdmins
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("tagged_admins"))
 	if tmp, ok := rawArgs["tagged_admins"]; ok {
-		return ec.unmarshalNSanitizedAdminInput2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSanitizedAdminInput(ctx, tmp)
+		return ec.unmarshalNSanitizedAdminInput2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSanitizedAdminInput(ctx, tmp)
 	}
 
 	var zeroVal []*model.SanitizedAdminInput
@@ -18409,7 +18405,7 @@ func (ec *executionContext) field_Mutation_createSessionComment_argsTaggedSlackU
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("tagged_slack_users"))
 	if tmp, ok := rawArgs["tagged_slack_users"]; ok {
-		return ec.unmarshalNSanitizedSlackChannelInput2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSanitizedSlackChannelInput(ctx, tmp)
+		return ec.unmarshalNSanitizedSlackChannelInput2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSanitizedSlackChannelInput(ctx, tmp)
 	}
 
 	var zeroVal []*model.SanitizedSlackChannelInput
@@ -18571,7 +18567,7 @@ func (ec *executionContext) field_Mutation_createSessionComment_argsIntegrations
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("integrations"))
 	if tmp, ok := rawArgs["integrations"]; ok {
-		return ec.unmarshalNIntegrationType2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐIntegrationType(ctx, tmp)
+		return ec.unmarshalNIntegrationType2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐIntegrationType(ctx, tmp)
 	}
 
 	var zeroVal []*model.IntegrationType
@@ -18589,7 +18585,7 @@ func (ec *executionContext) field_Mutation_createSessionComment_argsTags(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("tags"))
 	if tmp, ok := rawArgs["tags"]; ok {
-		return ec.unmarshalNSessionCommentTagInput2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSessionCommentTagInput(ctx, tmp)
+		return ec.unmarshalNSessionCommentTagInput2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSessionCommentTagInput(ctx, tmp)
 	}
 
 	var zeroVal []*model.SessionCommentTagInput
@@ -18622,11 +18618,6 @@ func (ec *executionContext) field_Mutation_createWorkspace_args(ctx context.Cont
 		return nil, err
 	}
 	args["name"] = arg0
-	arg1, err := ec.field_Mutation_createWorkspace_argsPromoCode(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["promo_code"] = arg1
 	return args, nil
 }
 func (ec *executionContext) field_Mutation_createWorkspace_argsName(
@@ -18644,24 +18635,6 @@ func (ec *executionContext) field_Mutation_createWorkspace_argsName(
 	}
 
 	var zeroVal string
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Mutation_createWorkspace_argsPromoCode(
-	ctx context.Context,
-	rawArgs map[string]any,
-) (*string, error) {
-	if _, ok := rawArgs["promo_code"]; !ok {
-		var zeroVal *string
-		return zeroVal, nil
-	}
-
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("promo_code"))
-	if tmp, ok := rawArgs["promo_code"]; ok {
-		return ec.unmarshalOString2ᚖstring(ctx, tmp)
-	}
-
-	var zeroVal *string
 	return zeroVal, nil
 }
 
@@ -19239,7 +19212,7 @@ func (ec *executionContext) field_Mutation_deleteSessions_argsParams(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("params"))
 	if tmp, ok := rawArgs["params"]; ok {
-		return ec.unmarshalNQueryInput2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐQueryInput(ctx, tmp)
+		return ec.unmarshalNQueryInput2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐQueryInput(ctx, tmp)
 	}
 
 	var zeroVal model.QueryInput
@@ -19594,7 +19567,7 @@ func (ec *executionContext) field_Mutation_editProjectSettings_argsSampling(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("sampling"))
 	if tmp, ok := rawArgs["sampling"]; ok {
-		return ec.unmarshalOSamplingInput2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSamplingInput(ctx, tmp)
+		return ec.unmarshalOSamplingInput2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSamplingInput(ctx, tmp)
 	}
 
 	var zeroVal *model.SamplingInput
@@ -19770,7 +19743,7 @@ func (ec *executionContext) field_Mutation_editSavedSegment_argsEntityType(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("entity_type"))
 	if tmp, ok := rawArgs["entity_type"]; ok {
-		return ec.unmarshalNSavedSegmentEntityType2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSavedSegmentEntityType(ctx, tmp)
+		return ec.unmarshalNSavedSegmentEntityType2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSavedSegmentEntityType(ctx, tmp)
 	}
 
 	var zeroVal model.SavedSegmentEntityType
@@ -20426,7 +20399,7 @@ func (ec *executionContext) field_Mutation_linkIssueForErrorComment_argsIntegrat
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("integrations"))
 	if tmp, ok := rawArgs["integrations"]; ok {
-		return ec.unmarshalNIntegrationType2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐIntegrationType(ctx, tmp)
+		return ec.unmarshalNIntegrationType2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐIntegrationType(ctx, tmp)
 	}
 
 	var zeroVal []*model.IntegrationType
@@ -20661,7 +20634,7 @@ func (ec *executionContext) field_Mutation_linkIssueForSessionComment_argsIntegr
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("integrations"))
 	if tmp, ok := rawArgs["integrations"]; ok {
-		return ec.unmarshalNIntegrationType2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐIntegrationType(ctx, tmp)
+		return ec.unmarshalNIntegrationType2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐIntegrationType(ctx, tmp)
 	}
 
 	var zeroVal []*model.IntegrationType
@@ -20977,7 +20950,7 @@ func (ec *executionContext) field_Mutation_removeIntegrationFromProject_argsInte
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("integration_type"))
 	if tmp, ok := rawArgs["integration_type"]; ok {
-		return ec.unmarshalOIntegrationType2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐIntegrationType(ctx, tmp)
+		return ec.unmarshalOIntegrationType2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐIntegrationType(ctx, tmp)
 	}
 
 	var zeroVal *model.IntegrationType
@@ -21028,7 +21001,7 @@ func (ec *executionContext) field_Mutation_removeIntegrationFromWorkspace_argsIn
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("integration_type"))
 	if tmp, ok := rawArgs["integration_type"]; ok {
-		return ec.unmarshalNIntegrationType2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐIntegrationType(ctx, tmp)
+		return ec.unmarshalNIntegrationType2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐIntegrationType(ctx, tmp)
 	}
 
 	var zeroVal model.IntegrationType
@@ -21171,7 +21144,7 @@ func (ec *executionContext) field_Mutation_replyToErrorComment_argsTaggedAdmins(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("tagged_admins"))
 	if tmp, ok := rawArgs["tagged_admins"]; ok {
-		return ec.unmarshalNSanitizedAdminInput2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSanitizedAdminInput(ctx, tmp)
+		return ec.unmarshalNSanitizedAdminInput2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSanitizedAdminInput(ctx, tmp)
 	}
 
 	var zeroVal []*model.SanitizedAdminInput
@@ -21189,7 +21162,7 @@ func (ec *executionContext) field_Mutation_replyToErrorComment_argsTaggedSlackUs
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("tagged_slack_users"))
 	if tmp, ok := rawArgs["tagged_slack_users"]; ok {
-		return ec.unmarshalNSanitizedSlackChannelInput2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSanitizedSlackChannelInput(ctx, tmp)
+		return ec.unmarshalNSanitizedSlackChannelInput2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSanitizedSlackChannelInput(ctx, tmp)
 	}
 
 	var zeroVal []*model.SanitizedSlackChannelInput
@@ -21314,7 +21287,7 @@ func (ec *executionContext) field_Mutation_replyToSessionComment_argsTaggedAdmin
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("tagged_admins"))
 	if tmp, ok := rawArgs["tagged_admins"]; ok {
-		return ec.unmarshalNSanitizedAdminInput2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSanitizedAdminInput(ctx, tmp)
+		return ec.unmarshalNSanitizedAdminInput2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSanitizedAdminInput(ctx, tmp)
 	}
 
 	var zeroVal []*model.SanitizedAdminInput
@@ -21332,7 +21305,7 @@ func (ec *executionContext) field_Mutation_replyToSessionComment_argsTaggedSlack
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("tagged_slack_users"))
 	if tmp, ok := rawArgs["tagged_slack_users"]; ok {
-		return ec.unmarshalNSanitizedSlackChannelInput2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSanitizedSlackChannelInput(ctx, tmp)
+		return ec.unmarshalNSanitizedSlackChannelInput2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSanitizedSlackChannelInput(ctx, tmp)
 	}
 
 	var zeroVal []*model.SanitizedSlackChannelInput
@@ -21474,7 +21447,7 @@ func (ec *executionContext) field_Mutation_saveBillingPlan_argsSessionsRetention
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("sessionsRetention"))
 	if tmp, ok := rawArgs["sessionsRetention"]; ok {
-		return ec.unmarshalNRetentionPeriod2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐRetentionPeriod(ctx, tmp)
+		return ec.unmarshalNRetentionPeriod2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐRetentionPeriod(ctx, tmp)
 	}
 
 	var zeroVal model.RetentionPeriod
@@ -21510,7 +21483,7 @@ func (ec *executionContext) field_Mutation_saveBillingPlan_argsErrorsRetention(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("errorsRetention"))
 	if tmp, ok := rawArgs["errorsRetention"]; ok {
-		return ec.unmarshalNRetentionPeriod2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐRetentionPeriod(ctx, tmp)
+		return ec.unmarshalNRetentionPeriod2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐRetentionPeriod(ctx, tmp)
 	}
 
 	var zeroVal model.RetentionPeriod
@@ -21546,7 +21519,7 @@ func (ec *executionContext) field_Mutation_saveBillingPlan_argsLogsRetention(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("logsRetention"))
 	if tmp, ok := rawArgs["logsRetention"]; ok {
-		return ec.unmarshalNRetentionPeriod2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐRetentionPeriod(ctx, tmp)
+		return ec.unmarshalNRetentionPeriod2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐRetentionPeriod(ctx, tmp)
 	}
 
 	var zeroVal model.RetentionPeriod
@@ -21582,7 +21555,7 @@ func (ec *executionContext) field_Mutation_saveBillingPlan_argsTracesRetention(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("tracesRetention"))
 	if tmp, ok := rawArgs["tracesRetention"]; ok {
-		return ec.unmarshalNRetentionPeriod2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐRetentionPeriod(ctx, tmp)
+		return ec.unmarshalNRetentionPeriod2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐRetentionPeriod(ctx, tmp)
 	}
 
 	var zeroVal model.RetentionPeriod
@@ -21618,7 +21591,7 @@ func (ec *executionContext) field_Mutation_saveBillingPlan_argsMetricsRetention(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("metricsRetention"))
 	if tmp, ok := rawArgs["metricsRetention"]; ok {
-		return ec.unmarshalNRetentionPeriod2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐRetentionPeriod(ctx, tmp)
+		return ec.unmarshalNRetentionPeriod2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐRetentionPeriod(ctx, tmp)
 	}
 
 	var zeroVal model.RetentionPeriod
@@ -22034,7 +22007,7 @@ func (ec *executionContext) field_Mutation_updateAdminAboutYouDetails_argsAdminD
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("adminDetails"))
 	if tmp, ok := rawArgs["adminDetails"]; ok {
-		return ec.unmarshalNAdminAboutYouDetails2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐAdminAboutYouDetails(ctx, tmp)
+		return ec.unmarshalNAdminAboutYouDetails2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐAdminAboutYouDetails(ctx, tmp)
 	}
 
 	var zeroVal model.AdminAboutYouDetails
@@ -22062,7 +22035,7 @@ func (ec *executionContext) field_Mutation_updateAdminAndCreateWorkspace_argsAdm
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("admin_and_workspace_details"))
 	if tmp, ok := rawArgs["admin_and_workspace_details"]; ok {
-		return ec.unmarshalNAdminAndWorkspaceDetails2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐAdminAndWorkspaceDetails(ctx, tmp)
+		return ec.unmarshalNAdminAndWorkspaceDetails2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐAdminAndWorkspaceDetails(ctx, tmp)
 	}
 
 	var zeroVal model.AdminAndWorkspaceDetails
@@ -22288,7 +22261,7 @@ func (ec *executionContext) field_Mutation_updateAlert_argsProductType(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("product_type"))
 	if tmp, ok := rawArgs["product_type"]; ok {
-		return ec.unmarshalOProductType2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐProductType(ctx, tmp)
+		return ec.unmarshalOProductType2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐProductType(ctx, tmp)
 	}
 
 	var zeroVal *model.ProductType
@@ -22306,7 +22279,7 @@ func (ec *executionContext) field_Mutation_updateAlert_argsFunctionType(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("function_type"))
 	if tmp, ok := rawArgs["function_type"]; ok {
-		return ec.unmarshalOMetricAggregator2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricAggregator(ctx, tmp)
+		return ec.unmarshalOMetricAggregator2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricAggregator(ctx, tmp)
 	}
 
 	var zeroVal *model.MetricAggregator
@@ -22432,7 +22405,7 @@ func (ec *executionContext) field_Mutation_updateAlert_argsThresholdType(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("threshold_type"))
 	if tmp, ok := rawArgs["threshold_type"]; ok {
-		return ec.unmarshalOThresholdType2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐThresholdType(ctx, tmp)
+		return ec.unmarshalOThresholdType2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐThresholdType(ctx, tmp)
 	}
 
 	var zeroVal *model.ThresholdType
@@ -22450,7 +22423,7 @@ func (ec *executionContext) field_Mutation_updateAlert_argsThresholdCondition(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("threshold_condition"))
 	if tmp, ok := rawArgs["threshold_condition"]; ok {
-		return ec.unmarshalOThresholdCondition2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐThresholdCondition(ctx, tmp)
+		return ec.unmarshalOThresholdCondition2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐThresholdCondition(ctx, tmp)
 	}
 
 	var zeroVal *model.ThresholdCondition
@@ -22468,7 +22441,7 @@ func (ec *executionContext) field_Mutation_updateAlert_argsDestinations(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("destinations"))
 	if tmp, ok := rawArgs["destinations"]; ok {
-		return ec.unmarshalOAlertDestinationInput2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐAlertDestinationInputᚄ(ctx, tmp)
+		return ec.unmarshalOAlertDestinationInput2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐAlertDestinationInputᚄ(ctx, tmp)
 	}
 
 	var zeroVal []*model.AlertDestinationInput
@@ -22667,7 +22640,7 @@ func (ec *executionContext) field_Mutation_updateClickUpProjectMappings_argsProj
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("project_mappings"))
 	if tmp, ok := rawArgs["project_mappings"]; ok {
-		return ec.unmarshalNClickUpProjectMappingInput2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐClickUpProjectMappingInputᚄ(ctx, tmp)
+		return ec.unmarshalNClickUpProjectMappingInput2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐClickUpProjectMappingInputᚄ(ctx, tmp)
 	}
 
 	var zeroVal []*model.ClickUpProjectMappingInput
@@ -22751,7 +22724,7 @@ func (ec *executionContext) field_Mutation_updateEmailOptOut_argsCategory(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("category"))
 	if tmp, ok := rawArgs["category"]; ok {
-		return ec.unmarshalNEmailOptOutCategory2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐEmailOptOutCategory(ctx, tmp)
+		return ec.unmarshalNEmailOptOutCategory2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐEmailOptOutCategory(ctx, tmp)
 	}
 
 	var zeroVal model.EmailOptOutCategory
@@ -23044,7 +23017,7 @@ func (ec *executionContext) field_Mutation_updateErrorAlert_argsSlackChannels(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("slack_channels"))
 	if tmp, ok := rawArgs["slack_channels"]; ok {
-		return ec.unmarshalOSanitizedSlackChannelInput2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSanitizedSlackChannelInput(ctx, tmp)
+		return ec.unmarshalOSanitizedSlackChannelInput2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSanitizedSlackChannelInput(ctx, tmp)
 	}
 
 	var zeroVal []*model.SanitizedSlackChannelInput
@@ -23062,7 +23035,7 @@ func (ec *executionContext) field_Mutation_updateErrorAlert_argsDiscordChannels(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("discord_channels"))
 	if tmp, ok := rawArgs["discord_channels"]; ok {
-		return ec.unmarshalNDiscordChannelInput2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDiscordChannelInputᚄ(ctx, tmp)
+		return ec.unmarshalNDiscordChannelInput2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDiscordChannelInputᚄ(ctx, tmp)
 	}
 
 	var zeroVal []*model.DiscordChannelInput
@@ -23080,7 +23053,7 @@ func (ec *executionContext) field_Mutation_updateErrorAlert_argsMicrosoftTeamsCh
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("microsoft_teams_channels"))
 	if tmp, ok := rawArgs["microsoft_teams_channels"]; ok {
-		return ec.unmarshalNMicrosoftTeamsChannelInput2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMicrosoftTeamsChannelInputᚄ(ctx, tmp)
+		return ec.unmarshalNMicrosoftTeamsChannelInput2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMicrosoftTeamsChannelInputᚄ(ctx, tmp)
 	}
 
 	var zeroVal []*model.MicrosoftTeamsChannelInput
@@ -23098,7 +23071,7 @@ func (ec *executionContext) field_Mutation_updateErrorAlert_argsWebhookDestinati
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("webhook_destinations"))
 	if tmp, ok := rawArgs["webhook_destinations"]; ok {
-		return ec.unmarshalNWebhookDestinationInput2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐWebhookDestinationInputᚄ(ctx, tmp)
+		return ec.unmarshalNWebhookDestinationInput2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐWebhookDestinationInputᚄ(ctx, tmp)
 	}
 
 	var zeroVal []*model.WebhookDestinationInput
@@ -23295,7 +23268,7 @@ func (ec *executionContext) field_Mutation_updateErrorGroupState_argsState(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("state"))
 	if tmp, ok := rawArgs["state"]; ok {
-		return ec.unmarshalNErrorState2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐErrorState(ctx, tmp)
+		return ec.unmarshalNErrorState2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐErrorState(ctx, tmp)
 	}
 
 	var zeroVal model.ErrorState
@@ -23369,7 +23342,7 @@ func (ec *executionContext) field_Mutation_updateIntegrationProjectMappings_args
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("integration_type"))
 	if tmp, ok := rawArgs["integration_type"]; ok {
-		return ec.unmarshalNIntegrationType2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐIntegrationType(ctx, tmp)
+		return ec.unmarshalNIntegrationType2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐIntegrationType(ctx, tmp)
 	}
 
 	var zeroVal model.IntegrationType
@@ -23387,7 +23360,7 @@ func (ec *executionContext) field_Mutation_updateIntegrationProjectMappings_args
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("project_mappings"))
 	if tmp, ok := rawArgs["project_mappings"]; ok {
-		return ec.unmarshalNIntegrationProjectMappingInput2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐIntegrationProjectMappingInputᚄ(ctx, tmp)
+		return ec.unmarshalNIntegrationProjectMappingInput2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐIntegrationProjectMappingInputᚄ(ctx, tmp)
 	}
 
 	var zeroVal []*model.IntegrationProjectMappingInput
@@ -23512,7 +23485,7 @@ func (ec *executionContext) field_Mutation_updateLogAlert_argsInput(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 	if tmp, ok := rawArgs["input"]; ok {
-		return ec.unmarshalNLogAlertInput2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐLogAlertInput(ctx, tmp)
+		return ec.unmarshalNLogAlertInput2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐLogAlertInput(ctx, tmp)
 	}
 
 	var zeroVal model.LogAlertInput
@@ -23733,7 +23706,7 @@ func (ec *executionContext) field_Mutation_updateMetricMonitor_argsAggregator(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("aggregator"))
 	if tmp, ok := rawArgs["aggregator"]; ok {
-		return ec.unmarshalOMetricAggregator2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricAggregator(ctx, tmp)
+		return ec.unmarshalOMetricAggregator2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricAggregator(ctx, tmp)
 	}
 
 	var zeroVal *model.MetricAggregator
@@ -23823,7 +23796,7 @@ func (ec *executionContext) field_Mutation_updateMetricMonitor_argsSlackChannels
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("slack_channels"))
 	if tmp, ok := rawArgs["slack_channels"]; ok {
-		return ec.unmarshalOSanitizedSlackChannelInput2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSanitizedSlackChannelInput(ctx, tmp)
+		return ec.unmarshalOSanitizedSlackChannelInput2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSanitizedSlackChannelInput(ctx, tmp)
 	}
 
 	var zeroVal []*model.SanitizedSlackChannelInput
@@ -23841,7 +23814,7 @@ func (ec *executionContext) field_Mutation_updateMetricMonitor_argsDiscordChanne
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("discord_channels"))
 	if tmp, ok := rawArgs["discord_channels"]; ok {
-		return ec.unmarshalNDiscordChannelInput2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDiscordChannelInputᚄ(ctx, tmp)
+		return ec.unmarshalNDiscordChannelInput2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDiscordChannelInputᚄ(ctx, tmp)
 	}
 
 	var zeroVal []*model.DiscordChannelInput
@@ -23859,7 +23832,7 @@ func (ec *executionContext) field_Mutation_updateMetricMonitor_argsWebhookDestin
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("webhook_destinations"))
 	if tmp, ok := rawArgs["webhook_destinations"]; ok {
-		return ec.unmarshalNWebhookDestinationInput2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐWebhookDestinationInputᚄ(ctx, tmp)
+		return ec.unmarshalNWebhookDestinationInput2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐWebhookDestinationInputᚄ(ctx, tmp)
 	}
 
 	var zeroVal []*model.WebhookDestinationInput
@@ -23913,7 +23886,7 @@ func (ec *executionContext) field_Mutation_updateMetricMonitor_argsFilters(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("filters"))
 	if tmp, ok := rawArgs["filters"]; ok {
-		return ec.unmarshalOMetricTagFilterInput2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricTagFilterInputᚄ(ctx, tmp)
+		return ec.unmarshalOMetricTagFilterInput2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricTagFilterInputᚄ(ctx, tmp)
 	}
 
 	var zeroVal []*model.MetricTagFilterInput
@@ -24038,7 +24011,7 @@ func (ec *executionContext) field_Mutation_updateSessionAlert_argsInput(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 	if tmp, ok := rawArgs["input"]; ok {
-		return ec.unmarshalNSessionAlertInput2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSessionAlertInput(ctx, tmp)
+		return ec.unmarshalNSessionAlertInput2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSessionAlertInput(ctx, tmp)
 	}
 
 	var zeroVal model.SessionAlertInput
@@ -24140,7 +24113,7 @@ func (ec *executionContext) field_Mutation_updateVercelProjectMappings_argsProje
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("project_mappings"))
 	if tmp, ok := rawArgs["project_mappings"]; ok {
-		return ec.unmarshalNVercelProjectMappingInput2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐVercelProjectMappingInputᚄ(ctx, tmp)
+		return ec.unmarshalNVercelProjectMappingInput2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐVercelProjectMappingInputᚄ(ctx, tmp)
 	}
 
 	var zeroVal []*model.VercelProjectMappingInput
@@ -24247,7 +24220,7 @@ func (ec *executionContext) field_Mutation_upsertDashboard_argsMetrics(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("metrics"))
 	if tmp, ok := rawArgs["metrics"]; ok {
-		return ec.unmarshalNDashboardMetricConfigInput2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDashboardMetricConfigInputᚄ(ctx, tmp)
+		return ec.unmarshalNDashboardMetricConfigInput2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDashboardMetricConfigInputᚄ(ctx, tmp)
 	}
 
 	var zeroVal []*model.DashboardMetricConfigInput
@@ -24362,7 +24335,7 @@ func (ec *executionContext) field_Mutation_upsertGraph_argsGraph(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("graph"))
 	if tmp, ok := rawArgs["graph"]; ok {
-		return ec.unmarshalNGraphInput2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐGraphInput(ctx, tmp)
+		return ec.unmarshalNGraphInput2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐGraphInput(ctx, tmp)
 	}
 
 	var zeroVal model.GraphInput
@@ -24441,7 +24414,7 @@ func (ec *executionContext) field_Mutation_upsertVisualization_argsVisualization
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("visualization"))
 	if tmp, ok := rawArgs["visualization"]; ok {
-		return ec.unmarshalNVisualizationInput2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐVisualizationInput(ctx, tmp)
+		return ec.unmarshalNVisualizationInput2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐVisualizationInput(ctx, tmp)
 	}
 
 	var zeroVal model.VisualizationInput
@@ -24660,7 +24633,7 @@ func (ec *executionContext) field_Query_ai_query_suggestion_argsProductType(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("product_type"))
 	if tmp, ok := rawArgs["product_type"]; ok {
-		return ec.unmarshalNProductType2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐProductType(ctx, tmp)
+		return ec.unmarshalNProductType2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐProductType(ctx, tmp)
 	}
 
 	var zeroVal model.ProductType
@@ -25282,7 +25255,7 @@ func (ec *executionContext) field_Query_dailyErrorsCount_argsDateRange(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("date_range"))
 	if tmp, ok := rawArgs["date_range"]; ok {
-		return ec.unmarshalNDateRangeInput2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDateRangeInput(ctx, tmp)
+		return ec.unmarshalNDateRangeInput2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDateRangeInput(ctx, tmp)
 	}
 
 	var zeroVal model.DateRangeInput
@@ -25333,7 +25306,7 @@ func (ec *executionContext) field_Query_dailySessionsCount_argsDateRange(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("date_range"))
 	if tmp, ok := rawArgs["date_range"]; ok {
-		return ec.unmarshalNDateRangeInput2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDateRangeInput(ctx, tmp)
+		return ec.unmarshalNDateRangeInput2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDateRangeInput(ctx, tmp)
 	}
 
 	var zeroVal model.DateRangeInput
@@ -25761,7 +25734,7 @@ func (ec *executionContext) field_Query_error_groups_argsParams(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("params"))
 	if tmp, ok := rawArgs["params"]; ok {
-		return ec.unmarshalNQueryInput2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐQueryInput(ctx, tmp)
+		return ec.unmarshalNQueryInput2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐQueryInput(ctx, tmp)
 	}
 
 	var zeroVal model.QueryInput
@@ -25858,7 +25831,7 @@ func (ec *executionContext) field_Query_error_groups_clickhouse_argsQuery(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("query"))
 	if tmp, ok := rawArgs["query"]; ok {
-		return ec.unmarshalNClickhouseQuery2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐClickhouseQuery(ctx, tmp)
+		return ec.unmarshalNClickhouseQuery2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐClickhouseQuery(ctx, tmp)
 	}
 
 	var zeroVal model.ClickhouseQuery
@@ -25950,7 +25923,7 @@ func (ec *executionContext) field_Query_error_instance_argsParams(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("params"))
 	if tmp, ok := rawArgs["params"]; ok {
-		return ec.unmarshalOQueryInput2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐQueryInput(ctx, tmp)
+		return ec.unmarshalOQueryInput2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐQueryInput(ctx, tmp)
 	}
 
 	var zeroVal *model.QueryInput
@@ -26136,7 +26109,7 @@ func (ec *executionContext) field_Query_error_objects_argsParams(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("params"))
 	if tmp, ok := rawArgs["params"]; ok {
-		return ec.unmarshalNQueryInput2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐQueryInput(ctx, tmp)
+		return ec.unmarshalNQueryInput2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐQueryInput(ctx, tmp)
 	}
 
 	var zeroVal model.QueryInput
@@ -26266,7 +26239,7 @@ func (ec *executionContext) field_Query_errors_histogram_argsParams(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("params"))
 	if tmp, ok := rawArgs["params"]; ok {
-		return ec.unmarshalNQueryInput2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐQueryInput(ctx, tmp)
+		return ec.unmarshalNQueryInput2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐQueryInput(ctx, tmp)
 	}
 
 	var zeroVal model.QueryInput
@@ -26284,7 +26257,7 @@ func (ec *executionContext) field_Query_errors_histogram_argsHistogramOptions(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("histogram_options"))
 	if tmp, ok := rawArgs["histogram_options"]; ok {
-		return ec.unmarshalNDateHistogramOptions2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDateHistogramOptions(ctx, tmp)
+		return ec.unmarshalNDateHistogramOptions2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDateHistogramOptions(ctx, tmp)
 	}
 
 	var zeroVal model.DateHistogramOptions
@@ -26340,7 +26313,7 @@ func (ec *executionContext) field_Query_errors_histogram_clickhouse_argsQuery(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("query"))
 	if tmp, ok := rawArgs["query"]; ok {
-		return ec.unmarshalNClickhouseQuery2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐClickhouseQuery(ctx, tmp)
+		return ec.unmarshalNClickhouseQuery2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐClickhouseQuery(ctx, tmp)
 	}
 
 	var zeroVal model.ClickhouseQuery
@@ -26358,7 +26331,7 @@ func (ec *executionContext) field_Query_errors_histogram_clickhouse_argsHistogra
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("histogram_options"))
 	if tmp, ok := rawArgs["histogram_options"]; ok {
-		return ec.unmarshalNDateHistogramOptions2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDateHistogramOptions(ctx, tmp)
+		return ec.unmarshalNDateHistogramOptions2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDateHistogramOptions(ctx, tmp)
 	}
 
 	var zeroVal model.DateHistogramOptions
@@ -26442,7 +26415,7 @@ func (ec *executionContext) field_Query_errors_key_values_argsDateRange(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("date_range"))
 	if tmp, ok := rawArgs["date_range"]; ok {
-		return ec.unmarshalNDateRangeRequiredInput2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDateRangeRequiredInput(ctx, tmp)
+		return ec.unmarshalNDateRangeRequiredInput2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDateRangeRequiredInput(ctx, tmp)
 	}
 
 	var zeroVal model.DateRangeRequiredInput
@@ -26539,7 +26512,7 @@ func (ec *executionContext) field_Query_errors_keys_argsDateRange(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("date_range"))
 	if tmp, ok := rawArgs["date_range"]; ok {
-		return ec.unmarshalNDateRangeRequiredInput2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDateRangeRequiredInput(ctx, tmp)
+		return ec.unmarshalNDateRangeRequiredInput2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDateRangeRequiredInput(ctx, tmp)
 	}
 
 	var zeroVal model.DateRangeRequiredInput
@@ -26575,7 +26548,7 @@ func (ec *executionContext) field_Query_errors_keys_argsType(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
 	if tmp, ok := rawArgs["type"]; ok {
-		return ec.unmarshalOKeyType2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐKeyType(ctx, tmp)
+		return ec.unmarshalOKeyType2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐKeyType(ctx, tmp)
 	}
 
 	var zeroVal *model.KeyType
@@ -26681,7 +26654,7 @@ func (ec *executionContext) field_Query_errors_metrics_argsParams(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("params"))
 	if tmp, ok := rawArgs["params"]; ok {
-		return ec.unmarshalNQueryInput2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐQueryInput(ctx, tmp)
+		return ec.unmarshalNQueryInput2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐQueryInput(ctx, tmp)
 	}
 
 	var zeroVal model.QueryInput
@@ -26735,7 +26708,7 @@ func (ec *executionContext) field_Query_errors_metrics_argsMetricTypes(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("metric_types"))
 	if tmp, ok := rawArgs["metric_types"]; ok {
-		return ec.unmarshalOMetricAggregator2ᚕgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricAggregatorᚄ(ctx, tmp)
+		return ec.unmarshalOMetricAggregator2ᚕgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricAggregatorᚄ(ctx, tmp)
 	}
 
 	var zeroVal []model.MetricAggregator
@@ -26843,7 +26816,7 @@ func (ec *executionContext) field_Query_errors_metrics_argsLimitAggregator(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("limit_aggregator"))
 	if tmp, ok := rawArgs["limit_aggregator"]; ok {
-		return ec.unmarshalOMetricAggregator2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricAggregator(ctx, tmp)
+		return ec.unmarshalOMetricAggregator2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricAggregator(ctx, tmp)
 	}
 
 	var zeroVal *model.MetricAggregator
@@ -26879,7 +26852,7 @@ func (ec *executionContext) field_Query_errors_metrics_argsExpressions(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("expressions"))
 	if tmp, ok := rawArgs["expressions"]; ok {
-		return ec.unmarshalOMetricExpressionInput2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricExpressionInputᚄ(ctx, tmp)
+		return ec.unmarshalOMetricExpressionInput2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricExpressionInputᚄ(ctx, tmp)
 	}
 
 	var zeroVal []*model.MetricExpressionInput
@@ -27047,7 +27020,7 @@ func (ec *executionContext) field_Query_event_sessions_argsParams(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("params"))
 	if tmp, ok := rawArgs["params"]; ok {
-		return ec.unmarshalNQueryInput2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐQueryInput(ctx, tmp)
+		return ec.unmarshalNQueryInput2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐQueryInput(ctx, tmp)
 	}
 
 	var zeroVal model.QueryInput
@@ -27218,7 +27191,7 @@ func (ec *executionContext) field_Query_events_key_values_argsDateRange(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("date_range"))
 	if tmp, ok := rawArgs["date_range"]; ok {
-		return ec.unmarshalNDateRangeRequiredInput2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDateRangeRequiredInput(ctx, tmp)
+		return ec.unmarshalNDateRangeRequiredInput2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDateRangeRequiredInput(ctx, tmp)
 	}
 
 	var zeroVal model.DateRangeRequiredInput
@@ -27338,7 +27311,7 @@ func (ec *executionContext) field_Query_events_keys_argsDateRange(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("date_range"))
 	if tmp, ok := rawArgs["date_range"]; ok {
-		return ec.unmarshalNDateRangeRequiredInput2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDateRangeRequiredInput(ctx, tmp)
+		return ec.unmarshalNDateRangeRequiredInput2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDateRangeRequiredInput(ctx, tmp)
 	}
 
 	var zeroVal model.DateRangeRequiredInput
@@ -27374,7 +27347,7 @@ func (ec *executionContext) field_Query_events_keys_argsType(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
 	if tmp, ok := rawArgs["type"]; ok {
-		return ec.unmarshalOKeyType2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐKeyType(ctx, tmp)
+		return ec.unmarshalOKeyType2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐKeyType(ctx, tmp)
 	}
 
 	var zeroVal *model.KeyType
@@ -27498,7 +27471,7 @@ func (ec *executionContext) field_Query_events_metrics_argsParams(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("params"))
 	if tmp, ok := rawArgs["params"]; ok {
-		return ec.unmarshalNQueryInput2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐQueryInput(ctx, tmp)
+		return ec.unmarshalNQueryInput2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐQueryInput(ctx, tmp)
 	}
 
 	var zeroVal model.QueryInput
@@ -27552,7 +27525,7 @@ func (ec *executionContext) field_Query_events_metrics_argsMetricTypes(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("metric_types"))
 	if tmp, ok := rawArgs["metric_types"]; ok {
-		return ec.unmarshalOMetricAggregator2ᚕgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricAggregatorᚄ(ctx, tmp)
+		return ec.unmarshalOMetricAggregator2ᚕgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricAggregatorᚄ(ctx, tmp)
 	}
 
 	var zeroVal []model.MetricAggregator
@@ -27660,7 +27633,7 @@ func (ec *executionContext) field_Query_events_metrics_argsLimitAggregator(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("limit_aggregator"))
 	if tmp, ok := rawArgs["limit_aggregator"]; ok {
-		return ec.unmarshalOMetricAggregator2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricAggregator(ctx, tmp)
+		return ec.unmarshalOMetricAggregator2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricAggregator(ctx, tmp)
 	}
 
 	var zeroVal *model.MetricAggregator
@@ -27696,7 +27669,7 @@ func (ec *executionContext) field_Query_events_metrics_argsExpressions(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("expressions"))
 	if tmp, ok := rawArgs["expressions"]; ok {
-		return ec.unmarshalOMetricExpressionInput2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricExpressionInputᚄ(ctx, tmp)
+		return ec.unmarshalOMetricExpressionInput2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricExpressionInputᚄ(ctx, tmp)
 	}
 
 	var zeroVal []*model.MetricExpressionInput
@@ -27770,7 +27743,7 @@ func (ec *executionContext) field_Query_existing_logs_traces_argsDateRange(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("date_range"))
 	if tmp, ok := rawArgs["date_range"]; ok {
-		return ec.unmarshalNDateRangeRequiredInput2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDateRangeRequiredInput(ctx, tmp)
+		return ec.unmarshalNDateRangeRequiredInput2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDateRangeRequiredInput(ctx, tmp)
 	}
 
 	var zeroVal model.DateRangeRequiredInput
@@ -28142,7 +28115,7 @@ func (ec *executionContext) field_Query_integration_project_mappings_argsIntegra
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("integration_type"))
 	if tmp, ok := rawArgs["integration_type"]; ok {
-		return ec.unmarshalOIntegrationType2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐIntegrationType(ctx, tmp)
+		return ec.unmarshalOIntegrationType2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐIntegrationType(ctx, tmp)
 	}
 
 	var zeroVal *model.IntegrationType
@@ -28203,7 +28176,7 @@ func (ec *executionContext) field_Query_is_integrated_with_argsIntegrationType(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("integration_type"))
 	if tmp, ok := rawArgs["integration_type"]; ok {
-		return ec.unmarshalNIntegrationType2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐIntegrationType(ctx, tmp)
+		return ec.unmarshalNIntegrationType2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐIntegrationType(ctx, tmp)
 	}
 
 	var zeroVal model.IntegrationType
@@ -28254,7 +28227,7 @@ func (ec *executionContext) field_Query_is_project_integrated_with_argsIntegrati
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("integration_type"))
 	if tmp, ok := rawArgs["integration_type"]; ok {
-		return ec.unmarshalNIntegrationType2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐIntegrationType(ctx, tmp)
+		return ec.unmarshalNIntegrationType2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐIntegrationType(ctx, tmp)
 	}
 
 	var zeroVal model.IntegrationType
@@ -28305,7 +28278,7 @@ func (ec *executionContext) field_Query_is_workspace_integrated_with_argsIntegra
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("integration_type"))
 	if tmp, ok := rawArgs["integration_type"]; ok {
-		return ec.unmarshalNIntegrationType2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐIntegrationType(ctx, tmp)
+		return ec.unmarshalNIntegrationType2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐIntegrationType(ctx, tmp)
 	}
 
 	var zeroVal model.IntegrationType
@@ -28409,7 +28382,7 @@ func (ec *executionContext) field_Query_key_values_argsProductType(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("product_type"))
 	if tmp, ok := rawArgs["product_type"]; ok {
-		return ec.unmarshalOProductType2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐProductType(ctx, tmp)
+		return ec.unmarshalOProductType2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐProductType(ctx, tmp)
 	}
 
 	var zeroVal *model.ProductType
@@ -28463,7 +28436,7 @@ func (ec *executionContext) field_Query_key_values_argsDateRange(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("date_range"))
 	if tmp, ok := rawArgs["date_range"]; ok {
-		return ec.unmarshalNDateRangeRequiredInput2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDateRangeRequiredInput(ctx, tmp)
+		return ec.unmarshalNDateRangeRequiredInput2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDateRangeRequiredInput(ctx, tmp)
 	}
 
 	var zeroVal model.DateRangeRequiredInput
@@ -28560,7 +28533,7 @@ func (ec *executionContext) field_Query_key_values_suggestions_argsProductType(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("product_type"))
 	if tmp, ok := rawArgs["product_type"]; ok {
-		return ec.unmarshalNProductType2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐProductType(ctx, tmp)
+		return ec.unmarshalNProductType2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐProductType(ctx, tmp)
 	}
 
 	var zeroVal model.ProductType
@@ -28596,7 +28569,7 @@ func (ec *executionContext) field_Query_key_values_suggestions_argsDateRange(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("date_range"))
 	if tmp, ok := rawArgs["date_range"]; ok {
-		return ec.unmarshalNDateRangeRequiredInput2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDateRangeRequiredInput(ctx, tmp)
+		return ec.unmarshalNDateRangeRequiredInput2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDateRangeRequiredInput(ctx, tmp)
 	}
 
 	var zeroVal model.DateRangeRequiredInput
@@ -28667,7 +28640,7 @@ func (ec *executionContext) field_Query_keys_argsProductType(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("product_type"))
 	if tmp, ok := rawArgs["product_type"]; ok {
-		return ec.unmarshalOProductType2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐProductType(ctx, tmp)
+		return ec.unmarshalOProductType2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐProductType(ctx, tmp)
 	}
 
 	var zeroVal *model.ProductType
@@ -28703,7 +28676,7 @@ func (ec *executionContext) field_Query_keys_argsDateRange(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("date_range"))
 	if tmp, ok := rawArgs["date_range"]; ok {
-		return ec.unmarshalNDateRangeRequiredInput2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDateRangeRequiredInput(ctx, tmp)
+		return ec.unmarshalNDateRangeRequiredInput2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDateRangeRequiredInput(ctx, tmp)
 	}
 
 	var zeroVal model.DateRangeRequiredInput
@@ -28739,7 +28712,7 @@ func (ec *executionContext) field_Query_keys_argsType(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
 	if tmp, ok := rawArgs["type"]; ok {
-		return ec.unmarshalOKeyType2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐKeyType(ctx, tmp)
+		return ec.unmarshalOKeyType2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐKeyType(ctx, tmp)
 	}
 
 	var zeroVal *model.KeyType
@@ -28935,7 +28908,7 @@ func (ec *executionContext) field_Query_log_lines_argsProductType(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("product_type"))
 	if tmp, ok := rawArgs["product_type"]; ok {
-		return ec.unmarshalNProductType2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐProductType(ctx, tmp)
+		return ec.unmarshalNProductType2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐProductType(ctx, tmp)
 	}
 
 	var zeroVal model.ProductType
@@ -28971,7 +28944,7 @@ func (ec *executionContext) field_Query_log_lines_argsParams(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("params"))
 	if tmp, ok := rawArgs["params"]; ok {
-		return ec.unmarshalNQueryInput2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐQueryInput(ctx, tmp)
+		return ec.unmarshalNQueryInput2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐQueryInput(ctx, tmp)
 	}
 
 	var zeroVal model.QueryInput
@@ -29075,7 +29048,7 @@ func (ec *executionContext) field_Query_logs_argsParams(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("params"))
 	if tmp, ok := rawArgs["params"]; ok {
-		return ec.unmarshalNQueryInput2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐQueryInput(ctx, tmp)
+		return ec.unmarshalNQueryInput2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐQueryInput(ctx, tmp)
 	}
 
 	var zeroVal model.QueryInput
@@ -29147,7 +29120,7 @@ func (ec *executionContext) field_Query_logs_argsDirection(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("direction"))
 	if tmp, ok := rawArgs["direction"]; ok {
-		return ec.unmarshalNSortDirection2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSortDirection(ctx, tmp)
+		return ec.unmarshalNSortDirection2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSortDirection(ctx, tmp)
 	}
 
 	var zeroVal model.SortDirection
@@ -29244,7 +29217,7 @@ func (ec *executionContext) field_Query_logs_histogram_argsParams(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("params"))
 	if tmp, ok := rawArgs["params"]; ok {
-		return ec.unmarshalNQueryInput2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐQueryInput(ctx, tmp)
+		return ec.unmarshalNQueryInput2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐQueryInput(ctx, tmp)
 	}
 
 	var zeroVal model.QueryInput
@@ -29328,7 +29301,7 @@ func (ec *executionContext) field_Query_logs_key_values_argsDateRange(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("date_range"))
 	if tmp, ok := rawArgs["date_range"]; ok {
-		return ec.unmarshalNDateRangeRequiredInput2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDateRangeRequiredInput(ctx, tmp)
+		return ec.unmarshalNDateRangeRequiredInput2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDateRangeRequiredInput(ctx, tmp)
 	}
 
 	var zeroVal model.DateRangeRequiredInput
@@ -29425,7 +29398,7 @@ func (ec *executionContext) field_Query_logs_keys_argsDateRange(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("date_range"))
 	if tmp, ok := rawArgs["date_range"]; ok {
-		return ec.unmarshalNDateRangeRequiredInput2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDateRangeRequiredInput(ctx, tmp)
+		return ec.unmarshalNDateRangeRequiredInput2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDateRangeRequiredInput(ctx, tmp)
 	}
 
 	var zeroVal model.DateRangeRequiredInput
@@ -29461,7 +29434,7 @@ func (ec *executionContext) field_Query_logs_keys_argsType(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
 	if tmp, ok := rawArgs["type"]; ok {
-		return ec.unmarshalOKeyType2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐKeyType(ctx, tmp)
+		return ec.unmarshalOKeyType2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐKeyType(ctx, tmp)
 	}
 
 	var zeroVal *model.KeyType
@@ -29567,7 +29540,7 @@ func (ec *executionContext) field_Query_logs_metrics_argsParams(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("params"))
 	if tmp, ok := rawArgs["params"]; ok {
-		return ec.unmarshalNQueryInput2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐQueryInput(ctx, tmp)
+		return ec.unmarshalNQueryInput2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐQueryInput(ctx, tmp)
 	}
 
 	var zeroVal model.QueryInput
@@ -29621,7 +29594,7 @@ func (ec *executionContext) field_Query_logs_metrics_argsMetricTypes(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("metric_types"))
 	if tmp, ok := rawArgs["metric_types"]; ok {
-		return ec.unmarshalOMetricAggregator2ᚕgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricAggregatorᚄ(ctx, tmp)
+		return ec.unmarshalOMetricAggregator2ᚕgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricAggregatorᚄ(ctx, tmp)
 	}
 
 	var zeroVal []model.MetricAggregator
@@ -29729,7 +29702,7 @@ func (ec *executionContext) field_Query_logs_metrics_argsLimitAggregator(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("limit_aggregator"))
 	if tmp, ok := rawArgs["limit_aggregator"]; ok {
-		return ec.unmarshalOMetricAggregator2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricAggregator(ctx, tmp)
+		return ec.unmarshalOMetricAggregator2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricAggregator(ctx, tmp)
 	}
 
 	var zeroVal *model.MetricAggregator
@@ -29765,7 +29738,7 @@ func (ec *executionContext) field_Query_logs_metrics_argsExpressions(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("expressions"))
 	if tmp, ok := rawArgs["expressions"]; ok {
-		return ec.unmarshalOMetricExpressionInput2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricExpressionInputᚄ(ctx, tmp)
+		return ec.unmarshalOMetricExpressionInput2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricExpressionInputᚄ(ctx, tmp)
 	}
 
 	var zeroVal []*model.MetricExpressionInput
@@ -30118,7 +30091,7 @@ func (ec *executionContext) field_Query_metrics_argsProductType(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("product_type"))
 	if tmp, ok := rawArgs["product_type"]; ok {
-		return ec.unmarshalNProductType2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐProductType(ctx, tmp)
+		return ec.unmarshalNProductType2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐProductType(ctx, tmp)
 	}
 
 	var zeroVal model.ProductType
@@ -30154,7 +30127,7 @@ func (ec *executionContext) field_Query_metrics_argsParams(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("params"))
 	if tmp, ok := rawArgs["params"]; ok {
-		return ec.unmarshalNQueryInput2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐQueryInput(ctx, tmp)
+		return ec.unmarshalNQueryInput2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐQueryInput(ctx, tmp)
 	}
 
 	var zeroVal model.QueryInput
@@ -30190,7 +30163,7 @@ func (ec *executionContext) field_Query_metrics_argsMetricTypes(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("metric_types"))
 	if tmp, ok := rawArgs["metric_types"]; ok {
-		return ec.unmarshalOMetricAggregator2ᚕgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricAggregatorᚄ(ctx, tmp)
+		return ec.unmarshalOMetricAggregator2ᚕgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricAggregatorᚄ(ctx, tmp)
 	}
 
 	var zeroVal []model.MetricAggregator
@@ -30316,7 +30289,7 @@ func (ec *executionContext) field_Query_metrics_argsLimitAggregator(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("limit_aggregator"))
 	if tmp, ok := rawArgs["limit_aggregator"]; ok {
-		return ec.unmarshalOMetricAggregator2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricAggregator(ctx, tmp)
+		return ec.unmarshalOMetricAggregator2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricAggregator(ctx, tmp)
 	}
 
 	var zeroVal *model.MetricAggregator
@@ -30352,7 +30325,7 @@ func (ec *executionContext) field_Query_metrics_argsPredictionSettings(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("prediction_settings"))
 	if tmp, ok := rawArgs["prediction_settings"]; ok {
-		return ec.unmarshalOPredictionSettings2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐPredictionSettings(ctx, tmp)
+		return ec.unmarshalOPredictionSettings2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐPredictionSettings(ctx, tmp)
 	}
 
 	var zeroVal *model.PredictionSettings
@@ -30370,7 +30343,7 @@ func (ec *executionContext) field_Query_metrics_argsExpressions(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("expressions"))
 	if tmp, ok := rawArgs["expressions"]; ok {
-		return ec.unmarshalOMetricExpressionInput2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricExpressionInputᚄ(ctx, tmp)
+		return ec.unmarshalOMetricExpressionInput2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricExpressionInputᚄ(ctx, tmp)
 	}
 
 	var zeroVal []*model.MetricExpressionInput
@@ -30449,7 +30422,7 @@ func (ec *executionContext) field_Query_network_histogram_argsParams(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("params"))
 	if tmp, ok := rawArgs["params"]; ok {
-		return ec.unmarshalNNetworkHistogramParamsInput2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐNetworkHistogramParamsInput(ctx, tmp)
+		return ec.unmarshalNNetworkHistogramParamsInput2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐNetworkHistogramParamsInput(ctx, tmp)
 	}
 
 	var zeroVal model.NetworkHistogramParamsInput
@@ -30933,7 +30906,7 @@ func (ec *executionContext) field_Query_saved_segments_argsEntityType(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("entity_type"))
 	if tmp, ok := rawArgs["entity_type"]; ok {
-		return ec.unmarshalNSavedSegmentEntityType2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSavedSegmentEntityType(ctx, tmp)
+		return ec.unmarshalNSavedSegmentEntityType2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSavedSegmentEntityType(ctx, tmp)
 	}
 
 	var zeroVal model.SavedSegmentEntityType
@@ -30971,7 +30944,7 @@ func (ec *executionContext) field_Query_search_issues_argsIntegrationType(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("integration_type"))
 	if tmp, ok := rawArgs["integration_type"]; ok {
-		return ec.unmarshalNIntegrationType2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐIntegrationType(ctx, tmp)
+		return ec.unmarshalNIntegrationType2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐIntegrationType(ctx, tmp)
 	}
 
 	var zeroVal model.IntegrationType
@@ -31430,7 +31403,7 @@ func (ec *executionContext) field_Query_session_users_report_argsParams(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("params"))
 	if tmp, ok := rawArgs["params"]; ok {
-		return ec.unmarshalNQueryInput2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐQueryInput(ctx, tmp)
+		return ec.unmarshalNQueryInput2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐQueryInput(ctx, tmp)
 	}
 
 	var zeroVal model.QueryInput
@@ -31519,7 +31492,7 @@ func (ec *executionContext) field_Query_sessions_argsParams(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("params"))
 	if tmp, ok := rawArgs["params"]; ok {
-		return ec.unmarshalNQueryInput2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐQueryInput(ctx, tmp)
+		return ec.unmarshalNQueryInput2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐQueryInput(ctx, tmp)
 	}
 
 	var zeroVal model.QueryInput
@@ -31662,7 +31635,7 @@ func (ec *executionContext) field_Query_sessions_clickhouse_argsQuery(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("query"))
 	if tmp, ok := rawArgs["query"]; ok {
-		return ec.unmarshalNClickhouseQuery2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐClickhouseQuery(ctx, tmp)
+		return ec.unmarshalNClickhouseQuery2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐClickhouseQuery(ctx, tmp)
 	}
 
 	var zeroVal model.ClickhouseQuery
@@ -31772,7 +31745,7 @@ func (ec *executionContext) field_Query_sessions_histogram_argsParams(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("params"))
 	if tmp, ok := rawArgs["params"]; ok {
-		return ec.unmarshalNQueryInput2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐQueryInput(ctx, tmp)
+		return ec.unmarshalNQueryInput2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐQueryInput(ctx, tmp)
 	}
 
 	var zeroVal model.QueryInput
@@ -31790,7 +31763,7 @@ func (ec *executionContext) field_Query_sessions_histogram_argsHistogramOptions(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("histogram_options"))
 	if tmp, ok := rawArgs["histogram_options"]; ok {
-		return ec.unmarshalNDateHistogramOptions2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDateHistogramOptions(ctx, tmp)
+		return ec.unmarshalNDateHistogramOptions2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDateHistogramOptions(ctx, tmp)
 	}
 
 	var zeroVal model.DateHistogramOptions
@@ -31846,7 +31819,7 @@ func (ec *executionContext) field_Query_sessions_histogram_clickhouse_argsQuery(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("query"))
 	if tmp, ok := rawArgs["query"]; ok {
-		return ec.unmarshalNClickhouseQuery2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐClickhouseQuery(ctx, tmp)
+		return ec.unmarshalNClickhouseQuery2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐClickhouseQuery(ctx, tmp)
 	}
 
 	var zeroVal model.ClickhouseQuery
@@ -31864,7 +31837,7 @@ func (ec *executionContext) field_Query_sessions_histogram_clickhouse_argsHistog
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("histogram_options"))
 	if tmp, ok := rawArgs["histogram_options"]; ok {
-		return ec.unmarshalNDateHistogramOptions2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDateHistogramOptions(ctx, tmp)
+		return ec.unmarshalNDateHistogramOptions2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDateHistogramOptions(ctx, tmp)
 	}
 
 	var zeroVal model.DateHistogramOptions
@@ -31948,7 +31921,7 @@ func (ec *executionContext) field_Query_sessions_key_values_argsDateRange(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("date_range"))
 	if tmp, ok := rawArgs["date_range"]; ok {
-		return ec.unmarshalNDateRangeRequiredInput2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDateRangeRequiredInput(ctx, tmp)
+		return ec.unmarshalNDateRangeRequiredInput2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDateRangeRequiredInput(ctx, tmp)
 	}
 
 	var zeroVal model.DateRangeRequiredInput
@@ -32045,7 +32018,7 @@ func (ec *executionContext) field_Query_sessions_keys_argsDateRange(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("date_range"))
 	if tmp, ok := rawArgs["date_range"]; ok {
-		return ec.unmarshalNDateRangeRequiredInput2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDateRangeRequiredInput(ctx, tmp)
+		return ec.unmarshalNDateRangeRequiredInput2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDateRangeRequiredInput(ctx, tmp)
 	}
 
 	var zeroVal model.DateRangeRequiredInput
@@ -32081,7 +32054,7 @@ func (ec *executionContext) field_Query_sessions_keys_argsType(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
 	if tmp, ok := rawArgs["type"]; ok {
-		return ec.unmarshalOKeyType2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐKeyType(ctx, tmp)
+		return ec.unmarshalOKeyType2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐKeyType(ctx, tmp)
 	}
 
 	var zeroVal *model.KeyType
@@ -32187,7 +32160,7 @@ func (ec *executionContext) field_Query_sessions_metrics_argsParams(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("params"))
 	if tmp, ok := rawArgs["params"]; ok {
-		return ec.unmarshalNQueryInput2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐQueryInput(ctx, tmp)
+		return ec.unmarshalNQueryInput2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐQueryInput(ctx, tmp)
 	}
 
 	var zeroVal model.QueryInput
@@ -32241,7 +32214,7 @@ func (ec *executionContext) field_Query_sessions_metrics_argsMetricTypes(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("metric_types"))
 	if tmp, ok := rawArgs["metric_types"]; ok {
-		return ec.unmarshalOMetricAggregator2ᚕgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricAggregatorᚄ(ctx, tmp)
+		return ec.unmarshalOMetricAggregator2ᚕgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricAggregatorᚄ(ctx, tmp)
 	}
 
 	var zeroVal []model.MetricAggregator
@@ -32349,7 +32322,7 @@ func (ec *executionContext) field_Query_sessions_metrics_argsLimitAggregator(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("limit_aggregator"))
 	if tmp, ok := rawArgs["limit_aggregator"]; ok {
-		return ec.unmarshalOMetricAggregator2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricAggregator(ctx, tmp)
+		return ec.unmarshalOMetricAggregator2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricAggregator(ctx, tmp)
 	}
 
 	var zeroVal *model.MetricAggregator
@@ -32385,7 +32358,7 @@ func (ec *executionContext) field_Query_sessions_metrics_argsExpressions(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("expressions"))
 	if tmp, ok := rawArgs["expressions"]; ok {
-		return ec.unmarshalOMetricExpressionInput2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricExpressionInputᚄ(ctx, tmp)
+		return ec.unmarshalOMetricExpressionInput2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricExpressionInputᚄ(ctx, tmp)
 	}
 
 	var zeroVal []*model.MetricExpressionInput
@@ -32833,7 +32806,7 @@ func (ec *executionContext) field_Query_traces_argsParams(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("params"))
 	if tmp, ok := rawArgs["params"]; ok {
-		return ec.unmarshalNQueryInput2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐQueryInput(ctx, tmp)
+		return ec.unmarshalNQueryInput2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐQueryInput(ctx, tmp)
 	}
 
 	var zeroVal model.QueryInput
@@ -32905,7 +32878,7 @@ func (ec *executionContext) field_Query_traces_argsDirection(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("direction"))
 	if tmp, ok := rawArgs["direction"]; ok {
-		return ec.unmarshalNSortDirection2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSortDirection(ctx, tmp)
+		return ec.unmarshalNSortDirection2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSortDirection(ctx, tmp)
 	}
 
 	var zeroVal model.SortDirection
@@ -33025,7 +32998,7 @@ func (ec *executionContext) field_Query_traces_key_values_argsDateRange(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("date_range"))
 	if tmp, ok := rawArgs["date_range"]; ok {
-		return ec.unmarshalNDateRangeRequiredInput2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDateRangeRequiredInput(ctx, tmp)
+		return ec.unmarshalNDateRangeRequiredInput2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDateRangeRequiredInput(ctx, tmp)
 	}
 
 	var zeroVal model.DateRangeRequiredInput
@@ -33122,7 +33095,7 @@ func (ec *executionContext) field_Query_traces_keys_argsDateRange(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("date_range"))
 	if tmp, ok := rawArgs["date_range"]; ok {
-		return ec.unmarshalNDateRangeRequiredInput2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDateRangeRequiredInput(ctx, tmp)
+		return ec.unmarshalNDateRangeRequiredInput2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDateRangeRequiredInput(ctx, tmp)
 	}
 
 	var zeroVal model.DateRangeRequiredInput
@@ -33158,7 +33131,7 @@ func (ec *executionContext) field_Query_traces_keys_argsType(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
 	if tmp, ok := rawArgs["type"]; ok {
-		return ec.unmarshalOKeyType2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐKeyType(ctx, tmp)
+		return ec.unmarshalOKeyType2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐKeyType(ctx, tmp)
 	}
 
 	var zeroVal *model.KeyType
@@ -33264,7 +33237,7 @@ func (ec *executionContext) field_Query_traces_metrics_argsParams(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("params"))
 	if tmp, ok := rawArgs["params"]; ok {
-		return ec.unmarshalNQueryInput2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐQueryInput(ctx, tmp)
+		return ec.unmarshalNQueryInput2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐQueryInput(ctx, tmp)
 	}
 
 	var zeroVal model.QueryInput
@@ -33318,7 +33291,7 @@ func (ec *executionContext) field_Query_traces_metrics_argsMetricTypes(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("metric_types"))
 	if tmp, ok := rawArgs["metric_types"]; ok {
-		return ec.unmarshalOMetricAggregator2ᚕgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricAggregatorᚄ(ctx, tmp)
+		return ec.unmarshalOMetricAggregator2ᚕgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricAggregatorᚄ(ctx, tmp)
 	}
 
 	var zeroVal []model.MetricAggregator
@@ -33426,7 +33399,7 @@ func (ec *executionContext) field_Query_traces_metrics_argsLimitAggregator(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("limit_aggregator"))
 	if tmp, ok := rawArgs["limit_aggregator"]; ok {
-		return ec.unmarshalOMetricAggregator2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricAggregator(ctx, tmp)
+		return ec.unmarshalOMetricAggregator2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricAggregator(ctx, tmp)
 	}
 
 	var zeroVal *model.MetricAggregator
@@ -33462,7 +33435,7 @@ func (ec *executionContext) field_Query_traces_metrics_argsExpressions(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("expressions"))
 	if tmp, ok := rawArgs["expressions"]; ok {
-		return ec.unmarshalOMetricExpressionInput2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricExpressionInputᚄ(ctx, tmp)
+		return ec.unmarshalOMetricExpressionInput2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricExpressionInputᚄ(ctx, tmp)
 	}
 
 	var zeroVal []*model.MetricExpressionInput
@@ -33574,7 +33547,7 @@ func (ec *executionContext) field_Query_usageHistory_argsProductType(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("product_type"))
 	if tmp, ok := rawArgs["product_type"]; ok {
-		return ec.unmarshalNProductType2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐProductType(ctx, tmp)
+		return ec.unmarshalNProductType2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐProductType(ctx, tmp)
 	}
 
 	var zeroVal model.ProductType
@@ -33592,7 +33565,7 @@ func (ec *executionContext) field_Query_usageHistory_argsDateRange(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("date_range"))
 	if tmp, ok := rawArgs["date_range"]; ok {
-		return ec.unmarshalODateRangeRequiredInput2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDateRangeRequiredInput(ctx, tmp)
+		return ec.unmarshalODateRangeRequiredInput2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDateRangeRequiredInput(ctx, tmp)
 	}
 
 	var zeroVal *model.DateRangeRequiredInput
@@ -35514,7 +35487,7 @@ func (ec *executionContext) _AccountDetails_session_count_per_month(ctx context.
 	}
 	res := resTmp.([]*model.NamedCount)
 	fc.Result = res
-	return ec.marshalONamedCount2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐNamedCount(ctx, field.Selections, res)
+	return ec.marshalONamedCount2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐNamedCount(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_AccountDetails_session_count_per_month(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -35561,7 +35534,7 @@ func (ec *executionContext) _AccountDetails_session_count_per_day(ctx context.Co
 	}
 	res := resTmp.([]*model.NamedCount)
 	fc.Result = res
-	return ec.marshalONamedCount2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐNamedCount(ctx, field.Selections, res)
+	return ec.marshalONamedCount2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐNamedCount(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_AccountDetails_session_count_per_day(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -35655,7 +35628,7 @@ func (ec *executionContext) _AccountDetails_members(ctx context.Context, field g
 	}
 	res := resTmp.([]*model.AccountDetailsMember)
 	fc.Result = res
-	return ec.marshalNAccountDetailsMember2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐAccountDetailsMemberᚄ(ctx, field.Selections, res)
+	return ec.marshalNAccountDetailsMember2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐAccountDetailsMemberᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_AccountDetails_members(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -36729,7 +36702,7 @@ func (ec *executionContext) _Alert_product_type(ctx context.Context, field graph
 	}
 	res := resTmp.(model.ProductType)
 	fc.Result = res
-	return ec.marshalNProductType2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐProductType(ctx, field.Selections, res)
+	return ec.marshalNProductType2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐProductType(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Alert_product_type(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -36773,7 +36746,7 @@ func (ec *executionContext) _Alert_function_type(ctx context.Context, field grap
 	}
 	res := resTmp.(model.MetricAggregator)
 	fc.Result = res
-	return ec.marshalNMetricAggregator2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricAggregator(ctx, field.Selections, res)
+	return ec.marshalNMetricAggregator2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricAggregator(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Alert_function_type(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -37025,7 +36998,7 @@ func (ec *executionContext) _Alert_destinations(ctx context.Context, field graph
 	}
 	res := resTmp.([]*model1.AlertDestination)
 	fc.Result = res
-	return ec.marshalNAlertDestination2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐAlertDestination(ctx, field.Selections, res)
+	return ec.marshalNAlertDestination2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐAlertDestination(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Alert_destinations(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -37201,7 +37174,7 @@ func (ec *executionContext) _Alert_threshold_type(ctx context.Context, field gra
 	}
 	res := resTmp.(model.ThresholdType)
 	fc.Result = res
-	return ec.marshalOThresholdType2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐThresholdType(ctx, field.Selections, res)
+	return ec.marshalOThresholdType2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐThresholdType(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Alert_threshold_type(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -37242,7 +37215,7 @@ func (ec *executionContext) _Alert_threshold_condition(ctx context.Context, fiel
 	}
 	res := resTmp.(model.ThresholdCondition)
 	fc.Result = res
-	return ec.marshalOThresholdCondition2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐThresholdCondition(ctx, field.Selections, res)
+	return ec.marshalOThresholdCondition2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐThresholdCondition(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Alert_threshold_condition(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -37415,7 +37388,7 @@ func (ec *executionContext) _AlertDestination_destination_type(ctx context.Conte
 	}
 	res := resTmp.(model.AlertDestinationType)
 	fc.Result = res
-	return ec.marshalNAlertDestinationType2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐAlertDestinationType(ctx, field.Selections, res)
+	return ec.marshalNAlertDestinationType2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐAlertDestinationType(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_AlertDestination_destination_type(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -37723,7 +37696,7 @@ func (ec *executionContext) _AlertStateChange_state(ctx context.Context, field g
 	}
 	res := resTmp.(model.AlertState)
 	fc.Result = res
-	return ec.marshalNAlertState2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐAlertState(ctx, field.Selections, res)
+	return ec.marshalNAlertState2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐAlertState(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_AlertStateChange_state(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -37811,7 +37784,7 @@ func (ec *executionContext) _AlertStateChangeResults_alertStateChanges(ctx conte
 	}
 	res := resTmp.([]*model.AlertStateChange)
 	fc.Result = res
-	return ec.marshalNAlertStateChange2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐAlertStateChange(ctx, field.Selections, res)
+	return ec.marshalNAlertStateChange2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐAlertStateChange(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_AlertStateChangeResults_alertStateChanges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -38505,7 +38478,7 @@ func (ec *executionContext) _AllProjectSettings_sampling(ctx context.Context, fi
 	}
 	res := resTmp.(*model.Sampling)
 	fc.Result = res
-	return ec.marshalNSampling2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSampling(ctx, field.Selections, res)
+	return ec.marshalNSampling2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSampling(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_AllProjectSettings_sampling(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -39505,7 +39478,7 @@ func (ec *executionContext) _BillingDetails_plan(ctx context.Context, field grap
 	}
 	res := resTmp.(*model.Plan)
 	fc.Result = res
-	return ec.marshalNPlan2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐPlan(ctx, field.Selections, res)
+	return ec.marshalNPlan2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐPlan(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_BillingDetails_plan(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -40358,7 +40331,7 @@ func (ec *executionContext) _CategoryHistogramPayload_buckets(ctx context.Contex
 	}
 	res := resTmp.([]*model.CategoryHistogramBucket)
 	fc.Result = res
-	return ec.marshalNCategoryHistogramBucket2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐCategoryHistogramBucketᚄ(ctx, field.Selections, res)
+	return ec.marshalNCategoryHistogramBucket2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐCategoryHistogramBucketᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_CategoryHistogramPayload_buckets(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -40496,7 +40469,7 @@ func (ec *executionContext) _ClickUpFolder_lists(ctx context.Context, field grap
 	}
 	res := resTmp.([]*model.ClickUpList)
 	fc.Result = res
-	return ec.marshalNClickUpList2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐClickUpListᚄ(ctx, field.Selections, res)
+	return ec.marshalNClickUpList2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐClickUpListᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_ClickUpFolder_lists(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -40986,7 +40959,7 @@ func (ec *executionContext) _ClickUpTeam_spaces(ctx context.Context, field graph
 	}
 	res := resTmp.([]*model.ClickUpSpace)
 	fc.Result = res
-	return ec.marshalNClickUpSpace2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐClickUpSpaceᚄ(ctx, field.Selections, res)
+	return ec.marshalNClickUpSpace2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐClickUpSpaceᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_ClickUpTeam_spaces(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -41168,7 +41141,7 @@ func (ec *executionContext) _CommentReply_author(ctx context.Context, field grap
 	}
 	res := resTmp.(*model.SanitizedAdmin)
 	fc.Result = res
-	return ec.marshalNSanitizedAdmin2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSanitizedAdmin(ctx, field.Selections, res)
+	return ec.marshalNSanitizedAdmin2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSanitizedAdmin(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_CommentReply_author(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -41926,7 +41899,7 @@ func (ec *executionContext) _DashboardDefinition_metrics(ctx context.Context, fi
 	}
 	res := resTmp.([]*model.DashboardMetricConfig)
 	fc.Result = res
-	return ec.marshalNDashboardMetricConfig2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDashboardMetricConfigᚄ(ctx, field.Selections, res)
+	return ec.marshalNDashboardMetricConfig2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDashboardMetricConfigᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_DashboardDefinition_metrics(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -42212,7 +42185,7 @@ func (ec *executionContext) _DashboardMetricConfig_component_type(ctx context.Co
 	}
 	res := resTmp.(*model.MetricViewComponentType)
 	fc.Result = res
-	return ec.marshalOMetricViewComponentType2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricViewComponentType(ctx, field.Selections, res)
+	return ec.marshalOMetricViewComponentType2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricViewComponentType(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_DashboardMetricConfig_component_type(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -42458,7 +42431,7 @@ func (ec *executionContext) _DashboardMetricConfig_chart_type(ctx context.Contex
 	}
 	res := resTmp.(*model.DashboardChartType)
 	fc.Result = res
-	return ec.marshalODashboardChartType2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDashboardChartType(ctx, field.Selections, res)
+	return ec.marshalODashboardChartType2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDashboardChartType(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_DashboardMetricConfig_chart_type(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -42499,7 +42472,7 @@ func (ec *executionContext) _DashboardMetricConfig_aggregator(ctx context.Contex
 	}
 	res := resTmp.(*model.MetricAggregator)
 	fc.Result = res
-	return ec.marshalOMetricAggregator2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricAggregator(ctx, field.Selections, res)
+	return ec.marshalOMetricAggregator2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricAggregator(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_DashboardMetricConfig_aggregator(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -42704,7 +42677,7 @@ func (ec *executionContext) _DashboardMetricConfig_filters(ctx context.Context, 
 	}
 	res := resTmp.([]*model.MetricTagFilter)
 	fc.Result = res
-	return ec.marshalOMetricTagFilter2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricTagFilterᚄ(ctx, field.Selections, res)
+	return ec.marshalOMetricTagFilter2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricTagFilterᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_DashboardMetricConfig_filters(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -42885,7 +42858,7 @@ func (ec *executionContext) _DashboardPayload_aggregator(ctx context.Context, fi
 	}
 	res := resTmp.(model.MetricAggregator)
 	fc.Result = res
-	return ec.marshalNMetricAggregator2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricAggregator(ctx, field.Selections, res)
+	return ec.marshalNMetricAggregator2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricAggregator(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_DashboardPayload_aggregator(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -43383,7 +43356,7 @@ func (ec *executionContext) _EnhancedUserDetailsResult_socials(ctx context.Conte
 	}
 	res := resTmp.([]*model.SocialLink)
 	fc.Result = res
-	return ec.marshalOSocialLink2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSocialLink(ctx, field.Selections, res)
+	return ec.marshalOSocialLink2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSocialLink(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_EnhancedUserDetailsResult_socials(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -43603,7 +43576,7 @@ func (ec *executionContext) _ErrorAlert_ChannelsToNotify(ctx context.Context, fi
 	}
 	res := resTmp.([]*model.SanitizedSlackChannel)
 	fc.Result = res
-	return ec.marshalNSanitizedSlackChannel2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSanitizedSlackChannel(ctx, field.Selections, res)
+	return ec.marshalNSanitizedSlackChannel2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSanitizedSlackChannel(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_ErrorAlert_ChannelsToNotify(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -43653,7 +43626,7 @@ func (ec *executionContext) _ErrorAlert_DiscordChannelsToNotify(ctx context.Cont
 	}
 	res := resTmp.([]*model1.DiscordChannel)
 	fc.Result = res
-	return ec.marshalNDiscordChannel2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐDiscordChannelᚄ(ctx, field.Selections, res)
+	return ec.marshalNDiscordChannel2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐDiscordChannelᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_ErrorAlert_DiscordChannelsToNotify(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -43703,7 +43676,7 @@ func (ec *executionContext) _ErrorAlert_MicrosoftTeamsChannelsToNotify(ctx conte
 	}
 	res := resTmp.([]*model1.MicrosoftTeamsChannel)
 	fc.Result = res
-	return ec.marshalNMicrosoftTeamsChannel2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐMicrosoftTeamsChannelᚄ(ctx, field.Selections, res)
+	return ec.marshalNMicrosoftTeamsChannel2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐMicrosoftTeamsChannelᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_ErrorAlert_MicrosoftTeamsChannelsToNotify(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -43753,7 +43726,7 @@ func (ec *executionContext) _ErrorAlert_WebhookDestinations(ctx context.Context,
 	}
 	res := resTmp.([]*model1.WebhookDestination)
 	fc.Result = res
-	return ec.marshalNWebhookDestination2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐWebhookDestinationᚄ(ctx, field.Selections, res)
+	return ec.marshalNWebhookDestination2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐWebhookDestinationᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_ErrorAlert_WebhookDestinations(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -44545,7 +44518,7 @@ func (ec *executionContext) _ErrorComment_author(ctx context.Context, field grap
 	}
 	res := resTmp.(*model.SanitizedAdmin)
 	fc.Result = res
-	return ec.marshalNSanitizedAdmin2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSanitizedAdmin(ctx, field.Selections, res)
+	return ec.marshalNSanitizedAdmin2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSanitizedAdmin(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_ErrorComment_author(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -44643,7 +44616,7 @@ func (ec *executionContext) _ErrorComment_attachments(ctx context.Context, field
 	}
 	res := resTmp.([]*model1.ExternalAttachment)
 	fc.Result = res
-	return ec.marshalNExternalAttachment2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐExternalAttachment(ctx, field.Selections, res)
+	return ec.marshalNExternalAttachment2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐExternalAttachment(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_ErrorComment_attachments(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -44701,7 +44674,7 @@ func (ec *executionContext) _ErrorComment_replies(ctx context.Context, field gra
 	}
 	res := resTmp.([]*model1.CommentReply)
 	fc.Result = res
-	return ec.marshalNCommentReply2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐCommentReply(ctx, field.Selections, res)
+	return ec.marshalNCommentReply2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐCommentReply(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_ErrorComment_replies(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -45241,7 +45214,7 @@ func (ec *executionContext) _ErrorGroup_structured_stack_trace(ctx context.Conte
 	}
 	res := resTmp.([]*model.ErrorTrace)
 	fc.Result = res
-	return ec.marshalNErrorTrace2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐErrorTrace(ctx, field.Selections, res)
+	return ec.marshalNErrorTrace2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐErrorTrace(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_ErrorGroup_structured_stack_trace(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -45311,7 +45284,7 @@ func (ec *executionContext) _ErrorGroup_metadata_log(ctx context.Context, field 
 	}
 	res := resTmp.([]*model.ErrorMetadata)
 	fc.Result = res
-	return ec.marshalNErrorMetadata2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐErrorMetadata(ctx, field.Selections, res)
+	return ec.marshalNErrorMetadata2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐErrorMetadata(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_ErrorGroup_metadata_log(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -45465,7 +45438,7 @@ func (ec *executionContext) _ErrorGroup_state(ctx context.Context, field graphql
 	}
 	res := resTmp.(model.ErrorState)
 	fc.Result = res
-	return ec.marshalNErrorState2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐErrorState(ctx, field.Selections, res)
+	return ec.marshalNErrorState2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐErrorState(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_ErrorGroup_state(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -45635,7 +45608,7 @@ func (ec *executionContext) _ErrorGroup_error_metrics(ctx context.Context, field
 	}
 	res := resTmp.([]*model.ErrorDistributionItem)
 	fc.Result = res
-	return ec.marshalNErrorDistributionItem2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐErrorDistributionItemᚄ(ctx, field.Selections, res)
+	return ec.marshalNErrorDistributionItem2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐErrorDistributionItemᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_ErrorGroup_error_metrics(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -45894,7 +45867,7 @@ func (ec *executionContext) _ErrorGroup_error_tag(ctx context.Context, field gra
 	}
 	res := resTmp.(*model1.ErrorTag)
 	fc.Result = res
-	return ec.marshalOErrorTag2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐErrorTag(ctx, field.Selections, res)
+	return ec.marshalOErrorTag2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐErrorTag(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_ErrorGroup_error_tag(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -45992,7 +45965,7 @@ func (ec *executionContext) _ErrorGroupTagAggregation_buckets(ctx context.Contex
 	}
 	res := resTmp.([]*model.ErrorGroupTagAggregationBucket)
 	fc.Result = res
-	return ec.marshalNErrorGroupTagAggregationBucket2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐErrorGroupTagAggregationBucketᚄ(ctx, field.Selections, res)
+	return ec.marshalNErrorGroupTagAggregationBucket2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐErrorGroupTagAggregationBucketᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_ErrorGroupTagAggregation_buckets(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -46176,7 +46149,7 @@ func (ec *executionContext) _ErrorInstance_error_object(ctx context.Context, fie
 	}
 	res := resTmp.(model1.ErrorObject)
 	fc.Result = res
-	return ec.marshalNErrorObject2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐErrorObject(ctx, field.Selections, res)
+	return ec.marshalNErrorObject2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐErrorObject(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_ErrorInstance_error_object(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -47584,7 +47557,7 @@ func (ec *executionContext) _ErrorObject_structured_stack_trace(ctx context.Cont
 	}
 	res := resTmp.([]*model.ErrorTrace)
 	fc.Result = res
-	return ec.marshalNErrorTrace2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐErrorTrace(ctx, field.Selections, res)
+	return ec.marshalNErrorTrace2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐErrorTrace(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_ErrorObject_structured_stack_trace(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -47900,7 +47873,7 @@ func (ec *executionContext) _ErrorObject_session(ctx context.Context, field grap
 	}
 	res := resTmp.(*model1.Session)
 	fc.Result = res
-	return ec.marshalOSession2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐSession(ctx, field.Selections, res)
+	return ec.marshalOSession2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐSession(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_ErrorObject_session(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -48311,7 +48284,7 @@ func (ec *executionContext) _ErrorObjectNode_session(ctx context.Context, field 
 	}
 	res := resTmp.(*model.ErrorObjectNodeSession)
 	fc.Result = res
-	return ec.marshalOErrorObjectNodeSession2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐErrorObjectNodeSession(ctx, field.Selections, res)
+	return ec.marshalOErrorObjectNodeSession2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐErrorObjectNodeSession(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_ErrorObjectNode_session(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -48667,7 +48640,7 @@ func (ec *executionContext) _ErrorObjectResults_error_objects(ctx context.Contex
 	}
 	res := resTmp.([]*model.ErrorObjectNode)
 	fc.Result = res
-	return ec.marshalNErrorObjectNode2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐErrorObjectNodeᚄ(ctx, field.Selections, res)
+	return ec.marshalNErrorObjectNode2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐErrorObjectNodeᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_ErrorObjectResults_error_objects(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -48773,7 +48746,7 @@ func (ec *executionContext) _ErrorResults_error_groups(ctx context.Context, fiel
 	}
 	res := resTmp.([]model1.ErrorGroup)
 	fc.Result = res
-	return ec.marshalNErrorGroup2ᚕgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐErrorGroupᚄ(ctx, field.Selections, res)
+	return ec.marshalNErrorGroup2ᚕgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐErrorGroupᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_ErrorResults_error_groups(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -49279,7 +49252,7 @@ func (ec *executionContext) _ErrorTrace_sourceMappingErrorMetadata(ctx context.C
 	}
 	res := resTmp.(*model.SourceMappingError)
 	fc.Result = res
-	return ec.marshalOSourceMappingError2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSourceMappingError(ctx, field.Selections, res)
+	return ec.marshalOSourceMappingError2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSourceMappingError(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_ErrorTrace_sourceMappingErrorMetadata(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -49512,7 +49485,7 @@ func (ec *executionContext) _ErrorTrace_enhancementSource(ctx context.Context, f
 	}
 	res := resTmp.(*model.EnhancementSource)
 	fc.Result = res
-	return ec.marshalOEnhancementSource2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐEnhancementSource(ctx, field.Selections, res)
+	return ec.marshalOEnhancementSource2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐEnhancementSource(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_ErrorTrace_enhancementSource(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -49861,7 +49834,7 @@ func (ec *executionContext) _ExternalAttachment_integration_type(ctx context.Con
 	}
 	res := resTmp.(model.IntegrationType)
 	fc.Result = res
-	return ec.marshalNIntegrationType2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐIntegrationType(ctx, field.Selections, res)
+	return ec.marshalNIntegrationType2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐIntegrationType(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_ExternalAttachment_integration_type(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -50773,7 +50746,7 @@ func (ec *executionContext) _Graph_productType(ctx context.Context, field graphq
 	}
 	res := resTmp.(model.ProductType)
 	fc.Result = res
-	return ec.marshalNProductType2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐProductType(ctx, field.Selections, res)
+	return ec.marshalNProductType2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐProductType(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Graph_productType(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -51063,7 +51036,7 @@ func (ec *executionContext) _Graph_limitFunctionType(ctx context.Context, field 
 	}
 	res := resTmp.(*model.MetricAggregator)
 	fc.Result = res
-	return ec.marshalOMetricAggregator2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricAggregator(ctx, field.Selections, res)
+	return ec.marshalOMetricAggregator2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricAggregator(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Graph_limitFunctionType(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -51145,7 +51118,7 @@ func (ec *executionContext) _Graph_funnelSteps(ctx context.Context, field graphq
 	}
 	res := resTmp.([]*model.FunnelStep)
 	fc.Result = res
-	return ec.marshalOFunnelStep2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐFunnelStepᚄ(ctx, field.Selections, res)
+	return ec.marshalOFunnelStep2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐFunnelStepᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Graph_funnelSteps(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -51277,7 +51250,7 @@ func (ec *executionContext) _Graph_expressions(ctx context.Context, field graphq
 	}
 	res := resTmp.([]*model.MetricExpression)
 	fc.Result = res
-	return ec.marshalNMetricExpression2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricExpressionᚄ(ctx, field.Selections, res)
+	return ec.marshalNMetricExpression2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricExpressionᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Graph_expressions(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -52840,7 +52813,7 @@ func (ec *executionContext) _JiraIssueType_scope(ctx context.Context, field grap
 	}
 	res := resTmp.(*model.JiraIssueTypeScope)
 	fc.Result = res
-	return ec.marshalOJiraIssueTypeScope2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐJiraIssueTypeScope(ctx, field.Selections, res)
+	return ec.marshalOJiraIssueTypeScope2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐJiraIssueTypeScope(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_JiraIssueType_scope(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -52931,7 +52904,7 @@ func (ec *executionContext) _JiraIssueTypeScope_project(ctx context.Context, fie
 	}
 	res := resTmp.(*model.JiraProjectIdentifier)
 	fc.Result = res
-	return ec.marshalOJiraProjectIdentifier2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐJiraProjectIdentifier(ctx, field.Selections, res)
+	return ec.marshalOJiraProjectIdentifier2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐJiraProjectIdentifier(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_JiraIssueTypeScope_project(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -53152,7 +53125,7 @@ func (ec *executionContext) _JiraProject_issueTypes(ctx context.Context, field g
 	}
 	res := resTmp.([]*model.JiraIssueType)
 	fc.Result = res
-	return ec.marshalOJiraIssueType2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐJiraIssueType(ctx, field.Selections, res)
+	return ec.marshalOJiraIssueType2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐJiraIssueType(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_JiraProject_issueTypes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -53434,7 +53407,7 @@ func (ec *executionContext) _KeyValueSuggestion_values(ctx context.Context, fiel
 	}
 	res := resTmp.([]*model.ValueSuggestion)
 	fc.Result = res
-	return ec.marshalNValueSuggestion2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐValueSuggestionᚄ(ctx, field.Selections, res)
+	return ec.marshalNValueSuggestion2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐValueSuggestionᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_KeyValueSuggestion_values(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -53788,7 +53761,7 @@ func (ec *executionContext) _Log_level(ctx context.Context, field graphql.Collec
 	}
 	res := resTmp.(model.LogLevel)
 	fc.Result = res
-	return ec.marshalNLogLevel2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐLogLevel(ctx, field.Selections, res)
+	return ec.marshalNLogLevel2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐLogLevel(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Log_level(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -54339,7 +54312,7 @@ func (ec *executionContext) _LogAlert_ChannelsToNotify(ctx context.Context, fiel
 	}
 	res := resTmp.([]*model.SanitizedSlackChannel)
 	fc.Result = res
-	return ec.marshalNSanitizedSlackChannel2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSanitizedSlackChannelᚄ(ctx, field.Selections, res)
+	return ec.marshalNSanitizedSlackChannel2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSanitizedSlackChannelᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_LogAlert_ChannelsToNotify(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -54389,7 +54362,7 @@ func (ec *executionContext) _LogAlert_DiscordChannelsToNotify(ctx context.Contex
 	}
 	res := resTmp.([]*model1.DiscordChannel)
 	fc.Result = res
-	return ec.marshalNDiscordChannel2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐDiscordChannelᚄ(ctx, field.Selections, res)
+	return ec.marshalNDiscordChannel2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐDiscordChannelᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_LogAlert_DiscordChannelsToNotify(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -54439,7 +54412,7 @@ func (ec *executionContext) _LogAlert_MicrosoftTeamsChannelsToNotify(ctx context
 	}
 	res := resTmp.([]*model1.MicrosoftTeamsChannel)
 	fc.Result = res
-	return ec.marshalNMicrosoftTeamsChannel2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐMicrosoftTeamsChannelᚄ(ctx, field.Selections, res)
+	return ec.marshalNMicrosoftTeamsChannel2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐMicrosoftTeamsChannelᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_LogAlert_MicrosoftTeamsChannelsToNotify(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -54489,7 +54462,7 @@ func (ec *executionContext) _LogAlert_WebhookDestinations(ctx context.Context, f
 	}
 	res := resTmp.([]*model1.WebhookDestination)
 	fc.Result = res
-	return ec.marshalNWebhookDestination2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐWebhookDestinationᚄ(ctx, field.Selections, res)
+	return ec.marshalNWebhookDestination2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐWebhookDestinationᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_LogAlert_WebhookDestinations(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -54976,7 +54949,7 @@ func (ec *executionContext) _LogConnection_edges(ctx context.Context, field grap
 	}
 	res := resTmp.([]*model.LogEdge)
 	fc.Result = res
-	return ec.marshalNLogEdge2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐLogEdgeᚄ(ctx, field.Selections, res)
+	return ec.marshalNLogEdge2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐLogEdgeᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_LogConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -55026,7 +54999,7 @@ func (ec *executionContext) _LogConnection_pageInfo(ctx context.Context, field g
 	}
 	res := resTmp.(*model.PageInfo)
 	fc.Result = res
-	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐPageInfo(ctx, field.Selections, res)
+	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐPageInfo(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_LogConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -55124,7 +55097,7 @@ func (ec *executionContext) _LogEdge_node(ctx context.Context, field graphql.Col
 	}
 	res := resTmp.(*model.Log)
 	fc.Result = res
-	return ec.marshalNLog2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐLog(ctx, field.Selections, res)
+	return ec.marshalNLog2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐLog(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_LogEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -55279,7 +55252,7 @@ func (ec *executionContext) _LogLine_severity(ctx context.Context, field graphql
 	}
 	res := resTmp.(*model.LogLevel)
 	fc.Result = res
-	return ec.marshalOLogLevel2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐLogLevel(ctx, field.Selections, res)
+	return ec.marshalOLogLevel2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐLogLevel(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_LogLine_severity(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -55367,7 +55340,7 @@ func (ec *executionContext) _LogsHistogram_buckets(ctx context.Context, field gr
 	}
 	res := resTmp.([]*model.LogsHistogramBucket)
 	fc.Result = res
-	return ec.marshalNLogsHistogramBucket2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐLogsHistogramBucketᚄ(ctx, field.Selections, res)
+	return ec.marshalNLogsHistogramBucket2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐLogsHistogramBucketᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_LogsHistogram_buckets(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -55593,7 +55566,7 @@ func (ec *executionContext) _LogsHistogramBucket_counts(ctx context.Context, fie
 	}
 	res := resTmp.([]*model.LogsHistogramBucketCount)
 	fc.Result = res
-	return ec.marshalNLogsHistogramBucketCount2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐLogsHistogramBucketCountᚄ(ctx, field.Selections, res)
+	return ec.marshalNLogsHistogramBucketCount2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐLogsHistogramBucketCountᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_LogsHistogramBucket_counts(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -55687,7 +55660,7 @@ func (ec *executionContext) _LogsHistogramBucketCount_level(ctx context.Context,
 	}
 	res := resTmp.(model.LogLevel)
 	fc.Result = res
-	return ec.marshalNLogLevel2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐLogLevel(ctx, field.Selections, res)
+	return ec.marshalNLogLevel2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐLogLevel(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_LogsHistogramBucketCount_level(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -56382,7 +56355,7 @@ func (ec *executionContext) _MetricBucket_metric_type(ctx context.Context, field
 	}
 	res := resTmp.(model.MetricAggregator)
 	fc.Result = res
-	return ec.marshalNMetricAggregator2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricAggregator(ctx, field.Selections, res)
+	return ec.marshalNMetricAggregator2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricAggregator(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_MetricBucket_metric_type(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -56549,7 +56522,7 @@ func (ec *executionContext) _MetricConnection_edges(ctx context.Context, field g
 	}
 	res := resTmp.([]*model.MetricEdge)
 	fc.Result = res
-	return ec.marshalNMetricEdge2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricEdgeᚄ(ctx, field.Selections, res)
+	return ec.marshalNMetricEdge2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricEdgeᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_MetricConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -56599,7 +56572,7 @@ func (ec *executionContext) _MetricConnection_pageInfo(ctx context.Context, fiel
 	}
 	res := resTmp.(*model.PageInfo)
 	fc.Result = res
-	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐPageInfo(ctx, field.Selections, res)
+	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐPageInfo(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_MetricConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -56697,7 +56670,7 @@ func (ec *executionContext) _MetricEdge_node(ctx context.Context, field graphql.
 	}
 	res := resTmp.(*model.MetricRow)
 	fc.Result = res
-	return ec.marshalNMetricRow2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricRow(ctx, field.Selections, res)
+	return ec.marshalNMetricRow2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricRow(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_MetricEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -56771,7 +56744,7 @@ func (ec *executionContext) _MetricExpression_aggregator(ctx context.Context, fi
 	}
 	res := resTmp.(model.MetricAggregator)
 	fc.Result = res
-	return ec.marshalNMetricAggregator2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricAggregator(ctx, field.Selections, res)
+	return ec.marshalNMetricAggregator2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricAggregator(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_MetricExpression_aggregator(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -56991,7 +56964,7 @@ func (ec *executionContext) _MetricMonitor_channels_to_notify(ctx context.Contex
 	}
 	res := resTmp.([]*model.SanitizedSlackChannel)
 	fc.Result = res
-	return ec.marshalNSanitizedSlackChannel2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSanitizedSlackChannel(ctx, field.Selections, res)
+	return ec.marshalNSanitizedSlackChannel2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSanitizedSlackChannel(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_MetricMonitor_channels_to_notify(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -57041,7 +57014,7 @@ func (ec *executionContext) _MetricMonitor_discord_channels_to_notify(ctx contex
 	}
 	res := resTmp.([]*model1.DiscordChannel)
 	fc.Result = res
-	return ec.marshalNDiscordChannel2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐDiscordChannelᚄ(ctx, field.Selections, res)
+	return ec.marshalNDiscordChannel2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐDiscordChannelᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_MetricMonitor_discord_channels_to_notify(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -57091,7 +57064,7 @@ func (ec *executionContext) _MetricMonitor_webhook_destinations(ctx context.Cont
 	}
 	res := resTmp.([]*model1.WebhookDestination)
 	fc.Result = res
-	return ec.marshalNWebhookDestination2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐWebhookDestinationᚄ(ctx, field.Selections, res)
+	return ec.marshalNWebhookDestination2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐWebhookDestinationᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_MetricMonitor_webhook_destinations(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -57185,7 +57158,7 @@ func (ec *executionContext) _MetricMonitor_aggregator(ctx context.Context, field
 	}
 	res := resTmp.(model.MetricAggregator)
 	fc.Result = res
-	return ec.marshalNMetricAggregator2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricAggregator(ctx, field.Selections, res)
+	return ec.marshalNMetricAggregator2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricAggregator(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_MetricMonitor_aggregator(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -57484,7 +57457,7 @@ func (ec *executionContext) _MetricMonitor_filters(ctx context.Context, field gr
 	}
 	res := resTmp.([]*model.MetricTagFilter)
 	fc.Result = res
-	return ec.marshalOMetricTagFilter2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricTagFilterᚄ(ctx, field.Selections, res)
+	return ec.marshalOMetricTagFilter2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricTagFilterᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_MetricMonitor_filters(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -57976,7 +57949,7 @@ func (ec *executionContext) _MetricRow_type(ctx context.Context, field graphql.C
 	}
 	res := resTmp.(model.MetricRowType)
 	fc.Result = res
-	return ec.marshalNMetricRowType2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricRowType(ctx, field.Selections, res)
+	return ec.marshalNMetricRowType2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricRowType(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_MetricRow_type(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -58108,7 +58081,7 @@ func (ec *executionContext) _MetricRow_exemplars(ctx context.Context, field grap
 	}
 	res := resTmp.([]*model.MetricRowExemplar)
 	fc.Result = res
-	return ec.marshalNMetricRowExemplar2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricRowExemplarᚄ(ctx, field.Selections, res)
+	return ec.marshalNMetricRowExemplar2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricRowExemplarᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_MetricRow_exemplars(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -58562,7 +58535,7 @@ func (ec *executionContext) _MetricTagFilter_op(ctx context.Context, field graph
 	}
 	res := resTmp.(model.MetricTagFilterOp)
 	fc.Result = res
-	return ec.marshalNMetricTagFilterOp2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricTagFilterOp(ctx, field.Selections, res)
+	return ec.marshalNMetricTagFilterOp2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricTagFilterOp(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_MetricTagFilter_op(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -58650,7 +58623,7 @@ func (ec *executionContext) _MetricsBuckets_buckets(ctx context.Context, field g
 	}
 	res := resTmp.([]*model.MetricBucket)
 	fc.Result = res
-	return ec.marshalNMetricBucket2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricBucketᚄ(ctx, field.Selections, res)
+	return ec.marshalNMetricBucket2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricBucketᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_MetricsBuckets_buckets(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -58889,7 +58862,7 @@ func (ec *executionContext) _Mutation_updateAdminAndCreateWorkspace(ctx context.
 	}
 	res := resTmp.(*model1.Project)
 	fc.Result = res
-	return ec.marshalOProject2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐProject(ctx, field.Selections, res)
+	return ec.marshalOProject2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐProject(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_updateAdminAndCreateWorkspace(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -59031,7 +59004,7 @@ func (ec *executionContext) _Mutation_createAdmin(ctx context.Context, field gra
 	}
 	res := resTmp.(*model1.Admin)
 	fc.Result = res
-	return ec.marshalNAdmin2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐAdmin(ctx, field.Selections, res)
+	return ec.marshalNAdmin2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐAdmin(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_createAdmin(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -59104,7 +59077,7 @@ func (ec *executionContext) _Mutation_createProject(ctx context.Context, field g
 	}
 	res := resTmp.(*model1.Project)
 	fc.Result = res
-	return ec.marshalOProject2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐProject(ctx, field.Selections, res)
+	return ec.marshalOProject2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐProject(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_createProject(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -59177,7 +59150,7 @@ func (ec *executionContext) _Mutation_createWorkspace(ctx context.Context, field
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().CreateWorkspace(rctx, fc.Args["name"].(string), fc.Args["promo_code"].(*string))
+		return ec.resolvers.Mutation().CreateWorkspace(rctx, fc.Args["name"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -59188,7 +59161,7 @@ func (ec *executionContext) _Mutation_createWorkspace(ctx context.Context, field
 	}
 	res := resTmp.(*model1.Workspace)
 	fc.Result = res
-	return ec.marshalOWorkspace2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐWorkspace(ctx, field.Selections, res)
+	return ec.marshalOWorkspace2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐWorkspace(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_createWorkspace(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -59294,7 +59267,7 @@ func (ec *executionContext) _Mutation_editProject(ctx context.Context, field gra
 	}
 	res := resTmp.(*model1.Project)
 	fc.Result = res
-	return ec.marshalOProject2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐProject(ctx, field.Selections, res)
+	return ec.marshalOProject2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐProject(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_editProject(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -59378,7 +59351,7 @@ func (ec *executionContext) _Mutation_editProjectSettings(ctx context.Context, f
 	}
 	res := resTmp.(*model.AllProjectSettings)
 	fc.Result = res
-	return ec.marshalOAllProjectSettings2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐAllProjectSettings(ctx, field.Selections, res)
+	return ec.marshalOAllProjectSettings2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐAllProjectSettings(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_editProjectSettings(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -59517,7 +59490,7 @@ func (ec *executionContext) _Mutation_editWorkspace(ctx context.Context, field g
 	}
 	res := resTmp.(*model1.Workspace)
 	fc.Result = res
-	return ec.marshalOWorkspace2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐWorkspace(ctx, field.Selections, res)
+	return ec.marshalOWorkspace2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐWorkspace(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_editWorkspace(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -59623,7 +59596,7 @@ func (ec *executionContext) _Mutation_editWorkspaceSettings(ctx context.Context,
 	}
 	res := resTmp.(*model1.AllWorkspaceSettings)
 	fc.Result = res
-	return ec.marshalOAllWorkspaceSettings2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐAllWorkspaceSettings(ctx, field.Selections, res)
+	return ec.marshalOAllWorkspaceSettings2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐAllWorkspaceSettings(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_editWorkspaceSettings(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -59772,7 +59745,7 @@ func (ec *executionContext) _Mutation_markErrorGroupAsViewed(ctx context.Context
 	}
 	res := resTmp.(*model1.ErrorGroup)
 	fc.Result = res
-	return ec.marshalOErrorGroup2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐErrorGroup(ctx, field.Selections, res)
+	return ec.marshalOErrorGroup2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐErrorGroup(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_markErrorGroupAsViewed(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -59870,7 +59843,7 @@ func (ec *executionContext) _Mutation_markSessionAsViewed(ctx context.Context, f
 	}
 	res := resTmp.(*model1.Session)
 	fc.Result = res
-	return ec.marshalOSession2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐSession(ctx, field.Selections, res)
+	return ec.marshalOSession2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐSession(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_markSessionAsViewed(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -60034,7 +60007,7 @@ func (ec *executionContext) _Mutation_updateErrorGroupState(ctx context.Context,
 	}
 	res := resTmp.(*model1.ErrorGroup)
 	fc.Result = res
-	return ec.marshalOErrorGroup2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐErrorGroup(ctx, field.Selections, res)
+	return ec.marshalOErrorGroup2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐErrorGroup(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_updateErrorGroupState(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -60450,7 +60423,7 @@ func (ec *executionContext) _Mutation_changeAdminRole(ctx context.Context, field
 	}
 	res := resTmp.(*model1.WorkspaceAdminRole)
 	fc.Result = res
-	return ec.marshalNWorkspaceAdminRole2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐWorkspaceAdminRole(ctx, field.Selections, res)
+	return ec.marshalNWorkspaceAdminRole2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐWorkspaceAdminRole(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_changeAdminRole(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -60515,7 +60488,7 @@ func (ec *executionContext) _Mutation_changeProjectMembership(ctx context.Contex
 	}
 	res := resTmp.(*model1.WorkspaceAdminRole)
 	fc.Result = res
-	return ec.marshalNWorkspaceAdminRole2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐWorkspaceAdminRole(ctx, field.Selections, res)
+	return ec.marshalNWorkspaceAdminRole2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐWorkspaceAdminRole(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_changeProjectMembership(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -60684,7 +60657,7 @@ func (ec *executionContext) _Mutation_createSavedSegment(ctx context.Context, fi
 	}
 	res := resTmp.(*model1.SavedSegment)
 	fc.Result = res
-	return ec.marshalOSavedSegment2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐSavedSegment(ctx, field.Selections, res)
+	return ec.marshalOSavedSegment2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐSavedSegment(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_createSavedSegment(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -61060,7 +61033,7 @@ func (ec *executionContext) _Mutation_createSessionComment(ctx context.Context, 
 	}
 	res := resTmp.(*model1.SessionComment)
 	fc.Result = res
-	return ec.marshalOSessionComment2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐSessionComment(ctx, field.Selections, res)
+	return ec.marshalOSessionComment2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐSessionComment(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_createSessionComment(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -61146,7 +61119,7 @@ func (ec *executionContext) _Mutation_createSessionCommentWithExistingIssue(ctx 
 	}
 	res := resTmp.(*model1.SessionComment)
 	fc.Result = res
-	return ec.marshalOSessionComment2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐSessionComment(ctx, field.Selections, res)
+	return ec.marshalOSessionComment2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐSessionComment(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_createSessionCommentWithExistingIssue(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -61232,7 +61205,7 @@ func (ec *executionContext) _Mutation_createIssueForSessionComment(ctx context.C
 	}
 	res := resTmp.(*model1.SessionComment)
 	fc.Result = res
-	return ec.marshalOSessionComment2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐSessionComment(ctx, field.Selections, res)
+	return ec.marshalOSessionComment2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐSessionComment(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_createIssueForSessionComment(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -61318,7 +61291,7 @@ func (ec *executionContext) _Mutation_linkIssueForSessionComment(ctx context.Con
 	}
 	res := resTmp.(*model1.SessionComment)
 	fc.Result = res
-	return ec.marshalOSessionComment2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐSessionComment(ctx, field.Selections, res)
+	return ec.marshalOSessionComment2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐSessionComment(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_linkIssueForSessionComment(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -61508,7 +61481,7 @@ func (ec *executionContext) _Mutation_replyToSessionComment(ctx context.Context,
 	}
 	res := resTmp.(*model1.CommentReply)
 	fc.Result = res
-	return ec.marshalOCommentReply2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐCommentReply(ctx, field.Selections, res)
+	return ec.marshalOCommentReply2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐCommentReply(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_replyToSessionComment(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -61572,7 +61545,7 @@ func (ec *executionContext) _Mutation_createErrorComment(ctx context.Context, fi
 	}
 	res := resTmp.(*model1.ErrorComment)
 	fc.Result = res
-	return ec.marshalOErrorComment2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐErrorComment(ctx, field.Selections, res)
+	return ec.marshalOErrorComment2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐErrorComment(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_createErrorComment(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -61646,7 +61619,7 @@ func (ec *executionContext) _Mutation_createErrorCommentForExistingIssue(ctx con
 	}
 	res := resTmp.(*model1.ErrorComment)
 	fc.Result = res
-	return ec.marshalOErrorComment2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐErrorComment(ctx, field.Selections, res)
+	return ec.marshalOErrorComment2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐErrorComment(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_createErrorCommentForExistingIssue(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -61824,7 +61797,7 @@ func (ec *executionContext) _Mutation_createIssueForErrorComment(ctx context.Con
 	}
 	res := resTmp.(*model1.ErrorComment)
 	fc.Result = res
-	return ec.marshalOErrorComment2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐErrorComment(ctx, field.Selections, res)
+	return ec.marshalOErrorComment2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐErrorComment(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_createIssueForErrorComment(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -61898,7 +61871,7 @@ func (ec *executionContext) _Mutation_linkIssueForErrorComment(ctx context.Conte
 	}
 	res := resTmp.(*model1.ErrorComment)
 	fc.Result = res
-	return ec.marshalOErrorComment2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐErrorComment(ctx, field.Selections, res)
+	return ec.marshalOErrorComment2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐErrorComment(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_linkIssueForErrorComment(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -62024,7 +61997,7 @@ func (ec *executionContext) _Mutation_replyToErrorComment(ctx context.Context, f
 	}
 	res := resTmp.(*model1.CommentReply)
 	fc.Result = res
-	return ec.marshalOCommentReply2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐCommentReply(ctx, field.Selections, res)
+	return ec.marshalOCommentReply2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐCommentReply(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_replyToErrorComment(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -62311,7 +62284,7 @@ func (ec *executionContext) _Mutation_syncSlackIntegration(ctx context.Context, 
 	}
 	res := resTmp.(*model.SlackSyncResponse)
 	fc.Result = res
-	return ec.marshalNSlackSyncResponse2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSlackSyncResponse(ctx, field.Selections, res)
+	return ec.marshalNSlackSyncResponse2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSlackSyncResponse(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_syncSlackIntegration(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -62369,7 +62342,7 @@ func (ec *executionContext) _Mutation_createMetricMonitor(ctx context.Context, f
 	}
 	res := resTmp.(*model1.MetricMonitor)
 	fc.Result = res
-	return ec.marshalOMetricMonitor2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐMetricMonitor(ctx, field.Selections, res)
+	return ec.marshalOMetricMonitor2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐMetricMonitor(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_createMetricMonitor(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -62453,7 +62426,7 @@ func (ec *executionContext) _Mutation_updateMetricMonitor(ctx context.Context, f
 	}
 	res := resTmp.(*model1.MetricMonitor)
 	fc.Result = res
-	return ec.marshalOMetricMonitor2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐMetricMonitor(ctx, field.Selections, res)
+	return ec.marshalOMetricMonitor2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐMetricMonitor(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_updateMetricMonitor(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -62537,7 +62510,7 @@ func (ec *executionContext) _Mutation_createAlert(ctx context.Context, field gra
 	}
 	res := resTmp.(*model1.Alert)
 	fc.Result = res
-	return ec.marshalOAlert2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐAlert(ctx, field.Selections, res)
+	return ec.marshalOAlert2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐAlert(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_createAlert(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -62629,7 +62602,7 @@ func (ec *executionContext) _Mutation_updateAlert(ctx context.Context, field gra
 	}
 	res := resTmp.(*model1.Alert)
 	fc.Result = res
-	return ec.marshalOAlert2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐAlert(ctx, field.Selections, res)
+	return ec.marshalOAlert2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐAlert(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_updateAlert(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -62831,7 +62804,7 @@ func (ec *executionContext) _Mutation_updateErrorAlert(ctx context.Context, fiel
 	}
 	res := resTmp.(*model1.ErrorAlert)
 	fc.Result = res
-	return ec.marshalOErrorAlert2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐErrorAlert(ctx, field.Selections, res)
+	return ec.marshalOErrorAlert2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐErrorAlert(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_updateErrorAlert(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -62921,7 +62894,7 @@ func (ec *executionContext) _Mutation_deleteErrorAlert(ctx context.Context, fiel
 	}
 	res := resTmp.(*model1.ErrorAlert)
 	fc.Result = res
-	return ec.marshalOErrorAlert2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐErrorAlert(ctx, field.Selections, res)
+	return ec.marshalOErrorAlert2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐErrorAlert(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_deleteErrorAlert(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -63011,7 +62984,7 @@ func (ec *executionContext) _Mutation_deleteMetricMonitor(ctx context.Context, f
 	}
 	res := resTmp.(*model1.MetricMonitor)
 	fc.Result = res
-	return ec.marshalOMetricMonitor2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐMetricMonitor(ctx, field.Selections, res)
+	return ec.marshalOMetricMonitor2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐMetricMonitor(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_deleteMetricMonitor(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -63095,7 +63068,7 @@ func (ec *executionContext) _Mutation_updateSessionAlertIsDisabled(ctx context.C
 	}
 	res := resTmp.(*model1.SessionAlert)
 	fc.Result = res
-	return ec.marshalOSessionAlert2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐSessionAlert(ctx, field.Selections, res)
+	return ec.marshalOSessionAlert2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐSessionAlert(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_updateSessionAlertIsDisabled(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -63187,7 +63160,7 @@ func (ec *executionContext) _Mutation_updateErrorAlertIsDisabled(ctx context.Con
 	}
 	res := resTmp.(*model1.ErrorAlert)
 	fc.Result = res
-	return ec.marshalOErrorAlert2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐErrorAlert(ctx, field.Selections, res)
+	return ec.marshalOErrorAlert2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐErrorAlert(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_updateErrorAlertIsDisabled(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -63277,7 +63250,7 @@ func (ec *executionContext) _Mutation_updateMetricMonitorIsDisabled(ctx context.
 	}
 	res := resTmp.(*model1.MetricMonitor)
 	fc.Result = res
-	return ec.marshalOMetricMonitor2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐMetricMonitor(ctx, field.Selections, res)
+	return ec.marshalOMetricMonitor2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐMetricMonitor(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_updateMetricMonitorIsDisabled(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -63361,7 +63334,7 @@ func (ec *executionContext) _Mutation_updateSessionAlert(ctx context.Context, fi
 	}
 	res := resTmp.(*model1.SessionAlert)
 	fc.Result = res
-	return ec.marshalOSessionAlert2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐSessionAlert(ctx, field.Selections, res)
+	return ec.marshalOSessionAlert2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐSessionAlert(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_updateSessionAlert(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -63453,7 +63426,7 @@ func (ec *executionContext) _Mutation_deleteSessionAlert(ctx context.Context, fi
 	}
 	res := resTmp.(*model1.SessionAlert)
 	fc.Result = res
-	return ec.marshalOSessionAlert2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐSessionAlert(ctx, field.Selections, res)
+	return ec.marshalOSessionAlert2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐSessionAlert(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_deleteSessionAlert(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -63545,7 +63518,7 @@ func (ec *executionContext) _Mutation_updateLogAlert(ctx context.Context, field 
 	}
 	res := resTmp.(*model1.LogAlert)
 	fc.Result = res
-	return ec.marshalOLogAlert2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐLogAlert(ctx, field.Selections, res)
+	return ec.marshalOLogAlert2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐLogAlert(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_updateLogAlert(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -63633,7 +63606,7 @@ func (ec *executionContext) _Mutation_deleteLogAlert(ctx context.Context, field 
 	}
 	res := resTmp.(*model1.LogAlert)
 	fc.Result = res
-	return ec.marshalOLogAlert2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐLogAlert(ctx, field.Selections, res)
+	return ec.marshalOLogAlert2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐLogAlert(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_deleteLogAlert(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -63721,7 +63694,7 @@ func (ec *executionContext) _Mutation_updateLogAlertIsDisabled(ctx context.Conte
 	}
 	res := resTmp.(*model1.LogAlert)
 	fc.Result = res
-	return ec.marshalOLogAlert2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐLogAlert(ctx, field.Selections, res)
+	return ec.marshalOLogAlert2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐLogAlert(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_updateLogAlertIsDisabled(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -63809,7 +63782,7 @@ func (ec *executionContext) _Mutation_updateSessionIsPublic(ctx context.Context,
 	}
 	res := resTmp.(*model1.Session)
 	fc.Result = res
-	return ec.marshalOSession2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐSession(ctx, field.Selections, res)
+	return ec.marshalOSession2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐSession(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_updateSessionIsPublic(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -63973,7 +63946,7 @@ func (ec *executionContext) _Mutation_updateErrorGroupIsPublic(ctx context.Conte
 	}
 	res := resTmp.(*model1.ErrorGroup)
 	fc.Result = res
-	return ec.marshalOErrorGroup2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐErrorGroup(ctx, field.Selections, res)
+	return ec.marshalOErrorGroup2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐErrorGroup(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_updateErrorGroupIsPublic(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -64071,7 +64044,7 @@ func (ec *executionContext) _Mutation_updateAllowMeterOverage(ctx context.Contex
 	}
 	res := resTmp.(*model1.Workspace)
 	fc.Result = res
-	return ec.marshalOWorkspace2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐWorkspace(ctx, field.Selections, res)
+	return ec.marshalOWorkspace2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐWorkspace(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_updateAllowMeterOverage(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -64773,7 +64746,7 @@ func (ec *executionContext) _Mutation_editServiceGithubSettings(ctx context.Cont
 	}
 	res := resTmp.(*model1.Service)
 	fc.Result = res
-	return ec.marshalOService2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐService(ctx, field.Selections, res)
+	return ec.marshalOService2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐService(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_editServiceGithubSettings(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -64846,7 +64819,7 @@ func (ec *executionContext) _Mutation_createErrorTag(ctx context.Context, field 
 	}
 	res := resTmp.(*model1.ErrorTag)
 	fc.Result = res
-	return ec.marshalNErrorTag2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐErrorTag(ctx, field.Selections, res)
+	return ec.marshalNErrorTag2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐErrorTag(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_createErrorTag(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -64955,7 +64928,7 @@ func (ec *executionContext) _Mutation_upsertSlackChannel(ctx context.Context, fi
 	}
 	res := resTmp.(*model.SanitizedSlackChannel)
 	fc.Result = res
-	return ec.marshalNSanitizedSlackChannel2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSanitizedSlackChannel(ctx, field.Selections, res)
+	return ec.marshalNSanitizedSlackChannel2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSanitizedSlackChannel(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_upsertSlackChannel(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -65016,7 +64989,7 @@ func (ec *executionContext) _Mutation_upsertDiscordChannel(ctx context.Context, 
 	}
 	res := resTmp.(*model1.DiscordChannel)
 	fc.Result = res
-	return ec.marshalNDiscordChannel2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐDiscordChannel(ctx, field.Selections, res)
+	return ec.marshalNDiscordChannel2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐDiscordChannel(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_upsertDiscordChannel(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -65074,7 +65047,7 @@ func (ec *executionContext) _Mutation_testErrorEnhancement(ctx context.Context, 
 	}
 	res := resTmp.(*model1.ErrorObject)
 	fc.Result = res
-	return ec.marshalOErrorObject2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐErrorObject(ctx, field.Selections, res)
+	return ec.marshalOErrorObject2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐErrorObject(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_testErrorEnhancement(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -65293,7 +65266,7 @@ func (ec *executionContext) _Mutation_upsertGraph(ctx context.Context, field gra
 	}
 	res := resTmp.(*model1.Graph)
 	fc.Result = res
-	return ec.marshalNGraph2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐGraph(ctx, field.Selections, res)
+	return ec.marshalNGraph2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐGraph(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_upsertGraph(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -65881,7 +65854,7 @@ func (ec *executionContext) _Plan_type(ctx context.Context, field graphql.Collec
 	}
 	res := resTmp.(model.PlanType)
 	fc.Result = res
-	return ec.marshalNPlanType2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐPlanType(ctx, field.Selections, res)
+	return ec.marshalNPlanType2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐPlanType(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Plan_type(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -65925,7 +65898,7 @@ func (ec *executionContext) _Plan_interval(ctx context.Context, field graphql.Co
 	}
 	res := resTmp.(model.SubscriptionInterval)
 	fc.Result = res
-	return ec.marshalNSubscriptionInterval2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSubscriptionInterval(ctx, field.Selections, res)
+	return ec.marshalNSubscriptionInterval2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSubscriptionInterval(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Plan_interval(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -66051,7 +66024,7 @@ func (ec *executionContext) _Plan_aws_mp_subscription(ctx context.Context, field
 	}
 	res := resTmp.(*model.AWSMarketplaceSubscription)
 	fc.Result = res
-	return ec.marshalOAWSMarketplaceSubscription2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐAWSMarketplaceSubscription(ctx, field.Selections, res)
+	return ec.marshalOAWSMarketplaceSubscription2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐAWSMarketplaceSubscription(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Plan_aws_mp_subscription(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -66798,7 +66771,7 @@ func (ec *executionContext) _Project_workspace(ctx context.Context, field graphq
 	}
 	res := resTmp.(*model1.Workspace)
 	fc.Result = res
-	return ec.marshalOWorkspace2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐWorkspace(ctx, field.Selections, res)
+	return ec.marshalOWorkspace2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐWorkspace(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Project_workspace(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -67221,7 +67194,7 @@ func (ec *executionContext) _Query_accounts(ctx context.Context, field graphql.C
 	}
 	res := resTmp.([]*model.Account)
 	fc.Result = res
-	return ec.marshalOAccount2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐAccount(ctx, field.Selections, res)
+	return ec.marshalOAccount2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐAccount(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_accounts(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -67301,7 +67274,7 @@ func (ec *executionContext) _Query_account_details(ctx context.Context, field gr
 	}
 	res := resTmp.(*model.AccountDetails)
 	fc.Result = res
-	return ec.marshalNAccountDetails2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐAccountDetails(ctx, field.Selections, res)
+	return ec.marshalNAccountDetails2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐAccountDetails(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_account_details(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -67367,7 +67340,7 @@ func (ec *executionContext) _Query_session(ctx context.Context, field graphql.Co
 	}
 	res := resTmp.(*model1.Session)
 	fc.Result = res
-	return ec.marshalOSession2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐSession(ctx, field.Selections, res)
+	return ec.marshalOSession2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐSession(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_session(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -67586,7 +67559,7 @@ func (ec *executionContext) _Query_session_intervals(ctx context.Context, field 
 	}
 	res := resTmp.([]*model1.SessionInterval)
 	fc.Result = res
-	return ec.marshalNSessionInterval2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐSessionIntervalᚄ(ctx, field.Selections, res)
+	return ec.marshalNSessionInterval2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐSessionIntervalᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_session_intervals(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -67653,7 +67626,7 @@ func (ec *executionContext) _Query_timeline_indicator_events(ctx context.Context
 	}
 	res := resTmp.([]*model1.TimelineIndicatorEvent)
 	fc.Result = res
-	return ec.marshalNTimelineIndicatorEvent2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐTimelineIndicatorEventᚄ(ctx, field.Selections, res)
+	return ec.marshalNTimelineIndicatorEvent2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐTimelineIndicatorEventᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_timeline_indicator_events(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -67772,7 +67745,7 @@ func (ec *executionContext) _Query_rage_clicks(ctx context.Context, field graphq
 	}
 	res := resTmp.([]*model1.RageClickEvent)
 	fc.Result = res
-	return ec.marshalNRageClickEvent2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐRageClickEventᚄ(ctx, field.Selections, res)
+	return ec.marshalNRageClickEvent2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐRageClickEventᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_rage_clicks(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -67841,7 +67814,7 @@ func (ec *executionContext) _Query_rageClicksForProject(ctx context.Context, fie
 	}
 	res := resTmp.([]*model.RageClickEventForProject)
 	fc.Result = res
-	return ec.marshalNRageClickEventForProject2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐRageClickEventForProjectᚄ(ctx, field.Selections, res)
+	return ec.marshalNRageClickEventForProject2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐRageClickEventForProjectᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_rageClicksForProject(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -67906,7 +67879,7 @@ func (ec *executionContext) _Query_error_groups_clickhouse(ctx context.Context, 
 	}
 	res := resTmp.(*model1.ErrorResults)
 	fc.Result = res
-	return ec.marshalNErrorResults2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐErrorResults(ctx, field.Selections, res)
+	return ec.marshalNErrorResults2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐErrorResults(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_error_groups_clickhouse(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -67967,7 +67940,7 @@ func (ec *executionContext) _Query_error_groups(ctx context.Context, field graph
 	}
 	res := resTmp.(*model1.ErrorResults)
 	fc.Result = res
-	return ec.marshalNErrorResults2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐErrorResults(ctx, field.Selections, res)
+	return ec.marshalNErrorResults2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐErrorResults(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_error_groups(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -68028,7 +68001,7 @@ func (ec *executionContext) _Query_errors_histogram_clickhouse(ctx context.Conte
 	}
 	res := resTmp.(*model1.ErrorsHistogram)
 	fc.Result = res
-	return ec.marshalNErrorsHistogram2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐErrorsHistogram(ctx, field.Selections, res)
+	return ec.marshalNErrorsHistogram2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐErrorsHistogram(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_errors_histogram_clickhouse(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -68089,7 +68062,7 @@ func (ec *executionContext) _Query_errors_histogram(ctx context.Context, field g
 	}
 	res := resTmp.(*model1.ErrorsHistogram)
 	fc.Result = res
-	return ec.marshalNErrorsHistogram2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐErrorsHistogram(ctx, field.Selections, res)
+	return ec.marshalNErrorsHistogram2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐErrorsHistogram(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_errors_histogram(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -68147,7 +68120,7 @@ func (ec *executionContext) _Query_error_group(ctx context.Context, field graphq
 	}
 	res := resTmp.(*model1.ErrorGroup)
 	fc.Result = res
-	return ec.marshalOErrorGroup2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐErrorGroup(ctx, field.Selections, res)
+	return ec.marshalOErrorGroup2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐErrorGroup(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_error_group(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -68245,7 +68218,7 @@ func (ec *executionContext) _Query_error_object(ctx context.Context, field graph
 	}
 	res := resTmp.(*model1.ErrorObject)
 	fc.Result = res
-	return ec.marshalOErrorObject2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐErrorObject(ctx, field.Selections, res)
+	return ec.marshalOErrorObject2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐErrorObject(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_error_object(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -68354,7 +68327,7 @@ func (ec *executionContext) _Query_error_objects(ctx context.Context, field grap
 	}
 	res := resTmp.(*model.ErrorObjectResults)
 	fc.Result = res
-	return ec.marshalNErrorObjectResults2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐErrorObjectResults(ctx, field.Selections, res)
+	return ec.marshalNErrorObjectResults2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐErrorObjectResults(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_error_objects(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -68412,7 +68385,7 @@ func (ec *executionContext) _Query_error_object_for_log(ctx context.Context, fie
 	}
 	res := resTmp.(*model1.ErrorObject)
 	fc.Result = res
-	return ec.marshalOErrorObject2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐErrorObject(ctx, field.Selections, res)
+	return ec.marshalOErrorObject2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐErrorObject(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_error_object_for_log(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -68518,7 +68491,7 @@ func (ec *executionContext) _Query_error_instance(ctx context.Context, field gra
 	}
 	res := resTmp.(*model1.ErrorInstance)
 	fc.Result = res
-	return ec.marshalOErrorInstance2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐErrorInstance(ctx, field.Selections, res)
+	return ec.marshalOErrorInstance2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐErrorInstance(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_error_instance(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -68578,7 +68551,7 @@ func (ec *executionContext) _Query_enhanced_user_details(ctx context.Context, fi
 	}
 	res := resTmp.(*model.EnhancedUserDetailsResult)
 	fc.Result = res
-	return ec.marshalOEnhancedUserDetailsResult2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐEnhancedUserDetailsResult(ctx, field.Selections, res)
+	return ec.marshalOEnhancedUserDetailsResult2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐEnhancedUserDetailsResult(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_enhanced_user_details(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -68644,7 +68617,7 @@ func (ec *executionContext) _Query_errors(ctx context.Context, field graphql.Col
 	}
 	res := resTmp.([]*model1.ErrorObject)
 	fc.Result = res
-	return ec.marshalOErrorObject2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐErrorObject(ctx, field.Selections, res)
+	return ec.marshalOErrorObject2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐErrorObject(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_errors(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -68805,7 +68778,7 @@ func (ec *executionContext) _Query_web_vitals(ctx context.Context, field graphql
 	}
 	res := resTmp.(*model.MetricsBuckets)
 	fc.Result = res
-	return ec.marshalNMetricsBuckets2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricsBuckets(ctx, field.Selections, res)
+	return ec.marshalNMetricsBuckets2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricsBuckets(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_web_vitals(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -68868,7 +68841,7 @@ func (ec *executionContext) _Query_session_comments(ctx context.Context, field g
 	}
 	res := resTmp.([]*model1.SessionComment)
 	fc.Result = res
-	return ec.marshalNSessionComment2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐSessionComment(ctx, field.Selections, res)
+	return ec.marshalNSessionComment2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐSessionComment(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_session_comments(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -68957,7 +68930,7 @@ func (ec *executionContext) _Query_session_comment_tags_for_project(ctx context.
 	}
 	res := resTmp.([]*model1.SessionCommentTag)
 	fc.Result = res
-	return ec.marshalNSessionCommentTag2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐSessionCommentTagᚄ(ctx, field.Selections, res)
+	return ec.marshalNSessionCommentTag2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐSessionCommentTagᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_session_comment_tags_for_project(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -69018,7 +68991,7 @@ func (ec *executionContext) _Query_session_comments_for_admin(ctx context.Contex
 	}
 	res := resTmp.([]*model1.SessionComment)
 	fc.Result = res
-	return ec.marshalNSessionComment2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐSessionComment(ctx, field.Selections, res)
+	return ec.marshalNSessionComment2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐSessionComment(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_session_comments_for_admin(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -69096,7 +69069,7 @@ func (ec *executionContext) _Query_session_comments_for_project(ctx context.Cont
 	}
 	res := resTmp.([]*model1.SessionComment)
 	fc.Result = res
-	return ec.marshalNSessionComment2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐSessionComment(ctx, field.Selections, res)
+	return ec.marshalNSessionComment2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐSessionComment(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_session_comments_for_project(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -69237,7 +69210,7 @@ func (ec *executionContext) _Query_error_issue(ctx context.Context, field graphq
 	}
 	res := resTmp.([]*model1.ExternalAttachment)
 	fc.Result = res
-	return ec.marshalNExternalAttachment2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐExternalAttachment(ctx, field.Selections, res)
+	return ec.marshalNExternalAttachment2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐExternalAttachment(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_error_issue(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -69306,7 +69279,7 @@ func (ec *executionContext) _Query_error_comments(ctx context.Context, field gra
 	}
 	res := resTmp.([]*model1.ErrorComment)
 	fc.Result = res
-	return ec.marshalNErrorComment2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐErrorComment(ctx, field.Selections, res)
+	return ec.marshalNErrorComment2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐErrorComment(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_error_comments(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -69383,7 +69356,7 @@ func (ec *executionContext) _Query_error_comments_for_admin(ctx context.Context,
 	}
 	res := resTmp.([]*model1.ErrorComment)
 	fc.Result = res
-	return ec.marshalNErrorComment2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐErrorComment(ctx, field.Selections, res)
+	return ec.marshalNErrorComment2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐErrorComment(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_error_comments_for_admin(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -69449,7 +69422,7 @@ func (ec *executionContext) _Query_error_comments_for_project(ctx context.Contex
 	}
 	res := resTmp.([]*model1.ErrorComment)
 	fc.Result = res
-	return ec.marshalNErrorComment2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐErrorComment(ctx, field.Selections, res)
+	return ec.marshalNErrorComment2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐErrorComment(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_error_comments_for_project(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -69526,7 +69499,7 @@ func (ec *executionContext) _Query_workspace_admins(ctx context.Context, field g
 	}
 	res := resTmp.([]*model1.WorkspaceAdminRole)
 	fc.Result = res
-	return ec.marshalNWorkspaceAdminRole2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐWorkspaceAdminRoleᚄ(ctx, field.Selections, res)
+	return ec.marshalNWorkspaceAdminRole2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐWorkspaceAdminRoleᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_workspace_admins(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -69591,7 +69564,7 @@ func (ec *executionContext) _Query_workspace_admins_by_project_id(ctx context.Co
 	}
 	res := resTmp.([]*model1.WorkspaceAdminRole)
 	fc.Result = res
-	return ec.marshalNWorkspaceAdminRole2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐWorkspaceAdminRoleᚄ(ctx, field.Selections, res)
+	return ec.marshalNWorkspaceAdminRole2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐWorkspaceAdminRoleᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_workspace_admins_by_project_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -69656,7 +69629,7 @@ func (ec *executionContext) _Query_clientIntegration(ctx context.Context, field 
 	}
 	res := resTmp.(*model.IntegrationStatus)
 	fc.Result = res
-	return ec.marshalNIntegrationStatus2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐIntegrationStatus(ctx, field.Selections, res)
+	return ec.marshalNIntegrationStatus2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐIntegrationStatus(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_clientIntegration(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -69719,7 +69692,7 @@ func (ec *executionContext) _Query_serverIntegration(ctx context.Context, field 
 	}
 	res := resTmp.(*model.IntegrationStatus)
 	fc.Result = res
-	return ec.marshalNIntegrationStatus2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐIntegrationStatus(ctx, field.Selections, res)
+	return ec.marshalNIntegrationStatus2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐIntegrationStatus(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_serverIntegration(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -69782,7 +69755,7 @@ func (ec *executionContext) _Query_logsIntegration(ctx context.Context, field gr
 	}
 	res := resTmp.(*model.IntegrationStatus)
 	fc.Result = res
-	return ec.marshalNIntegrationStatus2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐIntegrationStatus(ctx, field.Selections, res)
+	return ec.marshalNIntegrationStatus2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐIntegrationStatus(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_logsIntegration(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -69845,7 +69818,7 @@ func (ec *executionContext) _Query_tracesIntegration(ctx context.Context, field 
 	}
 	res := resTmp.(*model.IntegrationStatus)
 	fc.Result = res
-	return ec.marshalNIntegrationStatus2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐIntegrationStatus(ctx, field.Selections, res)
+	return ec.marshalNIntegrationStatus2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐIntegrationStatus(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_tracesIntegration(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -69908,7 +69881,7 @@ func (ec *executionContext) _Query_metricsIntegration(ctx context.Context, field
 	}
 	res := resTmp.(*model.IntegrationStatus)
 	fc.Result = res
-	return ec.marshalNIntegrationStatus2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐIntegrationStatus(ctx, field.Selections, res)
+	return ec.marshalNIntegrationStatus2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐIntegrationStatus(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_metricsIntegration(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -70124,7 +70097,7 @@ func (ec *executionContext) _Query_projectHasViewedASession(ctx context.Context,
 	}
 	res := resTmp.(*model1.Session)
 	fc.Result = res
-	return ec.marshalOSession2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐSession(ctx, field.Selections, res)
+	return ec.marshalOSession2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐSession(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_projectHasViewedASession(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -70291,7 +70264,7 @@ func (ec *executionContext) _Query_dailySessionsCount(ctx context.Context, field
 	}
 	res := resTmp.([]*model1.DailySessionCount)
 	fc.Result = res
-	return ec.marshalNDailySessionCount2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐDailySessionCount(ctx, field.Selections, res)
+	return ec.marshalNDailySessionCount2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐDailySessionCount(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_dailySessionsCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -70354,7 +70327,7 @@ func (ec *executionContext) _Query_dailyErrorsCount(ctx context.Context, field g
 	}
 	res := resTmp.([]*model1.DailyErrorCount)
 	fc.Result = res
-	return ec.marshalNDailyErrorCount2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐDailyErrorCount(ctx, field.Selections, res)
+	return ec.marshalNDailyErrorCount2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐDailyErrorCount(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_dailyErrorsCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -70472,7 +70445,7 @@ func (ec *executionContext) _Query_errorGroupTags(ctx context.Context, field gra
 	}
 	res := resTmp.([]*model.ErrorGroupTagAggregation)
 	fc.Result = res
-	return ec.marshalNErrorGroupTagAggregation2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐErrorGroupTagAggregationᚄ(ctx, field.Selections, res)
+	return ec.marshalNErrorGroupTagAggregation2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐErrorGroupTagAggregationᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_errorGroupTags(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -70533,7 +70506,7 @@ func (ec *executionContext) _Query_referrers(ctx context.Context, field graphql.
 	}
 	res := resTmp.([]*model.ReferrerTablePayload)
 	fc.Result = res
-	return ec.marshalNReferrerTablePayload2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐReferrerTablePayload(ctx, field.Selections, res)
+	return ec.marshalNReferrerTablePayload2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐReferrerTablePayload(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_referrers(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -70593,7 +70566,7 @@ func (ec *executionContext) _Query_newUsersCount(ctx context.Context, field grap
 	}
 	res := resTmp.(*model.NewUsersCount)
 	fc.Result = res
-	return ec.marshalONewUsersCount2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐNewUsersCount(ctx, field.Selections, res)
+	return ec.marshalONewUsersCount2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐNewUsersCount(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_newUsersCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -70652,7 +70625,7 @@ func (ec *executionContext) _Query_topUsers(ctx context.Context, field graphql.C
 	}
 	res := resTmp.([]*model.TopUsersPayload)
 	fc.Result = res
-	return ec.marshalNTopUsersPayload2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐTopUsersPayload(ctx, field.Selections, res)
+	return ec.marshalNTopUsersPayload2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐTopUsersPayload(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_topUsers(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -70716,7 +70689,7 @@ func (ec *executionContext) _Query_averageSessionLength(ctx context.Context, fie
 	}
 	res := resTmp.(*model.AverageSessionLength)
 	fc.Result = res
-	return ec.marshalOAverageSessionLength2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐAverageSessionLength(ctx, field.Selections, res)
+	return ec.marshalOAverageSessionLength2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐAverageSessionLength(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_averageSessionLength(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -70772,7 +70745,7 @@ func (ec *executionContext) _Query_userFingerprintCount(ctx context.Context, fie
 	}
 	res := resTmp.(*model.UserFingerprintCount)
 	fc.Result = res
-	return ec.marshalOUserFingerprintCount2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐUserFingerprintCount(ctx, field.Selections, res)
+	return ec.marshalOUserFingerprintCount2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐUserFingerprintCount(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_userFingerprintCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -70831,7 +70804,7 @@ func (ec *executionContext) _Query_sessions_clickhouse(ctx context.Context, fiel
 	}
 	res := resTmp.(*model1.SessionResults)
 	fc.Result = res
-	return ec.marshalNSessionResults2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐSessionResults(ctx, field.Selections, res)
+	return ec.marshalNSessionResults2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐSessionResults(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_sessions_clickhouse(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -70896,7 +70869,7 @@ func (ec *executionContext) _Query_sessions(ctx context.Context, field graphql.C
 	}
 	res := resTmp.(*model1.SessionResults)
 	fc.Result = res
-	return ec.marshalNSessionResults2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐSessionResults(ctx, field.Selections, res)
+	return ec.marshalNSessionResults2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐSessionResults(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_sessions(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -70961,7 +70934,7 @@ func (ec *executionContext) _Query_sessions_histogram_clickhouse(ctx context.Con
 	}
 	res := resTmp.(*model1.SessionsHistogram)
 	fc.Result = res
-	return ec.marshalNSessionsHistogram2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐSessionsHistogram(ctx, field.Selections, res)
+	return ec.marshalNSessionsHistogram2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐSessionsHistogram(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_sessions_histogram_clickhouse(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -71030,7 +71003,7 @@ func (ec *executionContext) _Query_sessions_histogram(ctx context.Context, field
 	}
 	res := resTmp.(*model1.SessionsHistogram)
 	fc.Result = res
-	return ec.marshalNSessionsHistogram2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐSessionsHistogram(ctx, field.Selections, res)
+	return ec.marshalNSessionsHistogram2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐSessionsHistogram(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_sessions_histogram(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -71099,7 +71072,7 @@ func (ec *executionContext) _Query_session_users_report(ctx context.Context, fie
 	}
 	res := resTmp.([]*model.SessionsReportRow)
 	fc.Result = res
-	return ec.marshalNSessionsReportRow2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSessionsReportRowᚄ(ctx, field.Selections, res)
+	return ec.marshalNSessionsReportRow2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSessionsReportRowᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_session_users_report(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -71181,7 +71154,7 @@ func (ec *executionContext) _Query_billingDetailsForProject(ctx context.Context,
 	}
 	res := resTmp.(*model.BillingDetails)
 	fc.Result = res
-	return ec.marshalOBillingDetails2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐBillingDetails(ctx, field.Selections, res)
+	return ec.marshalOBillingDetails2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐBillingDetails(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_billingDetailsForProject(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -71272,7 +71245,7 @@ func (ec *executionContext) _Query_billingDetails(ctx context.Context, field gra
 	}
 	res := resTmp.(*model.BillingDetails)
 	fc.Result = res
-	return ec.marshalNBillingDetails2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐBillingDetails(ctx, field.Selections, res)
+	return ec.marshalNBillingDetails2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐBillingDetails(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_billingDetails(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -71363,7 +71336,7 @@ func (ec *executionContext) _Query_usageHistory(ctx context.Context, field graph
 	}
 	res := resTmp.(*model.UsageHistory)
 	fc.Result = res
-	return ec.marshalNUsageHistory2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐUsageHistory(ctx, field.Selections, res)
+	return ec.marshalNUsageHistory2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐUsageHistory(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_usageHistory(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -71419,7 +71392,7 @@ func (ec *executionContext) _Query_projects(ctx context.Context, field graphql.C
 	}
 	res := resTmp.([]*model1.Project)
 	fc.Result = res
-	return ec.marshalOProject2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐProject(ctx, field.Selections, res)
+	return ec.marshalOProject2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐProject(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_projects(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -71492,7 +71465,7 @@ func (ec *executionContext) _Query_workspaces(ctx context.Context, field graphql
 	}
 	res := resTmp.([]*model1.Workspace)
 	fc.Result = res
-	return ec.marshalOWorkspace2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐWorkspace(ctx, field.Selections, res)
+	return ec.marshalOWorkspace2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐWorkspace(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_workspaces(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -71631,7 +71604,7 @@ func (ec *executionContext) _Query_joinable_workspaces(ctx context.Context, fiel
 	}
 	res := resTmp.([]*model1.Workspace)
 	fc.Result = res
-	return ec.marshalOWorkspace2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐWorkspace(ctx, field.Selections, res)
+	return ec.marshalOWorkspace2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐWorkspace(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_joinable_workspaces(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -71729,7 +71702,7 @@ func (ec *executionContext) _Query_alerts(ctx context.Context, field graphql.Col
 	}
 	res := resTmp.([]*model1.Alert)
 	fc.Result = res
-	return ec.marshalNAlert2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐAlert(ctx, field.Selections, res)
+	return ec.marshalNAlert2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐAlert(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_alerts(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -71824,7 +71797,7 @@ func (ec *executionContext) _Query_alert(ctx context.Context, field graphql.Coll
 	}
 	res := resTmp.(*model1.Alert)
 	fc.Result = res
-	return ec.marshalNAlert2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐAlert(ctx, field.Selections, res)
+	return ec.marshalNAlert2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐAlert(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_alert(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -71919,7 +71892,7 @@ func (ec *executionContext) _Query_alerting_alert_state_changes(ctx context.Cont
 	}
 	res := resTmp.(*model.AlertStateChangeResults)
 	fc.Result = res
-	return ec.marshalNAlertStateChangeResults2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐAlertStateChangeResults(ctx, field.Selections, res)
+	return ec.marshalNAlertStateChangeResults2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐAlertStateChangeResults(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_alerting_alert_state_changes(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -71980,7 +71953,7 @@ func (ec *executionContext) _Query_last_alert_state_changes(ctx context.Context,
 	}
 	res := resTmp.([]*model.AlertStateChange)
 	fc.Result = res
-	return ec.marshalNAlertStateChange2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐAlertStateChange(ctx, field.Selections, res)
+	return ec.marshalNAlertStateChange2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐAlertStateChange(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_last_alert_state_changes(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -72049,7 +72022,7 @@ func (ec *executionContext) _Query_error_alerts(ctx context.Context, field graph
 	}
 	res := resTmp.([]*model1.ErrorAlert)
 	fc.Result = res
-	return ec.marshalNErrorAlert2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐErrorAlert(ctx, field.Selections, res)
+	return ec.marshalNErrorAlert2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐErrorAlert(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_error_alerts(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -72139,7 +72112,7 @@ func (ec *executionContext) _Query_new_user_alerts(ctx context.Context, field gr
 	}
 	res := resTmp.([]*model1.SessionAlert)
 	fc.Result = res
-	return ec.marshalOSessionAlert2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐSessionAlert(ctx, field.Selections, res)
+	return ec.marshalOSessionAlert2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐSessionAlert(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_new_user_alerts(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -72234,7 +72207,7 @@ func (ec *executionContext) _Query_track_properties_alerts(ctx context.Context, 
 	}
 	res := resTmp.([]*model1.SessionAlert)
 	fc.Result = res
-	return ec.marshalNSessionAlert2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐSessionAlert(ctx, field.Selections, res)
+	return ec.marshalNSessionAlert2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐSessionAlert(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_track_properties_alerts(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -72329,7 +72302,7 @@ func (ec *executionContext) _Query_user_properties_alerts(ctx context.Context, f
 	}
 	res := resTmp.([]*model1.SessionAlert)
 	fc.Result = res
-	return ec.marshalNSessionAlert2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐSessionAlert(ctx, field.Selections, res)
+	return ec.marshalNSessionAlert2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐSessionAlert(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_user_properties_alerts(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -72424,7 +72397,7 @@ func (ec *executionContext) _Query_new_session_alerts(ctx context.Context, field
 	}
 	res := resTmp.([]*model1.SessionAlert)
 	fc.Result = res
-	return ec.marshalNSessionAlert2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐSessionAlert(ctx, field.Selections, res)
+	return ec.marshalNSessionAlert2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐSessionAlert(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_new_session_alerts(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -72519,7 +72492,7 @@ func (ec *executionContext) _Query_rage_click_alerts(ctx context.Context, field 
 	}
 	res := resTmp.([]*model1.SessionAlert)
 	fc.Result = res
-	return ec.marshalNSessionAlert2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐSessionAlert(ctx, field.Selections, res)
+	return ec.marshalNSessionAlert2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐSessionAlert(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_rage_click_alerts(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -72614,7 +72587,7 @@ func (ec *executionContext) _Query_log_alerts(ctx context.Context, field graphql
 	}
 	res := resTmp.([]*model1.LogAlert)
 	fc.Result = res
-	return ec.marshalNLogAlert2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐLogAlert(ctx, field.Selections, res)
+	return ec.marshalNLogAlert2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐLogAlert(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_log_alerts(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -72705,7 +72678,7 @@ func (ec *executionContext) _Query_log_alert(ctx context.Context, field graphql.
 	}
 	res := resTmp.(*model1.LogAlert)
 	fc.Result = res
-	return ec.marshalNLogAlert2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐLogAlert(ctx, field.Selections, res)
+	return ec.marshalNLogAlert2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐLogAlert(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_log_alert(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -72796,7 +72769,7 @@ func (ec *executionContext) _Query_projectSuggestion(ctx context.Context, field 
 	}
 	res := resTmp.([]*model1.Project)
 	fc.Result = res
-	return ec.marshalNProject2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐProject(ctx, field.Selections, res)
+	return ec.marshalNProject2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐProject(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_projectSuggestion(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -72880,7 +72853,7 @@ func (ec *executionContext) _Query_environment_suggestion(ctx context.Context, f
 	}
 	res := resTmp.([]*model1.Field)
 	fc.Result = res
-	return ec.marshalOField2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐField(ctx, field.Selections, res)
+	return ec.marshalOField2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐField(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_environment_suggestion(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -73000,7 +72973,7 @@ func (ec *executionContext) _Query_slack_channel_suggestion(ctx context.Context,
 	}
 	res := resTmp.([]*model.SanitizedSlackChannel)
 	fc.Result = res
-	return ec.marshalNSanitizedSlackChannel2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSanitizedSlackChannelᚄ(ctx, field.Selections, res)
+	return ec.marshalNSanitizedSlackChannel2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSanitizedSlackChannelᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_slack_channel_suggestion(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -73061,7 +73034,7 @@ func (ec *executionContext) _Query_microsoft_teams_channel_suggestions(ctx conte
 	}
 	res := resTmp.([]*model1.MicrosoftTeamsChannel)
 	fc.Result = res
-	return ec.marshalNMicrosoftTeamsChannel2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐMicrosoftTeamsChannelᚄ(ctx, field.Selections, res)
+	return ec.marshalNMicrosoftTeamsChannel2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐMicrosoftTeamsChannelᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_microsoft_teams_channel_suggestions(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -73122,7 +73095,7 @@ func (ec *executionContext) _Query_discord_channel_suggestions(ctx context.Conte
 	}
 	res := resTmp.([]*model1.DiscordChannel)
 	fc.Result = res
-	return ec.marshalNDiscordChannel2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐDiscordChannelᚄ(ctx, field.Selections, res)
+	return ec.marshalNDiscordChannel2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐDiscordChannelᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_discord_channel_suggestions(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -73238,7 +73211,7 @@ func (ec *executionContext) _Query_search_issues(ctx context.Context, field grap
 	}
 	res := resTmp.([]*model.IssuesSearchResult)
 	fc.Result = res
-	return ec.marshalNIssuesSearchResult2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐIssuesSearchResultᚄ(ctx, field.Selections, res)
+	return ec.marshalNIssuesSearchResult2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐIssuesSearchResultᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_search_issues(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -73466,7 +73439,7 @@ func (ec *executionContext) _Query_vercel_projects(ctx context.Context, field gr
 	}
 	res := resTmp.([]*model.VercelProject)
 	fc.Result = res
-	return ec.marshalNVercelProject2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐVercelProjectᚄ(ctx, field.Selections, res)
+	return ec.marshalNVercelProject2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐVercelProjectᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_vercel_projects(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -73529,7 +73502,7 @@ func (ec *executionContext) _Query_vercel_project_mappings(ctx context.Context, 
 	}
 	res := resTmp.([]*model.VercelProjectMapping)
 	fc.Result = res
-	return ec.marshalNVercelProjectMapping2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐVercelProjectMappingᚄ(ctx, field.Selections, res)
+	return ec.marshalNVercelProjectMapping2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐVercelProjectMappingᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_vercel_project_mappings(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -73590,7 +73563,7 @@ func (ec *executionContext) _Query_clickup_teams(ctx context.Context, field grap
 	}
 	res := resTmp.([]*model.ClickUpTeam)
 	fc.Result = res
-	return ec.marshalNClickUpTeam2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐClickUpTeamᚄ(ctx, field.Selections, res)
+	return ec.marshalNClickUpTeam2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐClickUpTeamᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_clickup_teams(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -73653,7 +73626,7 @@ func (ec *executionContext) _Query_clickup_project_mappings(ctx context.Context,
 	}
 	res := resTmp.([]*model.ClickUpProjectMapping)
 	fc.Result = res
-	return ec.marshalNClickUpProjectMapping2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐClickUpProjectMappingᚄ(ctx, field.Selections, res)
+	return ec.marshalNClickUpProjectMapping2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐClickUpProjectMappingᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_clickup_project_mappings(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -73714,7 +73687,7 @@ func (ec *executionContext) _Query_clickup_folders(ctx context.Context, field gr
 	}
 	res := resTmp.([]*model.ClickUpFolder)
 	fc.Result = res
-	return ec.marshalNClickUpFolder2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐClickUpFolderᚄ(ctx, field.Selections, res)
+	return ec.marshalNClickUpFolder2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐClickUpFolderᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_clickup_folders(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -73777,7 +73750,7 @@ func (ec *executionContext) _Query_clickup_folderless_lists(ctx context.Context,
 	}
 	res := resTmp.([]*model.ClickUpList)
 	fc.Result = res
-	return ec.marshalNClickUpList2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐClickUpListᚄ(ctx, field.Selections, res)
+	return ec.marshalNClickUpList2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐClickUpListᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_clickup_folderless_lists(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -73838,7 +73811,7 @@ func (ec *executionContext) _Query_height_lists(ctx context.Context, field graph
 	}
 	res := resTmp.([]*model.HeightList)
 	fc.Result = res
-	return ec.marshalNHeightList2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐHeightListᚄ(ctx, field.Selections, res)
+	return ec.marshalNHeightList2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐHeightListᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_height_lists(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -73901,7 +73874,7 @@ func (ec *executionContext) _Query_height_workspaces(ctx context.Context, field 
 	}
 	res := resTmp.([]*model.HeightWorkspace)
 	fc.Result = res
-	return ec.marshalNHeightWorkspace2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐHeightWorkspaceᚄ(ctx, field.Selections, res)
+	return ec.marshalNHeightWorkspace2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐHeightWorkspaceᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_height_workspaces(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -73966,7 +73939,7 @@ func (ec *executionContext) _Query_integration_project_mappings(ctx context.Cont
 	}
 	res := resTmp.([]*model1.IntegrationProjectMapping)
 	fc.Result = res
-	return ec.marshalNIntegrationProjectMapping2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐIntegrationProjectMappingᚄ(ctx, field.Selections, res)
+	return ec.marshalNIntegrationProjectMapping2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐIntegrationProjectMappingᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_integration_project_mappings(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -74024,7 +73997,7 @@ func (ec *executionContext) _Query_linear_teams(ctx context.Context, field graph
 	}
 	res := resTmp.([]*model.LinearTeam)
 	fc.Result = res
-	return ec.marshalOLinearTeam2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐLinearTeamᚄ(ctx, field.Selections, res)
+	return ec.marshalOLinearTeam2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐLinearTeamᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_linear_teams(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -74084,7 +74057,7 @@ func (ec *executionContext) _Query_jira_projects(ctx context.Context, field grap
 	}
 	res := resTmp.([]*model.JiraProject)
 	fc.Result = res
-	return ec.marshalOJiraProject2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐJiraProjectᚄ(ctx, field.Selections, res)
+	return ec.marshalOJiraProject2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐJiraProjectᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_jira_projects(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -74148,7 +74121,7 @@ func (ec *executionContext) _Query_gitlab_projects(ctx context.Context, field gr
 	}
 	res := resTmp.([]*model.GitlabProject)
 	fc.Result = res
-	return ec.marshalOGitlabProject2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐGitlabProjectᚄ(ctx, field.Selections, res)
+	return ec.marshalOGitlabProject2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐGitlabProjectᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_gitlab_projects(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -74208,7 +74181,7 @@ func (ec *executionContext) _Query_github_repos(ctx context.Context, field graph
 	}
 	res := resTmp.([]*model.GitHubRepo)
 	fc.Result = res
-	return ec.marshalOGitHubRepo2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐGitHubRepoᚄ(ctx, field.Selections, res)
+	return ec.marshalOGitHubRepo2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐGitHubRepoᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_github_repos(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -74323,7 +74296,7 @@ func (ec *executionContext) _Query_project(ctx context.Context, field graphql.Co
 	}
 	res := resTmp.(*model1.Project)
 	fc.Result = res
-	return ec.marshalOProject2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐProject(ctx, field.Selections, res)
+	return ec.marshalOProject2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐProject(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_project(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -74407,7 +74380,7 @@ func (ec *executionContext) _Query_projectSettings(ctx context.Context, field gr
 	}
 	res := resTmp.(*model.AllProjectSettings)
 	fc.Result = res
-	return ec.marshalOAllProjectSettings2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐAllProjectSettings(ctx, field.Selections, res)
+	return ec.marshalOAllProjectSettings2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐAllProjectSettings(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_projectSettings(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -74491,7 +74464,7 @@ func (ec *executionContext) _Query_workspace(ctx context.Context, field graphql.
 	}
 	res := resTmp.(*model1.Workspace)
 	fc.Result = res
-	return ec.marshalOWorkspace2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐWorkspace(ctx, field.Selections, res)
+	return ec.marshalOWorkspace2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐWorkspace(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_workspace(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -74600,7 +74573,7 @@ func (ec *executionContext) _Query_workspace_for_invite_link(ctx context.Context
 	}
 	res := resTmp.(*model.WorkspaceForInviteLink)
 	fc.Result = res
-	return ec.marshalNWorkspaceForInviteLink2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐWorkspaceForInviteLink(ctx, field.Selections, res)
+	return ec.marshalNWorkspaceForInviteLink2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐWorkspaceForInviteLink(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_workspace_for_invite_link(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -74671,7 +74644,7 @@ func (ec *executionContext) _Query_workspace_invite_links(ctx context.Context, f
 	}
 	res := resTmp.(*model1.WorkspaceInviteLink)
 	fc.Result = res
-	return ec.marshalNWorkspaceInviteLink2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐWorkspaceInviteLink(ctx, field.Selections, res)
+	return ec.marshalNWorkspaceInviteLink2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐWorkspaceInviteLink(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_workspace_invite_links(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -74740,7 +74713,7 @@ func (ec *executionContext) _Query_workspacePendingInvites(ctx context.Context, 
 	}
 	res := resTmp.([]*model1.WorkspaceInviteLink)
 	fc.Result = res
-	return ec.marshalNWorkspaceInviteLink2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐWorkspaceInviteLink(ctx, field.Selections, res)
+	return ec.marshalNWorkspaceInviteLink2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐWorkspaceInviteLink(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_workspacePendingInvites(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -74806,7 +74779,7 @@ func (ec *executionContext) _Query_workspaceSettings(ctx context.Context, field 
 	}
 	res := resTmp.(*model1.AllWorkspaceSettings)
 	fc.Result = res
-	return ec.marshalOAllWorkspaceSettings2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐAllWorkspaceSettings(ctx, field.Selections, res)
+	return ec.marshalOAllWorkspaceSettings2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐAllWorkspaceSettings(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_workspaceSettings(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -74900,7 +74873,7 @@ func (ec *executionContext) _Query_workspace_for_project(ctx context.Context, fi
 	}
 	res := resTmp.(*model1.Workspace)
 	fc.Result = res
-	return ec.marshalOWorkspace2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐWorkspace(ctx, field.Selections, res)
+	return ec.marshalOWorkspace2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐWorkspace(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_workspace_for_project(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -75006,7 +74979,7 @@ func (ec *executionContext) _Query_admin(ctx context.Context, field graphql.Coll
 	}
 	res := resTmp.(*model1.Admin)
 	fc.Result = res
-	return ec.marshalOAdmin2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐAdmin(ctx, field.Selections, res)
+	return ec.marshalOAdmin2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐAdmin(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_admin(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -75079,7 +75052,7 @@ func (ec *executionContext) _Query_admin_role(ctx context.Context, field graphql
 	}
 	res := resTmp.(*model1.WorkspaceAdminRole)
 	fc.Result = res
-	return ec.marshalOWorkspaceAdminRole2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐWorkspaceAdminRole(ctx, field.Selections, res)
+	return ec.marshalOWorkspaceAdminRole2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐWorkspaceAdminRole(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_admin_role(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -75141,7 +75114,7 @@ func (ec *executionContext) _Query_admin_role_by_project(ctx context.Context, fi
 	}
 	res := resTmp.(*model1.WorkspaceAdminRole)
 	fc.Result = res
-	return ec.marshalOWorkspaceAdminRole2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐWorkspaceAdminRole(ctx, field.Selections, res)
+	return ec.marshalOWorkspaceAdminRole2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐWorkspaceAdminRole(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_admin_role_by_project(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -75203,7 +75176,7 @@ func (ec *executionContext) _Query_saved_segments(ctx context.Context, field gra
 	}
 	res := resTmp.([]*model1.SavedSegment)
 	fc.Result = res
-	return ec.marshalOSavedSegment2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐSavedSegment(ctx, field.Selections, res)
+	return ec.marshalOSavedSegment2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐSavedSegment(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_saved_segments(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -75429,7 +75402,7 @@ func (ec *executionContext) _Query_subscription_details(ctx context.Context, fie
 	}
 	res := resTmp.(*model.SubscriptionDetails)
 	fc.Result = res
-	return ec.marshalOSubscriptionDetails2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSubscriptionDetails(ctx, field.Selections, res)
+	return ec.marshalOSubscriptionDetails2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSubscriptionDetails(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_subscription_details(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -75496,7 +75469,7 @@ func (ec *executionContext) _Query_dashboard_definitions(ctx context.Context, fi
 	}
 	res := resTmp.([]*model.DashboardDefinition)
 	fc.Result = res
-	return ec.marshalNDashboardDefinition2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDashboardDefinition(ctx, field.Selections, res)
+	return ec.marshalNDashboardDefinition2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDashboardDefinition(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_dashboard_definitions(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -75676,7 +75649,7 @@ func (ec *executionContext) _Query_network_histogram(ctx context.Context, field 
 	}
 	res := resTmp.(*model.CategoryHistogramPayload)
 	fc.Result = res
-	return ec.marshalOCategoryHistogramPayload2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐCategoryHistogramPayload(ctx, field.Selections, res)
+	return ec.marshalOCategoryHistogramPayload2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐCategoryHistogramPayload(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_network_histogram(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -75735,7 +75708,7 @@ func (ec *executionContext) _Query_metric_monitors(ctx context.Context, field gr
 	}
 	res := resTmp.([]*model1.MetricMonitor)
 	fc.Result = res
-	return ec.marshalNMetricMonitor2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐMetricMonitor(ctx, field.Selections, res)
+	return ec.marshalNMetricMonitor2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐMetricMonitor(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_metric_monitors(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -75877,7 +75850,7 @@ func (ec *executionContext) _Query_event_chunks(ctx context.Context, field graph
 	}
 	res := resTmp.([]*model1.EventChunk)
 	fc.Result = res
-	return ec.marshalNEventChunk2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐEventChunkᚄ(ctx, field.Selections, res)
+	return ec.marshalNEventChunk2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐEventChunkᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_event_chunks(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -75940,7 +75913,7 @@ func (ec *executionContext) _Query_sourcemap_files(ctx context.Context, field gr
 	}
 	res := resTmp.([]*model.S3File)
 	fc.Result = res
-	return ec.marshalNS3File2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐS3Fileᚄ(ctx, field.Selections, res)
+	return ec.marshalNS3File2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐS3Fileᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_sourcemap_files(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -76051,7 +76024,7 @@ func (ec *executionContext) _Query_oauth_client_metadata(ctx context.Context, fi
 	}
 	res := resTmp.(*model.OAuthClient)
 	fc.Result = res
-	return ec.marshalOOAuthClient2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐOAuthClient(ctx, field.Selections, res)
+	return ec.marshalOOAuthClient2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐOAuthClient(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_oauth_client_metadata(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -76111,7 +76084,7 @@ func (ec *executionContext) _Query_sso_login(ctx context.Context, field graphql.
 	}
 	res := resTmp.(*model.SSOLogin)
 	fc.Result = res
-	return ec.marshalOSSOLogin2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSSOLogin(ctx, field.Selections, res)
+	return ec.marshalOSSOLogin2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSSOLogin(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_sso_login(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -76172,7 +76145,7 @@ func (ec *executionContext) _Query_email_opt_outs(ctx context.Context, field gra
 	}
 	res := resTmp.([]model.EmailOptOutCategory)
 	fc.Result = res
-	return ec.marshalNEmailOptOutCategory2ᚕgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐEmailOptOutCategoryᚄ(ctx, field.Selections, res)
+	return ec.marshalNEmailOptOutCategory2ᚕgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐEmailOptOutCategoryᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_email_opt_outs(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -76227,7 +76200,7 @@ func (ec *executionContext) _Query_ai_query_suggestion(ctx context.Context, fiel
 	}
 	res := resTmp.(*model.QueryOutput)
 	fc.Result = res
-	return ec.marshalNQueryOutput2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐQueryOutput(ctx, field.Selections, res)
+	return ec.marshalNQueryOutput2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐQueryOutput(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_ai_query_suggestion(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -76288,7 +76261,7 @@ func (ec *executionContext) _Query_logs(ctx context.Context, field graphql.Colle
 	}
 	res := resTmp.(*model.LogConnection)
 	fc.Result = res
-	return ec.marshalNLogConnection2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐLogConnection(ctx, field.Selections, res)
+	return ec.marshalNLogConnection2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐLogConnection(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_logs(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -76349,7 +76322,7 @@ func (ec *executionContext) _Query_logs_histogram(ctx context.Context, field gra
 	}
 	res := resTmp.(*model.LogsHistogram)
 	fc.Result = res
-	return ec.marshalNLogsHistogram2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐLogsHistogram(ctx, field.Selections, res)
+	return ec.marshalNLogsHistogram2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐLogsHistogram(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_logs_histogram(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -76414,7 +76387,7 @@ func (ec *executionContext) _Query_logs_metrics(ctx context.Context, field graph
 	}
 	res := resTmp.(*model.MetricsBuckets)
 	fc.Result = res
-	return ec.marshalNMetricsBuckets2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricsBuckets(ctx, field.Selections, res)
+	return ec.marshalNMetricsBuckets2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricsBuckets(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_logs_metrics(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -76477,7 +76450,7 @@ func (ec *executionContext) _Query_logs_keys(ctx context.Context, field graphql.
 	}
 	res := resTmp.([]*model.QueryKey)
 	fc.Result = res
-	return ec.marshalNQueryKey2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐQueryKeyᚄ(ctx, field.Selections, res)
+	return ec.marshalNQueryKey2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐQueryKeyᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_logs_keys(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -76593,7 +76566,7 @@ func (ec *executionContext) _Query_logs_error_objects(ctx context.Context, field
 	}
 	res := resTmp.([]*model1.ErrorObject)
 	fc.Result = res
-	return ec.marshalNErrorObject2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐErrorObjectᚄ(ctx, field.Selections, res)
+	return ec.marshalNErrorObject2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐErrorObjectᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_logs_error_objects(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -76809,7 +76782,7 @@ func (ec *executionContext) _Query_session_insight(ctx context.Context, field gr
 	}
 	res := resTmp.(*model1.SessionInsight)
 	fc.Result = res
-	return ec.marshalOSessionInsight2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐSessionInsight(ctx, field.Selections, res)
+	return ec.marshalOSessionInsight2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐSessionInsight(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_session_insight(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -76872,7 +76845,7 @@ func (ec *executionContext) _Query_session_exports(ctx context.Context, field gr
 	}
 	res := resTmp.([]*model.SessionExportWithSession)
 	fc.Result = res
-	return ec.marshalNSessionExportWithSession2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSessionExportWithSessionᚄ(ctx, field.Selections, res)
+	return ec.marshalNSessionExportWithSession2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSessionExportWithSessionᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_session_exports(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -76943,7 +76916,7 @@ func (ec *executionContext) _Query_system_configuration(ctx context.Context, fie
 	}
 	res := resTmp.(*model1.SystemConfiguration)
 	fc.Result = res
-	return ec.marshalNSystemConfiguration2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐSystemConfiguration(ctx, field.Selections, res)
+	return ec.marshalNSystemConfiguration2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐSystemConfiguration(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_system_configuration(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -76990,7 +76963,7 @@ func (ec *executionContext) _Query_services(ctx context.Context, field graphql.C
 	}
 	res := resTmp.(*model.ServiceConnection)
 	fc.Result = res
-	return ec.marshalOServiceConnection2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐServiceConnection(ctx, field.Selections, res)
+	return ec.marshalOServiceConnection2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐServiceConnection(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_services(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -77048,7 +77021,7 @@ func (ec *executionContext) _Query_serviceByName(ctx context.Context, field grap
 	}
 	res := resTmp.(*model1.Service)
 	fc.Result = res
-	return ec.marshalOService2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐService(ctx, field.Selections, res)
+	return ec.marshalOService2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐService(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_serviceByName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -77118,7 +77091,7 @@ func (ec *executionContext) _Query_error_tags(ctx context.Context, field graphql
 	}
 	res := resTmp.([]*model1.ErrorTag)
 	fc.Result = res
-	return ec.marshalOErrorTag2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐErrorTag(ctx, field.Selections, res)
+	return ec.marshalOErrorTag2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐErrorTag(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_error_tags(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -77169,7 +77142,7 @@ func (ec *executionContext) _Query_match_error_tag(ctx context.Context, field gr
 	}
 	res := resTmp.([]*model.MatchedErrorTag)
 	fc.Result = res
-	return ec.marshalOMatchedErrorTag2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMatchedErrorTag(ctx, field.Selections, res)
+	return ec.marshalOMatchedErrorTag2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMatchedErrorTag(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_match_error_tag(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -77231,7 +77204,7 @@ func (ec *executionContext) _Query_trace(ctx context.Context, field graphql.Coll
 	}
 	res := resTmp.(*model.TracePayload)
 	fc.Result = res
-	return ec.marshalOTracePayload2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐTracePayload(ctx, field.Selections, res)
+	return ec.marshalOTracePayload2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐTracePayload(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_trace(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -77292,7 +77265,7 @@ func (ec *executionContext) _Query_traces(ctx context.Context, field graphql.Col
 	}
 	res := resTmp.(*model.TraceConnection)
 	fc.Result = res
-	return ec.marshalNTraceConnection2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐTraceConnection(ctx, field.Selections, res)
+	return ec.marshalNTraceConnection2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐTraceConnection(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_traces(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -77355,7 +77328,7 @@ func (ec *executionContext) _Query_traces_metrics(ctx context.Context, field gra
 	}
 	res := resTmp.(*model.MetricsBuckets)
 	fc.Result = res
-	return ec.marshalNMetricsBuckets2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricsBuckets(ctx, field.Selections, res)
+	return ec.marshalNMetricsBuckets2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricsBuckets(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_traces_metrics(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -77418,7 +77391,7 @@ func (ec *executionContext) _Query_traces_keys(ctx context.Context, field graphq
 	}
 	res := resTmp.([]*model.QueryKey)
 	fc.Result = res
-	return ec.marshalNQueryKey2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐQueryKeyᚄ(ctx, field.Selections, res)
+	return ec.marshalNQueryKey2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐQueryKeyᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_traces_keys(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -77534,7 +77507,7 @@ func (ec *executionContext) _Query_errors_keys(ctx context.Context, field graphq
 	}
 	res := resTmp.([]*model.QueryKey)
 	fc.Result = res
-	return ec.marshalNQueryKey2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐQueryKeyᚄ(ctx, field.Selections, res)
+	return ec.marshalNQueryKey2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐQueryKeyᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_errors_keys(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -77650,7 +77623,7 @@ func (ec *executionContext) _Query_errors_metrics(ctx context.Context, field gra
 	}
 	res := resTmp.(*model.MetricsBuckets)
 	fc.Result = res
-	return ec.marshalNMetricsBuckets2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricsBuckets(ctx, field.Selections, res)
+	return ec.marshalNMetricsBuckets2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricsBuckets(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_errors_metrics(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -77713,7 +77686,7 @@ func (ec *executionContext) _Query_sessions_keys(ctx context.Context, field grap
 	}
 	res := resTmp.([]*model.QueryKey)
 	fc.Result = res
-	return ec.marshalNQueryKey2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐQueryKeyᚄ(ctx, field.Selections, res)
+	return ec.marshalNQueryKey2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐQueryKeyᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_sessions_keys(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -77829,7 +77802,7 @@ func (ec *executionContext) _Query_sessions_metrics(ctx context.Context, field g
 	}
 	res := resTmp.(*model.MetricsBuckets)
 	fc.Result = res
-	return ec.marshalNMetricsBuckets2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricsBuckets(ctx, field.Selections, res)
+	return ec.marshalNMetricsBuckets2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricsBuckets(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_sessions_metrics(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -77892,7 +77865,7 @@ func (ec *executionContext) _Query_events_keys(ctx context.Context, field graphq
 	}
 	res := resTmp.([]*model.QueryKey)
 	fc.Result = res
-	return ec.marshalNQueryKey2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐQueryKeyᚄ(ctx, field.Selections, res)
+	return ec.marshalNQueryKey2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐQueryKeyᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_events_keys(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -78008,7 +77981,7 @@ func (ec *executionContext) _Query_events_metrics(ctx context.Context, field gra
 	}
 	res := resTmp.(*model.MetricsBuckets)
 	fc.Result = res
-	return ec.marshalNMetricsBuckets2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricsBuckets(ctx, field.Selections, res)
+	return ec.marshalNMetricsBuckets2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricsBuckets(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_events_metrics(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -78071,7 +78044,7 @@ func (ec *executionContext) _Query_event_sessions(ctx context.Context, field gra
 	}
 	res := resTmp.(*model1.SessionResults)
 	fc.Result = res
-	return ec.marshalNSessionResults2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐSessionResults(ctx, field.Selections, res)
+	return ec.marshalNSessionResults2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐSessionResults(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_event_sessions(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -78136,7 +78109,7 @@ func (ec *executionContext) _Query_metrics(ctx context.Context, field graphql.Co
 	}
 	res := resTmp.(*model.MetricsBuckets)
 	fc.Result = res
-	return ec.marshalNMetricsBuckets2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricsBuckets(ctx, field.Selections, res)
+	return ec.marshalNMetricsBuckets2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricsBuckets(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_metrics(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -78199,7 +78172,7 @@ func (ec *executionContext) _Query_keys(ctx context.Context, field graphql.Colle
 	}
 	res := resTmp.([]*model.QueryKey)
 	fc.Result = res
-	return ec.marshalNQueryKey2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐQueryKeyᚄ(ctx, field.Selections, res)
+	return ec.marshalNQueryKey2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐQueryKeyᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_keys(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -78315,7 +78288,7 @@ func (ec *executionContext) _Query_key_values_suggestions(ctx context.Context, f
 	}
 	res := resTmp.([]*model.KeyValueSuggestion)
 	fc.Result = res
-	return ec.marshalNKeyValueSuggestion2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐKeyValueSuggestionᚄ(ctx, field.Selections, res)
+	return ec.marshalNKeyValueSuggestion2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐKeyValueSuggestionᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_key_values_suggestions(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -78376,7 +78349,7 @@ func (ec *executionContext) _Query_visualization(ctx context.Context, field grap
 	}
 	res := resTmp.(*model1.Visualization)
 	fc.Result = res
-	return ec.marshalNVisualization2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐVisualization(ctx, field.Selections, res)
+	return ec.marshalNVisualization2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐVisualization(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_visualization(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -78449,7 +78422,7 @@ func (ec *executionContext) _Query_visualizations(ctx context.Context, field gra
 	}
 	res := resTmp.(*model1.VisualizationsResponse)
 	fc.Result = res
-	return ec.marshalNVisualizationsResponse2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐVisualizationsResponse(ctx, field.Selections, res)
+	return ec.marshalNVisualizationsResponse2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐVisualizationsResponse(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_visualizations(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -78510,7 +78483,7 @@ func (ec *executionContext) _Query_graph(ctx context.Context, field graphql.Coll
 	}
 	res := resTmp.(*model1.Graph)
 	fc.Result = res
-	return ec.marshalNGraph2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐGraph(ctx, field.Selections, res)
+	return ec.marshalNGraph2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐGraph(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_graph(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -78603,7 +78576,7 @@ func (ec *executionContext) _Query_graph_templates(ctx context.Context, field gr
 	}
 	res := resTmp.([]*model1.Graph)
 	fc.Result = res
-	return ec.marshalNGraph2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐGraphᚄ(ctx, field.Selections, res)
+	return ec.marshalNGraph2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐGraphᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_graph_templates(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -78685,7 +78658,7 @@ func (ec *executionContext) _Query_log_lines(ctx context.Context, field graphql.
 	}
 	res := resTmp.([]*model.LogLine)
 	fc.Result = res
-	return ec.marshalNLogLine2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐLogLineᚄ(ctx, field.Selections, res)
+	return ec.marshalNLogLine2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐLogLineᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_log_lines(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -78925,7 +78898,7 @@ func (ec *executionContext) _QueryKey_type(ctx context.Context, field graphql.Co
 	}
 	res := resTmp.(model.KeyType)
 	fc.Result = res
-	return ec.marshalNKeyType2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐKeyType(ctx, field.Selections, res)
+	return ec.marshalNKeyType2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐKeyType(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_QueryKey_type(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -79013,7 +78986,7 @@ func (ec *executionContext) _QueryOutput_date_range(ctx context.Context, field g
 	}
 	res := resTmp.(*model.DateRangeRequiredOutput)
 	fc.Result = res
-	return ec.marshalNDateRangeRequiredOutput2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDateRangeRequiredOutput(ctx, field.Selections, res)
+	return ec.marshalNDateRangeRequiredOutput2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDateRangeRequiredOutput(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_QueryOutput_date_range(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -80734,7 +80707,7 @@ func (ec *executionContext) _SavedSegment_entity_type(ctx context.Context, field
 	}
 	res := resTmp.(model.SavedSegmentEntityType)
 	fc.Result = res
-	return ec.marshalNSavedSegmentEntityType2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSavedSegmentEntityType(ctx, field.Selections, res)
+	return ec.marshalNSavedSegmentEntityType2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSavedSegmentEntityType(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_SavedSegment_entity_type(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -80778,7 +80751,7 @@ func (ec *executionContext) _SavedSegment_params(ctx context.Context, field grap
 	}
 	res := resTmp.(*model1.SearchParams)
 	fc.Result = res
-	return ec.marshalNSearchParams2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐSearchParams(ctx, field.Selections, res)
+	return ec.marshalNSearchParams2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐSearchParams(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_SavedSegment_params(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -81043,7 +81016,7 @@ func (ec *executionContext) _Service_status(ctx context.Context, field graphql.C
 	}
 	res := resTmp.(model.ServiceStatus)
 	fc.Result = res
-	return ec.marshalNServiceStatus2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐServiceStatus(ctx, field.Selections, res)
+	return ec.marshalNServiceStatus2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐServiceStatus(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Service_status(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -81251,7 +81224,7 @@ func (ec *executionContext) _ServiceConnection_edges(ctx context.Context, field 
 	}
 	res := resTmp.([]*model.ServiceEdge)
 	fc.Result = res
-	return ec.marshalNServiceEdge2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐServiceEdge(ctx, field.Selections, res)
+	return ec.marshalNServiceEdge2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐServiceEdge(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_ServiceConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -81301,7 +81274,7 @@ func (ec *executionContext) _ServiceConnection_pageInfo(ctx context.Context, fie
 	}
 	res := resTmp.(*model.PageInfo)
 	fc.Result = res
-	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐPageInfo(ctx, field.Selections, res)
+	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐPageInfo(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_ServiceConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -81399,7 +81372,7 @@ func (ec *executionContext) _ServiceEdge_node(ctx context.Context, field graphql
 	}
 	res := resTmp.(*model.ServiceNode)
 	fc.Result = res
-	return ec.marshalNServiceNode2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐServiceNode(ctx, field.Selections, res)
+	return ec.marshalNServiceNode2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐServiceNode(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_ServiceEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -81593,7 +81566,7 @@ func (ec *executionContext) _ServiceNode_status(ctx context.Context, field graph
 	}
 	res := resTmp.(model.ServiceStatus)
 	fc.Result = res
-	return ec.marshalNServiceStatus2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐServiceStatus(ctx, field.Selections, res)
+	return ec.marshalNServiceStatus2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐServiceStatus(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_ServiceNode_status(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -82994,7 +82967,7 @@ func (ec *executionContext) _Session_fields(ctx context.Context, field graphql.C
 	}
 	res := resTmp.([]*model1.Field)
 	fc.Result = res
-	return ec.marshalOField2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐField(ctx, field.Selections, res)
+	return ec.marshalOField2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐField(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Session_fields(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -83212,7 +83185,7 @@ func (ec *executionContext) _Session_excluded_reason(ctx context.Context, field 
 	}
 	res := resTmp.(*model.SessionExcludedReason)
 	fc.Result = res
-	return ec.marshalOSessionExcludedReason2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSessionExcludedReason(ctx, field.Selections, res)
+	return ec.marshalOSessionExcludedReason2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSessionExcludedReason(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Session_excluded_reason(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -84038,7 +84011,7 @@ func (ec *executionContext) _Session_session_feedback(ctx context.Context, field
 	}
 	res := resTmp.([]*model1.SessionComment)
 	fc.Result = res
-	return ec.marshalOSessionComment2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐSessionCommentᚄ(ctx, field.Selections, res)
+	return ec.marshalOSessionComment2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐSessionCommentᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Session_session_feedback(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -84286,7 +84259,7 @@ func (ec *executionContext) _SessionAlert_ChannelsToNotify(ctx context.Context, 
 	}
 	res := resTmp.([]*model.SanitizedSlackChannel)
 	fc.Result = res
-	return ec.marshalNSanitizedSlackChannel2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSanitizedSlackChannel(ctx, field.Selections, res)
+	return ec.marshalNSanitizedSlackChannel2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSanitizedSlackChannel(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_SessionAlert_ChannelsToNotify(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -84336,7 +84309,7 @@ func (ec *executionContext) _SessionAlert_DiscordChannelsToNotify(ctx context.Co
 	}
 	res := resTmp.([]*model1.DiscordChannel)
 	fc.Result = res
-	return ec.marshalNDiscordChannel2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐDiscordChannelᚄ(ctx, field.Selections, res)
+	return ec.marshalNDiscordChannel2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐDiscordChannelᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_SessionAlert_DiscordChannelsToNotify(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -84386,7 +84359,7 @@ func (ec *executionContext) _SessionAlert_MicrosoftTeamsChannelsToNotify(ctx con
 	}
 	res := resTmp.([]*model1.MicrosoftTeamsChannel)
 	fc.Result = res
-	return ec.marshalNMicrosoftTeamsChannel2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐMicrosoftTeamsChannelᚄ(ctx, field.Selections, res)
+	return ec.marshalNMicrosoftTeamsChannel2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐMicrosoftTeamsChannelᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_SessionAlert_MicrosoftTeamsChannelsToNotify(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -84436,7 +84409,7 @@ func (ec *executionContext) _SessionAlert_WebhookDestinations(ctx context.Contex
 	}
 	res := resTmp.([]*model1.WebhookDestination)
 	fc.Result = res
-	return ec.marshalNWebhookDestination2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐWebhookDestinationᚄ(ctx, field.Selections, res)
+	return ec.marshalNWebhookDestination2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐWebhookDestinationᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_SessionAlert_WebhookDestinations(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -84618,7 +84591,7 @@ func (ec *executionContext) _SessionAlert_TrackProperties(ctx context.Context, f
 	}
 	res := resTmp.([]*model1.TrackProperty)
 	fc.Result = res
-	return ec.marshalNTrackProperty2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐTrackProperty(ctx, field.Selections, res)
+	return ec.marshalNTrackProperty2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐTrackProperty(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_SessionAlert_TrackProperties(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -84670,7 +84643,7 @@ func (ec *executionContext) _SessionAlert_UserProperties(ctx context.Context, fi
 	}
 	res := resTmp.([]*model1.UserProperty)
 	fc.Result = res
-	return ec.marshalNUserProperty2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐUserProperty(ctx, field.Selections, res)
+	return ec.marshalNUserProperty2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐUserProperty(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_SessionAlert_UserProperties(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -85326,7 +85299,7 @@ func (ec *executionContext) _SessionComment_author(ctx context.Context, field gr
 	}
 	res := resTmp.(*model.SanitizedAdmin)
 	fc.Result = res
-	return ec.marshalOSanitizedAdmin2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSanitizedAdmin(ctx, field.Selections, res)
+	return ec.marshalOSanitizedAdmin2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSanitizedAdmin(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_SessionComment_author(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -85506,7 +85479,7 @@ func (ec *executionContext) _SessionComment_type(ctx context.Context, field grap
 	}
 	res := resTmp.(model.SessionCommentType)
 	fc.Result = res
-	return ec.marshalNSessionCommentType2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSessionCommentType(ctx, field.Selections, res)
+	return ec.marshalNSessionCommentType2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSessionCommentType(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_SessionComment_type(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -85635,7 +85608,7 @@ func (ec *executionContext) _SessionComment_attachments(ctx context.Context, fie
 	}
 	res := resTmp.([]*model1.ExternalAttachment)
 	fc.Result = res
-	return ec.marshalNExternalAttachment2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐExternalAttachment(ctx, field.Selections, res)
+	return ec.marshalNExternalAttachment2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐExternalAttachment(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_SessionComment_attachments(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -85693,7 +85666,7 @@ func (ec *executionContext) _SessionComment_replies(ctx context.Context, field g
 	}
 	res := resTmp.([]*model1.CommentReply)
 	fc.Result = res
-	return ec.marshalNCommentReply2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐCommentReply(ctx, field.Selections, res)
+	return ec.marshalNCommentReply2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐCommentReply(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_SessionComment_replies(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -86538,7 +86511,7 @@ func (ec *executionContext) _SessionPayload_errors(ctx context.Context, field gr
 	}
 	res := resTmp.([]model1.ErrorObject)
 	fc.Result = res
-	return ec.marshalNErrorObject2ᚕgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐErrorObject(ctx, field.Selections, res)
+	return ec.marshalNErrorObject2ᚕgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐErrorObject(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_SessionPayload_errors(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -86636,7 +86609,7 @@ func (ec *executionContext) _SessionPayload_rage_clicks(ctx context.Context, fie
 	}
 	res := resTmp.([]model1.RageClickEvent)
 	fc.Result = res
-	return ec.marshalNRageClickEvent2ᚕgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐRageClickEventᚄ(ctx, field.Selections, res)
+	return ec.marshalNRageClickEvent2ᚕgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐRageClickEventᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_SessionPayload_rage_clicks(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -86694,7 +86667,7 @@ func (ec *executionContext) _SessionPayload_session_comments(ctx context.Context
 	}
 	res := resTmp.([]model1.SessionComment)
 	fc.Result = res
-	return ec.marshalNSessionComment2ᚕgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐSessionComment(ctx, field.Selections, res)
+	return ec.marshalNSessionComment2ᚕgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐSessionComment(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_SessionPayload_session_comments(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -86904,7 +86877,7 @@ func (ec *executionContext) _SessionResults_sessions(ctx context.Context, field 
 	}
 	res := resTmp.([]model1.Session)
 	fc.Result = res
-	return ec.marshalNSession2ᚕgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐSessionᚄ(ctx, field.Selections, res)
+	return ec.marshalNSession2ᚕgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐSessionᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_SessionResults_sessions(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -88160,7 +88133,7 @@ func (ec *executionContext) _SocialLink_type(ctx context.Context, field graphql.
 	}
 	res := resTmp.(model.SocialType)
 	fc.Result = res
-	return ec.marshalNSocialType2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSocialType(ctx, field.Selections, res)
+	return ec.marshalNSocialType2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSocialType(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_SocialLink_type(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -88289,7 +88262,7 @@ func (ec *executionContext) _SortOutput_direction(ctx context.Context, field gra
 	}
 	res := resTmp.(model.SortDirection)
 	fc.Result = res
-	return ec.marshalNSortDirection2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSortDirection(ctx, field.Selections, res)
+	return ec.marshalNSortDirection2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSortDirection(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_SortOutput_direction(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -88330,7 +88303,7 @@ func (ec *executionContext) _SourceMappingError_errorCode(ctx context.Context, f
 	}
 	res := resTmp.(*model.SourceMappingErrorCode)
 	fc.Result = res
-	return ec.marshalOSourceMappingErrorCode2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSourceMappingErrorCode(ctx, field.Selections, res)
+	return ec.marshalOSourceMappingErrorCode2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSourceMappingErrorCode(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_SourceMappingError_errorCode(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -88871,7 +88844,7 @@ func (ec *executionContext) _Subscription_session_payload_appended(ctx context.C
 				w.Write([]byte{'{'})
 				graphql.MarshalString(field.Alias).MarshalGQL(w)
 				w.Write([]byte{':'})
-				ec.marshalOSessionPayload2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐSessionPayload(ctx, field.Selections, res).MarshalGQL(w)
+				ec.marshalOSessionPayload2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐSessionPayload(ctx, field.Selections, res).MarshalGQL(w)
 				w.Write([]byte{'}'})
 			})
 		case <-ctx.Done():
@@ -88985,7 +88958,7 @@ func (ec *executionContext) _SubscriptionDetails_discount(ctx context.Context, f
 	}
 	res := resTmp.(*model.SubscriptionDiscount)
 	fc.Result = res
-	return ec.marshalOSubscriptionDiscount2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSubscriptionDiscount(ctx, field.Selections, res)
+	return ec.marshalOSubscriptionDiscount2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSubscriptionDiscount(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_SubscriptionDetails_discount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -89036,7 +89009,7 @@ func (ec *executionContext) _SubscriptionDetails_lastInvoice(ctx context.Context
 	}
 	res := resTmp.(*model.Invoice)
 	fc.Result = res
-	return ec.marshalOInvoice2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐInvoice(ctx, field.Selections, res)
+	return ec.marshalOInvoice2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐInvoice(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_SubscriptionDetails_lastInvoice(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -90663,7 +90636,7 @@ func (ec *executionContext) _Trace_events(ctx context.Context, field graphql.Col
 	}
 	res := resTmp.([]*model.TraceEvent)
 	fc.Result = res
-	return ec.marshalOTraceEvent2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐTraceEvent(ctx, field.Selections, res)
+	return ec.marshalOTraceEvent2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐTraceEvent(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Trace_events(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -90712,7 +90685,7 @@ func (ec *executionContext) _Trace_links(ctx context.Context, field graphql.Coll
 	}
 	res := resTmp.([]*model.TraceLink)
 	fc.Result = res
-	return ec.marshalOTraceLink2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐTraceLink(ctx, field.Selections, res)
+	return ec.marshalOTraceLink2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐTraceLink(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Trace_links(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -90766,7 +90739,7 @@ func (ec *executionContext) _TraceConnection_edges(ctx context.Context, field gr
 	}
 	res := resTmp.([]*model.TraceEdge)
 	fc.Result = res
-	return ec.marshalNTraceEdge2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐTraceEdgeᚄ(ctx, field.Selections, res)
+	return ec.marshalNTraceEdge2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐTraceEdgeᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_TraceConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -90816,7 +90789,7 @@ func (ec *executionContext) _TraceConnection_pageInfo(ctx context.Context, field
 	}
 	res := resTmp.(*model.PageInfo)
 	fc.Result = res
-	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐPageInfo(ctx, field.Selections, res)
+	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐPageInfo(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_TraceConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -90958,7 +90931,7 @@ func (ec *executionContext) _TraceEdge_node(ctx context.Context, field graphql.C
 	}
 	res := resTmp.(*model.Trace)
 	fc.Result = res
-	return ec.marshalNTrace2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐTrace(ctx, field.Selections, res)
+	return ec.marshalNTrace2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐTrace(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_TraceEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -91783,7 +91756,7 @@ func (ec *executionContext) _TracePayload_trace(ctx context.Context, field graph
 	}
 	res := resTmp.([]*model.Trace)
 	fc.Result = res
-	return ec.marshalNTrace2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐTraceᚄ(ctx, field.Selections, res)
+	return ec.marshalNTrace2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐTraceᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_TracePayload_trace(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -91869,7 +91842,7 @@ func (ec *executionContext) _TracePayload_errors(ctx context.Context, field grap
 	}
 	res := resTmp.([]*model.TraceError)
 	fc.Result = res
-	return ec.marshalNTraceError2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐTraceErrorᚄ(ctx, field.Selections, res)
+	return ec.marshalNTraceError2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐTraceErrorᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_TracePayload_errors(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -92067,7 +92040,7 @@ func (ec *executionContext) _UsageHistory_usage(ctx context.Context, field graph
 	}
 	res := resTmp.(*model.MetricsBuckets)
 	fc.Result = res
-	return ec.marshalNMetricsBuckets2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricsBuckets(ctx, field.Selections, res)
+	return ec.marshalNMetricsBuckets2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricsBuckets(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_UsageHistory_usage(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -92559,7 +92532,7 @@ func (ec *executionContext) _Variable_suggestionType(ctx context.Context, field 
 	}
 	res := resTmp.(model.SuggestionType)
 	fc.Result = res
-	return ec.marshalNSuggestionType2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSuggestionType(ctx, field.Selections, res)
+	return ec.marshalNSuggestionType2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSuggestionType(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Variable_suggestionType(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -92864,7 +92837,7 @@ func (ec *executionContext) _VercelProject_env(ctx context.Context, field graphq
 	}
 	res := resTmp.([]*model.VercelEnv)
 	fc.Result = res
-	return ec.marshalNVercelEnv2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐVercelEnvᚄ(ctx, field.Selections, res)
+	return ec.marshalNVercelEnv2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐVercelEnvᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_VercelProject_env(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -93177,7 +93150,7 @@ func (ec *executionContext) _Visualization_updatedByAdmin(ctx context.Context, f
 	}
 	res := resTmp.(*model.SanitizedAdmin)
 	fc.Result = res
-	return ec.marshalOSanitizedAdmin2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSanitizedAdmin(ctx, field.Selections, res)
+	return ec.marshalOSanitizedAdmin2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSanitizedAdmin(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Visualization_updatedByAdmin(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -93231,7 +93204,7 @@ func (ec *executionContext) _Visualization_graphs(ctx context.Context, field gra
 	}
 	res := resTmp.([]model1.Graph)
 	fc.Result = res
-	return ec.marshalNGraph2ᚕgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐGraphᚄ(ctx, field.Selections, res)
+	return ec.marshalNGraph2ᚕgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐGraphᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Visualization_graphs(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -93354,7 +93327,7 @@ func (ec *executionContext) _Visualization_variables(ctx context.Context, field 
 	}
 	res := resTmp.([]*model.Variable)
 	fc.Result = res
-	return ec.marshalNVariable2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐVariableᚄ(ctx, field.Selections, res)
+	return ec.marshalNVariable2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐVariableᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Visualization_variables(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -93452,7 +93425,7 @@ func (ec *executionContext) _VisualizationsResponse_results(ctx context.Context,
 	}
 	res := resTmp.([]model1.Visualization)
 	fc.Result = res
-	return ec.marshalNVisualization2ᚕgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐVisualizationᚄ(ctx, field.Selections, res)
+	return ec.marshalNVisualization2ᚕgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐVisualizationᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_VisualizationsResponse_results(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -94033,7 +94006,7 @@ func (ec *executionContext) _Workspace_projects(ctx context.Context, field graph
 	}
 	res := resTmp.([]model1.Project)
 	fc.Result = res
-	return ec.marshalNProject2ᚕgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐProject(ctx, field.Selections, res)
+	return ec.marshalNProject2ᚕgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐProject(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Workspace_projects(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -94537,7 +94510,7 @@ func (ec *executionContext) _Workspace_retention_period(ctx context.Context, fie
 	}
 	res := resTmp.(*model.RetentionPeriod)
 	fc.Result = res
-	return ec.marshalNRetentionPeriod2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐRetentionPeriod(ctx, field.Selections, res)
+	return ec.marshalNRetentionPeriod2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐRetentionPeriod(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Workspace_retention_period(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -94581,7 +94554,7 @@ func (ec *executionContext) _Workspace_errors_retention_period(ctx context.Conte
 	}
 	res := resTmp.(*model.RetentionPeriod)
 	fc.Result = res
-	return ec.marshalNRetentionPeriod2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐRetentionPeriod(ctx, field.Selections, res)
+	return ec.marshalNRetentionPeriod2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐRetentionPeriod(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Workspace_errors_retention_period(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -94625,7 +94598,7 @@ func (ec *executionContext) _Workspace_logs_retention_period(ctx context.Context
 	}
 	res := resTmp.(*model.RetentionPeriod)
 	fc.Result = res
-	return ec.marshalNRetentionPeriod2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐRetentionPeriod(ctx, field.Selections, res)
+	return ec.marshalNRetentionPeriod2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐRetentionPeriod(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Workspace_logs_retention_period(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -94669,7 +94642,7 @@ func (ec *executionContext) _Workspace_traces_retention_period(ctx context.Conte
 	}
 	res := resTmp.(*model.RetentionPeriod)
 	fc.Result = res
-	return ec.marshalNRetentionPeriod2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐRetentionPeriod(ctx, field.Selections, res)
+	return ec.marshalNRetentionPeriod2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐRetentionPeriod(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Workspace_traces_retention_period(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -94713,7 +94686,7 @@ func (ec *executionContext) _Workspace_metrics_retention_period(ctx context.Cont
 	}
 	res := resTmp.(*model.RetentionPeriod)
 	fc.Result = res
-	return ec.marshalNRetentionPeriod2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐRetentionPeriod(ctx, field.Selections, res)
+	return ec.marshalNRetentionPeriod2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐRetentionPeriod(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Workspace_metrics_retention_period(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -95047,7 +95020,7 @@ func (ec *executionContext) _WorkspaceAdminRole_admin(ctx context.Context, field
 	}
 	res := resTmp.(*model1.Admin)
 	fc.Result = res
-	return ec.marshalNAdmin2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐAdmin(ctx, field.Selections, res)
+	return ec.marshalNAdmin2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐAdmin(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_WorkspaceAdminRole_admin(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -97780,7 +97753,7 @@ func (ec *executionContext) unmarshalInputAdminAndWorkspaceDetails(ctx context.C
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"first_name", "last_name", "user_defined_role", "user_defined_team_size", "heard_about", "referral", "workspace_name", "allowed_auto_join_email_origins", "promo_code"}
+	fieldsInOrder := [...]string{"first_name", "last_name", "user_defined_role", "user_defined_team_size", "heard_about", "referral", "workspace_name", "allowed_auto_join_email_origins"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -97843,13 +97816,6 @@ func (ec *executionContext) unmarshalInputAdminAndWorkspaceDetails(ctx context.C
 				return it, err
 			}
 			it.AllowedAutoJoinEmailOrigins = data
-		case "promo_code":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("promo_code"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.PromoCode = data
 		}
 	}
 
@@ -97872,7 +97838,7 @@ func (ec *executionContext) unmarshalInputAlertDestinationInput(ctx context.Cont
 		switch k {
 		case "destination_type":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("destination_type"))
-			data, err := ec.unmarshalNAlertDestinationType2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐAlertDestinationType(ctx, v)
+			data, err := ec.unmarshalNAlertDestinationType2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐAlertDestinationType(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -97961,7 +97927,7 @@ func (ec *executionContext) unmarshalInputClickhouseQuery(ctx context.Context, o
 			it.Rules = data
 		case "dateRange":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dateRange"))
-			data, err := ec.unmarshalNDateRangeRequiredInput2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDateRangeRequiredInput(ctx, v)
+			data, err := ec.unmarshalNDateRangeRequiredInput2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDateRangeRequiredInput(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -98002,7 +97968,7 @@ func (ec *executionContext) unmarshalInputDashboardMetricConfigInput(ctx context
 			it.Description = data
 		case "component_type":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("component_type"))
-			data, err := ec.unmarshalOMetricViewComponentType2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricViewComponentType(ctx, v)
+			data, err := ec.unmarshalOMetricViewComponentType2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricViewComponentType(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -98044,14 +98010,14 @@ func (ec *executionContext) unmarshalInputDashboardMetricConfigInput(ctx context
 			it.HelpArticle = data
 		case "chart_type":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("chart_type"))
-			data, err := ec.unmarshalODashboardChartType2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDashboardChartType(ctx, v)
+			data, err := ec.unmarshalODashboardChartType2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDashboardChartType(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.ChartType = data
 		case "aggregator":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("aggregator"))
-			data, err := ec.unmarshalOMetricAggregator2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricAggregator(ctx, v)
+			data, err := ec.unmarshalOMetricAggregator2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricAggregator(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -98086,7 +98052,7 @@ func (ec *executionContext) unmarshalInputDashboardMetricConfigInput(ctx context
 			it.MaxPercentile = data
 		case "filters":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("filters"))
-			data, err := ec.unmarshalOMetricTagFilterInput2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricTagFilterInputᚄ(ctx, v)
+			data, err := ec.unmarshalOMetricTagFilterInput2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricTagFilterInputᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -98120,7 +98086,7 @@ func (ec *executionContext) unmarshalInputDashboardParamsInput(ctx context.Conte
 		switch k {
 		case "date_range":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("date_range"))
-			data, err := ec.unmarshalNDateRangeRequiredInput2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDateRangeRequiredInput(ctx, v)
+			data, err := ec.unmarshalNDateRangeRequiredInput2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDateRangeRequiredInput(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -98148,14 +98114,14 @@ func (ec *executionContext) unmarshalInputDashboardParamsInput(ctx context.Conte
 			it.Units = data
 		case "aggregator":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("aggregator"))
-			data, err := ec.unmarshalNMetricAggregator2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricAggregator(ctx, v)
+			data, err := ec.unmarshalNMetricAggregator2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricAggregator(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.Aggregator = data
 		case "filters":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("filters"))
-			data, err := ec.unmarshalOMetricTagFilterInput2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricTagFilterInputᚄ(ctx, v)
+			data, err := ec.unmarshalOMetricTagFilterInput2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricTagFilterInputᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -98189,7 +98155,7 @@ func (ec *executionContext) unmarshalInputDateHistogramBucketSize(ctx context.Co
 		switch k {
 		case "calendar_interval":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("calendar_interval"))
-			data, err := ec.unmarshalNOpenSearchCalendarInterval2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐOpenSearchCalendarInterval(ctx, v)
+			data, err := ec.unmarshalNOpenSearchCalendarInterval2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐOpenSearchCalendarInterval(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -98223,7 +98189,7 @@ func (ec *executionContext) unmarshalInputDateHistogramOptions(ctx context.Conte
 		switch k {
 		case "bucket_size":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("bucket_size"))
-			data, err := ec.unmarshalNDateHistogramBucketSize2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDateHistogramBucketSize(ctx, v)
+			data, err := ec.unmarshalNDateHistogramBucketSize2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDateHistogramBucketSize(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -98237,7 +98203,7 @@ func (ec *executionContext) unmarshalInputDateHistogramOptions(ctx context.Conte
 			it.TimeZone = data
 		case "bounds":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("bounds"))
-			data, err := ec.unmarshalNDateRangeInput2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDateRangeInput(ctx, v)
+			data, err := ec.unmarshalNDateRangeInput2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDateRangeInput(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -98366,7 +98332,7 @@ func (ec *executionContext) unmarshalInputErrorGroupFrequenciesParamsInput(ctx c
 		switch k {
 		case "date_range":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("date_range"))
-			data, err := ec.unmarshalNDateRangeRequiredInput2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDateRangeRequiredInput(ctx, v)
+			data, err := ec.unmarshalNDateRangeRequiredInput2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDateRangeRequiredInput(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -98469,7 +98435,7 @@ func (ec *executionContext) unmarshalInputGraphInput(ctx context.Context, obj an
 			it.Title = data
 		case "productType":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("productType"))
-			data, err := ec.unmarshalNProductType2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐProductType(ctx, v)
+			data, err := ec.unmarshalNProductType2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐProductType(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -98518,7 +98484,7 @@ func (ec *executionContext) unmarshalInputGraphInput(ctx context.Context, obj an
 			it.Limit = data
 		case "limitFunctionType":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("limitFunctionType"))
-			data, err := ec.unmarshalOMetricAggregator2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricAggregator(ctx, v)
+			data, err := ec.unmarshalOMetricAggregator2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricAggregator(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -98532,7 +98498,7 @@ func (ec *executionContext) unmarshalInputGraphInput(ctx context.Context, obj an
 			it.LimitMetric = data
 		case "funnelSteps":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("funnelSteps"))
-			data, err := ec.unmarshalOFunnelStepInput2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐFunnelStepInputᚄ(ctx, v)
+			data, err := ec.unmarshalOFunnelStepInput2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐFunnelStepInputᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -98553,7 +98519,7 @@ func (ec *executionContext) unmarshalInputGraphInput(ctx context.Context, obj an
 			it.NullHandling = data
 		case "expressions":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("expressions"))
-			data, err := ec.unmarshalNMetricExpressionInput2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricExpressionInputᚄ(ctx, v)
+			data, err := ec.unmarshalNMetricExpressionInput2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricExpressionInputᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -98690,28 +98656,28 @@ func (ec *executionContext) unmarshalInputLogAlertInput(ctx context.Context, obj
 			it.ThresholdWindow = data
 		case "slack_channels":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("slack_channels"))
-			data, err := ec.unmarshalNSanitizedSlackChannelInput2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSanitizedSlackChannelInputᚄ(ctx, v)
+			data, err := ec.unmarshalNSanitizedSlackChannelInput2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSanitizedSlackChannelInputᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.SlackChannels = data
 		case "discord_channels":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("discord_channels"))
-			data, err := ec.unmarshalNDiscordChannelInput2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDiscordChannelInputᚄ(ctx, v)
+			data, err := ec.unmarshalNDiscordChannelInput2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDiscordChannelInputᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.DiscordChannels = data
 		case "microsoft_teams_channels":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("microsoft_teams_channels"))
-			data, err := ec.unmarshalNMicrosoftTeamsChannelInput2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMicrosoftTeamsChannelInputᚄ(ctx, v)
+			data, err := ec.unmarshalNMicrosoftTeamsChannelInput2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMicrosoftTeamsChannelInputᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.MicrosoftTeamsChannels = data
 		case "webhook_destinations":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("webhook_destinations"))
-			data, err := ec.unmarshalNWebhookDestinationInput2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐWebhookDestinationInputᚄ(ctx, v)
+			data, err := ec.unmarshalNWebhookDestinationInput2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐWebhookDestinationInputᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -98766,7 +98732,7 @@ func (ec *executionContext) unmarshalInputMetricExpressionInput(ctx context.Cont
 		switch k {
 		case "aggregator":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("aggregator"))
-			data, err := ec.unmarshalNMetricAggregator2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricAggregator(ctx, v)
+			data, err := ec.unmarshalNMetricAggregator2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricAggregator(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -98807,7 +98773,7 @@ func (ec *executionContext) unmarshalInputMetricTagFilterInput(ctx context.Conte
 			it.Tag = data
 		case "op":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("op"))
-			data, err := ec.unmarshalNMetricTagFilterOp2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricTagFilterOp(ctx, v)
+			data, err := ec.unmarshalNMetricTagFilterOp2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricTagFilterOp(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -98882,7 +98848,7 @@ func (ec *executionContext) unmarshalInputNetworkHistogramParamsInput(ctx contex
 			it.LookbackDays = data
 		case "attribute":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("attribute"))
-			data, err := ec.unmarshalONetworkRequestAttribute2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐNetworkRequestAttribute(ctx, v)
+			data, err := ec.unmarshalONetworkRequestAttribute2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐNetworkRequestAttribute(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -98923,7 +98889,7 @@ func (ec *executionContext) unmarshalInputPredictionSettings(ctx context.Context
 			it.IntervalWidth = data
 		case "thresholdCondition":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("thresholdCondition"))
-			data, err := ec.unmarshalNThresholdCondition2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐThresholdCondition(ctx, v)
+			data, err := ec.unmarshalNThresholdCondition2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐThresholdCondition(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -98964,14 +98930,14 @@ func (ec *executionContext) unmarshalInputQueryInput(ctx context.Context, obj an
 			it.Query = data
 		case "date_range":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("date_range"))
-			data, err := ec.unmarshalNDateRangeRequiredInput2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDateRangeRequiredInput(ctx, v)
+			data, err := ec.unmarshalNDateRangeRequiredInput2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDateRangeRequiredInput(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.DateRange = data
 		case "sort":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("sort"))
-			data, err := ec.unmarshalOSortInput2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSortInput(ctx, v)
+			data, err := ec.unmarshalOSortInput2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSortInput(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -99226,28 +99192,28 @@ func (ec *executionContext) unmarshalInputSessionAlertInput(ctx context.Context,
 			it.ThresholdWindow = data
 		case "slack_channels":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("slack_channels"))
-			data, err := ec.unmarshalNSanitizedSlackChannelInput2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSanitizedSlackChannelInputᚄ(ctx, v)
+			data, err := ec.unmarshalNSanitizedSlackChannelInput2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSanitizedSlackChannelInputᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.SlackChannels = data
 		case "discord_channels":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("discord_channels"))
-			data, err := ec.unmarshalNDiscordChannelInput2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDiscordChannelInputᚄ(ctx, v)
+			data, err := ec.unmarshalNDiscordChannelInput2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDiscordChannelInputᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.DiscordChannels = data
 		case "microsoft_teams_channels":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("microsoft_teams_channels"))
-			data, err := ec.unmarshalNMicrosoftTeamsChannelInput2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMicrosoftTeamsChannelInputᚄ(ctx, v)
+			data, err := ec.unmarshalNMicrosoftTeamsChannelInput2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMicrosoftTeamsChannelInputᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.MicrosoftTeamsChannels = data
 		case "webhook_destinations":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("webhook_destinations"))
-			data, err := ec.unmarshalNWebhookDestinationInput2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐWebhookDestinationInputᚄ(ctx, v)
+			data, err := ec.unmarshalNWebhookDestinationInput2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐWebhookDestinationInputᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -99282,14 +99248,14 @@ func (ec *executionContext) unmarshalInputSessionAlertInput(ctx context.Context,
 			it.Default = data
 		case "type":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
-			data, err := ec.unmarshalNSessionAlertType2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSessionAlertType(ctx, v)
+			data, err := ec.unmarshalNSessionAlertType2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSessionAlertType(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.Type = data
 		case "user_properties":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("user_properties"))
-			data, err := ec.unmarshalNUserPropertyInput2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐUserPropertyInputᚄ(ctx, v)
+			data, err := ec.unmarshalNUserPropertyInput2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐUserPropertyInputᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -99303,7 +99269,7 @@ func (ec *executionContext) unmarshalInputSessionAlertInput(ctx context.Context,
 			it.ExcludeRules = data
 		case "track_properties":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("track_properties"))
-			data, err := ec.unmarshalNTrackPropertyInput2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐTrackPropertyInputᚄ(ctx, v)
+			data, err := ec.unmarshalNTrackPropertyInput2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐTrackPropertyInputᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -99371,7 +99337,7 @@ func (ec *executionContext) unmarshalInputSortInput(ctx context.Context, obj any
 			it.Column = data
 		case "direction":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("direction"))
-			data, err := ec.unmarshalNSortDirection2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSortDirection(ctx, v)
+			data, err := ec.unmarshalNSortDirection2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSortDirection(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -99494,7 +99460,7 @@ func (ec *executionContext) unmarshalInputVariableInput(ctx context.Context, obj
 			it.DefaultValues = data
 		case "suggestionType":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("suggestionType"))
-			data, err := ec.unmarshalNSuggestionType2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSuggestionType(ctx, v)
+			data, err := ec.unmarshalNSuggestionType2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSuggestionType(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -99604,14 +99570,14 @@ func (ec *executionContext) unmarshalInputVisualizationInput(ctx context.Context
 			it.TimePreset = data
 		case "variables":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("variables"))
-			data, err := ec.unmarshalOVariableInput2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐVariableInputᚄ(ctx, v)
+			data, err := ec.unmarshalOVariableInput2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐVariableInputᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.Variables = data
 		case "dashboardTemplateType":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dashboardTemplateType"))
-			data, err := ec.unmarshalODashboardTemplateType2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDashboardTemplateType(ctx, v)
+			data, err := ec.unmarshalODashboardTemplateType2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDashboardTemplateType(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -115498,11 +115464,11 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 
 // region    ***************************** type.gotpl *****************************
 
-func (ec *executionContext) marshalNAccountDetails2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐAccountDetails(ctx context.Context, sel ast.SelectionSet, v model.AccountDetails) graphql.Marshaler {
+func (ec *executionContext) marshalNAccountDetails2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐAccountDetails(ctx context.Context, sel ast.SelectionSet, v model.AccountDetails) graphql.Marshaler {
 	return ec._AccountDetails(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNAccountDetails2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐAccountDetails(ctx context.Context, sel ast.SelectionSet, v *model.AccountDetails) graphql.Marshaler {
+func (ec *executionContext) marshalNAccountDetails2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐAccountDetails(ctx context.Context, sel ast.SelectionSet, v *model.AccountDetails) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -115512,7 +115478,7 @@ func (ec *executionContext) marshalNAccountDetails2ᚖgithubᚗcomᚋhighlight�
 	return ec._AccountDetails(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNAccountDetailsMember2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐAccountDetailsMemberᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.AccountDetailsMember) graphql.Marshaler {
+func (ec *executionContext) marshalNAccountDetailsMember2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐAccountDetailsMemberᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.AccountDetailsMember) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -115536,7 +115502,7 @@ func (ec *executionContext) marshalNAccountDetailsMember2ᚕᚖgithubᚗcomᚋhi
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNAccountDetailsMember2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐAccountDetailsMember(ctx, sel, v[i])
+			ret[i] = ec.marshalNAccountDetailsMember2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐAccountDetailsMember(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -115556,7 +115522,7 @@ func (ec *executionContext) marshalNAccountDetailsMember2ᚕᚖgithubᚗcomᚋhi
 	return ret
 }
 
-func (ec *executionContext) marshalNAccountDetailsMember2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐAccountDetailsMember(ctx context.Context, sel ast.SelectionSet, v *model.AccountDetailsMember) graphql.Marshaler {
+func (ec *executionContext) marshalNAccountDetailsMember2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐAccountDetailsMember(ctx context.Context, sel ast.SelectionSet, v *model.AccountDetailsMember) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -115566,11 +115532,11 @@ func (ec *executionContext) marshalNAccountDetailsMember2ᚖgithubᚗcomᚋhighl
 	return ec._AccountDetailsMember(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNAdmin2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐAdmin(ctx context.Context, sel ast.SelectionSet, v model1.Admin) graphql.Marshaler {
+func (ec *executionContext) marshalNAdmin2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐAdmin(ctx context.Context, sel ast.SelectionSet, v model1.Admin) graphql.Marshaler {
 	return ec._Admin(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNAdmin2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐAdmin(ctx context.Context, sel ast.SelectionSet, v *model1.Admin) graphql.Marshaler {
+func (ec *executionContext) marshalNAdmin2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐAdmin(ctx context.Context, sel ast.SelectionSet, v *model1.Admin) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -115580,21 +115546,21 @@ func (ec *executionContext) marshalNAdmin2ᚖgithubᚗcomᚋhighlightᚑrunᚋhi
 	return ec._Admin(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNAdminAboutYouDetails2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐAdminAboutYouDetails(ctx context.Context, v any) (model.AdminAboutYouDetails, error) {
+func (ec *executionContext) unmarshalNAdminAboutYouDetails2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐAdminAboutYouDetails(ctx context.Context, v any) (model.AdminAboutYouDetails, error) {
 	res, err := ec.unmarshalInputAdminAboutYouDetails(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNAdminAndWorkspaceDetails2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐAdminAndWorkspaceDetails(ctx context.Context, v any) (model.AdminAndWorkspaceDetails, error) {
+func (ec *executionContext) unmarshalNAdminAndWorkspaceDetails2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐAdminAndWorkspaceDetails(ctx context.Context, v any) (model.AdminAndWorkspaceDetails, error) {
 	res, err := ec.unmarshalInputAdminAndWorkspaceDetails(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNAlert2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐAlert(ctx context.Context, sel ast.SelectionSet, v model1.Alert) graphql.Marshaler {
+func (ec *executionContext) marshalNAlert2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐAlert(ctx context.Context, sel ast.SelectionSet, v model1.Alert) graphql.Marshaler {
 	return ec._Alert(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNAlert2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐAlert(ctx context.Context, sel ast.SelectionSet, v []*model1.Alert) graphql.Marshaler {
+func (ec *executionContext) marshalNAlert2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐAlert(ctx context.Context, sel ast.SelectionSet, v []*model1.Alert) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -115618,7 +115584,7 @@ func (ec *executionContext) marshalNAlert2ᚕᚖgithubᚗcomᚋhighlightᚑrun�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOAlert2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐAlert(ctx, sel, v[i])
+			ret[i] = ec.marshalOAlert2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐAlert(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -115632,7 +115598,7 @@ func (ec *executionContext) marshalNAlert2ᚕᚖgithubᚗcomᚋhighlightᚑrun�
 	return ret
 }
 
-func (ec *executionContext) marshalNAlert2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐAlert(ctx context.Context, sel ast.SelectionSet, v *model1.Alert) graphql.Marshaler {
+func (ec *executionContext) marshalNAlert2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐAlert(ctx context.Context, sel ast.SelectionSet, v *model1.Alert) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -115642,7 +115608,7 @@ func (ec *executionContext) marshalNAlert2ᚖgithubᚗcomᚋhighlightᚑrunᚋhi
 	return ec._Alert(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNAlertDestination2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐAlertDestination(ctx context.Context, sel ast.SelectionSet, v []*model1.AlertDestination) graphql.Marshaler {
+func (ec *executionContext) marshalNAlertDestination2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐAlertDestination(ctx context.Context, sel ast.SelectionSet, v []*model1.AlertDestination) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -115666,7 +115632,7 @@ func (ec *executionContext) marshalNAlertDestination2ᚕᚖgithubᚗcomᚋhighli
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOAlertDestination2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐAlertDestination(ctx, sel, v[i])
+			ret[i] = ec.marshalOAlertDestination2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐAlertDestination(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -115680,14 +115646,14 @@ func (ec *executionContext) marshalNAlertDestination2ᚕᚖgithubᚗcomᚋhighli
 	return ret
 }
 
-func (ec *executionContext) unmarshalNAlertDestinationInput2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐAlertDestinationInputᚄ(ctx context.Context, v any) ([]*model.AlertDestinationInput, error) {
+func (ec *executionContext) unmarshalNAlertDestinationInput2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐAlertDestinationInputᚄ(ctx context.Context, v any) ([]*model.AlertDestinationInput, error) {
 	var vSlice []any
 	vSlice = graphql.CoerceList(v)
 	var err error
 	res := make([]*model.AlertDestinationInput, len(vSlice))
 	for i := range vSlice {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalNAlertDestinationInput2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐAlertDestinationInput(ctx, vSlice[i])
+		res[i], err = ec.unmarshalNAlertDestinationInput2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐAlertDestinationInput(ctx, vSlice[i])
 		if err != nil {
 			return nil, err
 		}
@@ -115695,32 +115661,32 @@ func (ec *executionContext) unmarshalNAlertDestinationInput2ᚕᚖgithubᚗcom�
 	return res, nil
 }
 
-func (ec *executionContext) unmarshalNAlertDestinationInput2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐAlertDestinationInput(ctx context.Context, v any) (*model.AlertDestinationInput, error) {
+func (ec *executionContext) unmarshalNAlertDestinationInput2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐAlertDestinationInput(ctx context.Context, v any) (*model.AlertDestinationInput, error) {
 	res, err := ec.unmarshalInputAlertDestinationInput(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNAlertDestinationType2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐAlertDestinationType(ctx context.Context, v any) (model.AlertDestinationType, error) {
+func (ec *executionContext) unmarshalNAlertDestinationType2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐAlertDestinationType(ctx context.Context, v any) (model.AlertDestinationType, error) {
 	var res model.AlertDestinationType
 	err := res.UnmarshalGQL(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNAlertDestinationType2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐAlertDestinationType(ctx context.Context, sel ast.SelectionSet, v model.AlertDestinationType) graphql.Marshaler {
+func (ec *executionContext) marshalNAlertDestinationType2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐAlertDestinationType(ctx context.Context, sel ast.SelectionSet, v model.AlertDestinationType) graphql.Marshaler {
 	return v
 }
 
-func (ec *executionContext) unmarshalNAlertState2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐAlertState(ctx context.Context, v any) (model.AlertState, error) {
+func (ec *executionContext) unmarshalNAlertState2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐAlertState(ctx context.Context, v any) (model.AlertState, error) {
 	var res model.AlertState
 	err := res.UnmarshalGQL(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNAlertState2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐAlertState(ctx context.Context, sel ast.SelectionSet, v model.AlertState) graphql.Marshaler {
+func (ec *executionContext) marshalNAlertState2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐAlertState(ctx context.Context, sel ast.SelectionSet, v model.AlertState) graphql.Marshaler {
 	return v
 }
 
-func (ec *executionContext) marshalNAlertStateChange2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐAlertStateChange(ctx context.Context, sel ast.SelectionSet, v []*model.AlertStateChange) graphql.Marshaler {
+func (ec *executionContext) marshalNAlertStateChange2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐAlertStateChange(ctx context.Context, sel ast.SelectionSet, v []*model.AlertStateChange) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -115744,7 +115710,7 @@ func (ec *executionContext) marshalNAlertStateChange2ᚕᚖgithubᚗcomᚋhighli
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOAlertStateChange2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐAlertStateChange(ctx, sel, v[i])
+			ret[i] = ec.marshalOAlertStateChange2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐAlertStateChange(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -115758,11 +115724,11 @@ func (ec *executionContext) marshalNAlertStateChange2ᚕᚖgithubᚗcomᚋhighli
 	return ret
 }
 
-func (ec *executionContext) marshalNAlertStateChangeResults2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐAlertStateChangeResults(ctx context.Context, sel ast.SelectionSet, v model.AlertStateChangeResults) graphql.Marshaler {
+func (ec *executionContext) marshalNAlertStateChangeResults2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐAlertStateChangeResults(ctx context.Context, sel ast.SelectionSet, v model.AlertStateChangeResults) graphql.Marshaler {
 	return ec._AlertStateChangeResults(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNAlertStateChangeResults2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐAlertStateChangeResults(ctx context.Context, sel ast.SelectionSet, v *model.AlertStateChangeResults) graphql.Marshaler {
+func (ec *executionContext) marshalNAlertStateChangeResults2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐAlertStateChangeResults(ctx context.Context, sel ast.SelectionSet, v *model.AlertStateChangeResults) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -115796,11 +115762,11 @@ func (ec *executionContext) marshalNAny2ᚕinterface(ctx context.Context, sel as
 	return ret
 }
 
-func (ec *executionContext) marshalNBillingDetails2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐBillingDetails(ctx context.Context, sel ast.SelectionSet, v model.BillingDetails) graphql.Marshaler {
+func (ec *executionContext) marshalNBillingDetails2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐBillingDetails(ctx context.Context, sel ast.SelectionSet, v model.BillingDetails) graphql.Marshaler {
 	return ec._BillingDetails(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNBillingDetails2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐBillingDetails(ctx context.Context, sel ast.SelectionSet, v *model.BillingDetails) graphql.Marshaler {
+func (ec *executionContext) marshalNBillingDetails2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐBillingDetails(ctx context.Context, sel ast.SelectionSet, v *model.BillingDetails) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -115846,7 +115812,7 @@ func (ec *executionContext) marshalNBoolean2ᚖbool(ctx context.Context, sel ast
 	return res
 }
 
-func (ec *executionContext) marshalNCategoryHistogramBucket2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐCategoryHistogramBucketᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.CategoryHistogramBucket) graphql.Marshaler {
+func (ec *executionContext) marshalNCategoryHistogramBucket2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐCategoryHistogramBucketᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.CategoryHistogramBucket) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -115870,7 +115836,7 @@ func (ec *executionContext) marshalNCategoryHistogramBucket2ᚕᚖgithubᚗcom�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNCategoryHistogramBucket2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐCategoryHistogramBucket(ctx, sel, v[i])
+			ret[i] = ec.marshalNCategoryHistogramBucket2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐCategoryHistogramBucket(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -115890,7 +115856,7 @@ func (ec *executionContext) marshalNCategoryHistogramBucket2ᚕᚖgithubᚗcom�
 	return ret
 }
 
-func (ec *executionContext) marshalNCategoryHistogramBucket2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐCategoryHistogramBucket(ctx context.Context, sel ast.SelectionSet, v *model.CategoryHistogramBucket) graphql.Marshaler {
+func (ec *executionContext) marshalNCategoryHistogramBucket2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐCategoryHistogramBucket(ctx context.Context, sel ast.SelectionSet, v *model.CategoryHistogramBucket) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -115900,7 +115866,7 @@ func (ec *executionContext) marshalNCategoryHistogramBucket2ᚖgithubᚗcomᚋhi
 	return ec._CategoryHistogramBucket(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNClickUpFolder2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐClickUpFolderᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.ClickUpFolder) graphql.Marshaler {
+func (ec *executionContext) marshalNClickUpFolder2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐClickUpFolderᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.ClickUpFolder) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -115924,7 +115890,7 @@ func (ec *executionContext) marshalNClickUpFolder2ᚕᚖgithubᚗcomᚋhighlight
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNClickUpFolder2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐClickUpFolder(ctx, sel, v[i])
+			ret[i] = ec.marshalNClickUpFolder2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐClickUpFolder(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -115944,7 +115910,7 @@ func (ec *executionContext) marshalNClickUpFolder2ᚕᚖgithubᚗcomᚋhighlight
 	return ret
 }
 
-func (ec *executionContext) marshalNClickUpFolder2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐClickUpFolder(ctx context.Context, sel ast.SelectionSet, v *model.ClickUpFolder) graphql.Marshaler {
+func (ec *executionContext) marshalNClickUpFolder2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐClickUpFolder(ctx context.Context, sel ast.SelectionSet, v *model.ClickUpFolder) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -115954,7 +115920,7 @@ func (ec *executionContext) marshalNClickUpFolder2ᚖgithubᚗcomᚋhighlightᚑ
 	return ec._ClickUpFolder(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNClickUpList2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐClickUpListᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.ClickUpList) graphql.Marshaler {
+func (ec *executionContext) marshalNClickUpList2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐClickUpListᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.ClickUpList) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -115978,7 +115944,7 @@ func (ec *executionContext) marshalNClickUpList2ᚕᚖgithubᚗcomᚋhighlight�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNClickUpList2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐClickUpList(ctx, sel, v[i])
+			ret[i] = ec.marshalNClickUpList2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐClickUpList(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -115998,7 +115964,7 @@ func (ec *executionContext) marshalNClickUpList2ᚕᚖgithubᚗcomᚋhighlight�
 	return ret
 }
 
-func (ec *executionContext) marshalNClickUpList2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐClickUpList(ctx context.Context, sel ast.SelectionSet, v *model.ClickUpList) graphql.Marshaler {
+func (ec *executionContext) marshalNClickUpList2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐClickUpList(ctx context.Context, sel ast.SelectionSet, v *model.ClickUpList) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -116008,7 +115974,7 @@ func (ec *executionContext) marshalNClickUpList2ᚖgithubᚗcomᚋhighlightᚑru
 	return ec._ClickUpList(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNClickUpProjectMapping2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐClickUpProjectMappingᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.ClickUpProjectMapping) graphql.Marshaler {
+func (ec *executionContext) marshalNClickUpProjectMapping2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐClickUpProjectMappingᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.ClickUpProjectMapping) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -116032,7 +115998,7 @@ func (ec *executionContext) marshalNClickUpProjectMapping2ᚕᚖgithubᚗcomᚋh
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNClickUpProjectMapping2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐClickUpProjectMapping(ctx, sel, v[i])
+			ret[i] = ec.marshalNClickUpProjectMapping2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐClickUpProjectMapping(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -116052,7 +116018,7 @@ func (ec *executionContext) marshalNClickUpProjectMapping2ᚕᚖgithubᚗcomᚋh
 	return ret
 }
 
-func (ec *executionContext) marshalNClickUpProjectMapping2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐClickUpProjectMapping(ctx context.Context, sel ast.SelectionSet, v *model.ClickUpProjectMapping) graphql.Marshaler {
+func (ec *executionContext) marshalNClickUpProjectMapping2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐClickUpProjectMapping(ctx context.Context, sel ast.SelectionSet, v *model.ClickUpProjectMapping) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -116062,14 +116028,14 @@ func (ec *executionContext) marshalNClickUpProjectMapping2ᚖgithubᚗcomᚋhigh
 	return ec._ClickUpProjectMapping(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNClickUpProjectMappingInput2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐClickUpProjectMappingInputᚄ(ctx context.Context, v any) ([]*model.ClickUpProjectMappingInput, error) {
+func (ec *executionContext) unmarshalNClickUpProjectMappingInput2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐClickUpProjectMappingInputᚄ(ctx context.Context, v any) ([]*model.ClickUpProjectMappingInput, error) {
 	var vSlice []any
 	vSlice = graphql.CoerceList(v)
 	var err error
 	res := make([]*model.ClickUpProjectMappingInput, len(vSlice))
 	for i := range vSlice {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalNClickUpProjectMappingInput2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐClickUpProjectMappingInput(ctx, vSlice[i])
+		res[i], err = ec.unmarshalNClickUpProjectMappingInput2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐClickUpProjectMappingInput(ctx, vSlice[i])
 		if err != nil {
 			return nil, err
 		}
@@ -116077,12 +116043,12 @@ func (ec *executionContext) unmarshalNClickUpProjectMappingInput2ᚕᚖgithubᚗ
 	return res, nil
 }
 
-func (ec *executionContext) unmarshalNClickUpProjectMappingInput2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐClickUpProjectMappingInput(ctx context.Context, v any) (*model.ClickUpProjectMappingInput, error) {
+func (ec *executionContext) unmarshalNClickUpProjectMappingInput2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐClickUpProjectMappingInput(ctx context.Context, v any) (*model.ClickUpProjectMappingInput, error) {
 	res, err := ec.unmarshalInputClickUpProjectMappingInput(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNClickUpSpace2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐClickUpSpaceᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.ClickUpSpace) graphql.Marshaler {
+func (ec *executionContext) marshalNClickUpSpace2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐClickUpSpaceᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.ClickUpSpace) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -116106,7 +116072,7 @@ func (ec *executionContext) marshalNClickUpSpace2ᚕᚖgithubᚗcomᚋhighlight�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNClickUpSpace2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐClickUpSpace(ctx, sel, v[i])
+			ret[i] = ec.marshalNClickUpSpace2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐClickUpSpace(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -116126,7 +116092,7 @@ func (ec *executionContext) marshalNClickUpSpace2ᚕᚖgithubᚗcomᚋhighlight�
 	return ret
 }
 
-func (ec *executionContext) marshalNClickUpSpace2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐClickUpSpace(ctx context.Context, sel ast.SelectionSet, v *model.ClickUpSpace) graphql.Marshaler {
+func (ec *executionContext) marshalNClickUpSpace2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐClickUpSpace(ctx context.Context, sel ast.SelectionSet, v *model.ClickUpSpace) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -116136,7 +116102,7 @@ func (ec *executionContext) marshalNClickUpSpace2ᚖgithubᚗcomᚋhighlightᚑr
 	return ec._ClickUpSpace(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNClickUpTeam2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐClickUpTeamᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.ClickUpTeam) graphql.Marshaler {
+func (ec *executionContext) marshalNClickUpTeam2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐClickUpTeamᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.ClickUpTeam) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -116160,7 +116126,7 @@ func (ec *executionContext) marshalNClickUpTeam2ᚕᚖgithubᚗcomᚋhighlight�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNClickUpTeam2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐClickUpTeam(ctx, sel, v[i])
+			ret[i] = ec.marshalNClickUpTeam2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐClickUpTeam(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -116180,7 +116146,7 @@ func (ec *executionContext) marshalNClickUpTeam2ᚕᚖgithubᚗcomᚋhighlight�
 	return ret
 }
 
-func (ec *executionContext) marshalNClickUpTeam2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐClickUpTeam(ctx context.Context, sel ast.SelectionSet, v *model.ClickUpTeam) graphql.Marshaler {
+func (ec *executionContext) marshalNClickUpTeam2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐClickUpTeam(ctx context.Context, sel ast.SelectionSet, v *model.ClickUpTeam) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -116190,12 +116156,12 @@ func (ec *executionContext) marshalNClickUpTeam2ᚖgithubᚗcomᚋhighlightᚑru
 	return ec._ClickUpTeam(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNClickhouseQuery2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐClickhouseQuery(ctx context.Context, v any) (model.ClickhouseQuery, error) {
+func (ec *executionContext) unmarshalNClickhouseQuery2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐClickhouseQuery(ctx context.Context, v any) (model.ClickhouseQuery, error) {
 	res, err := ec.unmarshalInputClickhouseQuery(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNCommentReply2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐCommentReply(ctx context.Context, sel ast.SelectionSet, v []*model1.CommentReply) graphql.Marshaler {
+func (ec *executionContext) marshalNCommentReply2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐCommentReply(ctx context.Context, sel ast.SelectionSet, v []*model1.CommentReply) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -116219,7 +116185,7 @@ func (ec *executionContext) marshalNCommentReply2ᚕᚖgithubᚗcomᚋhighlight�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOCommentReply2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐCommentReply(ctx, sel, v[i])
+			ret[i] = ec.marshalOCommentReply2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐCommentReply(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -116233,7 +116199,7 @@ func (ec *executionContext) marshalNCommentReply2ᚕᚖgithubᚗcomᚋhighlight�
 	return ret
 }
 
-func (ec *executionContext) marshalNDailyErrorCount2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐDailyErrorCount(ctx context.Context, sel ast.SelectionSet, v []*model1.DailyErrorCount) graphql.Marshaler {
+func (ec *executionContext) marshalNDailyErrorCount2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐDailyErrorCount(ctx context.Context, sel ast.SelectionSet, v []*model1.DailyErrorCount) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -116257,7 +116223,7 @@ func (ec *executionContext) marshalNDailyErrorCount2ᚕᚖgithubᚗcomᚋhighlig
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalODailyErrorCount2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐDailyErrorCount(ctx, sel, v[i])
+			ret[i] = ec.marshalODailyErrorCount2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐDailyErrorCount(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -116271,7 +116237,7 @@ func (ec *executionContext) marshalNDailyErrorCount2ᚕᚖgithubᚗcomᚋhighlig
 	return ret
 }
 
-func (ec *executionContext) marshalNDailySessionCount2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐDailySessionCount(ctx context.Context, sel ast.SelectionSet, v []*model1.DailySessionCount) graphql.Marshaler {
+func (ec *executionContext) marshalNDailySessionCount2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐDailySessionCount(ctx context.Context, sel ast.SelectionSet, v []*model1.DailySessionCount) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -116295,7 +116261,7 @@ func (ec *executionContext) marshalNDailySessionCount2ᚕᚖgithubᚗcomᚋhighl
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalODailySessionCount2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐDailySessionCount(ctx, sel, v[i])
+			ret[i] = ec.marshalODailySessionCount2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐDailySessionCount(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -116309,7 +116275,7 @@ func (ec *executionContext) marshalNDailySessionCount2ᚕᚖgithubᚗcomᚋhighl
 	return ret
 }
 
-func (ec *executionContext) marshalNDashboardDefinition2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDashboardDefinition(ctx context.Context, sel ast.SelectionSet, v []*model.DashboardDefinition) graphql.Marshaler {
+func (ec *executionContext) marshalNDashboardDefinition2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDashboardDefinition(ctx context.Context, sel ast.SelectionSet, v []*model.DashboardDefinition) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -116333,7 +116299,7 @@ func (ec *executionContext) marshalNDashboardDefinition2ᚕᚖgithubᚗcomᚋhig
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalODashboardDefinition2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDashboardDefinition(ctx, sel, v[i])
+			ret[i] = ec.marshalODashboardDefinition2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDashboardDefinition(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -116347,7 +116313,7 @@ func (ec *executionContext) marshalNDashboardDefinition2ᚕᚖgithubᚗcomᚋhig
 	return ret
 }
 
-func (ec *executionContext) marshalNDashboardMetricConfig2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDashboardMetricConfigᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.DashboardMetricConfig) graphql.Marshaler {
+func (ec *executionContext) marshalNDashboardMetricConfig2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDashboardMetricConfigᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.DashboardMetricConfig) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -116371,7 +116337,7 @@ func (ec *executionContext) marshalNDashboardMetricConfig2ᚕᚖgithubᚗcomᚋh
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNDashboardMetricConfig2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDashboardMetricConfig(ctx, sel, v[i])
+			ret[i] = ec.marshalNDashboardMetricConfig2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDashboardMetricConfig(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -116391,7 +116357,7 @@ func (ec *executionContext) marshalNDashboardMetricConfig2ᚕᚖgithubᚗcomᚋh
 	return ret
 }
 
-func (ec *executionContext) marshalNDashboardMetricConfig2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDashboardMetricConfig(ctx context.Context, sel ast.SelectionSet, v *model.DashboardMetricConfig) graphql.Marshaler {
+func (ec *executionContext) marshalNDashboardMetricConfig2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDashboardMetricConfig(ctx context.Context, sel ast.SelectionSet, v *model.DashboardMetricConfig) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -116401,14 +116367,14 @@ func (ec *executionContext) marshalNDashboardMetricConfig2ᚖgithubᚗcomᚋhigh
 	return ec._DashboardMetricConfig(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNDashboardMetricConfigInput2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDashboardMetricConfigInputᚄ(ctx context.Context, v any) ([]*model.DashboardMetricConfigInput, error) {
+func (ec *executionContext) unmarshalNDashboardMetricConfigInput2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDashboardMetricConfigInputᚄ(ctx context.Context, v any) ([]*model.DashboardMetricConfigInput, error) {
 	var vSlice []any
 	vSlice = graphql.CoerceList(v)
 	var err error
 	res := make([]*model.DashboardMetricConfigInput, len(vSlice))
 	for i := range vSlice {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalNDashboardMetricConfigInput2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDashboardMetricConfigInput(ctx, vSlice[i])
+		res[i], err = ec.unmarshalNDashboardMetricConfigInput2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDashboardMetricConfigInput(ctx, vSlice[i])
 		if err != nil {
 			return nil, err
 		}
@@ -116416,42 +116382,42 @@ func (ec *executionContext) unmarshalNDashboardMetricConfigInput2ᚕᚖgithubᚗ
 	return res, nil
 }
 
-func (ec *executionContext) unmarshalNDashboardMetricConfigInput2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDashboardMetricConfigInput(ctx context.Context, v any) (*model.DashboardMetricConfigInput, error) {
+func (ec *executionContext) unmarshalNDashboardMetricConfigInput2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDashboardMetricConfigInput(ctx context.Context, v any) (*model.DashboardMetricConfigInput, error) {
 	res, err := ec.unmarshalInputDashboardMetricConfigInput(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNDateHistogramBucketSize2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDateHistogramBucketSize(ctx context.Context, v any) (*model.DateHistogramBucketSize, error) {
+func (ec *executionContext) unmarshalNDateHistogramBucketSize2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDateHistogramBucketSize(ctx context.Context, v any) (*model.DateHistogramBucketSize, error) {
 	res, err := ec.unmarshalInputDateHistogramBucketSize(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNDateHistogramOptions2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDateHistogramOptions(ctx context.Context, v any) (model.DateHistogramOptions, error) {
+func (ec *executionContext) unmarshalNDateHistogramOptions2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDateHistogramOptions(ctx context.Context, v any) (model.DateHistogramOptions, error) {
 	res, err := ec.unmarshalInputDateHistogramOptions(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNDateRangeInput2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDateRangeInput(ctx context.Context, v any) (model.DateRangeInput, error) {
+func (ec *executionContext) unmarshalNDateRangeInput2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDateRangeInput(ctx context.Context, v any) (model.DateRangeInput, error) {
 	res, err := ec.unmarshalInputDateRangeInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNDateRangeInput2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDateRangeInput(ctx context.Context, v any) (*model.DateRangeInput, error) {
+func (ec *executionContext) unmarshalNDateRangeInput2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDateRangeInput(ctx context.Context, v any) (*model.DateRangeInput, error) {
 	res, err := ec.unmarshalInputDateRangeInput(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNDateRangeRequiredInput2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDateRangeRequiredInput(ctx context.Context, v any) (model.DateRangeRequiredInput, error) {
+func (ec *executionContext) unmarshalNDateRangeRequiredInput2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDateRangeRequiredInput(ctx context.Context, v any) (model.DateRangeRequiredInput, error) {
 	res, err := ec.unmarshalInputDateRangeRequiredInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNDateRangeRequiredInput2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDateRangeRequiredInput(ctx context.Context, v any) (*model.DateRangeRequiredInput, error) {
+func (ec *executionContext) unmarshalNDateRangeRequiredInput2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDateRangeRequiredInput(ctx context.Context, v any) (*model.DateRangeRequiredInput, error) {
 	res, err := ec.unmarshalInputDateRangeRequiredInput(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNDateRangeRequiredOutput2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDateRangeRequiredOutput(ctx context.Context, sel ast.SelectionSet, v *model.DateRangeRequiredOutput) graphql.Marshaler {
+func (ec *executionContext) marshalNDateRangeRequiredOutput2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDateRangeRequiredOutput(ctx context.Context, sel ast.SelectionSet, v *model.DateRangeRequiredOutput) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -116461,11 +116427,11 @@ func (ec *executionContext) marshalNDateRangeRequiredOutput2ᚖgithubᚗcomᚋhi
 	return ec._DateRangeRequiredOutput(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNDiscordChannel2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐDiscordChannel(ctx context.Context, sel ast.SelectionSet, v model1.DiscordChannel) graphql.Marshaler {
+func (ec *executionContext) marshalNDiscordChannel2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐDiscordChannel(ctx context.Context, sel ast.SelectionSet, v model1.DiscordChannel) graphql.Marshaler {
 	return ec._DiscordChannel(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNDiscordChannel2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐDiscordChannelᚄ(ctx context.Context, sel ast.SelectionSet, v []*model1.DiscordChannel) graphql.Marshaler {
+func (ec *executionContext) marshalNDiscordChannel2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐDiscordChannelᚄ(ctx context.Context, sel ast.SelectionSet, v []*model1.DiscordChannel) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -116489,7 +116455,7 @@ func (ec *executionContext) marshalNDiscordChannel2ᚕᚖgithubᚗcomᚋhighligh
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNDiscordChannel2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐDiscordChannel(ctx, sel, v[i])
+			ret[i] = ec.marshalNDiscordChannel2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐDiscordChannel(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -116509,7 +116475,7 @@ func (ec *executionContext) marshalNDiscordChannel2ᚕᚖgithubᚗcomᚋhighligh
 	return ret
 }
 
-func (ec *executionContext) marshalNDiscordChannel2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐDiscordChannel(ctx context.Context, sel ast.SelectionSet, v *model1.DiscordChannel) graphql.Marshaler {
+func (ec *executionContext) marshalNDiscordChannel2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐDiscordChannel(ctx context.Context, sel ast.SelectionSet, v *model1.DiscordChannel) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -116519,14 +116485,14 @@ func (ec *executionContext) marshalNDiscordChannel2ᚖgithubᚗcomᚋhighlight�
 	return ec._DiscordChannel(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNDiscordChannelInput2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDiscordChannelInputᚄ(ctx context.Context, v any) ([]*model.DiscordChannelInput, error) {
+func (ec *executionContext) unmarshalNDiscordChannelInput2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDiscordChannelInputᚄ(ctx context.Context, v any) ([]*model.DiscordChannelInput, error) {
 	var vSlice []any
 	vSlice = graphql.CoerceList(v)
 	var err error
 	res := make([]*model.DiscordChannelInput, len(vSlice))
 	for i := range vSlice {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalNDiscordChannelInput2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDiscordChannelInput(ctx, vSlice[i])
+		res[i], err = ec.unmarshalNDiscordChannelInput2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDiscordChannelInput(ctx, vSlice[i])
 		if err != nil {
 			return nil, err
 		}
@@ -116534,29 +116500,29 @@ func (ec *executionContext) unmarshalNDiscordChannelInput2ᚕᚖgithubᚗcomᚋh
 	return res, nil
 }
 
-func (ec *executionContext) unmarshalNDiscordChannelInput2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDiscordChannelInput(ctx context.Context, v any) (*model.DiscordChannelInput, error) {
+func (ec *executionContext) unmarshalNDiscordChannelInput2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDiscordChannelInput(ctx context.Context, v any) (*model.DiscordChannelInput, error) {
 	res, err := ec.unmarshalInputDiscordChannelInput(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNEmailOptOutCategory2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐEmailOptOutCategory(ctx context.Context, v any) (model.EmailOptOutCategory, error) {
+func (ec *executionContext) unmarshalNEmailOptOutCategory2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐEmailOptOutCategory(ctx context.Context, v any) (model.EmailOptOutCategory, error) {
 	var res model.EmailOptOutCategory
 	err := res.UnmarshalGQL(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNEmailOptOutCategory2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐEmailOptOutCategory(ctx context.Context, sel ast.SelectionSet, v model.EmailOptOutCategory) graphql.Marshaler {
+func (ec *executionContext) marshalNEmailOptOutCategory2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐEmailOptOutCategory(ctx context.Context, sel ast.SelectionSet, v model.EmailOptOutCategory) graphql.Marshaler {
 	return v
 }
 
-func (ec *executionContext) unmarshalNEmailOptOutCategory2ᚕgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐEmailOptOutCategoryᚄ(ctx context.Context, v any) ([]model.EmailOptOutCategory, error) {
+func (ec *executionContext) unmarshalNEmailOptOutCategory2ᚕgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐEmailOptOutCategoryᚄ(ctx context.Context, v any) ([]model.EmailOptOutCategory, error) {
 	var vSlice []any
 	vSlice = graphql.CoerceList(v)
 	var err error
 	res := make([]model.EmailOptOutCategory, len(vSlice))
 	for i := range vSlice {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalNEmailOptOutCategory2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐEmailOptOutCategory(ctx, vSlice[i])
+		res[i], err = ec.unmarshalNEmailOptOutCategory2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐEmailOptOutCategory(ctx, vSlice[i])
 		if err != nil {
 			return nil, err
 		}
@@ -116564,7 +116530,7 @@ func (ec *executionContext) unmarshalNEmailOptOutCategory2ᚕgithubᚗcomᚋhigh
 	return res, nil
 }
 
-func (ec *executionContext) marshalNEmailOptOutCategory2ᚕgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐEmailOptOutCategoryᚄ(ctx context.Context, sel ast.SelectionSet, v []model.EmailOptOutCategory) graphql.Marshaler {
+func (ec *executionContext) marshalNEmailOptOutCategory2ᚕgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐEmailOptOutCategoryᚄ(ctx context.Context, sel ast.SelectionSet, v []model.EmailOptOutCategory) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -116588,7 +116554,7 @@ func (ec *executionContext) marshalNEmailOptOutCategory2ᚕgithubᚗcomᚋhighli
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNEmailOptOutCategory2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐEmailOptOutCategory(ctx, sel, v[i])
+			ret[i] = ec.marshalNEmailOptOutCategory2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐEmailOptOutCategory(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -116608,7 +116574,7 @@ func (ec *executionContext) marshalNEmailOptOutCategory2ᚕgithubᚗcomᚋhighli
 	return ret
 }
 
-func (ec *executionContext) marshalNErrorAlert2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐErrorAlert(ctx context.Context, sel ast.SelectionSet, v []*model1.ErrorAlert) graphql.Marshaler {
+func (ec *executionContext) marshalNErrorAlert2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐErrorAlert(ctx context.Context, sel ast.SelectionSet, v []*model1.ErrorAlert) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -116632,7 +116598,7 @@ func (ec *executionContext) marshalNErrorAlert2ᚕᚖgithubᚗcomᚋhighlightᚑ
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOErrorAlert2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐErrorAlert(ctx, sel, v[i])
+			ret[i] = ec.marshalOErrorAlert2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐErrorAlert(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -116646,7 +116612,7 @@ func (ec *executionContext) marshalNErrorAlert2ᚕᚖgithubᚗcomᚋhighlightᚑ
 	return ret
 }
 
-func (ec *executionContext) marshalNErrorComment2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐErrorComment(ctx context.Context, sel ast.SelectionSet, v []*model1.ErrorComment) graphql.Marshaler {
+func (ec *executionContext) marshalNErrorComment2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐErrorComment(ctx context.Context, sel ast.SelectionSet, v []*model1.ErrorComment) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -116670,7 +116636,7 @@ func (ec *executionContext) marshalNErrorComment2ᚕᚖgithubᚗcomᚋhighlight�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOErrorComment2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐErrorComment(ctx, sel, v[i])
+			ret[i] = ec.marshalOErrorComment2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐErrorComment(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -116684,7 +116650,7 @@ func (ec *executionContext) marshalNErrorComment2ᚕᚖgithubᚗcomᚋhighlight�
 	return ret
 }
 
-func (ec *executionContext) marshalNErrorDistributionItem2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐErrorDistributionItemᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.ErrorDistributionItem) graphql.Marshaler {
+func (ec *executionContext) marshalNErrorDistributionItem2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐErrorDistributionItemᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.ErrorDistributionItem) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -116708,7 +116674,7 @@ func (ec *executionContext) marshalNErrorDistributionItem2ᚕᚖgithubᚗcomᚋh
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNErrorDistributionItem2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐErrorDistributionItem(ctx, sel, v[i])
+			ret[i] = ec.marshalNErrorDistributionItem2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐErrorDistributionItem(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -116728,7 +116694,7 @@ func (ec *executionContext) marshalNErrorDistributionItem2ᚕᚖgithubᚗcomᚋh
 	return ret
 }
 
-func (ec *executionContext) marshalNErrorDistributionItem2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐErrorDistributionItem(ctx context.Context, sel ast.SelectionSet, v *model.ErrorDistributionItem) graphql.Marshaler {
+func (ec *executionContext) marshalNErrorDistributionItem2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐErrorDistributionItem(ctx context.Context, sel ast.SelectionSet, v *model.ErrorDistributionItem) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -116738,11 +116704,11 @@ func (ec *executionContext) marshalNErrorDistributionItem2ᚖgithubᚗcomᚋhigh
 	return ec._ErrorDistributionItem(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNErrorGroup2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐErrorGroup(ctx context.Context, sel ast.SelectionSet, v model1.ErrorGroup) graphql.Marshaler {
+func (ec *executionContext) marshalNErrorGroup2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐErrorGroup(ctx context.Context, sel ast.SelectionSet, v model1.ErrorGroup) graphql.Marshaler {
 	return ec._ErrorGroup(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNErrorGroup2ᚕgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐErrorGroupᚄ(ctx context.Context, sel ast.SelectionSet, v []model1.ErrorGroup) graphql.Marshaler {
+func (ec *executionContext) marshalNErrorGroup2ᚕgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐErrorGroupᚄ(ctx context.Context, sel ast.SelectionSet, v []model1.ErrorGroup) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -116766,7 +116732,7 @@ func (ec *executionContext) marshalNErrorGroup2ᚕgithubᚗcomᚋhighlightᚑrun
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNErrorGroup2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐErrorGroup(ctx, sel, v[i])
+			ret[i] = ec.marshalNErrorGroup2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐErrorGroup(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -116786,7 +116752,7 @@ func (ec *executionContext) marshalNErrorGroup2ᚕgithubᚗcomᚋhighlightᚑrun
 	return ret
 }
 
-func (ec *executionContext) marshalNErrorGroupTagAggregation2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐErrorGroupTagAggregationᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.ErrorGroupTagAggregation) graphql.Marshaler {
+func (ec *executionContext) marshalNErrorGroupTagAggregation2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐErrorGroupTagAggregationᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.ErrorGroupTagAggregation) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -116810,7 +116776,7 @@ func (ec *executionContext) marshalNErrorGroupTagAggregation2ᚕᚖgithubᚗcom�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNErrorGroupTagAggregation2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐErrorGroupTagAggregation(ctx, sel, v[i])
+			ret[i] = ec.marshalNErrorGroupTagAggregation2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐErrorGroupTagAggregation(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -116830,7 +116796,7 @@ func (ec *executionContext) marshalNErrorGroupTagAggregation2ᚕᚖgithubᚗcom�
 	return ret
 }
 
-func (ec *executionContext) marshalNErrorGroupTagAggregation2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐErrorGroupTagAggregation(ctx context.Context, sel ast.SelectionSet, v *model.ErrorGroupTagAggregation) graphql.Marshaler {
+func (ec *executionContext) marshalNErrorGroupTagAggregation2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐErrorGroupTagAggregation(ctx context.Context, sel ast.SelectionSet, v *model.ErrorGroupTagAggregation) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -116840,7 +116806,7 @@ func (ec *executionContext) marshalNErrorGroupTagAggregation2ᚖgithubᚗcomᚋh
 	return ec._ErrorGroupTagAggregation(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNErrorGroupTagAggregationBucket2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐErrorGroupTagAggregationBucketᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.ErrorGroupTagAggregationBucket) graphql.Marshaler {
+func (ec *executionContext) marshalNErrorGroupTagAggregationBucket2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐErrorGroupTagAggregationBucketᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.ErrorGroupTagAggregationBucket) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -116864,7 +116830,7 @@ func (ec *executionContext) marshalNErrorGroupTagAggregationBucket2ᚕᚖgithub�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNErrorGroupTagAggregationBucket2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐErrorGroupTagAggregationBucket(ctx, sel, v[i])
+			ret[i] = ec.marshalNErrorGroupTagAggregationBucket2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐErrorGroupTagAggregationBucket(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -116884,7 +116850,7 @@ func (ec *executionContext) marshalNErrorGroupTagAggregationBucket2ᚕᚖgithub�
 	return ret
 }
 
-func (ec *executionContext) marshalNErrorGroupTagAggregationBucket2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐErrorGroupTagAggregationBucket(ctx context.Context, sel ast.SelectionSet, v *model.ErrorGroupTagAggregationBucket) graphql.Marshaler {
+func (ec *executionContext) marshalNErrorGroupTagAggregationBucket2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐErrorGroupTagAggregationBucket(ctx context.Context, sel ast.SelectionSet, v *model.ErrorGroupTagAggregationBucket) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -116894,7 +116860,7 @@ func (ec *executionContext) marshalNErrorGroupTagAggregationBucket2ᚖgithubᚗc
 	return ec._ErrorGroupTagAggregationBucket(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNErrorMetadata2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐErrorMetadata(ctx context.Context, sel ast.SelectionSet, v []*model.ErrorMetadata) graphql.Marshaler {
+func (ec *executionContext) marshalNErrorMetadata2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐErrorMetadata(ctx context.Context, sel ast.SelectionSet, v []*model.ErrorMetadata) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -116918,7 +116884,7 @@ func (ec *executionContext) marshalNErrorMetadata2ᚕᚖgithubᚗcomᚋhighlight
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOErrorMetadata2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐErrorMetadata(ctx, sel, v[i])
+			ret[i] = ec.marshalOErrorMetadata2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐErrorMetadata(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -116932,11 +116898,11 @@ func (ec *executionContext) marshalNErrorMetadata2ᚕᚖgithubᚗcomᚋhighlight
 	return ret
 }
 
-func (ec *executionContext) marshalNErrorObject2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐErrorObject(ctx context.Context, sel ast.SelectionSet, v model1.ErrorObject) graphql.Marshaler {
+func (ec *executionContext) marshalNErrorObject2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐErrorObject(ctx context.Context, sel ast.SelectionSet, v model1.ErrorObject) graphql.Marshaler {
 	return ec._ErrorObject(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNErrorObject2ᚕgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐErrorObject(ctx context.Context, sel ast.SelectionSet, v []model1.ErrorObject) graphql.Marshaler {
+func (ec *executionContext) marshalNErrorObject2ᚕgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐErrorObject(ctx context.Context, sel ast.SelectionSet, v []model1.ErrorObject) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -116960,7 +116926,7 @@ func (ec *executionContext) marshalNErrorObject2ᚕgithubᚗcomᚋhighlightᚑru
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOErrorObject2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐErrorObject(ctx, sel, v[i])
+			ret[i] = ec.marshalOErrorObject2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐErrorObject(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -116974,7 +116940,7 @@ func (ec *executionContext) marshalNErrorObject2ᚕgithubᚗcomᚋhighlightᚑru
 	return ret
 }
 
-func (ec *executionContext) marshalNErrorObject2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐErrorObjectᚄ(ctx context.Context, sel ast.SelectionSet, v []*model1.ErrorObject) graphql.Marshaler {
+func (ec *executionContext) marshalNErrorObject2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐErrorObjectᚄ(ctx context.Context, sel ast.SelectionSet, v []*model1.ErrorObject) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -116998,7 +116964,7 @@ func (ec *executionContext) marshalNErrorObject2ᚕᚖgithubᚗcomᚋhighlight�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNErrorObject2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐErrorObject(ctx, sel, v[i])
+			ret[i] = ec.marshalNErrorObject2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐErrorObject(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -117018,7 +116984,7 @@ func (ec *executionContext) marshalNErrorObject2ᚕᚖgithubᚗcomᚋhighlight�
 	return ret
 }
 
-func (ec *executionContext) marshalNErrorObject2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐErrorObject(ctx context.Context, sel ast.SelectionSet, v *model1.ErrorObject) graphql.Marshaler {
+func (ec *executionContext) marshalNErrorObject2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐErrorObject(ctx context.Context, sel ast.SelectionSet, v *model1.ErrorObject) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -117028,7 +116994,7 @@ func (ec *executionContext) marshalNErrorObject2ᚖgithubᚗcomᚋhighlightᚑru
 	return ec._ErrorObject(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNErrorObjectNode2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐErrorObjectNodeᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.ErrorObjectNode) graphql.Marshaler {
+func (ec *executionContext) marshalNErrorObjectNode2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐErrorObjectNodeᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.ErrorObjectNode) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -117052,7 +117018,7 @@ func (ec *executionContext) marshalNErrorObjectNode2ᚕᚖgithubᚗcomᚋhighlig
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNErrorObjectNode2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐErrorObjectNode(ctx, sel, v[i])
+			ret[i] = ec.marshalNErrorObjectNode2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐErrorObjectNode(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -117072,7 +117038,7 @@ func (ec *executionContext) marshalNErrorObjectNode2ᚕᚖgithubᚗcomᚋhighlig
 	return ret
 }
 
-func (ec *executionContext) marshalNErrorObjectNode2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐErrorObjectNode(ctx context.Context, sel ast.SelectionSet, v *model.ErrorObjectNode) graphql.Marshaler {
+func (ec *executionContext) marshalNErrorObjectNode2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐErrorObjectNode(ctx context.Context, sel ast.SelectionSet, v *model.ErrorObjectNode) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -117082,11 +117048,11 @@ func (ec *executionContext) marshalNErrorObjectNode2ᚖgithubᚗcomᚋhighlight�
 	return ec._ErrorObjectNode(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNErrorObjectResults2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐErrorObjectResults(ctx context.Context, sel ast.SelectionSet, v model.ErrorObjectResults) graphql.Marshaler {
+func (ec *executionContext) marshalNErrorObjectResults2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐErrorObjectResults(ctx context.Context, sel ast.SelectionSet, v model.ErrorObjectResults) graphql.Marshaler {
 	return ec._ErrorObjectResults(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNErrorObjectResults2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐErrorObjectResults(ctx context.Context, sel ast.SelectionSet, v *model.ErrorObjectResults) graphql.Marshaler {
+func (ec *executionContext) marshalNErrorObjectResults2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐErrorObjectResults(ctx context.Context, sel ast.SelectionSet, v *model.ErrorObjectResults) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -117096,11 +117062,11 @@ func (ec *executionContext) marshalNErrorObjectResults2ᚖgithubᚗcomᚋhighlig
 	return ec._ErrorObjectResults(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNErrorResults2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐErrorResults(ctx context.Context, sel ast.SelectionSet, v model1.ErrorResults) graphql.Marshaler {
+func (ec *executionContext) marshalNErrorResults2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐErrorResults(ctx context.Context, sel ast.SelectionSet, v model1.ErrorResults) graphql.Marshaler {
 	return ec._ErrorResults(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNErrorResults2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐErrorResults(ctx context.Context, sel ast.SelectionSet, v *model1.ErrorResults) graphql.Marshaler {
+func (ec *executionContext) marshalNErrorResults2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐErrorResults(ctx context.Context, sel ast.SelectionSet, v *model1.ErrorResults) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -117110,21 +117076,21 @@ func (ec *executionContext) marshalNErrorResults2ᚖgithubᚗcomᚋhighlightᚑr
 	return ec._ErrorResults(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNErrorState2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐErrorState(ctx context.Context, v any) (model.ErrorState, error) {
+func (ec *executionContext) unmarshalNErrorState2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐErrorState(ctx context.Context, v any) (model.ErrorState, error) {
 	var res model.ErrorState
 	err := res.UnmarshalGQL(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNErrorState2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐErrorState(ctx context.Context, sel ast.SelectionSet, v model.ErrorState) graphql.Marshaler {
+func (ec *executionContext) marshalNErrorState2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐErrorState(ctx context.Context, sel ast.SelectionSet, v model.ErrorState) graphql.Marshaler {
 	return v
 }
 
-func (ec *executionContext) marshalNErrorTag2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐErrorTag(ctx context.Context, sel ast.SelectionSet, v model1.ErrorTag) graphql.Marshaler {
+func (ec *executionContext) marshalNErrorTag2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐErrorTag(ctx context.Context, sel ast.SelectionSet, v model1.ErrorTag) graphql.Marshaler {
 	return ec._ErrorTag(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNErrorTag2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐErrorTag(ctx context.Context, sel ast.SelectionSet, v *model1.ErrorTag) graphql.Marshaler {
+func (ec *executionContext) marshalNErrorTag2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐErrorTag(ctx context.Context, sel ast.SelectionSet, v *model1.ErrorTag) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -117134,7 +117100,7 @@ func (ec *executionContext) marshalNErrorTag2ᚖgithubᚗcomᚋhighlightᚑrun�
 	return ec._ErrorTag(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNErrorTrace2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐErrorTrace(ctx context.Context, sel ast.SelectionSet, v []*model.ErrorTrace) graphql.Marshaler {
+func (ec *executionContext) marshalNErrorTrace2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐErrorTrace(ctx context.Context, sel ast.SelectionSet, v []*model.ErrorTrace) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -117158,7 +117124,7 @@ func (ec *executionContext) marshalNErrorTrace2ᚕᚖgithubᚗcomᚋhighlightᚑ
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOErrorTrace2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐErrorTrace(ctx, sel, v[i])
+			ret[i] = ec.marshalOErrorTrace2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐErrorTrace(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -117172,11 +117138,11 @@ func (ec *executionContext) marshalNErrorTrace2ᚕᚖgithubᚗcomᚋhighlightᚑ
 	return ret
 }
 
-func (ec *executionContext) marshalNErrorsHistogram2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐErrorsHistogram(ctx context.Context, sel ast.SelectionSet, v model1.ErrorsHistogram) graphql.Marshaler {
+func (ec *executionContext) marshalNErrorsHistogram2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐErrorsHistogram(ctx context.Context, sel ast.SelectionSet, v model1.ErrorsHistogram) graphql.Marshaler {
 	return ec._ErrorsHistogram(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNErrorsHistogram2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐErrorsHistogram(ctx context.Context, sel ast.SelectionSet, v *model1.ErrorsHistogram) graphql.Marshaler {
+func (ec *executionContext) marshalNErrorsHistogram2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐErrorsHistogram(ctx context.Context, sel ast.SelectionSet, v *model1.ErrorsHistogram) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -117186,7 +117152,7 @@ func (ec *executionContext) marshalNErrorsHistogram2ᚖgithubᚗcomᚋhighlight�
 	return ec._ErrorsHistogram(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNEventChunk2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐEventChunkᚄ(ctx context.Context, sel ast.SelectionSet, v []*model1.EventChunk) graphql.Marshaler {
+func (ec *executionContext) marshalNEventChunk2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐEventChunkᚄ(ctx context.Context, sel ast.SelectionSet, v []*model1.EventChunk) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -117210,7 +117176,7 @@ func (ec *executionContext) marshalNEventChunk2ᚕᚖgithubᚗcomᚋhighlightᚑ
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNEventChunk2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐEventChunk(ctx, sel, v[i])
+			ret[i] = ec.marshalNEventChunk2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐEventChunk(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -117230,7 +117196,7 @@ func (ec *executionContext) marshalNEventChunk2ᚕᚖgithubᚗcomᚋhighlightᚑ
 	return ret
 }
 
-func (ec *executionContext) marshalNEventChunk2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐEventChunk(ctx context.Context, sel ast.SelectionSet, v *model1.EventChunk) graphql.Marshaler {
+func (ec *executionContext) marshalNEventChunk2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐEventChunk(ctx context.Context, sel ast.SelectionSet, v *model1.EventChunk) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -117240,7 +117206,7 @@ func (ec *executionContext) marshalNEventChunk2ᚖgithubᚗcomᚋhighlightᚑrun
 	return ec._EventChunk(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNExternalAttachment2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐExternalAttachment(ctx context.Context, sel ast.SelectionSet, v []*model1.ExternalAttachment) graphql.Marshaler {
+func (ec *executionContext) marshalNExternalAttachment2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐExternalAttachment(ctx context.Context, sel ast.SelectionSet, v []*model1.ExternalAttachment) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -117264,7 +117230,7 @@ func (ec *executionContext) marshalNExternalAttachment2ᚕᚖgithubᚗcomᚋhigh
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOExternalAttachment2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐExternalAttachment(ctx, sel, v[i])
+			ret[i] = ec.marshalOExternalAttachment2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐExternalAttachment(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -117293,7 +117259,7 @@ func (ec *executionContext) marshalNFloat2float64(ctx context.Context, sel ast.S
 	return res
 }
 
-func (ec *executionContext) marshalNFunnelStep2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐFunnelStep(ctx context.Context, sel ast.SelectionSet, v *model.FunnelStep) graphql.Marshaler {
+func (ec *executionContext) marshalNFunnelStep2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐFunnelStep(ctx context.Context, sel ast.SelectionSet, v *model.FunnelStep) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -117303,12 +117269,12 @@ func (ec *executionContext) marshalNFunnelStep2ᚖgithubᚗcomᚋhighlightᚑrun
 	return ec._FunnelStep(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNFunnelStepInput2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐFunnelStepInput(ctx context.Context, v any) (*model.FunnelStepInput, error) {
+func (ec *executionContext) unmarshalNFunnelStepInput2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐFunnelStepInput(ctx context.Context, v any) (*model.FunnelStepInput, error) {
 	res, err := ec.unmarshalInputFunnelStepInput(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNGitHubRepo2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐGitHubRepo(ctx context.Context, sel ast.SelectionSet, v *model.GitHubRepo) graphql.Marshaler {
+func (ec *executionContext) marshalNGitHubRepo2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐGitHubRepo(ctx context.Context, sel ast.SelectionSet, v *model.GitHubRepo) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -117318,7 +117284,7 @@ func (ec *executionContext) marshalNGitHubRepo2ᚖgithubᚗcomᚋhighlightᚑrun
 	return ec._GitHubRepo(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNGitlabProject2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐGitlabProject(ctx context.Context, sel ast.SelectionSet, v *model.GitlabProject) graphql.Marshaler {
+func (ec *executionContext) marshalNGitlabProject2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐGitlabProject(ctx context.Context, sel ast.SelectionSet, v *model.GitlabProject) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -117328,11 +117294,11 @@ func (ec *executionContext) marshalNGitlabProject2ᚖgithubᚗcomᚋhighlightᚑ
 	return ec._GitlabProject(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNGraph2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐGraph(ctx context.Context, sel ast.SelectionSet, v model1.Graph) graphql.Marshaler {
+func (ec *executionContext) marshalNGraph2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐGraph(ctx context.Context, sel ast.SelectionSet, v model1.Graph) graphql.Marshaler {
 	return ec._Graph(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNGraph2ᚕgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐGraphᚄ(ctx context.Context, sel ast.SelectionSet, v []model1.Graph) graphql.Marshaler {
+func (ec *executionContext) marshalNGraph2ᚕgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐGraphᚄ(ctx context.Context, sel ast.SelectionSet, v []model1.Graph) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -117356,7 +117322,7 @@ func (ec *executionContext) marshalNGraph2ᚕgithubᚗcomᚋhighlightᚑrunᚋhi
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNGraph2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐGraph(ctx, sel, v[i])
+			ret[i] = ec.marshalNGraph2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐGraph(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -117376,7 +117342,7 @@ func (ec *executionContext) marshalNGraph2ᚕgithubᚗcomᚋhighlightᚑrunᚋhi
 	return ret
 }
 
-func (ec *executionContext) marshalNGraph2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐGraphᚄ(ctx context.Context, sel ast.SelectionSet, v []*model1.Graph) graphql.Marshaler {
+func (ec *executionContext) marshalNGraph2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐGraphᚄ(ctx context.Context, sel ast.SelectionSet, v []*model1.Graph) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -117400,7 +117366,7 @@ func (ec *executionContext) marshalNGraph2ᚕᚖgithubᚗcomᚋhighlightᚑrun�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNGraph2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐGraph(ctx, sel, v[i])
+			ret[i] = ec.marshalNGraph2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐGraph(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -117420,7 +117386,7 @@ func (ec *executionContext) marshalNGraph2ᚕᚖgithubᚗcomᚋhighlightᚑrun�
 	return ret
 }
 
-func (ec *executionContext) marshalNGraph2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐGraph(ctx context.Context, sel ast.SelectionSet, v *model1.Graph) graphql.Marshaler {
+func (ec *executionContext) marshalNGraph2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐGraph(ctx context.Context, sel ast.SelectionSet, v *model1.Graph) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -117430,12 +117396,12 @@ func (ec *executionContext) marshalNGraph2ᚖgithubᚗcomᚋhighlightᚑrunᚋhi
 	return ec._Graph(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNGraphInput2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐGraphInput(ctx context.Context, v any) (model.GraphInput, error) {
+func (ec *executionContext) unmarshalNGraphInput2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐGraphInput(ctx context.Context, v any) (model.GraphInput, error) {
 	res, err := ec.unmarshalInputGraphInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNHeightList2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐHeightListᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.HeightList) graphql.Marshaler {
+func (ec *executionContext) marshalNHeightList2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐHeightListᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.HeightList) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -117459,7 +117425,7 @@ func (ec *executionContext) marshalNHeightList2ᚕᚖgithubᚗcomᚋhighlightᚑ
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNHeightList2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐHeightList(ctx, sel, v[i])
+			ret[i] = ec.marshalNHeightList2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐHeightList(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -117479,7 +117445,7 @@ func (ec *executionContext) marshalNHeightList2ᚕᚖgithubᚗcomᚋhighlightᚑ
 	return ret
 }
 
-func (ec *executionContext) marshalNHeightList2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐHeightList(ctx context.Context, sel ast.SelectionSet, v *model.HeightList) graphql.Marshaler {
+func (ec *executionContext) marshalNHeightList2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐHeightList(ctx context.Context, sel ast.SelectionSet, v *model.HeightList) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -117489,7 +117455,7 @@ func (ec *executionContext) marshalNHeightList2ᚖgithubᚗcomᚋhighlightᚑrun
 	return ec._HeightList(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNHeightWorkspace2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐHeightWorkspaceᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.HeightWorkspace) graphql.Marshaler {
+func (ec *executionContext) marshalNHeightWorkspace2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐHeightWorkspaceᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.HeightWorkspace) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -117513,7 +117479,7 @@ func (ec *executionContext) marshalNHeightWorkspace2ᚕᚖgithubᚗcomᚋhighlig
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNHeightWorkspace2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐHeightWorkspace(ctx, sel, v[i])
+			ret[i] = ec.marshalNHeightWorkspace2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐHeightWorkspace(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -117533,7 +117499,7 @@ func (ec *executionContext) marshalNHeightWorkspace2ᚕᚖgithubᚗcomᚋhighlig
 	return ret
 }
 
-func (ec *executionContext) marshalNHeightWorkspace2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐHeightWorkspace(ctx context.Context, sel ast.SelectionSet, v *model.HeightWorkspace) graphql.Marshaler {
+func (ec *executionContext) marshalNHeightWorkspace2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐHeightWorkspace(ctx context.Context, sel ast.SelectionSet, v *model.HeightWorkspace) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -117714,7 +117680,7 @@ func (ec *executionContext) marshalNInt642ᚕᚖint64(ctx context.Context, sel a
 	return ret
 }
 
-func (ec *executionContext) marshalNIntegrationProjectMapping2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐIntegrationProjectMappingᚄ(ctx context.Context, sel ast.SelectionSet, v []*model1.IntegrationProjectMapping) graphql.Marshaler {
+func (ec *executionContext) marshalNIntegrationProjectMapping2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐIntegrationProjectMappingᚄ(ctx context.Context, sel ast.SelectionSet, v []*model1.IntegrationProjectMapping) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -117738,7 +117704,7 @@ func (ec *executionContext) marshalNIntegrationProjectMapping2ᚕᚖgithubᚗcom
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNIntegrationProjectMapping2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐIntegrationProjectMapping(ctx, sel, v[i])
+			ret[i] = ec.marshalNIntegrationProjectMapping2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐIntegrationProjectMapping(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -117758,7 +117724,7 @@ func (ec *executionContext) marshalNIntegrationProjectMapping2ᚕᚖgithubᚗcom
 	return ret
 }
 
-func (ec *executionContext) marshalNIntegrationProjectMapping2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐIntegrationProjectMapping(ctx context.Context, sel ast.SelectionSet, v *model1.IntegrationProjectMapping) graphql.Marshaler {
+func (ec *executionContext) marshalNIntegrationProjectMapping2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐIntegrationProjectMapping(ctx context.Context, sel ast.SelectionSet, v *model1.IntegrationProjectMapping) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -117768,14 +117734,14 @@ func (ec *executionContext) marshalNIntegrationProjectMapping2ᚖgithubᚗcomᚋ
 	return ec._IntegrationProjectMapping(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNIntegrationProjectMappingInput2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐIntegrationProjectMappingInputᚄ(ctx context.Context, v any) ([]*model.IntegrationProjectMappingInput, error) {
+func (ec *executionContext) unmarshalNIntegrationProjectMappingInput2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐIntegrationProjectMappingInputᚄ(ctx context.Context, v any) ([]*model.IntegrationProjectMappingInput, error) {
 	var vSlice []any
 	vSlice = graphql.CoerceList(v)
 	var err error
 	res := make([]*model.IntegrationProjectMappingInput, len(vSlice))
 	for i := range vSlice {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalNIntegrationProjectMappingInput2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐIntegrationProjectMappingInput(ctx, vSlice[i])
+		res[i], err = ec.unmarshalNIntegrationProjectMappingInput2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐIntegrationProjectMappingInput(ctx, vSlice[i])
 		if err != nil {
 			return nil, err
 		}
@@ -117783,16 +117749,16 @@ func (ec *executionContext) unmarshalNIntegrationProjectMappingInput2ᚕᚖgithu
 	return res, nil
 }
 
-func (ec *executionContext) unmarshalNIntegrationProjectMappingInput2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐIntegrationProjectMappingInput(ctx context.Context, v any) (*model.IntegrationProjectMappingInput, error) {
+func (ec *executionContext) unmarshalNIntegrationProjectMappingInput2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐIntegrationProjectMappingInput(ctx context.Context, v any) (*model.IntegrationProjectMappingInput, error) {
 	res, err := ec.unmarshalInputIntegrationProjectMappingInput(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNIntegrationStatus2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐIntegrationStatus(ctx context.Context, sel ast.SelectionSet, v model.IntegrationStatus) graphql.Marshaler {
+func (ec *executionContext) marshalNIntegrationStatus2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐIntegrationStatus(ctx context.Context, sel ast.SelectionSet, v model.IntegrationStatus) graphql.Marshaler {
 	return ec._IntegrationStatus(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNIntegrationStatus2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐIntegrationStatus(ctx context.Context, sel ast.SelectionSet, v *model.IntegrationStatus) graphql.Marshaler {
+func (ec *executionContext) marshalNIntegrationStatus2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐIntegrationStatus(ctx context.Context, sel ast.SelectionSet, v *model.IntegrationStatus) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -117802,24 +117768,24 @@ func (ec *executionContext) marshalNIntegrationStatus2ᚖgithubᚗcomᚋhighligh
 	return ec._IntegrationStatus(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNIntegrationType2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐIntegrationType(ctx context.Context, v any) (model.IntegrationType, error) {
+func (ec *executionContext) unmarshalNIntegrationType2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐIntegrationType(ctx context.Context, v any) (model.IntegrationType, error) {
 	var res model.IntegrationType
 	err := res.UnmarshalGQL(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNIntegrationType2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐIntegrationType(ctx context.Context, sel ast.SelectionSet, v model.IntegrationType) graphql.Marshaler {
+func (ec *executionContext) marshalNIntegrationType2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐIntegrationType(ctx context.Context, sel ast.SelectionSet, v model.IntegrationType) graphql.Marshaler {
 	return v
 }
 
-func (ec *executionContext) unmarshalNIntegrationType2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐIntegrationType(ctx context.Context, v any) ([]*model.IntegrationType, error) {
+func (ec *executionContext) unmarshalNIntegrationType2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐIntegrationType(ctx context.Context, v any) ([]*model.IntegrationType, error) {
 	var vSlice []any
 	vSlice = graphql.CoerceList(v)
 	var err error
 	res := make([]*model.IntegrationType, len(vSlice))
 	for i := range vSlice {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalOIntegrationType2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐIntegrationType(ctx, vSlice[i])
+		res[i], err = ec.unmarshalOIntegrationType2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐIntegrationType(ctx, vSlice[i])
 		if err != nil {
 			return nil, err
 		}
@@ -117827,7 +117793,7 @@ func (ec *executionContext) unmarshalNIntegrationType2ᚕᚖgithubᚗcomᚋhighl
 	return res, nil
 }
 
-func (ec *executionContext) marshalNIntegrationType2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐIntegrationType(ctx context.Context, sel ast.SelectionSet, v []*model.IntegrationType) graphql.Marshaler {
+func (ec *executionContext) marshalNIntegrationType2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐIntegrationType(ctx context.Context, sel ast.SelectionSet, v []*model.IntegrationType) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -117851,7 +117817,7 @@ func (ec *executionContext) marshalNIntegrationType2ᚕᚖgithubᚗcomᚋhighlig
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOIntegrationType2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐIntegrationType(ctx, sel, v[i])
+			ret[i] = ec.marshalOIntegrationType2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐIntegrationType(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -117865,7 +117831,7 @@ func (ec *executionContext) marshalNIntegrationType2ᚕᚖgithubᚗcomᚋhighlig
 	return ret
 }
 
-func (ec *executionContext) marshalNIssuesSearchResult2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐIssuesSearchResultᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.IssuesSearchResult) graphql.Marshaler {
+func (ec *executionContext) marshalNIssuesSearchResult2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐIssuesSearchResultᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.IssuesSearchResult) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -117889,7 +117855,7 @@ func (ec *executionContext) marshalNIssuesSearchResult2ᚕᚖgithubᚗcomᚋhigh
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNIssuesSearchResult2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐIssuesSearchResult(ctx, sel, v[i])
+			ret[i] = ec.marshalNIssuesSearchResult2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐIssuesSearchResult(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -117909,7 +117875,7 @@ func (ec *executionContext) marshalNIssuesSearchResult2ᚕᚖgithubᚗcomᚋhigh
 	return ret
 }
 
-func (ec *executionContext) marshalNIssuesSearchResult2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐIssuesSearchResult(ctx context.Context, sel ast.SelectionSet, v *model.IssuesSearchResult) graphql.Marshaler {
+func (ec *executionContext) marshalNIssuesSearchResult2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐIssuesSearchResult(ctx context.Context, sel ast.SelectionSet, v *model.IssuesSearchResult) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -117919,7 +117885,7 @@ func (ec *executionContext) marshalNIssuesSearchResult2ᚖgithubᚗcomᚋhighlig
 	return ec._IssuesSearchResult(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNJiraProject2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐJiraProject(ctx context.Context, sel ast.SelectionSet, v *model.JiraProject) graphql.Marshaler {
+func (ec *executionContext) marshalNJiraProject2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐJiraProject(ctx context.Context, sel ast.SelectionSet, v *model.JiraProject) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -117929,17 +117895,17 @@ func (ec *executionContext) marshalNJiraProject2ᚖgithubᚗcomᚋhighlightᚑru
 	return ec._JiraProject(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNKeyType2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐKeyType(ctx context.Context, v any) (model.KeyType, error) {
+func (ec *executionContext) unmarshalNKeyType2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐKeyType(ctx context.Context, v any) (model.KeyType, error) {
 	var res model.KeyType
 	err := res.UnmarshalGQL(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNKeyType2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐKeyType(ctx context.Context, sel ast.SelectionSet, v model.KeyType) graphql.Marshaler {
+func (ec *executionContext) marshalNKeyType2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐKeyType(ctx context.Context, sel ast.SelectionSet, v model.KeyType) graphql.Marshaler {
 	return v
 }
 
-func (ec *executionContext) marshalNKeyValueSuggestion2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐKeyValueSuggestionᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.KeyValueSuggestion) graphql.Marshaler {
+func (ec *executionContext) marshalNKeyValueSuggestion2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐKeyValueSuggestionᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.KeyValueSuggestion) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -117963,7 +117929,7 @@ func (ec *executionContext) marshalNKeyValueSuggestion2ᚕᚖgithubᚗcomᚋhigh
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNKeyValueSuggestion2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐKeyValueSuggestion(ctx, sel, v[i])
+			ret[i] = ec.marshalNKeyValueSuggestion2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐKeyValueSuggestion(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -117983,7 +117949,7 @@ func (ec *executionContext) marshalNKeyValueSuggestion2ᚕᚖgithubᚗcomᚋhigh
 	return ret
 }
 
-func (ec *executionContext) marshalNKeyValueSuggestion2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐKeyValueSuggestion(ctx context.Context, sel ast.SelectionSet, v *model.KeyValueSuggestion) graphql.Marshaler {
+func (ec *executionContext) marshalNKeyValueSuggestion2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐKeyValueSuggestion(ctx context.Context, sel ast.SelectionSet, v *model.KeyValueSuggestion) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -117993,7 +117959,7 @@ func (ec *executionContext) marshalNKeyValueSuggestion2ᚖgithubᚗcomᚋhighlig
 	return ec._KeyValueSuggestion(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNLinearTeam2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐLinearTeam(ctx context.Context, sel ast.SelectionSet, v *model.LinearTeam) graphql.Marshaler {
+func (ec *executionContext) marshalNLinearTeam2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐLinearTeam(ctx context.Context, sel ast.SelectionSet, v *model.LinearTeam) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -118003,7 +117969,7 @@ func (ec *executionContext) marshalNLinearTeam2ᚖgithubᚗcomᚋhighlightᚑrun
 	return ec._LinearTeam(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNLog2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐLog(ctx context.Context, sel ast.SelectionSet, v *model.Log) graphql.Marshaler {
+func (ec *executionContext) marshalNLog2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐLog(ctx context.Context, sel ast.SelectionSet, v *model.Log) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -118013,11 +117979,11 @@ func (ec *executionContext) marshalNLog2ᚖgithubᚗcomᚋhighlightᚑrunᚋhigh
 	return ec._Log(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNLogAlert2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐLogAlert(ctx context.Context, sel ast.SelectionSet, v model1.LogAlert) graphql.Marshaler {
+func (ec *executionContext) marshalNLogAlert2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐLogAlert(ctx context.Context, sel ast.SelectionSet, v model1.LogAlert) graphql.Marshaler {
 	return ec._LogAlert(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNLogAlert2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐLogAlert(ctx context.Context, sel ast.SelectionSet, v []*model1.LogAlert) graphql.Marshaler {
+func (ec *executionContext) marshalNLogAlert2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐLogAlert(ctx context.Context, sel ast.SelectionSet, v []*model1.LogAlert) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -118041,7 +118007,7 @@ func (ec *executionContext) marshalNLogAlert2ᚕᚖgithubᚗcomᚋhighlightᚑru
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOLogAlert2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐLogAlert(ctx, sel, v[i])
+			ret[i] = ec.marshalOLogAlert2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐLogAlert(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -118055,7 +118021,7 @@ func (ec *executionContext) marshalNLogAlert2ᚕᚖgithubᚗcomᚋhighlightᚑru
 	return ret
 }
 
-func (ec *executionContext) marshalNLogAlert2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐLogAlert(ctx context.Context, sel ast.SelectionSet, v *model1.LogAlert) graphql.Marshaler {
+func (ec *executionContext) marshalNLogAlert2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐLogAlert(ctx context.Context, sel ast.SelectionSet, v *model1.LogAlert) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -118065,16 +118031,16 @@ func (ec *executionContext) marshalNLogAlert2ᚖgithubᚗcomᚋhighlightᚑrun�
 	return ec._LogAlert(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNLogAlertInput2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐLogAlertInput(ctx context.Context, v any) (model.LogAlertInput, error) {
+func (ec *executionContext) unmarshalNLogAlertInput2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐLogAlertInput(ctx context.Context, v any) (model.LogAlertInput, error) {
 	res, err := ec.unmarshalInputLogAlertInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNLogConnection2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐLogConnection(ctx context.Context, sel ast.SelectionSet, v model.LogConnection) graphql.Marshaler {
+func (ec *executionContext) marshalNLogConnection2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐLogConnection(ctx context.Context, sel ast.SelectionSet, v model.LogConnection) graphql.Marshaler {
 	return ec._LogConnection(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNLogConnection2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐLogConnection(ctx context.Context, sel ast.SelectionSet, v *model.LogConnection) graphql.Marshaler {
+func (ec *executionContext) marshalNLogConnection2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐLogConnection(ctx context.Context, sel ast.SelectionSet, v *model.LogConnection) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -118084,7 +118050,7 @@ func (ec *executionContext) marshalNLogConnection2ᚖgithubᚗcomᚋhighlightᚑ
 	return ec._LogConnection(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNLogEdge2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐLogEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.LogEdge) graphql.Marshaler {
+func (ec *executionContext) marshalNLogEdge2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐLogEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.LogEdge) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -118108,7 +118074,7 @@ func (ec *executionContext) marshalNLogEdge2ᚕᚖgithubᚗcomᚋhighlightᚑrun
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNLogEdge2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐLogEdge(ctx, sel, v[i])
+			ret[i] = ec.marshalNLogEdge2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐLogEdge(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -118128,7 +118094,7 @@ func (ec *executionContext) marshalNLogEdge2ᚕᚖgithubᚗcomᚋhighlightᚑrun
 	return ret
 }
 
-func (ec *executionContext) marshalNLogEdge2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐLogEdge(ctx context.Context, sel ast.SelectionSet, v *model.LogEdge) graphql.Marshaler {
+func (ec *executionContext) marshalNLogEdge2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐLogEdge(ctx context.Context, sel ast.SelectionSet, v *model.LogEdge) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -118138,17 +118104,17 @@ func (ec *executionContext) marshalNLogEdge2ᚖgithubᚗcomᚋhighlightᚑrunᚋ
 	return ec._LogEdge(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNLogLevel2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐLogLevel(ctx context.Context, v any) (model.LogLevel, error) {
+func (ec *executionContext) unmarshalNLogLevel2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐLogLevel(ctx context.Context, v any) (model.LogLevel, error) {
 	var res model.LogLevel
 	err := res.UnmarshalGQL(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNLogLevel2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐLogLevel(ctx context.Context, sel ast.SelectionSet, v model.LogLevel) graphql.Marshaler {
+func (ec *executionContext) marshalNLogLevel2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐLogLevel(ctx context.Context, sel ast.SelectionSet, v model.LogLevel) graphql.Marshaler {
 	return v
 }
 
-func (ec *executionContext) marshalNLogLine2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐLogLineᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.LogLine) graphql.Marshaler {
+func (ec *executionContext) marshalNLogLine2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐLogLineᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.LogLine) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -118172,7 +118138,7 @@ func (ec *executionContext) marshalNLogLine2ᚕᚖgithubᚗcomᚋhighlightᚑrun
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNLogLine2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐLogLine(ctx, sel, v[i])
+			ret[i] = ec.marshalNLogLine2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐLogLine(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -118192,7 +118158,7 @@ func (ec *executionContext) marshalNLogLine2ᚕᚖgithubᚗcomᚋhighlightᚑrun
 	return ret
 }
 
-func (ec *executionContext) marshalNLogLine2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐLogLine(ctx context.Context, sel ast.SelectionSet, v *model.LogLine) graphql.Marshaler {
+func (ec *executionContext) marshalNLogLine2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐLogLine(ctx context.Context, sel ast.SelectionSet, v *model.LogLine) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -118202,11 +118168,11 @@ func (ec *executionContext) marshalNLogLine2ᚖgithubᚗcomᚋhighlightᚑrunᚋ
 	return ec._LogLine(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNLogsHistogram2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐLogsHistogram(ctx context.Context, sel ast.SelectionSet, v model.LogsHistogram) graphql.Marshaler {
+func (ec *executionContext) marshalNLogsHistogram2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐLogsHistogram(ctx context.Context, sel ast.SelectionSet, v model.LogsHistogram) graphql.Marshaler {
 	return ec._LogsHistogram(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNLogsHistogram2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐLogsHistogram(ctx context.Context, sel ast.SelectionSet, v *model.LogsHistogram) graphql.Marshaler {
+func (ec *executionContext) marshalNLogsHistogram2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐLogsHistogram(ctx context.Context, sel ast.SelectionSet, v *model.LogsHistogram) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -118216,7 +118182,7 @@ func (ec *executionContext) marshalNLogsHistogram2ᚖgithubᚗcomᚋhighlightᚑ
 	return ec._LogsHistogram(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNLogsHistogramBucket2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐLogsHistogramBucketᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.LogsHistogramBucket) graphql.Marshaler {
+func (ec *executionContext) marshalNLogsHistogramBucket2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐLogsHistogramBucketᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.LogsHistogramBucket) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -118240,7 +118206,7 @@ func (ec *executionContext) marshalNLogsHistogramBucket2ᚕᚖgithubᚗcomᚋhig
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNLogsHistogramBucket2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐLogsHistogramBucket(ctx, sel, v[i])
+			ret[i] = ec.marshalNLogsHistogramBucket2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐLogsHistogramBucket(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -118260,7 +118226,7 @@ func (ec *executionContext) marshalNLogsHistogramBucket2ᚕᚖgithubᚗcomᚋhig
 	return ret
 }
 
-func (ec *executionContext) marshalNLogsHistogramBucket2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐLogsHistogramBucket(ctx context.Context, sel ast.SelectionSet, v *model.LogsHistogramBucket) graphql.Marshaler {
+func (ec *executionContext) marshalNLogsHistogramBucket2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐLogsHistogramBucket(ctx context.Context, sel ast.SelectionSet, v *model.LogsHistogramBucket) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -118270,7 +118236,7 @@ func (ec *executionContext) marshalNLogsHistogramBucket2ᚖgithubᚗcomᚋhighli
 	return ec._LogsHistogramBucket(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNLogsHistogramBucketCount2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐLogsHistogramBucketCountᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.LogsHistogramBucketCount) graphql.Marshaler {
+func (ec *executionContext) marshalNLogsHistogramBucketCount2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐLogsHistogramBucketCountᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.LogsHistogramBucketCount) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -118294,7 +118260,7 @@ func (ec *executionContext) marshalNLogsHistogramBucketCount2ᚕᚖgithubᚗcom�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNLogsHistogramBucketCount2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐLogsHistogramBucketCount(ctx, sel, v[i])
+			ret[i] = ec.marshalNLogsHistogramBucketCount2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐLogsHistogramBucketCount(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -118314,7 +118280,7 @@ func (ec *executionContext) marshalNLogsHistogramBucketCount2ᚕᚖgithubᚗcom�
 	return ret
 }
 
-func (ec *executionContext) marshalNLogsHistogramBucketCount2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐLogsHistogramBucketCount(ctx context.Context, sel ast.SelectionSet, v *model.LogsHistogramBucketCount) graphql.Marshaler {
+func (ec *executionContext) marshalNLogsHistogramBucketCount2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐLogsHistogramBucketCount(ctx context.Context, sel ast.SelectionSet, v *model.LogsHistogramBucketCount) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -118345,17 +118311,17 @@ func (ec *executionContext) marshalNMap2map(ctx context.Context, sel ast.Selecti
 	return res
 }
 
-func (ec *executionContext) unmarshalNMetricAggregator2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricAggregator(ctx context.Context, v any) (model.MetricAggregator, error) {
+func (ec *executionContext) unmarshalNMetricAggregator2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricAggregator(ctx context.Context, v any) (model.MetricAggregator, error) {
 	var res model.MetricAggregator
 	err := res.UnmarshalGQL(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNMetricAggregator2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricAggregator(ctx context.Context, sel ast.SelectionSet, v model.MetricAggregator) graphql.Marshaler {
+func (ec *executionContext) marshalNMetricAggregator2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricAggregator(ctx context.Context, sel ast.SelectionSet, v model.MetricAggregator) graphql.Marshaler {
 	return v
 }
 
-func (ec *executionContext) marshalNMetricBucket2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricBucketᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.MetricBucket) graphql.Marshaler {
+func (ec *executionContext) marshalNMetricBucket2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricBucketᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.MetricBucket) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -118379,7 +118345,7 @@ func (ec *executionContext) marshalNMetricBucket2ᚕᚖgithubᚗcomᚋhighlight�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNMetricBucket2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricBucket(ctx, sel, v[i])
+			ret[i] = ec.marshalNMetricBucket2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricBucket(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -118399,7 +118365,7 @@ func (ec *executionContext) marshalNMetricBucket2ᚕᚖgithubᚗcomᚋhighlight�
 	return ret
 }
 
-func (ec *executionContext) marshalNMetricBucket2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricBucket(ctx context.Context, sel ast.SelectionSet, v *model.MetricBucket) graphql.Marshaler {
+func (ec *executionContext) marshalNMetricBucket2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricBucket(ctx context.Context, sel ast.SelectionSet, v *model.MetricBucket) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -118409,7 +118375,7 @@ func (ec *executionContext) marshalNMetricBucket2ᚖgithubᚗcomᚋhighlightᚑr
 	return ec._MetricBucket(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNMetricEdge2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.MetricEdge) graphql.Marshaler {
+func (ec *executionContext) marshalNMetricEdge2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.MetricEdge) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -118433,7 +118399,7 @@ func (ec *executionContext) marshalNMetricEdge2ᚕᚖgithubᚗcomᚋhighlightᚑ
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNMetricEdge2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricEdge(ctx, sel, v[i])
+			ret[i] = ec.marshalNMetricEdge2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricEdge(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -118453,7 +118419,7 @@ func (ec *executionContext) marshalNMetricEdge2ᚕᚖgithubᚗcomᚋhighlightᚑ
 	return ret
 }
 
-func (ec *executionContext) marshalNMetricEdge2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricEdge(ctx context.Context, sel ast.SelectionSet, v *model.MetricEdge) graphql.Marshaler {
+func (ec *executionContext) marshalNMetricEdge2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricEdge(ctx context.Context, sel ast.SelectionSet, v *model.MetricEdge) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -118463,7 +118429,7 @@ func (ec *executionContext) marshalNMetricEdge2ᚖgithubᚗcomᚋhighlightᚑrun
 	return ec._MetricEdge(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNMetricExpression2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricExpressionᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.MetricExpression) graphql.Marshaler {
+func (ec *executionContext) marshalNMetricExpression2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricExpressionᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.MetricExpression) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -118487,7 +118453,7 @@ func (ec *executionContext) marshalNMetricExpression2ᚕᚖgithubᚗcomᚋhighli
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNMetricExpression2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricExpression(ctx, sel, v[i])
+			ret[i] = ec.marshalNMetricExpression2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricExpression(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -118507,7 +118473,7 @@ func (ec *executionContext) marshalNMetricExpression2ᚕᚖgithubᚗcomᚋhighli
 	return ret
 }
 
-func (ec *executionContext) marshalNMetricExpression2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricExpression(ctx context.Context, sel ast.SelectionSet, v *model.MetricExpression) graphql.Marshaler {
+func (ec *executionContext) marshalNMetricExpression2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricExpression(ctx context.Context, sel ast.SelectionSet, v *model.MetricExpression) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -118517,14 +118483,14 @@ func (ec *executionContext) marshalNMetricExpression2ᚖgithubᚗcomᚋhighlight
 	return ec._MetricExpression(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNMetricExpressionInput2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricExpressionInputᚄ(ctx context.Context, v any) ([]*model.MetricExpressionInput, error) {
+func (ec *executionContext) unmarshalNMetricExpressionInput2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricExpressionInputᚄ(ctx context.Context, v any) ([]*model.MetricExpressionInput, error) {
 	var vSlice []any
 	vSlice = graphql.CoerceList(v)
 	var err error
 	res := make([]*model.MetricExpressionInput, len(vSlice))
 	for i := range vSlice {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalNMetricExpressionInput2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricExpressionInput(ctx, vSlice[i])
+		res[i], err = ec.unmarshalNMetricExpressionInput2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricExpressionInput(ctx, vSlice[i])
 		if err != nil {
 			return nil, err
 		}
@@ -118532,12 +118498,12 @@ func (ec *executionContext) unmarshalNMetricExpressionInput2ᚕᚖgithubᚗcom�
 	return res, nil
 }
 
-func (ec *executionContext) unmarshalNMetricExpressionInput2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricExpressionInput(ctx context.Context, v any) (*model.MetricExpressionInput, error) {
+func (ec *executionContext) unmarshalNMetricExpressionInput2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricExpressionInput(ctx context.Context, v any) (*model.MetricExpressionInput, error) {
 	res, err := ec.unmarshalInputMetricExpressionInput(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNMetricMonitor2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐMetricMonitor(ctx context.Context, sel ast.SelectionSet, v []*model1.MetricMonitor) graphql.Marshaler {
+func (ec *executionContext) marshalNMetricMonitor2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐMetricMonitor(ctx context.Context, sel ast.SelectionSet, v []*model1.MetricMonitor) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -118561,7 +118527,7 @@ func (ec *executionContext) marshalNMetricMonitor2ᚕᚖgithubᚗcomᚋhighlight
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOMetricMonitor2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐMetricMonitor(ctx, sel, v[i])
+			ret[i] = ec.marshalOMetricMonitor2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐMetricMonitor(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -118575,7 +118541,7 @@ func (ec *executionContext) marshalNMetricMonitor2ᚕᚖgithubᚗcomᚋhighlight
 	return ret
 }
 
-func (ec *executionContext) marshalNMetricRow2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricRow(ctx context.Context, sel ast.SelectionSet, v *model.MetricRow) graphql.Marshaler {
+func (ec *executionContext) marshalNMetricRow2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricRow(ctx context.Context, sel ast.SelectionSet, v *model.MetricRow) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -118585,7 +118551,7 @@ func (ec *executionContext) marshalNMetricRow2ᚖgithubᚗcomᚋhighlightᚑrun�
 	return ec._MetricRow(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNMetricRowExemplar2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricRowExemplarᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.MetricRowExemplar) graphql.Marshaler {
+func (ec *executionContext) marshalNMetricRowExemplar2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricRowExemplarᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.MetricRowExemplar) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -118609,7 +118575,7 @@ func (ec *executionContext) marshalNMetricRowExemplar2ᚕᚖgithubᚗcomᚋhighl
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNMetricRowExemplar2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricRowExemplar(ctx, sel, v[i])
+			ret[i] = ec.marshalNMetricRowExemplar2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricRowExemplar(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -118629,7 +118595,7 @@ func (ec *executionContext) marshalNMetricRowExemplar2ᚕᚖgithubᚗcomᚋhighl
 	return ret
 }
 
-func (ec *executionContext) marshalNMetricRowExemplar2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricRowExemplar(ctx context.Context, sel ast.SelectionSet, v *model.MetricRowExemplar) graphql.Marshaler {
+func (ec *executionContext) marshalNMetricRowExemplar2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricRowExemplar(ctx context.Context, sel ast.SelectionSet, v *model.MetricRowExemplar) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -118639,17 +118605,17 @@ func (ec *executionContext) marshalNMetricRowExemplar2ᚖgithubᚗcomᚋhighligh
 	return ec._MetricRowExemplar(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNMetricRowType2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricRowType(ctx context.Context, v any) (model.MetricRowType, error) {
+func (ec *executionContext) unmarshalNMetricRowType2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricRowType(ctx context.Context, v any) (model.MetricRowType, error) {
 	var res model.MetricRowType
 	err := res.UnmarshalGQL(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNMetricRowType2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricRowType(ctx context.Context, sel ast.SelectionSet, v model.MetricRowType) graphql.Marshaler {
+func (ec *executionContext) marshalNMetricRowType2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricRowType(ctx context.Context, sel ast.SelectionSet, v model.MetricRowType) graphql.Marshaler {
 	return v
 }
 
-func (ec *executionContext) marshalNMetricTagFilter2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricTagFilter(ctx context.Context, sel ast.SelectionSet, v *model.MetricTagFilter) graphql.Marshaler {
+func (ec *executionContext) marshalNMetricTagFilter2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricTagFilter(ctx context.Context, sel ast.SelectionSet, v *model.MetricTagFilter) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -118659,26 +118625,26 @@ func (ec *executionContext) marshalNMetricTagFilter2ᚖgithubᚗcomᚋhighlight�
 	return ec._MetricTagFilter(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNMetricTagFilterInput2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricTagFilterInput(ctx context.Context, v any) (*model.MetricTagFilterInput, error) {
+func (ec *executionContext) unmarshalNMetricTagFilterInput2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricTagFilterInput(ctx context.Context, v any) (*model.MetricTagFilterInput, error) {
 	res, err := ec.unmarshalInputMetricTagFilterInput(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNMetricTagFilterOp2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricTagFilterOp(ctx context.Context, v any) (model.MetricTagFilterOp, error) {
+func (ec *executionContext) unmarshalNMetricTagFilterOp2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricTagFilterOp(ctx context.Context, v any) (model.MetricTagFilterOp, error) {
 	var res model.MetricTagFilterOp
 	err := res.UnmarshalGQL(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNMetricTagFilterOp2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricTagFilterOp(ctx context.Context, sel ast.SelectionSet, v model.MetricTagFilterOp) graphql.Marshaler {
+func (ec *executionContext) marshalNMetricTagFilterOp2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricTagFilterOp(ctx context.Context, sel ast.SelectionSet, v model.MetricTagFilterOp) graphql.Marshaler {
 	return v
 }
 
-func (ec *executionContext) marshalNMetricsBuckets2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricsBuckets(ctx context.Context, sel ast.SelectionSet, v model.MetricsBuckets) graphql.Marshaler {
+func (ec *executionContext) marshalNMetricsBuckets2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricsBuckets(ctx context.Context, sel ast.SelectionSet, v model.MetricsBuckets) graphql.Marshaler {
 	return ec._MetricsBuckets(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNMetricsBuckets2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricsBuckets(ctx context.Context, sel ast.SelectionSet, v *model.MetricsBuckets) graphql.Marshaler {
+func (ec *executionContext) marshalNMetricsBuckets2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricsBuckets(ctx context.Context, sel ast.SelectionSet, v *model.MetricsBuckets) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -118688,7 +118654,7 @@ func (ec *executionContext) marshalNMetricsBuckets2ᚖgithubᚗcomᚋhighlight�
 	return ec._MetricsBuckets(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNMicrosoftTeamsChannel2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐMicrosoftTeamsChannelᚄ(ctx context.Context, sel ast.SelectionSet, v []*model1.MicrosoftTeamsChannel) graphql.Marshaler {
+func (ec *executionContext) marshalNMicrosoftTeamsChannel2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐMicrosoftTeamsChannelᚄ(ctx context.Context, sel ast.SelectionSet, v []*model1.MicrosoftTeamsChannel) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -118712,7 +118678,7 @@ func (ec *executionContext) marshalNMicrosoftTeamsChannel2ᚕᚖgithubᚗcomᚋh
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNMicrosoftTeamsChannel2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐMicrosoftTeamsChannel(ctx, sel, v[i])
+			ret[i] = ec.marshalNMicrosoftTeamsChannel2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐMicrosoftTeamsChannel(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -118732,7 +118698,7 @@ func (ec *executionContext) marshalNMicrosoftTeamsChannel2ᚕᚖgithubᚗcomᚋh
 	return ret
 }
 
-func (ec *executionContext) marshalNMicrosoftTeamsChannel2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐMicrosoftTeamsChannel(ctx context.Context, sel ast.SelectionSet, v *model1.MicrosoftTeamsChannel) graphql.Marshaler {
+func (ec *executionContext) marshalNMicrosoftTeamsChannel2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐMicrosoftTeamsChannel(ctx context.Context, sel ast.SelectionSet, v *model1.MicrosoftTeamsChannel) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -118742,14 +118708,14 @@ func (ec *executionContext) marshalNMicrosoftTeamsChannel2ᚖgithubᚗcomᚋhigh
 	return ec._MicrosoftTeamsChannel(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNMicrosoftTeamsChannelInput2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMicrosoftTeamsChannelInputᚄ(ctx context.Context, v any) ([]*model.MicrosoftTeamsChannelInput, error) {
+func (ec *executionContext) unmarshalNMicrosoftTeamsChannelInput2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMicrosoftTeamsChannelInputᚄ(ctx context.Context, v any) ([]*model.MicrosoftTeamsChannelInput, error) {
 	var vSlice []any
 	vSlice = graphql.CoerceList(v)
 	var err error
 	res := make([]*model.MicrosoftTeamsChannelInput, len(vSlice))
 	for i := range vSlice {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalNMicrosoftTeamsChannelInput2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMicrosoftTeamsChannelInput(ctx, vSlice[i])
+		res[i], err = ec.unmarshalNMicrosoftTeamsChannelInput2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMicrosoftTeamsChannelInput(ctx, vSlice[i])
 		if err != nil {
 			return nil, err
 		}
@@ -118757,27 +118723,27 @@ func (ec *executionContext) unmarshalNMicrosoftTeamsChannelInput2ᚕᚖgithubᚗ
 	return res, nil
 }
 
-func (ec *executionContext) unmarshalNMicrosoftTeamsChannelInput2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMicrosoftTeamsChannelInput(ctx context.Context, v any) (*model.MicrosoftTeamsChannelInput, error) {
+func (ec *executionContext) unmarshalNMicrosoftTeamsChannelInput2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMicrosoftTeamsChannelInput(ctx context.Context, v any) (*model.MicrosoftTeamsChannelInput, error) {
 	res, err := ec.unmarshalInputMicrosoftTeamsChannelInput(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNNetworkHistogramParamsInput2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐNetworkHistogramParamsInput(ctx context.Context, v any) (model.NetworkHistogramParamsInput, error) {
+func (ec *executionContext) unmarshalNNetworkHistogramParamsInput2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐNetworkHistogramParamsInput(ctx context.Context, v any) (model.NetworkHistogramParamsInput, error) {
 	res, err := ec.unmarshalInputNetworkHistogramParamsInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNOpenSearchCalendarInterval2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐOpenSearchCalendarInterval(ctx context.Context, v any) (model.OpenSearchCalendarInterval, error) {
+func (ec *executionContext) unmarshalNOpenSearchCalendarInterval2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐOpenSearchCalendarInterval(ctx context.Context, v any) (model.OpenSearchCalendarInterval, error) {
 	var res model.OpenSearchCalendarInterval
 	err := res.UnmarshalGQL(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNOpenSearchCalendarInterval2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐOpenSearchCalendarInterval(ctx context.Context, sel ast.SelectionSet, v model.OpenSearchCalendarInterval) graphql.Marshaler {
+func (ec *executionContext) marshalNOpenSearchCalendarInterval2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐOpenSearchCalendarInterval(ctx context.Context, sel ast.SelectionSet, v model.OpenSearchCalendarInterval) graphql.Marshaler {
 	return v
 }
 
-func (ec *executionContext) marshalNPageInfo2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐPageInfo(ctx context.Context, sel ast.SelectionSet, v *model.PageInfo) graphql.Marshaler {
+func (ec *executionContext) marshalNPageInfo2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐPageInfo(ctx context.Context, sel ast.SelectionSet, v *model.PageInfo) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -118787,7 +118753,7 @@ func (ec *executionContext) marshalNPageInfo2ᚖgithubᚗcomᚋhighlightᚑrun�
 	return ec._PageInfo(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNPlan2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐPlan(ctx context.Context, sel ast.SelectionSet, v *model.Plan) graphql.Marshaler {
+func (ec *executionContext) marshalNPlan2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐPlan(ctx context.Context, sel ast.SelectionSet, v *model.Plan) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -118797,27 +118763,27 @@ func (ec *executionContext) marshalNPlan2ᚖgithubᚗcomᚋhighlightᚑrunᚋhig
 	return ec._Plan(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNPlanType2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐPlanType(ctx context.Context, v any) (model.PlanType, error) {
+func (ec *executionContext) unmarshalNPlanType2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐPlanType(ctx context.Context, v any) (model.PlanType, error) {
 	var res model.PlanType
 	err := res.UnmarshalGQL(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNPlanType2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐPlanType(ctx context.Context, sel ast.SelectionSet, v model.PlanType) graphql.Marshaler {
+func (ec *executionContext) marshalNPlanType2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐPlanType(ctx context.Context, sel ast.SelectionSet, v model.PlanType) graphql.Marshaler {
 	return v
 }
 
-func (ec *executionContext) unmarshalNProductType2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐProductType(ctx context.Context, v any) (model.ProductType, error) {
+func (ec *executionContext) unmarshalNProductType2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐProductType(ctx context.Context, v any) (model.ProductType, error) {
 	var res model.ProductType
 	err := res.UnmarshalGQL(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNProductType2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐProductType(ctx context.Context, sel ast.SelectionSet, v model.ProductType) graphql.Marshaler {
+func (ec *executionContext) marshalNProductType2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐProductType(ctx context.Context, sel ast.SelectionSet, v model.ProductType) graphql.Marshaler {
 	return v
 }
 
-func (ec *executionContext) marshalNProject2ᚕgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐProject(ctx context.Context, sel ast.SelectionSet, v []model1.Project) graphql.Marshaler {
+func (ec *executionContext) marshalNProject2ᚕgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐProject(ctx context.Context, sel ast.SelectionSet, v []model1.Project) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -118841,7 +118807,7 @@ func (ec *executionContext) marshalNProject2ᚕgithubᚗcomᚋhighlightᚑrunᚋ
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOProject2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐProject(ctx, sel, v[i])
+			ret[i] = ec.marshalOProject2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐProject(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -118855,7 +118821,7 @@ func (ec *executionContext) marshalNProject2ᚕgithubᚗcomᚋhighlightᚑrunᚋ
 	return ret
 }
 
-func (ec *executionContext) marshalNProject2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐProject(ctx context.Context, sel ast.SelectionSet, v []*model1.Project) graphql.Marshaler {
+func (ec *executionContext) marshalNProject2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐProject(ctx context.Context, sel ast.SelectionSet, v []*model1.Project) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -118879,7 +118845,7 @@ func (ec *executionContext) marshalNProject2ᚕᚖgithubᚗcomᚋhighlightᚑrun
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOProject2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐProject(ctx, sel, v[i])
+			ret[i] = ec.marshalOProject2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐProject(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -118893,12 +118859,12 @@ func (ec *executionContext) marshalNProject2ᚕᚖgithubᚗcomᚋhighlightᚑrun
 	return ret
 }
 
-func (ec *executionContext) unmarshalNQueryInput2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐQueryInput(ctx context.Context, v any) (model.QueryInput, error) {
+func (ec *executionContext) unmarshalNQueryInput2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐQueryInput(ctx context.Context, v any) (model.QueryInput, error) {
 	res, err := ec.unmarshalInputQueryInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNQueryKey2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐQueryKeyᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.QueryKey) graphql.Marshaler {
+func (ec *executionContext) marshalNQueryKey2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐQueryKeyᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.QueryKey) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -118922,7 +118888,7 @@ func (ec *executionContext) marshalNQueryKey2ᚕᚖgithubᚗcomᚋhighlightᚑru
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNQueryKey2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐQueryKey(ctx, sel, v[i])
+			ret[i] = ec.marshalNQueryKey2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐQueryKey(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -118942,7 +118908,7 @@ func (ec *executionContext) marshalNQueryKey2ᚕᚖgithubᚗcomᚋhighlightᚑru
 	return ret
 }
 
-func (ec *executionContext) marshalNQueryKey2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐQueryKey(ctx context.Context, sel ast.SelectionSet, v *model.QueryKey) graphql.Marshaler {
+func (ec *executionContext) marshalNQueryKey2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐQueryKey(ctx context.Context, sel ast.SelectionSet, v *model.QueryKey) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -118952,11 +118918,11 @@ func (ec *executionContext) marshalNQueryKey2ᚖgithubᚗcomᚋhighlightᚑrun�
 	return ec._QueryKey(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNQueryOutput2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐQueryOutput(ctx context.Context, sel ast.SelectionSet, v model.QueryOutput) graphql.Marshaler {
+func (ec *executionContext) marshalNQueryOutput2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐQueryOutput(ctx context.Context, sel ast.SelectionSet, v model.QueryOutput) graphql.Marshaler {
 	return ec._QueryOutput(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNQueryOutput2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐQueryOutput(ctx context.Context, sel ast.SelectionSet, v *model.QueryOutput) graphql.Marshaler {
+func (ec *executionContext) marshalNQueryOutput2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐQueryOutput(ctx context.Context, sel ast.SelectionSet, v *model.QueryOutput) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -118966,11 +118932,11 @@ func (ec *executionContext) marshalNQueryOutput2ᚖgithubᚗcomᚋhighlightᚑru
 	return ec._QueryOutput(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNRageClickEvent2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐRageClickEvent(ctx context.Context, sel ast.SelectionSet, v model1.RageClickEvent) graphql.Marshaler {
+func (ec *executionContext) marshalNRageClickEvent2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐRageClickEvent(ctx context.Context, sel ast.SelectionSet, v model1.RageClickEvent) graphql.Marshaler {
 	return ec._RageClickEvent(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNRageClickEvent2ᚕgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐRageClickEventᚄ(ctx context.Context, sel ast.SelectionSet, v []model1.RageClickEvent) graphql.Marshaler {
+func (ec *executionContext) marshalNRageClickEvent2ᚕgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐRageClickEventᚄ(ctx context.Context, sel ast.SelectionSet, v []model1.RageClickEvent) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -118994,7 +118960,7 @@ func (ec *executionContext) marshalNRageClickEvent2ᚕgithubᚗcomᚋhighlight�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNRageClickEvent2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐRageClickEvent(ctx, sel, v[i])
+			ret[i] = ec.marshalNRageClickEvent2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐRageClickEvent(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -119014,7 +118980,7 @@ func (ec *executionContext) marshalNRageClickEvent2ᚕgithubᚗcomᚋhighlight�
 	return ret
 }
 
-func (ec *executionContext) marshalNRageClickEvent2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐRageClickEventᚄ(ctx context.Context, sel ast.SelectionSet, v []*model1.RageClickEvent) graphql.Marshaler {
+func (ec *executionContext) marshalNRageClickEvent2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐRageClickEventᚄ(ctx context.Context, sel ast.SelectionSet, v []*model1.RageClickEvent) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -119038,7 +119004,7 @@ func (ec *executionContext) marshalNRageClickEvent2ᚕᚖgithubᚗcomᚋhighligh
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNRageClickEvent2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐRageClickEvent(ctx, sel, v[i])
+			ret[i] = ec.marshalNRageClickEvent2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐRageClickEvent(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -119058,7 +119024,7 @@ func (ec *executionContext) marshalNRageClickEvent2ᚕᚖgithubᚗcomᚋhighligh
 	return ret
 }
 
-func (ec *executionContext) marshalNRageClickEvent2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐRageClickEvent(ctx context.Context, sel ast.SelectionSet, v *model1.RageClickEvent) graphql.Marshaler {
+func (ec *executionContext) marshalNRageClickEvent2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐRageClickEvent(ctx context.Context, sel ast.SelectionSet, v *model1.RageClickEvent) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -119068,7 +119034,7 @@ func (ec *executionContext) marshalNRageClickEvent2ᚖgithubᚗcomᚋhighlight�
 	return ec._RageClickEvent(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNRageClickEventForProject2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐRageClickEventForProjectᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.RageClickEventForProject) graphql.Marshaler {
+func (ec *executionContext) marshalNRageClickEventForProject2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐRageClickEventForProjectᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.RageClickEventForProject) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -119092,7 +119058,7 @@ func (ec *executionContext) marshalNRageClickEventForProject2ᚕᚖgithubᚗcom�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNRageClickEventForProject2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐRageClickEventForProject(ctx, sel, v[i])
+			ret[i] = ec.marshalNRageClickEventForProject2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐRageClickEventForProject(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -119112,7 +119078,7 @@ func (ec *executionContext) marshalNRageClickEventForProject2ᚕᚖgithubᚗcom�
 	return ret
 }
 
-func (ec *executionContext) marshalNRageClickEventForProject2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐRageClickEventForProject(ctx context.Context, sel ast.SelectionSet, v *model.RageClickEventForProject) graphql.Marshaler {
+func (ec *executionContext) marshalNRageClickEventForProject2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐRageClickEventForProject(ctx context.Context, sel ast.SelectionSet, v *model.RageClickEventForProject) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -119122,7 +119088,7 @@ func (ec *executionContext) marshalNRageClickEventForProject2ᚖgithubᚗcomᚋh
 	return ec._RageClickEventForProject(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNReferrerTablePayload2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐReferrerTablePayload(ctx context.Context, sel ast.SelectionSet, v []*model.ReferrerTablePayload) graphql.Marshaler {
+func (ec *executionContext) marshalNReferrerTablePayload2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐReferrerTablePayload(ctx context.Context, sel ast.SelectionSet, v []*model.ReferrerTablePayload) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -119146,7 +119112,7 @@ func (ec *executionContext) marshalNReferrerTablePayload2ᚕᚖgithubᚗcomᚋhi
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOReferrerTablePayload2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐReferrerTablePayload(ctx, sel, v[i])
+			ret[i] = ec.marshalOReferrerTablePayload2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐReferrerTablePayload(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -119160,23 +119126,23 @@ func (ec *executionContext) marshalNReferrerTablePayload2ᚕᚖgithubᚗcomᚋhi
 	return ret
 }
 
-func (ec *executionContext) unmarshalNRetentionPeriod2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐRetentionPeriod(ctx context.Context, v any) (model.RetentionPeriod, error) {
+func (ec *executionContext) unmarshalNRetentionPeriod2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐRetentionPeriod(ctx context.Context, v any) (model.RetentionPeriod, error) {
 	var res model.RetentionPeriod
 	err := res.UnmarshalGQL(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNRetentionPeriod2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐRetentionPeriod(ctx context.Context, sel ast.SelectionSet, v model.RetentionPeriod) graphql.Marshaler {
+func (ec *executionContext) marshalNRetentionPeriod2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐRetentionPeriod(ctx context.Context, sel ast.SelectionSet, v model.RetentionPeriod) graphql.Marshaler {
 	return v
 }
 
-func (ec *executionContext) unmarshalNRetentionPeriod2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐRetentionPeriod(ctx context.Context, v any) (*model.RetentionPeriod, error) {
+func (ec *executionContext) unmarshalNRetentionPeriod2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐRetentionPeriod(ctx context.Context, v any) (*model.RetentionPeriod, error) {
 	var res = new(model.RetentionPeriod)
 	err := res.UnmarshalGQL(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNRetentionPeriod2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐRetentionPeriod(ctx context.Context, sel ast.SelectionSet, v *model.RetentionPeriod) graphql.Marshaler {
+func (ec *executionContext) marshalNRetentionPeriod2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐRetentionPeriod(ctx context.Context, sel ast.SelectionSet, v *model.RetentionPeriod) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -119186,7 +119152,7 @@ func (ec *executionContext) marshalNRetentionPeriod2ᚖgithubᚗcomᚋhighlight�
 	return v
 }
 
-func (ec *executionContext) marshalNS3File2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐS3Fileᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.S3File) graphql.Marshaler {
+func (ec *executionContext) marshalNS3File2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐS3Fileᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.S3File) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -119210,7 +119176,7 @@ func (ec *executionContext) marshalNS3File2ᚕᚖgithubᚗcomᚋhighlightᚑrun�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNS3File2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐS3File(ctx, sel, v[i])
+			ret[i] = ec.marshalNS3File2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐS3File(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -119230,7 +119196,7 @@ func (ec *executionContext) marshalNS3File2ᚕᚖgithubᚗcomᚋhighlightᚑrun�
 	return ret
 }
 
-func (ec *executionContext) marshalNS3File2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐS3File(ctx context.Context, sel ast.SelectionSet, v *model.S3File) graphql.Marshaler {
+func (ec *executionContext) marshalNS3File2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐS3File(ctx context.Context, sel ast.SelectionSet, v *model.S3File) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -119240,7 +119206,7 @@ func (ec *executionContext) marshalNS3File2ᚖgithubᚗcomᚋhighlightᚑrunᚋh
 	return ec._S3File(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNSampling2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSampling(ctx context.Context, sel ast.SelectionSet, v *model.Sampling) graphql.Marshaler {
+func (ec *executionContext) marshalNSampling2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSampling(ctx context.Context, sel ast.SelectionSet, v *model.Sampling) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -119250,11 +119216,11 @@ func (ec *executionContext) marshalNSampling2ᚖgithubᚗcomᚋhighlightᚑrun�
 	return ec._Sampling(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNSanitizedAdmin2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSanitizedAdmin(ctx context.Context, sel ast.SelectionSet, v model.SanitizedAdmin) graphql.Marshaler {
+func (ec *executionContext) marshalNSanitizedAdmin2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSanitizedAdmin(ctx context.Context, sel ast.SelectionSet, v model.SanitizedAdmin) graphql.Marshaler {
 	return ec._SanitizedAdmin(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNSanitizedAdmin2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSanitizedAdmin(ctx context.Context, sel ast.SelectionSet, v *model.SanitizedAdmin) graphql.Marshaler {
+func (ec *executionContext) marshalNSanitizedAdmin2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSanitizedAdmin(ctx context.Context, sel ast.SelectionSet, v *model.SanitizedAdmin) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -119264,14 +119230,14 @@ func (ec *executionContext) marshalNSanitizedAdmin2ᚖgithubᚗcomᚋhighlight�
 	return ec._SanitizedAdmin(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNSanitizedAdminInput2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSanitizedAdminInput(ctx context.Context, v any) ([]*model.SanitizedAdminInput, error) {
+func (ec *executionContext) unmarshalNSanitizedAdminInput2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSanitizedAdminInput(ctx context.Context, v any) ([]*model.SanitizedAdminInput, error) {
 	var vSlice []any
 	vSlice = graphql.CoerceList(v)
 	var err error
 	res := make([]*model.SanitizedAdminInput, len(vSlice))
 	for i := range vSlice {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalOSanitizedAdminInput2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSanitizedAdminInput(ctx, vSlice[i])
+		res[i], err = ec.unmarshalOSanitizedAdminInput2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSanitizedAdminInput(ctx, vSlice[i])
 		if err != nil {
 			return nil, err
 		}
@@ -119279,11 +119245,11 @@ func (ec *executionContext) unmarshalNSanitizedAdminInput2ᚕᚖgithubᚗcomᚋh
 	return res, nil
 }
 
-func (ec *executionContext) marshalNSanitizedSlackChannel2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSanitizedSlackChannel(ctx context.Context, sel ast.SelectionSet, v model.SanitizedSlackChannel) graphql.Marshaler {
+func (ec *executionContext) marshalNSanitizedSlackChannel2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSanitizedSlackChannel(ctx context.Context, sel ast.SelectionSet, v model.SanitizedSlackChannel) graphql.Marshaler {
 	return ec._SanitizedSlackChannel(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNSanitizedSlackChannel2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSanitizedSlackChannel(ctx context.Context, sel ast.SelectionSet, v []*model.SanitizedSlackChannel) graphql.Marshaler {
+func (ec *executionContext) marshalNSanitizedSlackChannel2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSanitizedSlackChannel(ctx context.Context, sel ast.SelectionSet, v []*model.SanitizedSlackChannel) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -119307,7 +119273,7 @@ func (ec *executionContext) marshalNSanitizedSlackChannel2ᚕᚖgithubᚗcomᚋh
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOSanitizedSlackChannel2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSanitizedSlackChannel(ctx, sel, v[i])
+			ret[i] = ec.marshalOSanitizedSlackChannel2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSanitizedSlackChannel(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -119321,7 +119287,7 @@ func (ec *executionContext) marshalNSanitizedSlackChannel2ᚕᚖgithubᚗcomᚋh
 	return ret
 }
 
-func (ec *executionContext) marshalNSanitizedSlackChannel2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSanitizedSlackChannelᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.SanitizedSlackChannel) graphql.Marshaler {
+func (ec *executionContext) marshalNSanitizedSlackChannel2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSanitizedSlackChannelᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.SanitizedSlackChannel) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -119345,7 +119311,7 @@ func (ec *executionContext) marshalNSanitizedSlackChannel2ᚕᚖgithubᚗcomᚋh
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNSanitizedSlackChannel2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSanitizedSlackChannel(ctx, sel, v[i])
+			ret[i] = ec.marshalNSanitizedSlackChannel2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSanitizedSlackChannel(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -119365,7 +119331,7 @@ func (ec *executionContext) marshalNSanitizedSlackChannel2ᚕᚖgithubᚗcomᚋh
 	return ret
 }
 
-func (ec *executionContext) marshalNSanitizedSlackChannel2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSanitizedSlackChannel(ctx context.Context, sel ast.SelectionSet, v *model.SanitizedSlackChannel) graphql.Marshaler {
+func (ec *executionContext) marshalNSanitizedSlackChannel2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSanitizedSlackChannel(ctx context.Context, sel ast.SelectionSet, v *model.SanitizedSlackChannel) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -119375,14 +119341,14 @@ func (ec *executionContext) marshalNSanitizedSlackChannel2ᚖgithubᚗcomᚋhigh
 	return ec._SanitizedSlackChannel(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNSanitizedSlackChannelInput2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSanitizedSlackChannelInput(ctx context.Context, v any) ([]*model.SanitizedSlackChannelInput, error) {
+func (ec *executionContext) unmarshalNSanitizedSlackChannelInput2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSanitizedSlackChannelInput(ctx context.Context, v any) ([]*model.SanitizedSlackChannelInput, error) {
 	var vSlice []any
 	vSlice = graphql.CoerceList(v)
 	var err error
 	res := make([]*model.SanitizedSlackChannelInput, len(vSlice))
 	for i := range vSlice {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalOSanitizedSlackChannelInput2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSanitizedSlackChannelInput(ctx, vSlice[i])
+		res[i], err = ec.unmarshalOSanitizedSlackChannelInput2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSanitizedSlackChannelInput(ctx, vSlice[i])
 		if err != nil {
 			return nil, err
 		}
@@ -119390,14 +119356,14 @@ func (ec *executionContext) unmarshalNSanitizedSlackChannelInput2ᚕᚖgithubᚗ
 	return res, nil
 }
 
-func (ec *executionContext) unmarshalNSanitizedSlackChannelInput2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSanitizedSlackChannelInputᚄ(ctx context.Context, v any) ([]*model.SanitizedSlackChannelInput, error) {
+func (ec *executionContext) unmarshalNSanitizedSlackChannelInput2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSanitizedSlackChannelInputᚄ(ctx context.Context, v any) ([]*model.SanitizedSlackChannelInput, error) {
 	var vSlice []any
 	vSlice = graphql.CoerceList(v)
 	var err error
 	res := make([]*model.SanitizedSlackChannelInput, len(vSlice))
 	for i := range vSlice {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalNSanitizedSlackChannelInput2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSanitizedSlackChannelInput(ctx, vSlice[i])
+		res[i], err = ec.unmarshalNSanitizedSlackChannelInput2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSanitizedSlackChannelInput(ctx, vSlice[i])
 		if err != nil {
 			return nil, err
 		}
@@ -119405,26 +119371,26 @@ func (ec *executionContext) unmarshalNSanitizedSlackChannelInput2ᚕᚖgithubᚗ
 	return res, nil
 }
 
-func (ec *executionContext) unmarshalNSanitizedSlackChannelInput2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSanitizedSlackChannelInput(ctx context.Context, v any) (*model.SanitizedSlackChannelInput, error) {
+func (ec *executionContext) unmarshalNSanitizedSlackChannelInput2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSanitizedSlackChannelInput(ctx context.Context, v any) (*model.SanitizedSlackChannelInput, error) {
 	res, err := ec.unmarshalInputSanitizedSlackChannelInput(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNSavedSegmentEntityType2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSavedSegmentEntityType(ctx context.Context, v any) (model.SavedSegmentEntityType, error) {
+func (ec *executionContext) unmarshalNSavedSegmentEntityType2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSavedSegmentEntityType(ctx context.Context, v any) (model.SavedSegmentEntityType, error) {
 	var res model.SavedSegmentEntityType
 	err := res.UnmarshalGQL(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNSavedSegmentEntityType2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSavedSegmentEntityType(ctx context.Context, sel ast.SelectionSet, v model.SavedSegmentEntityType) graphql.Marshaler {
+func (ec *executionContext) marshalNSavedSegmentEntityType2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSavedSegmentEntityType(ctx context.Context, sel ast.SelectionSet, v model.SavedSegmentEntityType) graphql.Marshaler {
 	return v
 }
 
-func (ec *executionContext) marshalNSearchParams2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐSearchParams(ctx context.Context, sel ast.SelectionSet, v model1.SearchParams) graphql.Marshaler {
+func (ec *executionContext) marshalNSearchParams2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐSearchParams(ctx context.Context, sel ast.SelectionSet, v model1.SearchParams) graphql.Marshaler {
 	return ec._SearchParams(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNSearchParams2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐSearchParams(ctx context.Context, sel ast.SelectionSet, v *model1.SearchParams) graphql.Marshaler {
+func (ec *executionContext) marshalNSearchParams2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐSearchParams(ctx context.Context, sel ast.SelectionSet, v *model1.SearchParams) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -119434,7 +119400,7 @@ func (ec *executionContext) marshalNSearchParams2ᚖgithubᚗcomᚋhighlightᚑr
 	return ec._SearchParams(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNServiceEdge2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐServiceEdge(ctx context.Context, sel ast.SelectionSet, v []*model.ServiceEdge) graphql.Marshaler {
+func (ec *executionContext) marshalNServiceEdge2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐServiceEdge(ctx context.Context, sel ast.SelectionSet, v []*model.ServiceEdge) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -119458,7 +119424,7 @@ func (ec *executionContext) marshalNServiceEdge2ᚕᚖgithubᚗcomᚋhighlight�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOServiceEdge2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐServiceEdge(ctx, sel, v[i])
+			ret[i] = ec.marshalOServiceEdge2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐServiceEdge(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -119472,7 +119438,7 @@ func (ec *executionContext) marshalNServiceEdge2ᚕᚖgithubᚗcomᚋhighlight�
 	return ret
 }
 
-func (ec *executionContext) marshalNServiceNode2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐServiceNode(ctx context.Context, sel ast.SelectionSet, v *model.ServiceNode) graphql.Marshaler {
+func (ec *executionContext) marshalNServiceNode2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐServiceNode(ctx context.Context, sel ast.SelectionSet, v *model.ServiceNode) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -119482,21 +119448,21 @@ func (ec *executionContext) marshalNServiceNode2ᚖgithubᚗcomᚋhighlightᚑru
 	return ec._ServiceNode(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNServiceStatus2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐServiceStatus(ctx context.Context, v any) (model.ServiceStatus, error) {
+func (ec *executionContext) unmarshalNServiceStatus2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐServiceStatus(ctx context.Context, v any) (model.ServiceStatus, error) {
 	var res model.ServiceStatus
 	err := res.UnmarshalGQL(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNServiceStatus2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐServiceStatus(ctx context.Context, sel ast.SelectionSet, v model.ServiceStatus) graphql.Marshaler {
+func (ec *executionContext) marshalNServiceStatus2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐServiceStatus(ctx context.Context, sel ast.SelectionSet, v model.ServiceStatus) graphql.Marshaler {
 	return v
 }
 
-func (ec *executionContext) marshalNSession2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐSession(ctx context.Context, sel ast.SelectionSet, v model1.Session) graphql.Marshaler {
+func (ec *executionContext) marshalNSession2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐSession(ctx context.Context, sel ast.SelectionSet, v model1.Session) graphql.Marshaler {
 	return ec._Session(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNSession2ᚕgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐSessionᚄ(ctx context.Context, sel ast.SelectionSet, v []model1.Session) graphql.Marshaler {
+func (ec *executionContext) marshalNSession2ᚕgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐSessionᚄ(ctx context.Context, sel ast.SelectionSet, v []model1.Session) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -119520,7 +119486,7 @@ func (ec *executionContext) marshalNSession2ᚕgithubᚗcomᚋhighlightᚑrunᚋ
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNSession2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐSession(ctx, sel, v[i])
+			ret[i] = ec.marshalNSession2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐSession(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -119540,7 +119506,7 @@ func (ec *executionContext) marshalNSession2ᚕgithubᚗcomᚋhighlightᚑrunᚋ
 	return ret
 }
 
-func (ec *executionContext) marshalNSessionAlert2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐSessionAlert(ctx context.Context, sel ast.SelectionSet, v []*model1.SessionAlert) graphql.Marshaler {
+func (ec *executionContext) marshalNSessionAlert2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐSessionAlert(ctx context.Context, sel ast.SelectionSet, v []*model1.SessionAlert) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -119564,7 +119530,7 @@ func (ec *executionContext) marshalNSessionAlert2ᚕᚖgithubᚗcomᚋhighlight�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOSessionAlert2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐSessionAlert(ctx, sel, v[i])
+			ret[i] = ec.marshalOSessionAlert2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐSessionAlert(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -119578,22 +119544,22 @@ func (ec *executionContext) marshalNSessionAlert2ᚕᚖgithubᚗcomᚋhighlight�
 	return ret
 }
 
-func (ec *executionContext) unmarshalNSessionAlertInput2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSessionAlertInput(ctx context.Context, v any) (model.SessionAlertInput, error) {
+func (ec *executionContext) unmarshalNSessionAlertInput2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSessionAlertInput(ctx context.Context, v any) (model.SessionAlertInput, error) {
 	res, err := ec.unmarshalInputSessionAlertInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNSessionAlertType2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSessionAlertType(ctx context.Context, v any) (model.SessionAlertType, error) {
+func (ec *executionContext) unmarshalNSessionAlertType2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSessionAlertType(ctx context.Context, v any) (model.SessionAlertType, error) {
 	var res model.SessionAlertType
 	err := res.UnmarshalGQL(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNSessionAlertType2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSessionAlertType(ctx context.Context, sel ast.SelectionSet, v model.SessionAlertType) graphql.Marshaler {
+func (ec *executionContext) marshalNSessionAlertType2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSessionAlertType(ctx context.Context, sel ast.SelectionSet, v model.SessionAlertType) graphql.Marshaler {
 	return v
 }
 
-func (ec *executionContext) marshalNSessionComment2ᚕgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐSessionComment(ctx context.Context, sel ast.SelectionSet, v []model1.SessionComment) graphql.Marshaler {
+func (ec *executionContext) marshalNSessionComment2ᚕgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐSessionComment(ctx context.Context, sel ast.SelectionSet, v []model1.SessionComment) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -119617,7 +119583,7 @@ func (ec *executionContext) marshalNSessionComment2ᚕgithubᚗcomᚋhighlight�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOSessionComment2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐSessionComment(ctx, sel, v[i])
+			ret[i] = ec.marshalOSessionComment2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐSessionComment(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -119631,7 +119597,7 @@ func (ec *executionContext) marshalNSessionComment2ᚕgithubᚗcomᚋhighlight�
 	return ret
 }
 
-func (ec *executionContext) marshalNSessionComment2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐSessionComment(ctx context.Context, sel ast.SelectionSet, v []*model1.SessionComment) graphql.Marshaler {
+func (ec *executionContext) marshalNSessionComment2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐSessionComment(ctx context.Context, sel ast.SelectionSet, v []*model1.SessionComment) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -119655,7 +119621,7 @@ func (ec *executionContext) marshalNSessionComment2ᚕᚖgithubᚗcomᚋhighligh
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOSessionComment2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐSessionComment(ctx, sel, v[i])
+			ret[i] = ec.marshalOSessionComment2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐSessionComment(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -119669,7 +119635,7 @@ func (ec *executionContext) marshalNSessionComment2ᚕᚖgithubᚗcomᚋhighligh
 	return ret
 }
 
-func (ec *executionContext) marshalNSessionComment2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐSessionComment(ctx context.Context, sel ast.SelectionSet, v *model1.SessionComment) graphql.Marshaler {
+func (ec *executionContext) marshalNSessionComment2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐSessionComment(ctx context.Context, sel ast.SelectionSet, v *model1.SessionComment) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -119679,7 +119645,7 @@ func (ec *executionContext) marshalNSessionComment2ᚖgithubᚗcomᚋhighlight�
 	return ec._SessionComment(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNSessionCommentTag2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐSessionCommentTagᚄ(ctx context.Context, sel ast.SelectionSet, v []*model1.SessionCommentTag) graphql.Marshaler {
+func (ec *executionContext) marshalNSessionCommentTag2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐSessionCommentTagᚄ(ctx context.Context, sel ast.SelectionSet, v []*model1.SessionCommentTag) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -119703,7 +119669,7 @@ func (ec *executionContext) marshalNSessionCommentTag2ᚕᚖgithubᚗcomᚋhighl
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNSessionCommentTag2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐSessionCommentTag(ctx, sel, v[i])
+			ret[i] = ec.marshalNSessionCommentTag2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐSessionCommentTag(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -119723,7 +119689,7 @@ func (ec *executionContext) marshalNSessionCommentTag2ᚕᚖgithubᚗcomᚋhighl
 	return ret
 }
 
-func (ec *executionContext) marshalNSessionCommentTag2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐSessionCommentTag(ctx context.Context, sel ast.SelectionSet, v *model1.SessionCommentTag) graphql.Marshaler {
+func (ec *executionContext) marshalNSessionCommentTag2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐSessionCommentTag(ctx context.Context, sel ast.SelectionSet, v *model1.SessionCommentTag) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -119733,14 +119699,14 @@ func (ec *executionContext) marshalNSessionCommentTag2ᚖgithubᚗcomᚋhighligh
 	return ec._SessionCommentTag(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNSessionCommentTagInput2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSessionCommentTagInput(ctx context.Context, v any) ([]*model.SessionCommentTagInput, error) {
+func (ec *executionContext) unmarshalNSessionCommentTagInput2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSessionCommentTagInput(ctx context.Context, v any) ([]*model.SessionCommentTagInput, error) {
 	var vSlice []any
 	vSlice = graphql.CoerceList(v)
 	var err error
 	res := make([]*model.SessionCommentTagInput, len(vSlice))
 	for i := range vSlice {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalOSessionCommentTagInput2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSessionCommentTagInput(ctx, vSlice[i])
+		res[i], err = ec.unmarshalOSessionCommentTagInput2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSessionCommentTagInput(ctx, vSlice[i])
 		if err != nil {
 			return nil, err
 		}
@@ -119748,17 +119714,17 @@ func (ec *executionContext) unmarshalNSessionCommentTagInput2ᚕᚖgithubᚗcom�
 	return res, nil
 }
 
-func (ec *executionContext) unmarshalNSessionCommentType2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSessionCommentType(ctx context.Context, v any) (model.SessionCommentType, error) {
+func (ec *executionContext) unmarshalNSessionCommentType2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSessionCommentType(ctx context.Context, v any) (model.SessionCommentType, error) {
 	var res model.SessionCommentType
 	err := res.UnmarshalGQL(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNSessionCommentType2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSessionCommentType(ctx context.Context, sel ast.SelectionSet, v model.SessionCommentType) graphql.Marshaler {
+func (ec *executionContext) marshalNSessionCommentType2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSessionCommentType(ctx context.Context, sel ast.SelectionSet, v model.SessionCommentType) graphql.Marshaler {
 	return v
 }
 
-func (ec *executionContext) marshalNSessionExportWithSession2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSessionExportWithSessionᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.SessionExportWithSession) graphql.Marshaler {
+func (ec *executionContext) marshalNSessionExportWithSession2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSessionExportWithSessionᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.SessionExportWithSession) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -119782,7 +119748,7 @@ func (ec *executionContext) marshalNSessionExportWithSession2ᚕᚖgithubᚗcom�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNSessionExportWithSession2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSessionExportWithSession(ctx, sel, v[i])
+			ret[i] = ec.marshalNSessionExportWithSession2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSessionExportWithSession(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -119802,7 +119768,7 @@ func (ec *executionContext) marshalNSessionExportWithSession2ᚕᚖgithubᚗcom�
 	return ret
 }
 
-func (ec *executionContext) marshalNSessionExportWithSession2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSessionExportWithSession(ctx context.Context, sel ast.SelectionSet, v *model.SessionExportWithSession) graphql.Marshaler {
+func (ec *executionContext) marshalNSessionExportWithSession2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSessionExportWithSession(ctx context.Context, sel ast.SelectionSet, v *model.SessionExportWithSession) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -119812,7 +119778,7 @@ func (ec *executionContext) marshalNSessionExportWithSession2ᚖgithubᚗcomᚋh
 	return ec._SessionExportWithSession(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNSessionInterval2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐSessionIntervalᚄ(ctx context.Context, sel ast.SelectionSet, v []*model1.SessionInterval) graphql.Marshaler {
+func (ec *executionContext) marshalNSessionInterval2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐSessionIntervalᚄ(ctx context.Context, sel ast.SelectionSet, v []*model1.SessionInterval) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -119836,7 +119802,7 @@ func (ec *executionContext) marshalNSessionInterval2ᚕᚖgithubᚗcomᚋhighlig
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNSessionInterval2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐSessionInterval(ctx, sel, v[i])
+			ret[i] = ec.marshalNSessionInterval2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐSessionInterval(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -119856,7 +119822,7 @@ func (ec *executionContext) marshalNSessionInterval2ᚕᚖgithubᚗcomᚋhighlig
 	return ret
 }
 
-func (ec *executionContext) marshalNSessionInterval2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐSessionInterval(ctx context.Context, sel ast.SelectionSet, v *model1.SessionInterval) graphql.Marshaler {
+func (ec *executionContext) marshalNSessionInterval2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐSessionInterval(ctx context.Context, sel ast.SelectionSet, v *model1.SessionInterval) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -119866,11 +119832,11 @@ func (ec *executionContext) marshalNSessionInterval2ᚖgithubᚗcomᚋhighlight�
 	return ec._SessionInterval(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNSessionResults2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐSessionResults(ctx context.Context, sel ast.SelectionSet, v model1.SessionResults) graphql.Marshaler {
+func (ec *executionContext) marshalNSessionResults2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐSessionResults(ctx context.Context, sel ast.SelectionSet, v model1.SessionResults) graphql.Marshaler {
 	return ec._SessionResults(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNSessionResults2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐSessionResults(ctx context.Context, sel ast.SelectionSet, v *model1.SessionResults) graphql.Marshaler {
+func (ec *executionContext) marshalNSessionResults2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐSessionResults(ctx context.Context, sel ast.SelectionSet, v *model1.SessionResults) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -119880,11 +119846,11 @@ func (ec *executionContext) marshalNSessionResults2ᚖgithubᚗcomᚋhighlight�
 	return ec._SessionResults(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNSessionsHistogram2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐSessionsHistogram(ctx context.Context, sel ast.SelectionSet, v model1.SessionsHistogram) graphql.Marshaler {
+func (ec *executionContext) marshalNSessionsHistogram2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐSessionsHistogram(ctx context.Context, sel ast.SelectionSet, v model1.SessionsHistogram) graphql.Marshaler {
 	return ec._SessionsHistogram(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNSessionsHistogram2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐSessionsHistogram(ctx context.Context, sel ast.SelectionSet, v *model1.SessionsHistogram) graphql.Marshaler {
+func (ec *executionContext) marshalNSessionsHistogram2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐSessionsHistogram(ctx context.Context, sel ast.SelectionSet, v *model1.SessionsHistogram) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -119894,7 +119860,7 @@ func (ec *executionContext) marshalNSessionsHistogram2ᚖgithubᚗcomᚋhighligh
 	return ec._SessionsHistogram(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNSessionsReportRow2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSessionsReportRowᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.SessionsReportRow) graphql.Marshaler {
+func (ec *executionContext) marshalNSessionsReportRow2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSessionsReportRowᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.SessionsReportRow) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -119918,7 +119884,7 @@ func (ec *executionContext) marshalNSessionsReportRow2ᚕᚖgithubᚗcomᚋhighl
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNSessionsReportRow2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSessionsReportRow(ctx, sel, v[i])
+			ret[i] = ec.marshalNSessionsReportRow2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSessionsReportRow(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -119938,7 +119904,7 @@ func (ec *executionContext) marshalNSessionsReportRow2ᚕᚖgithubᚗcomᚋhighl
 	return ret
 }
 
-func (ec *executionContext) marshalNSessionsReportRow2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSessionsReportRow(ctx context.Context, sel ast.SelectionSet, v *model.SessionsReportRow) graphql.Marshaler {
+func (ec *executionContext) marshalNSessionsReportRow2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSessionsReportRow(ctx context.Context, sel ast.SelectionSet, v *model.SessionsReportRow) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -119948,11 +119914,11 @@ func (ec *executionContext) marshalNSessionsReportRow2ᚖgithubᚗcomᚋhighligh
 	return ec._SessionsReportRow(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNSlackSyncResponse2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSlackSyncResponse(ctx context.Context, sel ast.SelectionSet, v model.SlackSyncResponse) graphql.Marshaler {
+func (ec *executionContext) marshalNSlackSyncResponse2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSlackSyncResponse(ctx context.Context, sel ast.SelectionSet, v model.SlackSyncResponse) graphql.Marshaler {
 	return ec._SlackSyncResponse(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNSlackSyncResponse2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSlackSyncResponse(ctx context.Context, sel ast.SelectionSet, v *model.SlackSyncResponse) graphql.Marshaler {
+func (ec *executionContext) marshalNSlackSyncResponse2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSlackSyncResponse(ctx context.Context, sel ast.SelectionSet, v *model.SlackSyncResponse) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -119962,23 +119928,23 @@ func (ec *executionContext) marshalNSlackSyncResponse2ᚖgithubᚗcomᚋhighligh
 	return ec._SlackSyncResponse(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNSocialType2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSocialType(ctx context.Context, v any) (model.SocialType, error) {
+func (ec *executionContext) unmarshalNSocialType2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSocialType(ctx context.Context, v any) (model.SocialType, error) {
 	var res model.SocialType
 	err := res.UnmarshalGQL(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNSocialType2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSocialType(ctx context.Context, sel ast.SelectionSet, v model.SocialType) graphql.Marshaler {
+func (ec *executionContext) marshalNSocialType2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSocialType(ctx context.Context, sel ast.SelectionSet, v model.SocialType) graphql.Marshaler {
 	return v
 }
 
-func (ec *executionContext) unmarshalNSortDirection2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSortDirection(ctx context.Context, v any) (model.SortDirection, error) {
+func (ec *executionContext) unmarshalNSortDirection2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSortDirection(ctx context.Context, v any) (model.SortDirection, error) {
 	var res model.SortDirection
 	err := res.UnmarshalGQL(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNSortDirection2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSortDirection(ctx context.Context, sel ast.SelectionSet, v model.SortDirection) graphql.Marshaler {
+func (ec *executionContext) marshalNSortDirection2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSortDirection(ctx context.Context, sel ast.SelectionSet, v model.SortDirection) graphql.Marshaler {
 	return v
 }
 
@@ -120102,31 +120068,31 @@ func (ec *executionContext) marshalNString2ᚖstring(ctx context.Context, sel as
 	return res
 }
 
-func (ec *executionContext) unmarshalNSubscriptionInterval2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSubscriptionInterval(ctx context.Context, v any) (model.SubscriptionInterval, error) {
+func (ec *executionContext) unmarshalNSubscriptionInterval2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSubscriptionInterval(ctx context.Context, v any) (model.SubscriptionInterval, error) {
 	var res model.SubscriptionInterval
 	err := res.UnmarshalGQL(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNSubscriptionInterval2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSubscriptionInterval(ctx context.Context, sel ast.SelectionSet, v model.SubscriptionInterval) graphql.Marshaler {
+func (ec *executionContext) marshalNSubscriptionInterval2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSubscriptionInterval(ctx context.Context, sel ast.SelectionSet, v model.SubscriptionInterval) graphql.Marshaler {
 	return v
 }
 
-func (ec *executionContext) unmarshalNSuggestionType2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSuggestionType(ctx context.Context, v any) (model.SuggestionType, error) {
+func (ec *executionContext) unmarshalNSuggestionType2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSuggestionType(ctx context.Context, v any) (model.SuggestionType, error) {
 	var res model.SuggestionType
 	err := res.UnmarshalGQL(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNSuggestionType2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSuggestionType(ctx context.Context, sel ast.SelectionSet, v model.SuggestionType) graphql.Marshaler {
+func (ec *executionContext) marshalNSuggestionType2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSuggestionType(ctx context.Context, sel ast.SelectionSet, v model.SuggestionType) graphql.Marshaler {
 	return v
 }
 
-func (ec *executionContext) marshalNSystemConfiguration2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐSystemConfiguration(ctx context.Context, sel ast.SelectionSet, v model1.SystemConfiguration) graphql.Marshaler {
+func (ec *executionContext) marshalNSystemConfiguration2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐSystemConfiguration(ctx context.Context, sel ast.SelectionSet, v model1.SystemConfiguration) graphql.Marshaler {
 	return ec._SystemConfiguration(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNSystemConfiguration2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐSystemConfiguration(ctx context.Context, sel ast.SelectionSet, v *model1.SystemConfiguration) graphql.Marshaler {
+func (ec *executionContext) marshalNSystemConfiguration2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐSystemConfiguration(ctx context.Context, sel ast.SelectionSet, v *model1.SystemConfiguration) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -120136,17 +120102,17 @@ func (ec *executionContext) marshalNSystemConfiguration2ᚖgithubᚗcomᚋhighli
 	return ec._SystemConfiguration(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNThresholdCondition2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐThresholdCondition(ctx context.Context, v any) (model.ThresholdCondition, error) {
+func (ec *executionContext) unmarshalNThresholdCondition2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐThresholdCondition(ctx context.Context, v any) (model.ThresholdCondition, error) {
 	var res model.ThresholdCondition
 	err := res.UnmarshalGQL(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNThresholdCondition2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐThresholdCondition(ctx context.Context, sel ast.SelectionSet, v model.ThresholdCondition) graphql.Marshaler {
+func (ec *executionContext) marshalNThresholdCondition2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐThresholdCondition(ctx context.Context, sel ast.SelectionSet, v model.ThresholdCondition) graphql.Marshaler {
 	return v
 }
 
-func (ec *executionContext) marshalNTimelineIndicatorEvent2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐTimelineIndicatorEventᚄ(ctx context.Context, sel ast.SelectionSet, v []*model1.TimelineIndicatorEvent) graphql.Marshaler {
+func (ec *executionContext) marshalNTimelineIndicatorEvent2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐTimelineIndicatorEventᚄ(ctx context.Context, sel ast.SelectionSet, v []*model1.TimelineIndicatorEvent) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -120170,7 +120136,7 @@ func (ec *executionContext) marshalNTimelineIndicatorEvent2ᚕᚖgithubᚗcomᚋ
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNTimelineIndicatorEvent2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐTimelineIndicatorEvent(ctx, sel, v[i])
+			ret[i] = ec.marshalNTimelineIndicatorEvent2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐTimelineIndicatorEvent(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -120190,7 +120156,7 @@ func (ec *executionContext) marshalNTimelineIndicatorEvent2ᚕᚖgithubᚗcomᚋ
 	return ret
 }
 
-func (ec *executionContext) marshalNTimelineIndicatorEvent2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐTimelineIndicatorEvent(ctx context.Context, sel ast.SelectionSet, v *model1.TimelineIndicatorEvent) graphql.Marshaler {
+func (ec *executionContext) marshalNTimelineIndicatorEvent2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐTimelineIndicatorEvent(ctx context.Context, sel ast.SelectionSet, v *model1.TimelineIndicatorEvent) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -120266,7 +120232,7 @@ func (ec *executionContext) marshalNTimestamp2ᚖtimeᚐTime(ctx context.Context
 	return res
 }
 
-func (ec *executionContext) marshalNTopUsersPayload2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐTopUsersPayload(ctx context.Context, sel ast.SelectionSet, v []*model.TopUsersPayload) graphql.Marshaler {
+func (ec *executionContext) marshalNTopUsersPayload2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐTopUsersPayload(ctx context.Context, sel ast.SelectionSet, v []*model.TopUsersPayload) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -120290,7 +120256,7 @@ func (ec *executionContext) marshalNTopUsersPayload2ᚕᚖgithubᚗcomᚋhighlig
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOTopUsersPayload2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐTopUsersPayload(ctx, sel, v[i])
+			ret[i] = ec.marshalOTopUsersPayload2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐTopUsersPayload(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -120304,7 +120270,7 @@ func (ec *executionContext) marshalNTopUsersPayload2ᚕᚖgithubᚗcomᚋhighlig
 	return ret
 }
 
-func (ec *executionContext) marshalNTrace2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐTraceᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Trace) graphql.Marshaler {
+func (ec *executionContext) marshalNTrace2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐTraceᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Trace) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -120328,7 +120294,7 @@ func (ec *executionContext) marshalNTrace2ᚕᚖgithubᚗcomᚋhighlightᚑrun�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNTrace2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐTrace(ctx, sel, v[i])
+			ret[i] = ec.marshalNTrace2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐTrace(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -120348,7 +120314,7 @@ func (ec *executionContext) marshalNTrace2ᚕᚖgithubᚗcomᚋhighlightᚑrun�
 	return ret
 }
 
-func (ec *executionContext) marshalNTrace2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐTrace(ctx context.Context, sel ast.SelectionSet, v *model.Trace) graphql.Marshaler {
+func (ec *executionContext) marshalNTrace2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐTrace(ctx context.Context, sel ast.SelectionSet, v *model.Trace) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -120358,11 +120324,11 @@ func (ec *executionContext) marshalNTrace2ᚖgithubᚗcomᚋhighlightᚑrunᚋhi
 	return ec._Trace(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNTraceConnection2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐTraceConnection(ctx context.Context, sel ast.SelectionSet, v model.TraceConnection) graphql.Marshaler {
+func (ec *executionContext) marshalNTraceConnection2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐTraceConnection(ctx context.Context, sel ast.SelectionSet, v model.TraceConnection) graphql.Marshaler {
 	return ec._TraceConnection(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNTraceConnection2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐTraceConnection(ctx context.Context, sel ast.SelectionSet, v *model.TraceConnection) graphql.Marshaler {
+func (ec *executionContext) marshalNTraceConnection2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐTraceConnection(ctx context.Context, sel ast.SelectionSet, v *model.TraceConnection) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -120372,7 +120338,7 @@ func (ec *executionContext) marshalNTraceConnection2ᚖgithubᚗcomᚋhighlight�
 	return ec._TraceConnection(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNTraceEdge2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐTraceEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.TraceEdge) graphql.Marshaler {
+func (ec *executionContext) marshalNTraceEdge2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐTraceEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.TraceEdge) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -120396,7 +120362,7 @@ func (ec *executionContext) marshalNTraceEdge2ᚕᚖgithubᚗcomᚋhighlightᚑr
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNTraceEdge2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐTraceEdge(ctx, sel, v[i])
+			ret[i] = ec.marshalNTraceEdge2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐTraceEdge(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -120416,7 +120382,7 @@ func (ec *executionContext) marshalNTraceEdge2ᚕᚖgithubᚗcomᚋhighlightᚑr
 	return ret
 }
 
-func (ec *executionContext) marshalNTraceEdge2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐTraceEdge(ctx context.Context, sel ast.SelectionSet, v *model.TraceEdge) graphql.Marshaler {
+func (ec *executionContext) marshalNTraceEdge2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐTraceEdge(ctx context.Context, sel ast.SelectionSet, v *model.TraceEdge) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -120426,7 +120392,7 @@ func (ec *executionContext) marshalNTraceEdge2ᚖgithubᚗcomᚋhighlightᚑrun�
 	return ec._TraceEdge(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNTraceError2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐTraceErrorᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.TraceError) graphql.Marshaler {
+func (ec *executionContext) marshalNTraceError2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐTraceErrorᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.TraceError) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -120450,7 +120416,7 @@ func (ec *executionContext) marshalNTraceError2ᚕᚖgithubᚗcomᚋhighlightᚑ
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNTraceError2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐTraceError(ctx, sel, v[i])
+			ret[i] = ec.marshalNTraceError2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐTraceError(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -120470,7 +120436,7 @@ func (ec *executionContext) marshalNTraceError2ᚕᚖgithubᚗcomᚋhighlightᚑ
 	return ret
 }
 
-func (ec *executionContext) marshalNTraceError2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐTraceError(ctx context.Context, sel ast.SelectionSet, v *model.TraceError) graphql.Marshaler {
+func (ec *executionContext) marshalNTraceError2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐTraceError(ctx context.Context, sel ast.SelectionSet, v *model.TraceError) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -120480,7 +120446,7 @@ func (ec *executionContext) marshalNTraceError2ᚖgithubᚗcomᚋhighlightᚑrun
 	return ec._TraceError(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNTrackProperty2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐTrackProperty(ctx context.Context, sel ast.SelectionSet, v []*model1.TrackProperty) graphql.Marshaler {
+func (ec *executionContext) marshalNTrackProperty2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐTrackProperty(ctx context.Context, sel ast.SelectionSet, v []*model1.TrackProperty) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -120504,7 +120470,7 @@ func (ec *executionContext) marshalNTrackProperty2ᚕᚖgithubᚗcomᚋhighlight
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOTrackProperty2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐTrackProperty(ctx, sel, v[i])
+			ret[i] = ec.marshalOTrackProperty2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐTrackProperty(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -120518,14 +120484,14 @@ func (ec *executionContext) marshalNTrackProperty2ᚕᚖgithubᚗcomᚋhighlight
 	return ret
 }
 
-func (ec *executionContext) unmarshalNTrackPropertyInput2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐTrackPropertyInputᚄ(ctx context.Context, v any) ([]*model.TrackPropertyInput, error) {
+func (ec *executionContext) unmarshalNTrackPropertyInput2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐTrackPropertyInputᚄ(ctx context.Context, v any) ([]*model.TrackPropertyInput, error) {
 	var vSlice []any
 	vSlice = graphql.CoerceList(v)
 	var err error
 	res := make([]*model.TrackPropertyInput, len(vSlice))
 	for i := range vSlice {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalNTrackPropertyInput2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐTrackPropertyInput(ctx, vSlice[i])
+		res[i], err = ec.unmarshalNTrackPropertyInput2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐTrackPropertyInput(ctx, vSlice[i])
 		if err != nil {
 			return nil, err
 		}
@@ -120533,7 +120499,7 @@ func (ec *executionContext) unmarshalNTrackPropertyInput2ᚕᚖgithubᚗcomᚋhi
 	return res, nil
 }
 
-func (ec *executionContext) unmarshalNTrackPropertyInput2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐTrackPropertyInput(ctx context.Context, v any) (*model.TrackPropertyInput, error) {
+func (ec *executionContext) unmarshalNTrackPropertyInput2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐTrackPropertyInput(ctx context.Context, v any) (*model.TrackPropertyInput, error) {
 	res, err := ec.unmarshalInputTrackPropertyInput(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
@@ -120553,11 +120519,11 @@ func (ec *executionContext) marshalNUInt642uint64(ctx context.Context, sel ast.S
 	return res
 }
 
-func (ec *executionContext) marshalNUsageHistory2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐUsageHistory(ctx context.Context, sel ast.SelectionSet, v model.UsageHistory) graphql.Marshaler {
+func (ec *executionContext) marshalNUsageHistory2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐUsageHistory(ctx context.Context, sel ast.SelectionSet, v model.UsageHistory) graphql.Marshaler {
 	return ec._UsageHistory(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNUsageHistory2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐUsageHistory(ctx context.Context, sel ast.SelectionSet, v *model.UsageHistory) graphql.Marshaler {
+func (ec *executionContext) marshalNUsageHistory2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐUsageHistory(ctx context.Context, sel ast.SelectionSet, v *model.UsageHistory) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -120567,7 +120533,7 @@ func (ec *executionContext) marshalNUsageHistory2ᚖgithubᚗcomᚋhighlightᚑr
 	return ec._UsageHistory(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNUserProperty2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐUserProperty(ctx context.Context, sel ast.SelectionSet, v []*model1.UserProperty) graphql.Marshaler {
+func (ec *executionContext) marshalNUserProperty2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐUserProperty(ctx context.Context, sel ast.SelectionSet, v []*model1.UserProperty) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -120591,7 +120557,7 @@ func (ec *executionContext) marshalNUserProperty2ᚕᚖgithubᚗcomᚋhighlight�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOUserProperty2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐUserProperty(ctx, sel, v[i])
+			ret[i] = ec.marshalOUserProperty2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐUserProperty(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -120605,14 +120571,14 @@ func (ec *executionContext) marshalNUserProperty2ᚕᚖgithubᚗcomᚋhighlight�
 	return ret
 }
 
-func (ec *executionContext) unmarshalNUserPropertyInput2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐUserPropertyInputᚄ(ctx context.Context, v any) ([]*model.UserPropertyInput, error) {
+func (ec *executionContext) unmarshalNUserPropertyInput2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐUserPropertyInputᚄ(ctx context.Context, v any) ([]*model.UserPropertyInput, error) {
 	var vSlice []any
 	vSlice = graphql.CoerceList(v)
 	var err error
 	res := make([]*model.UserPropertyInput, len(vSlice))
 	for i := range vSlice {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalNUserPropertyInput2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐUserPropertyInput(ctx, vSlice[i])
+		res[i], err = ec.unmarshalNUserPropertyInput2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐUserPropertyInput(ctx, vSlice[i])
 		if err != nil {
 			return nil, err
 		}
@@ -120620,12 +120586,12 @@ func (ec *executionContext) unmarshalNUserPropertyInput2ᚕᚖgithubᚗcomᚋhig
 	return res, nil
 }
 
-func (ec *executionContext) unmarshalNUserPropertyInput2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐUserPropertyInput(ctx context.Context, v any) (*model.UserPropertyInput, error) {
+func (ec *executionContext) unmarshalNUserPropertyInput2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐUserPropertyInput(ctx context.Context, v any) (*model.UserPropertyInput, error) {
 	res, err := ec.unmarshalInputUserPropertyInput(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNValueSuggestion2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐValueSuggestionᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.ValueSuggestion) graphql.Marshaler {
+func (ec *executionContext) marshalNValueSuggestion2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐValueSuggestionᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.ValueSuggestion) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -120649,7 +120615,7 @@ func (ec *executionContext) marshalNValueSuggestion2ᚕᚖgithubᚗcomᚋhighlig
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNValueSuggestion2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐValueSuggestion(ctx, sel, v[i])
+			ret[i] = ec.marshalNValueSuggestion2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐValueSuggestion(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -120669,7 +120635,7 @@ func (ec *executionContext) marshalNValueSuggestion2ᚕᚖgithubᚗcomᚋhighlig
 	return ret
 }
 
-func (ec *executionContext) marshalNValueSuggestion2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐValueSuggestion(ctx context.Context, sel ast.SelectionSet, v *model.ValueSuggestion) graphql.Marshaler {
+func (ec *executionContext) marshalNValueSuggestion2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐValueSuggestion(ctx context.Context, sel ast.SelectionSet, v *model.ValueSuggestion) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -120679,7 +120645,7 @@ func (ec *executionContext) marshalNValueSuggestion2ᚖgithubᚗcomᚋhighlight�
 	return ec._ValueSuggestion(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNVariable2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐVariableᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Variable) graphql.Marshaler {
+func (ec *executionContext) marshalNVariable2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐVariableᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Variable) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -120703,7 +120669,7 @@ func (ec *executionContext) marshalNVariable2ᚕᚖgithubᚗcomᚋhighlightᚑru
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNVariable2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐVariable(ctx, sel, v[i])
+			ret[i] = ec.marshalNVariable2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐVariable(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -120723,7 +120689,7 @@ func (ec *executionContext) marshalNVariable2ᚕᚖgithubᚗcomᚋhighlightᚑru
 	return ret
 }
 
-func (ec *executionContext) marshalNVariable2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐVariable(ctx context.Context, sel ast.SelectionSet, v *model.Variable) graphql.Marshaler {
+func (ec *executionContext) marshalNVariable2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐVariable(ctx context.Context, sel ast.SelectionSet, v *model.Variable) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -120733,12 +120699,12 @@ func (ec *executionContext) marshalNVariable2ᚖgithubᚗcomᚋhighlightᚑrun�
 	return ec._Variable(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNVariableInput2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐVariableInput(ctx context.Context, v any) (*model.VariableInput, error) {
+func (ec *executionContext) unmarshalNVariableInput2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐVariableInput(ctx context.Context, v any) (*model.VariableInput, error) {
 	res, err := ec.unmarshalInputVariableInput(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNVercelEnv2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐVercelEnvᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.VercelEnv) graphql.Marshaler {
+func (ec *executionContext) marshalNVercelEnv2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐVercelEnvᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.VercelEnv) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -120762,7 +120728,7 @@ func (ec *executionContext) marshalNVercelEnv2ᚕᚖgithubᚗcomᚋhighlightᚑr
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNVercelEnv2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐVercelEnv(ctx, sel, v[i])
+			ret[i] = ec.marshalNVercelEnv2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐVercelEnv(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -120782,7 +120748,7 @@ func (ec *executionContext) marshalNVercelEnv2ᚕᚖgithubᚗcomᚋhighlightᚑr
 	return ret
 }
 
-func (ec *executionContext) marshalNVercelEnv2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐVercelEnv(ctx context.Context, sel ast.SelectionSet, v *model.VercelEnv) graphql.Marshaler {
+func (ec *executionContext) marshalNVercelEnv2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐVercelEnv(ctx context.Context, sel ast.SelectionSet, v *model.VercelEnv) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -120792,7 +120758,7 @@ func (ec *executionContext) marshalNVercelEnv2ᚖgithubᚗcomᚋhighlightᚑrun�
 	return ec._VercelEnv(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNVercelProject2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐVercelProjectᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.VercelProject) graphql.Marshaler {
+func (ec *executionContext) marshalNVercelProject2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐVercelProjectᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.VercelProject) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -120816,7 +120782,7 @@ func (ec *executionContext) marshalNVercelProject2ᚕᚖgithubᚗcomᚋhighlight
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNVercelProject2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐVercelProject(ctx, sel, v[i])
+			ret[i] = ec.marshalNVercelProject2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐVercelProject(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -120836,7 +120802,7 @@ func (ec *executionContext) marshalNVercelProject2ᚕᚖgithubᚗcomᚋhighlight
 	return ret
 }
 
-func (ec *executionContext) marshalNVercelProject2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐVercelProject(ctx context.Context, sel ast.SelectionSet, v *model.VercelProject) graphql.Marshaler {
+func (ec *executionContext) marshalNVercelProject2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐVercelProject(ctx context.Context, sel ast.SelectionSet, v *model.VercelProject) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -120846,7 +120812,7 @@ func (ec *executionContext) marshalNVercelProject2ᚖgithubᚗcomᚋhighlightᚑ
 	return ec._VercelProject(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNVercelProjectMapping2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐVercelProjectMappingᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.VercelProjectMapping) graphql.Marshaler {
+func (ec *executionContext) marshalNVercelProjectMapping2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐVercelProjectMappingᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.VercelProjectMapping) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -120870,7 +120836,7 @@ func (ec *executionContext) marshalNVercelProjectMapping2ᚕᚖgithubᚗcomᚋhi
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNVercelProjectMapping2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐVercelProjectMapping(ctx, sel, v[i])
+			ret[i] = ec.marshalNVercelProjectMapping2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐVercelProjectMapping(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -120890,7 +120856,7 @@ func (ec *executionContext) marshalNVercelProjectMapping2ᚕᚖgithubᚗcomᚋhi
 	return ret
 }
 
-func (ec *executionContext) marshalNVercelProjectMapping2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐVercelProjectMapping(ctx context.Context, sel ast.SelectionSet, v *model.VercelProjectMapping) graphql.Marshaler {
+func (ec *executionContext) marshalNVercelProjectMapping2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐVercelProjectMapping(ctx context.Context, sel ast.SelectionSet, v *model.VercelProjectMapping) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -120900,14 +120866,14 @@ func (ec *executionContext) marshalNVercelProjectMapping2ᚖgithubᚗcomᚋhighl
 	return ec._VercelProjectMapping(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNVercelProjectMappingInput2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐVercelProjectMappingInputᚄ(ctx context.Context, v any) ([]*model.VercelProjectMappingInput, error) {
+func (ec *executionContext) unmarshalNVercelProjectMappingInput2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐVercelProjectMappingInputᚄ(ctx context.Context, v any) ([]*model.VercelProjectMappingInput, error) {
 	var vSlice []any
 	vSlice = graphql.CoerceList(v)
 	var err error
 	res := make([]*model.VercelProjectMappingInput, len(vSlice))
 	for i := range vSlice {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalNVercelProjectMappingInput2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐVercelProjectMappingInput(ctx, vSlice[i])
+		res[i], err = ec.unmarshalNVercelProjectMappingInput2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐVercelProjectMappingInput(ctx, vSlice[i])
 		if err != nil {
 			return nil, err
 		}
@@ -120915,16 +120881,16 @@ func (ec *executionContext) unmarshalNVercelProjectMappingInput2ᚕᚖgithubᚗc
 	return res, nil
 }
 
-func (ec *executionContext) unmarshalNVercelProjectMappingInput2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐVercelProjectMappingInput(ctx context.Context, v any) (*model.VercelProjectMappingInput, error) {
+func (ec *executionContext) unmarshalNVercelProjectMappingInput2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐVercelProjectMappingInput(ctx context.Context, v any) (*model.VercelProjectMappingInput, error) {
 	res, err := ec.unmarshalInputVercelProjectMappingInput(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNVisualization2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐVisualization(ctx context.Context, sel ast.SelectionSet, v model1.Visualization) graphql.Marshaler {
+func (ec *executionContext) marshalNVisualization2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐVisualization(ctx context.Context, sel ast.SelectionSet, v model1.Visualization) graphql.Marshaler {
 	return ec._Visualization(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNVisualization2ᚕgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐVisualizationᚄ(ctx context.Context, sel ast.SelectionSet, v []model1.Visualization) graphql.Marshaler {
+func (ec *executionContext) marshalNVisualization2ᚕgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐVisualizationᚄ(ctx context.Context, sel ast.SelectionSet, v []model1.Visualization) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -120948,7 +120914,7 @@ func (ec *executionContext) marshalNVisualization2ᚕgithubᚗcomᚋhighlightᚑ
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNVisualization2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐVisualization(ctx, sel, v[i])
+			ret[i] = ec.marshalNVisualization2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐVisualization(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -120968,7 +120934,7 @@ func (ec *executionContext) marshalNVisualization2ᚕgithubᚗcomᚋhighlightᚑ
 	return ret
 }
 
-func (ec *executionContext) marshalNVisualization2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐVisualization(ctx context.Context, sel ast.SelectionSet, v *model1.Visualization) graphql.Marshaler {
+func (ec *executionContext) marshalNVisualization2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐVisualization(ctx context.Context, sel ast.SelectionSet, v *model1.Visualization) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -120978,16 +120944,16 @@ func (ec *executionContext) marshalNVisualization2ᚖgithubᚗcomᚋhighlightᚑ
 	return ec._Visualization(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNVisualizationInput2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐVisualizationInput(ctx context.Context, v any) (model.VisualizationInput, error) {
+func (ec *executionContext) unmarshalNVisualizationInput2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐVisualizationInput(ctx context.Context, v any) (model.VisualizationInput, error) {
 	res, err := ec.unmarshalInputVisualizationInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNVisualizationsResponse2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐVisualizationsResponse(ctx context.Context, sel ast.SelectionSet, v model1.VisualizationsResponse) graphql.Marshaler {
+func (ec *executionContext) marshalNVisualizationsResponse2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐVisualizationsResponse(ctx context.Context, sel ast.SelectionSet, v model1.VisualizationsResponse) graphql.Marshaler {
 	return ec._VisualizationsResponse(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNVisualizationsResponse2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐVisualizationsResponse(ctx context.Context, sel ast.SelectionSet, v *model1.VisualizationsResponse) graphql.Marshaler {
+func (ec *executionContext) marshalNVisualizationsResponse2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐVisualizationsResponse(ctx context.Context, sel ast.SelectionSet, v *model1.VisualizationsResponse) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -120997,7 +120963,7 @@ func (ec *executionContext) marshalNVisualizationsResponse2ᚖgithubᚗcomᚋhig
 	return ec._VisualizationsResponse(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNWebhookDestination2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐWebhookDestinationᚄ(ctx context.Context, sel ast.SelectionSet, v []*model1.WebhookDestination) graphql.Marshaler {
+func (ec *executionContext) marshalNWebhookDestination2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐWebhookDestinationᚄ(ctx context.Context, sel ast.SelectionSet, v []*model1.WebhookDestination) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -121021,7 +120987,7 @@ func (ec *executionContext) marshalNWebhookDestination2ᚕᚖgithubᚗcomᚋhigh
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNWebhookDestination2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐWebhookDestination(ctx, sel, v[i])
+			ret[i] = ec.marshalNWebhookDestination2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐWebhookDestination(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -121041,7 +121007,7 @@ func (ec *executionContext) marshalNWebhookDestination2ᚕᚖgithubᚗcomᚋhigh
 	return ret
 }
 
-func (ec *executionContext) marshalNWebhookDestination2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐWebhookDestination(ctx context.Context, sel ast.SelectionSet, v *model1.WebhookDestination) graphql.Marshaler {
+func (ec *executionContext) marshalNWebhookDestination2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐWebhookDestination(ctx context.Context, sel ast.SelectionSet, v *model1.WebhookDestination) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -121051,14 +121017,14 @@ func (ec *executionContext) marshalNWebhookDestination2ᚖgithubᚗcomᚋhighlig
 	return ec._WebhookDestination(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNWebhookDestinationInput2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐWebhookDestinationInputᚄ(ctx context.Context, v any) ([]*model.WebhookDestinationInput, error) {
+func (ec *executionContext) unmarshalNWebhookDestinationInput2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐWebhookDestinationInputᚄ(ctx context.Context, v any) ([]*model.WebhookDestinationInput, error) {
 	var vSlice []any
 	vSlice = graphql.CoerceList(v)
 	var err error
 	res := make([]*model.WebhookDestinationInput, len(vSlice))
 	for i := range vSlice {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalNWebhookDestinationInput2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐWebhookDestinationInput(ctx, vSlice[i])
+		res[i], err = ec.unmarshalNWebhookDestinationInput2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐWebhookDestinationInput(ctx, vSlice[i])
 		if err != nil {
 			return nil, err
 		}
@@ -121066,16 +121032,16 @@ func (ec *executionContext) unmarshalNWebhookDestinationInput2ᚕᚖgithubᚗcom
 	return res, nil
 }
 
-func (ec *executionContext) unmarshalNWebhookDestinationInput2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐWebhookDestinationInput(ctx context.Context, v any) (*model.WebhookDestinationInput, error) {
+func (ec *executionContext) unmarshalNWebhookDestinationInput2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐWebhookDestinationInput(ctx context.Context, v any) (*model.WebhookDestinationInput, error) {
 	res, err := ec.unmarshalInputWebhookDestinationInput(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNWorkspaceAdminRole2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐWorkspaceAdminRole(ctx context.Context, sel ast.SelectionSet, v model1.WorkspaceAdminRole) graphql.Marshaler {
+func (ec *executionContext) marshalNWorkspaceAdminRole2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐWorkspaceAdminRole(ctx context.Context, sel ast.SelectionSet, v model1.WorkspaceAdminRole) graphql.Marshaler {
 	return ec._WorkspaceAdminRole(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNWorkspaceAdminRole2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐWorkspaceAdminRoleᚄ(ctx context.Context, sel ast.SelectionSet, v []*model1.WorkspaceAdminRole) graphql.Marshaler {
+func (ec *executionContext) marshalNWorkspaceAdminRole2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐWorkspaceAdminRoleᚄ(ctx context.Context, sel ast.SelectionSet, v []*model1.WorkspaceAdminRole) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -121099,7 +121065,7 @@ func (ec *executionContext) marshalNWorkspaceAdminRole2ᚕᚖgithubᚗcomᚋhigh
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNWorkspaceAdminRole2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐWorkspaceAdminRole(ctx, sel, v[i])
+			ret[i] = ec.marshalNWorkspaceAdminRole2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐWorkspaceAdminRole(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -121119,7 +121085,7 @@ func (ec *executionContext) marshalNWorkspaceAdminRole2ᚕᚖgithubᚗcomᚋhigh
 	return ret
 }
 
-func (ec *executionContext) marshalNWorkspaceAdminRole2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐWorkspaceAdminRole(ctx context.Context, sel ast.SelectionSet, v *model1.WorkspaceAdminRole) graphql.Marshaler {
+func (ec *executionContext) marshalNWorkspaceAdminRole2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐWorkspaceAdminRole(ctx context.Context, sel ast.SelectionSet, v *model1.WorkspaceAdminRole) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -121129,11 +121095,11 @@ func (ec *executionContext) marshalNWorkspaceAdminRole2ᚖgithubᚗcomᚋhighlig
 	return ec._WorkspaceAdminRole(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNWorkspaceForInviteLink2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐWorkspaceForInviteLink(ctx context.Context, sel ast.SelectionSet, v model.WorkspaceForInviteLink) graphql.Marshaler {
+func (ec *executionContext) marshalNWorkspaceForInviteLink2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐWorkspaceForInviteLink(ctx context.Context, sel ast.SelectionSet, v model.WorkspaceForInviteLink) graphql.Marshaler {
 	return ec._WorkspaceForInviteLink(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNWorkspaceForInviteLink2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐWorkspaceForInviteLink(ctx context.Context, sel ast.SelectionSet, v *model.WorkspaceForInviteLink) graphql.Marshaler {
+func (ec *executionContext) marshalNWorkspaceForInviteLink2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐWorkspaceForInviteLink(ctx context.Context, sel ast.SelectionSet, v *model.WorkspaceForInviteLink) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -121143,11 +121109,11 @@ func (ec *executionContext) marshalNWorkspaceForInviteLink2ᚖgithubᚗcomᚋhig
 	return ec._WorkspaceForInviteLink(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNWorkspaceInviteLink2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐWorkspaceInviteLink(ctx context.Context, sel ast.SelectionSet, v model1.WorkspaceInviteLink) graphql.Marshaler {
+func (ec *executionContext) marshalNWorkspaceInviteLink2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐWorkspaceInviteLink(ctx context.Context, sel ast.SelectionSet, v model1.WorkspaceInviteLink) graphql.Marshaler {
 	return ec._WorkspaceInviteLink(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNWorkspaceInviteLink2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐWorkspaceInviteLink(ctx context.Context, sel ast.SelectionSet, v []*model1.WorkspaceInviteLink) graphql.Marshaler {
+func (ec *executionContext) marshalNWorkspaceInviteLink2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐWorkspaceInviteLink(ctx context.Context, sel ast.SelectionSet, v []*model1.WorkspaceInviteLink) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -121171,7 +121137,7 @@ func (ec *executionContext) marshalNWorkspaceInviteLink2ᚕᚖgithubᚗcomᚋhig
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOWorkspaceInviteLink2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐWorkspaceInviteLink(ctx, sel, v[i])
+			ret[i] = ec.marshalOWorkspaceInviteLink2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐWorkspaceInviteLink(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -121185,7 +121151,7 @@ func (ec *executionContext) marshalNWorkspaceInviteLink2ᚕᚖgithubᚗcomᚋhig
 	return ret
 }
 
-func (ec *executionContext) marshalNWorkspaceInviteLink2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐWorkspaceInviteLink(ctx context.Context, sel ast.SelectionSet, v *model1.WorkspaceInviteLink) graphql.Marshaler {
+func (ec *executionContext) marshalNWorkspaceInviteLink2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐWorkspaceInviteLink(ctx context.Context, sel ast.SelectionSet, v *model1.WorkspaceInviteLink) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -121446,14 +121412,14 @@ func (ec *executionContext) marshalN__TypeKind2string(ctx context.Context, sel a
 	return res
 }
 
-func (ec *executionContext) marshalOAWSMarketplaceSubscription2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐAWSMarketplaceSubscription(ctx context.Context, sel ast.SelectionSet, v *model.AWSMarketplaceSubscription) graphql.Marshaler {
+func (ec *executionContext) marshalOAWSMarketplaceSubscription2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐAWSMarketplaceSubscription(ctx context.Context, sel ast.SelectionSet, v *model.AWSMarketplaceSubscription) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._AWSMarketplaceSubscription(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOAccount2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐAccount(ctx context.Context, sel ast.SelectionSet, v []*model.Account) graphql.Marshaler {
+func (ec *executionContext) marshalOAccount2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐAccount(ctx context.Context, sel ast.SelectionSet, v []*model.Account) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -121480,7 +121446,7 @@ func (ec *executionContext) marshalOAccount2ᚕᚖgithubᚗcomᚋhighlightᚑrun
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOAccount2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐAccount(ctx, sel, v[i])
+			ret[i] = ec.marshalOAccount2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐAccount(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -121494,35 +121460,35 @@ func (ec *executionContext) marshalOAccount2ᚕᚖgithubᚗcomᚋhighlightᚑrun
 	return ret
 }
 
-func (ec *executionContext) marshalOAccount2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐAccount(ctx context.Context, sel ast.SelectionSet, v *model.Account) graphql.Marshaler {
+func (ec *executionContext) marshalOAccount2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐAccount(ctx context.Context, sel ast.SelectionSet, v *model.Account) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Account(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOAdmin2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐAdmin(ctx context.Context, sel ast.SelectionSet, v *model1.Admin) graphql.Marshaler {
+func (ec *executionContext) marshalOAdmin2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐAdmin(ctx context.Context, sel ast.SelectionSet, v *model1.Admin) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Admin(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOAlert2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐAlert(ctx context.Context, sel ast.SelectionSet, v *model1.Alert) graphql.Marshaler {
+func (ec *executionContext) marshalOAlert2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐAlert(ctx context.Context, sel ast.SelectionSet, v *model1.Alert) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Alert(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOAlertDestination2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐAlertDestination(ctx context.Context, sel ast.SelectionSet, v *model1.AlertDestination) graphql.Marshaler {
+func (ec *executionContext) marshalOAlertDestination2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐAlertDestination(ctx context.Context, sel ast.SelectionSet, v *model1.AlertDestination) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._AlertDestination(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOAlertDestinationInput2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐAlertDestinationInputᚄ(ctx context.Context, v any) ([]*model.AlertDestinationInput, error) {
+func (ec *executionContext) unmarshalOAlertDestinationInput2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐAlertDestinationInputᚄ(ctx context.Context, v any) ([]*model.AlertDestinationInput, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -121532,7 +121498,7 @@ func (ec *executionContext) unmarshalOAlertDestinationInput2ᚕᚖgithubᚗcom�
 	res := make([]*model.AlertDestinationInput, len(vSlice))
 	for i := range vSlice {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalNAlertDestinationInput2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐAlertDestinationInput(ctx, vSlice[i])
+		res[i], err = ec.unmarshalNAlertDestinationInput2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐAlertDestinationInput(ctx, vSlice[i])
 		if err != nil {
 			return nil, err
 		}
@@ -121540,21 +121506,21 @@ func (ec *executionContext) unmarshalOAlertDestinationInput2ᚕᚖgithubᚗcom�
 	return res, nil
 }
 
-func (ec *executionContext) marshalOAlertStateChange2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐAlertStateChange(ctx context.Context, sel ast.SelectionSet, v *model.AlertStateChange) graphql.Marshaler {
+func (ec *executionContext) marshalOAlertStateChange2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐAlertStateChange(ctx context.Context, sel ast.SelectionSet, v *model.AlertStateChange) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._AlertStateChange(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOAllProjectSettings2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐAllProjectSettings(ctx context.Context, sel ast.SelectionSet, v *model.AllProjectSettings) graphql.Marshaler {
+func (ec *executionContext) marshalOAllProjectSettings2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐAllProjectSettings(ctx context.Context, sel ast.SelectionSet, v *model.AllProjectSettings) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._AllProjectSettings(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOAllWorkspaceSettings2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐAllWorkspaceSettings(ctx context.Context, sel ast.SelectionSet, v *model1.AllWorkspaceSettings) graphql.Marshaler {
+func (ec *executionContext) marshalOAllWorkspaceSettings2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐAllWorkspaceSettings(ctx context.Context, sel ast.SelectionSet, v *model1.AllWorkspaceSettings) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -121607,14 +121573,14 @@ func (ec *executionContext) marshalOAny2ᚕinterface(ctx context.Context, sel as
 	return ret
 }
 
-func (ec *executionContext) marshalOAverageSessionLength2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐAverageSessionLength(ctx context.Context, sel ast.SelectionSet, v *model.AverageSessionLength) graphql.Marshaler {
+func (ec *executionContext) marshalOAverageSessionLength2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐAverageSessionLength(ctx context.Context, sel ast.SelectionSet, v *model.AverageSessionLength) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._AverageSessionLength(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOBillingDetails2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐBillingDetails(ctx context.Context, sel ast.SelectionSet, v *model.BillingDetails) graphql.Marshaler {
+func (ec *executionContext) marshalOBillingDetails2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐBillingDetails(ctx context.Context, sel ast.SelectionSet, v *model.BillingDetails) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -121647,35 +121613,35 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 	return res
 }
 
-func (ec *executionContext) marshalOCategoryHistogramPayload2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐCategoryHistogramPayload(ctx context.Context, sel ast.SelectionSet, v *model.CategoryHistogramPayload) graphql.Marshaler {
+func (ec *executionContext) marshalOCategoryHistogramPayload2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐCategoryHistogramPayload(ctx context.Context, sel ast.SelectionSet, v *model.CategoryHistogramPayload) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._CategoryHistogramPayload(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOCommentReply2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐCommentReply(ctx context.Context, sel ast.SelectionSet, v *model1.CommentReply) graphql.Marshaler {
+func (ec *executionContext) marshalOCommentReply2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐCommentReply(ctx context.Context, sel ast.SelectionSet, v *model1.CommentReply) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._CommentReply(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalODailyErrorCount2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐDailyErrorCount(ctx context.Context, sel ast.SelectionSet, v *model1.DailyErrorCount) graphql.Marshaler {
+func (ec *executionContext) marshalODailyErrorCount2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐDailyErrorCount(ctx context.Context, sel ast.SelectionSet, v *model1.DailyErrorCount) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._DailyErrorCount(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalODailySessionCount2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐDailySessionCount(ctx context.Context, sel ast.SelectionSet, v *model1.DailySessionCount) graphql.Marshaler {
+func (ec *executionContext) marshalODailySessionCount2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐDailySessionCount(ctx context.Context, sel ast.SelectionSet, v *model1.DailySessionCount) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._DailySessionCount(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalODashboardChartType2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDashboardChartType(ctx context.Context, v any) (*model.DashboardChartType, error) {
+func (ec *executionContext) unmarshalODashboardChartType2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDashboardChartType(ctx context.Context, v any) (*model.DashboardChartType, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -121684,21 +121650,21 @@ func (ec *executionContext) unmarshalODashboardChartType2ᚖgithubᚗcomᚋhighl
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalODashboardChartType2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDashboardChartType(ctx context.Context, sel ast.SelectionSet, v *model.DashboardChartType) graphql.Marshaler {
+func (ec *executionContext) marshalODashboardChartType2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDashboardChartType(ctx context.Context, sel ast.SelectionSet, v *model.DashboardChartType) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return v
 }
 
-func (ec *executionContext) marshalODashboardDefinition2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDashboardDefinition(ctx context.Context, sel ast.SelectionSet, v *model.DashboardDefinition) graphql.Marshaler {
+func (ec *executionContext) marshalODashboardDefinition2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDashboardDefinition(ctx context.Context, sel ast.SelectionSet, v *model.DashboardDefinition) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._DashboardDefinition(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalODashboardTemplateType2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDashboardTemplateType(ctx context.Context, v any) (*model.DashboardTemplateType, error) {
+func (ec *executionContext) unmarshalODashboardTemplateType2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDashboardTemplateType(ctx context.Context, v any) (*model.DashboardTemplateType, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -121707,14 +121673,14 @@ func (ec *executionContext) unmarshalODashboardTemplateType2ᚖgithubᚗcomᚋhi
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalODashboardTemplateType2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDashboardTemplateType(ctx context.Context, sel ast.SelectionSet, v *model.DashboardTemplateType) graphql.Marshaler {
+func (ec *executionContext) marshalODashboardTemplateType2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDashboardTemplateType(ctx context.Context, sel ast.SelectionSet, v *model.DashboardTemplateType) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return v
 }
 
-func (ec *executionContext) unmarshalODateRangeRequiredInput2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDateRangeRequiredInput(ctx context.Context, v any) (*model.DateRangeRequiredInput, error) {
+func (ec *executionContext) unmarshalODateRangeRequiredInput2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐDateRangeRequiredInput(ctx context.Context, v any) (*model.DateRangeRequiredInput, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -121722,14 +121688,14 @@ func (ec *executionContext) unmarshalODateRangeRequiredInput2ᚖgithubᚗcomᚋh
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOEnhancedUserDetailsResult2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐEnhancedUserDetailsResult(ctx context.Context, sel ast.SelectionSet, v *model.EnhancedUserDetailsResult) graphql.Marshaler {
+func (ec *executionContext) marshalOEnhancedUserDetailsResult2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐEnhancedUserDetailsResult(ctx context.Context, sel ast.SelectionSet, v *model.EnhancedUserDetailsResult) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._EnhancedUserDetailsResult(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOEnhancementSource2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐEnhancementSource(ctx context.Context, v any) (*model.EnhancementSource, error) {
+func (ec *executionContext) unmarshalOEnhancementSource2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐEnhancementSource(ctx context.Context, v any) (*model.EnhancementSource, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -121738,53 +121704,53 @@ func (ec *executionContext) unmarshalOEnhancementSource2ᚖgithubᚗcomᚋhighli
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOEnhancementSource2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐEnhancementSource(ctx context.Context, sel ast.SelectionSet, v *model.EnhancementSource) graphql.Marshaler {
+func (ec *executionContext) marshalOEnhancementSource2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐEnhancementSource(ctx context.Context, sel ast.SelectionSet, v *model.EnhancementSource) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return v
 }
 
-func (ec *executionContext) marshalOErrorAlert2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐErrorAlert(ctx context.Context, sel ast.SelectionSet, v *model1.ErrorAlert) graphql.Marshaler {
+func (ec *executionContext) marshalOErrorAlert2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐErrorAlert(ctx context.Context, sel ast.SelectionSet, v *model1.ErrorAlert) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._ErrorAlert(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOErrorComment2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐErrorComment(ctx context.Context, sel ast.SelectionSet, v *model1.ErrorComment) graphql.Marshaler {
+func (ec *executionContext) marshalOErrorComment2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐErrorComment(ctx context.Context, sel ast.SelectionSet, v *model1.ErrorComment) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._ErrorComment(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOErrorGroup2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐErrorGroup(ctx context.Context, sel ast.SelectionSet, v *model1.ErrorGroup) graphql.Marshaler {
+func (ec *executionContext) marshalOErrorGroup2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐErrorGroup(ctx context.Context, sel ast.SelectionSet, v *model1.ErrorGroup) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._ErrorGroup(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOErrorInstance2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐErrorInstance(ctx context.Context, sel ast.SelectionSet, v *model1.ErrorInstance) graphql.Marshaler {
+func (ec *executionContext) marshalOErrorInstance2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐErrorInstance(ctx context.Context, sel ast.SelectionSet, v *model1.ErrorInstance) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._ErrorInstance(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOErrorMetadata2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐErrorMetadata(ctx context.Context, sel ast.SelectionSet, v *model.ErrorMetadata) graphql.Marshaler {
+func (ec *executionContext) marshalOErrorMetadata2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐErrorMetadata(ctx context.Context, sel ast.SelectionSet, v *model.ErrorMetadata) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._ErrorMetadata(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOErrorObject2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐErrorObject(ctx context.Context, sel ast.SelectionSet, v model1.ErrorObject) graphql.Marshaler {
+func (ec *executionContext) marshalOErrorObject2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐErrorObject(ctx context.Context, sel ast.SelectionSet, v model1.ErrorObject) graphql.Marshaler {
 	return ec._ErrorObject(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalOErrorObject2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐErrorObject(ctx context.Context, sel ast.SelectionSet, v []*model1.ErrorObject) graphql.Marshaler {
+func (ec *executionContext) marshalOErrorObject2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐErrorObject(ctx context.Context, sel ast.SelectionSet, v []*model1.ErrorObject) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -121811,7 +121777,7 @@ func (ec *executionContext) marshalOErrorObject2ᚕᚖgithubᚗcomᚋhighlight�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOErrorObject2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐErrorObject(ctx, sel, v[i])
+			ret[i] = ec.marshalOErrorObject2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐErrorObject(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -121825,21 +121791,21 @@ func (ec *executionContext) marshalOErrorObject2ᚕᚖgithubᚗcomᚋhighlight�
 	return ret
 }
 
-func (ec *executionContext) marshalOErrorObject2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐErrorObject(ctx context.Context, sel ast.SelectionSet, v *model1.ErrorObject) graphql.Marshaler {
+func (ec *executionContext) marshalOErrorObject2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐErrorObject(ctx context.Context, sel ast.SelectionSet, v *model1.ErrorObject) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._ErrorObject(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOErrorObjectNodeSession2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐErrorObjectNodeSession(ctx context.Context, sel ast.SelectionSet, v *model.ErrorObjectNodeSession) graphql.Marshaler {
+func (ec *executionContext) marshalOErrorObjectNodeSession2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐErrorObjectNodeSession(ctx context.Context, sel ast.SelectionSet, v *model.ErrorObjectNodeSession) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._ErrorObjectNodeSession(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOErrorTag2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐErrorTag(ctx context.Context, sel ast.SelectionSet, v []*model1.ErrorTag) graphql.Marshaler {
+func (ec *executionContext) marshalOErrorTag2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐErrorTag(ctx context.Context, sel ast.SelectionSet, v []*model1.ErrorTag) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -121866,7 +121832,7 @@ func (ec *executionContext) marshalOErrorTag2ᚕᚖgithubᚗcomᚋhighlightᚑru
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOErrorTag2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐErrorTag(ctx, sel, v[i])
+			ret[i] = ec.marshalOErrorTag2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐErrorTag(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -121880,28 +121846,28 @@ func (ec *executionContext) marshalOErrorTag2ᚕᚖgithubᚗcomᚋhighlightᚑru
 	return ret
 }
 
-func (ec *executionContext) marshalOErrorTag2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐErrorTag(ctx context.Context, sel ast.SelectionSet, v *model1.ErrorTag) graphql.Marshaler {
+func (ec *executionContext) marshalOErrorTag2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐErrorTag(ctx context.Context, sel ast.SelectionSet, v *model1.ErrorTag) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._ErrorTag(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOErrorTrace2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐErrorTrace(ctx context.Context, sel ast.SelectionSet, v *model.ErrorTrace) graphql.Marshaler {
+func (ec *executionContext) marshalOErrorTrace2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐErrorTrace(ctx context.Context, sel ast.SelectionSet, v *model.ErrorTrace) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._ErrorTrace(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOExternalAttachment2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐExternalAttachment(ctx context.Context, sel ast.SelectionSet, v *model1.ExternalAttachment) graphql.Marshaler {
+func (ec *executionContext) marshalOExternalAttachment2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐExternalAttachment(ctx context.Context, sel ast.SelectionSet, v *model1.ExternalAttachment) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._ExternalAttachment(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOField2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐField(ctx context.Context, sel ast.SelectionSet, v []*model1.Field) graphql.Marshaler {
+func (ec *executionContext) marshalOField2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐField(ctx context.Context, sel ast.SelectionSet, v []*model1.Field) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -121928,7 +121894,7 @@ func (ec *executionContext) marshalOField2ᚕᚖgithubᚗcomᚋhighlightᚑrun�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOField2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐField(ctx, sel, v[i])
+			ret[i] = ec.marshalOField2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐField(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -121942,7 +121908,7 @@ func (ec *executionContext) marshalOField2ᚕᚖgithubᚗcomᚋhighlightᚑrun�
 	return ret
 }
 
-func (ec *executionContext) marshalOField2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐField(ctx context.Context, sel ast.SelectionSet, v *model1.Field) graphql.Marshaler {
+func (ec *executionContext) marshalOField2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐField(ctx context.Context, sel ast.SelectionSet, v *model1.Field) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -121975,7 +121941,7 @@ func (ec *executionContext) marshalOFloat2ᚖfloat64(ctx context.Context, sel as
 	return res
 }
 
-func (ec *executionContext) marshalOFunnelStep2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐFunnelStepᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.FunnelStep) graphql.Marshaler {
+func (ec *executionContext) marshalOFunnelStep2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐFunnelStepᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.FunnelStep) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -122002,7 +121968,7 @@ func (ec *executionContext) marshalOFunnelStep2ᚕᚖgithubᚗcomᚋhighlightᚑ
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNFunnelStep2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐFunnelStep(ctx, sel, v[i])
+			ret[i] = ec.marshalNFunnelStep2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐFunnelStep(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -122022,7 +121988,7 @@ func (ec *executionContext) marshalOFunnelStep2ᚕᚖgithubᚗcomᚋhighlightᚑ
 	return ret
 }
 
-func (ec *executionContext) unmarshalOFunnelStepInput2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐFunnelStepInputᚄ(ctx context.Context, v any) ([]*model.FunnelStepInput, error) {
+func (ec *executionContext) unmarshalOFunnelStepInput2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐFunnelStepInputᚄ(ctx context.Context, v any) ([]*model.FunnelStepInput, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -122032,7 +121998,7 @@ func (ec *executionContext) unmarshalOFunnelStepInput2ᚕᚖgithubᚗcomᚋhighl
 	res := make([]*model.FunnelStepInput, len(vSlice))
 	for i := range vSlice {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalNFunnelStepInput2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐFunnelStepInput(ctx, vSlice[i])
+		res[i], err = ec.unmarshalNFunnelStepInput2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐFunnelStepInput(ctx, vSlice[i])
 		if err != nil {
 			return nil, err
 		}
@@ -122040,7 +122006,7 @@ func (ec *executionContext) unmarshalOFunnelStepInput2ᚕᚖgithubᚗcomᚋhighl
 	return res, nil
 }
 
-func (ec *executionContext) marshalOGitHubRepo2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐGitHubRepoᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.GitHubRepo) graphql.Marshaler {
+func (ec *executionContext) marshalOGitHubRepo2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐGitHubRepoᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.GitHubRepo) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -122067,7 +122033,7 @@ func (ec *executionContext) marshalOGitHubRepo2ᚕᚖgithubᚗcomᚋhighlightᚑ
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNGitHubRepo2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐGitHubRepo(ctx, sel, v[i])
+			ret[i] = ec.marshalNGitHubRepo2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐGitHubRepo(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -122087,7 +122053,7 @@ func (ec *executionContext) marshalOGitHubRepo2ᚕᚖgithubᚗcomᚋhighlightᚑ
 	return ret
 }
 
-func (ec *executionContext) marshalOGitlabProject2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐGitlabProjectᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.GitlabProject) graphql.Marshaler {
+func (ec *executionContext) marshalOGitlabProject2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐGitlabProjectᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.GitlabProject) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -122114,7 +122080,7 @@ func (ec *executionContext) marshalOGitlabProject2ᚕᚖgithubᚗcomᚋhighlight
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNGitlabProject2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐGitlabProject(ctx, sel, v[i])
+			ret[i] = ec.marshalNGitlabProject2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐGitlabProject(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -122248,7 +122214,7 @@ func (ec *executionContext) marshalOInt642ᚖint64(ctx context.Context, sel ast.
 	return res
 }
 
-func (ec *executionContext) unmarshalOIntegrationType2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐIntegrationType(ctx context.Context, v any) (*model.IntegrationType, error) {
+func (ec *executionContext) unmarshalOIntegrationType2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐIntegrationType(ctx context.Context, v any) (*model.IntegrationType, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -122257,21 +122223,21 @@ func (ec *executionContext) unmarshalOIntegrationType2ᚖgithubᚗcomᚋhighligh
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOIntegrationType2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐIntegrationType(ctx context.Context, sel ast.SelectionSet, v *model.IntegrationType) graphql.Marshaler {
+func (ec *executionContext) marshalOIntegrationType2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐIntegrationType(ctx context.Context, sel ast.SelectionSet, v *model.IntegrationType) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return v
 }
 
-func (ec *executionContext) marshalOInvoice2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐInvoice(ctx context.Context, sel ast.SelectionSet, v *model.Invoice) graphql.Marshaler {
+func (ec *executionContext) marshalOInvoice2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐInvoice(ctx context.Context, sel ast.SelectionSet, v *model.Invoice) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Invoice(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOJiraIssueType2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐJiraIssueType(ctx context.Context, sel ast.SelectionSet, v []*model.JiraIssueType) graphql.Marshaler {
+func (ec *executionContext) marshalOJiraIssueType2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐJiraIssueType(ctx context.Context, sel ast.SelectionSet, v []*model.JiraIssueType) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -122298,7 +122264,7 @@ func (ec *executionContext) marshalOJiraIssueType2ᚕᚖgithubᚗcomᚋhighlight
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOJiraIssueType2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐJiraIssueType(ctx, sel, v[i])
+			ret[i] = ec.marshalOJiraIssueType2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐJiraIssueType(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -122312,21 +122278,21 @@ func (ec *executionContext) marshalOJiraIssueType2ᚕᚖgithubᚗcomᚋhighlight
 	return ret
 }
 
-func (ec *executionContext) marshalOJiraIssueType2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐJiraIssueType(ctx context.Context, sel ast.SelectionSet, v *model.JiraIssueType) graphql.Marshaler {
+func (ec *executionContext) marshalOJiraIssueType2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐJiraIssueType(ctx context.Context, sel ast.SelectionSet, v *model.JiraIssueType) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._JiraIssueType(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOJiraIssueTypeScope2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐJiraIssueTypeScope(ctx context.Context, sel ast.SelectionSet, v *model.JiraIssueTypeScope) graphql.Marshaler {
+func (ec *executionContext) marshalOJiraIssueTypeScope2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐJiraIssueTypeScope(ctx context.Context, sel ast.SelectionSet, v *model.JiraIssueTypeScope) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._JiraIssueTypeScope(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOJiraProject2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐJiraProjectᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.JiraProject) graphql.Marshaler {
+func (ec *executionContext) marshalOJiraProject2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐJiraProjectᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.JiraProject) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -122353,7 +122319,7 @@ func (ec *executionContext) marshalOJiraProject2ᚕᚖgithubᚗcomᚋhighlight�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNJiraProject2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐJiraProject(ctx, sel, v[i])
+			ret[i] = ec.marshalNJiraProject2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐJiraProject(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -122373,14 +122339,14 @@ func (ec *executionContext) marshalOJiraProject2ᚕᚖgithubᚗcomᚋhighlight�
 	return ret
 }
 
-func (ec *executionContext) marshalOJiraProjectIdentifier2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐJiraProjectIdentifier(ctx context.Context, sel ast.SelectionSet, v *model.JiraProjectIdentifier) graphql.Marshaler {
+func (ec *executionContext) marshalOJiraProjectIdentifier2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐJiraProjectIdentifier(ctx context.Context, sel ast.SelectionSet, v *model.JiraProjectIdentifier) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._JiraProjectIdentifier(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOKeyType2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐKeyType(ctx context.Context, v any) (*model.KeyType, error) {
+func (ec *executionContext) unmarshalOKeyType2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐKeyType(ctx context.Context, v any) (*model.KeyType, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -122389,14 +122355,14 @@ func (ec *executionContext) unmarshalOKeyType2ᚖgithubᚗcomᚋhighlightᚑrun�
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOKeyType2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐKeyType(ctx context.Context, sel ast.SelectionSet, v *model.KeyType) graphql.Marshaler {
+func (ec *executionContext) marshalOKeyType2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐKeyType(ctx context.Context, sel ast.SelectionSet, v *model.KeyType) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return v
 }
 
-func (ec *executionContext) marshalOLinearTeam2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐLinearTeamᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.LinearTeam) graphql.Marshaler {
+func (ec *executionContext) marshalOLinearTeam2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐLinearTeamᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.LinearTeam) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -122423,7 +122389,7 @@ func (ec *executionContext) marshalOLinearTeam2ᚕᚖgithubᚗcomᚋhighlightᚑ
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNLinearTeam2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐLinearTeam(ctx, sel, v[i])
+			ret[i] = ec.marshalNLinearTeam2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐLinearTeam(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -122443,14 +122409,14 @@ func (ec *executionContext) marshalOLinearTeam2ᚕᚖgithubᚗcomᚋhighlightᚑ
 	return ret
 }
 
-func (ec *executionContext) marshalOLogAlert2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐLogAlert(ctx context.Context, sel ast.SelectionSet, v *model1.LogAlert) graphql.Marshaler {
+func (ec *executionContext) marshalOLogAlert2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐLogAlert(ctx context.Context, sel ast.SelectionSet, v *model1.LogAlert) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._LogAlert(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOLogLevel2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐLogLevel(ctx context.Context, v any) (*model.LogLevel, error) {
+func (ec *executionContext) unmarshalOLogLevel2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐLogLevel(ctx context.Context, v any) (*model.LogLevel, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -122459,14 +122425,14 @@ func (ec *executionContext) unmarshalOLogLevel2ᚖgithubᚗcomᚋhighlightᚑrun
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOLogLevel2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐLogLevel(ctx context.Context, sel ast.SelectionSet, v *model.LogLevel) graphql.Marshaler {
+func (ec *executionContext) marshalOLogLevel2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐLogLevel(ctx context.Context, sel ast.SelectionSet, v *model.LogLevel) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return v
 }
 
-func (ec *executionContext) marshalOMatchedErrorTag2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMatchedErrorTag(ctx context.Context, sel ast.SelectionSet, v []*model.MatchedErrorTag) graphql.Marshaler {
+func (ec *executionContext) marshalOMatchedErrorTag2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMatchedErrorTag(ctx context.Context, sel ast.SelectionSet, v []*model.MatchedErrorTag) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -122493,7 +122459,7 @@ func (ec *executionContext) marshalOMatchedErrorTag2ᚕᚖgithubᚗcomᚋhighlig
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOMatchedErrorTag2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMatchedErrorTag(ctx, sel, v[i])
+			ret[i] = ec.marshalOMatchedErrorTag2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMatchedErrorTag(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -122507,14 +122473,14 @@ func (ec *executionContext) marshalOMatchedErrorTag2ᚕᚖgithubᚗcomᚋhighlig
 	return ret
 }
 
-func (ec *executionContext) marshalOMatchedErrorTag2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMatchedErrorTag(ctx context.Context, sel ast.SelectionSet, v *model.MatchedErrorTag) graphql.Marshaler {
+func (ec *executionContext) marshalOMatchedErrorTag2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMatchedErrorTag(ctx context.Context, sel ast.SelectionSet, v *model.MatchedErrorTag) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._MatchedErrorTag(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOMetricAggregator2ᚕgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricAggregatorᚄ(ctx context.Context, v any) ([]model.MetricAggregator, error) {
+func (ec *executionContext) unmarshalOMetricAggregator2ᚕgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricAggregatorᚄ(ctx context.Context, v any) ([]model.MetricAggregator, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -122524,7 +122490,7 @@ func (ec *executionContext) unmarshalOMetricAggregator2ᚕgithubᚗcomᚋhighlig
 	res := make([]model.MetricAggregator, len(vSlice))
 	for i := range vSlice {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalNMetricAggregator2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricAggregator(ctx, vSlice[i])
+		res[i], err = ec.unmarshalNMetricAggregator2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricAggregator(ctx, vSlice[i])
 		if err != nil {
 			return nil, err
 		}
@@ -122532,7 +122498,7 @@ func (ec *executionContext) unmarshalOMetricAggregator2ᚕgithubᚗcomᚋhighlig
 	return res, nil
 }
 
-func (ec *executionContext) marshalOMetricAggregator2ᚕgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricAggregatorᚄ(ctx context.Context, sel ast.SelectionSet, v []model.MetricAggregator) graphql.Marshaler {
+func (ec *executionContext) marshalOMetricAggregator2ᚕgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricAggregatorᚄ(ctx context.Context, sel ast.SelectionSet, v []model.MetricAggregator) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -122559,7 +122525,7 @@ func (ec *executionContext) marshalOMetricAggregator2ᚕgithubᚗcomᚋhighlight
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNMetricAggregator2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricAggregator(ctx, sel, v[i])
+			ret[i] = ec.marshalNMetricAggregator2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricAggregator(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -122579,7 +122545,7 @@ func (ec *executionContext) marshalOMetricAggregator2ᚕgithubᚗcomᚋhighlight
 	return ret
 }
 
-func (ec *executionContext) unmarshalOMetricAggregator2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricAggregator(ctx context.Context, v any) (*model.MetricAggregator, error) {
+func (ec *executionContext) unmarshalOMetricAggregator2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricAggregator(ctx context.Context, v any) (*model.MetricAggregator, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -122588,14 +122554,14 @@ func (ec *executionContext) unmarshalOMetricAggregator2ᚖgithubᚗcomᚋhighlig
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOMetricAggregator2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricAggregator(ctx context.Context, sel ast.SelectionSet, v *model.MetricAggregator) graphql.Marshaler {
+func (ec *executionContext) marshalOMetricAggregator2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricAggregator(ctx context.Context, sel ast.SelectionSet, v *model.MetricAggregator) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return v
 }
 
-func (ec *executionContext) unmarshalOMetricExpressionInput2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricExpressionInputᚄ(ctx context.Context, v any) ([]*model.MetricExpressionInput, error) {
+func (ec *executionContext) unmarshalOMetricExpressionInput2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricExpressionInputᚄ(ctx context.Context, v any) ([]*model.MetricExpressionInput, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -122605,7 +122571,7 @@ func (ec *executionContext) unmarshalOMetricExpressionInput2ᚕᚖgithubᚗcom�
 	res := make([]*model.MetricExpressionInput, len(vSlice))
 	for i := range vSlice {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalNMetricExpressionInput2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricExpressionInput(ctx, vSlice[i])
+		res[i], err = ec.unmarshalNMetricExpressionInput2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricExpressionInput(ctx, vSlice[i])
 		if err != nil {
 			return nil, err
 		}
@@ -122613,14 +122579,14 @@ func (ec *executionContext) unmarshalOMetricExpressionInput2ᚕᚖgithubᚗcom�
 	return res, nil
 }
 
-func (ec *executionContext) marshalOMetricMonitor2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐMetricMonitor(ctx context.Context, sel ast.SelectionSet, v *model1.MetricMonitor) graphql.Marshaler {
+func (ec *executionContext) marshalOMetricMonitor2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐMetricMonitor(ctx context.Context, sel ast.SelectionSet, v *model1.MetricMonitor) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._MetricMonitor(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOMetricTagFilter2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricTagFilterᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.MetricTagFilter) graphql.Marshaler {
+func (ec *executionContext) marshalOMetricTagFilter2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricTagFilterᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.MetricTagFilter) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -122647,7 +122613,7 @@ func (ec *executionContext) marshalOMetricTagFilter2ᚕᚖgithubᚗcomᚋhighlig
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNMetricTagFilter2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricTagFilter(ctx, sel, v[i])
+			ret[i] = ec.marshalNMetricTagFilter2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricTagFilter(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -122667,7 +122633,7 @@ func (ec *executionContext) marshalOMetricTagFilter2ᚕᚖgithubᚗcomᚋhighlig
 	return ret
 }
 
-func (ec *executionContext) unmarshalOMetricTagFilterInput2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricTagFilterInputᚄ(ctx context.Context, v any) ([]*model.MetricTagFilterInput, error) {
+func (ec *executionContext) unmarshalOMetricTagFilterInput2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricTagFilterInputᚄ(ctx context.Context, v any) ([]*model.MetricTagFilterInput, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -122677,7 +122643,7 @@ func (ec *executionContext) unmarshalOMetricTagFilterInput2ᚕᚖgithubᚗcomᚋ
 	res := make([]*model.MetricTagFilterInput, len(vSlice))
 	for i := range vSlice {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalNMetricTagFilterInput2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricTagFilterInput(ctx, vSlice[i])
+		res[i], err = ec.unmarshalNMetricTagFilterInput2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricTagFilterInput(ctx, vSlice[i])
 		if err != nil {
 			return nil, err
 		}
@@ -122685,7 +122651,7 @@ func (ec *executionContext) unmarshalOMetricTagFilterInput2ᚕᚖgithubᚗcomᚋ
 	return res, nil
 }
 
-func (ec *executionContext) unmarshalOMetricViewComponentType2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricViewComponentType(ctx context.Context, v any) (*model.MetricViewComponentType, error) {
+func (ec *executionContext) unmarshalOMetricViewComponentType2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricViewComponentType(ctx context.Context, v any) (*model.MetricViewComponentType, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -122694,14 +122660,14 @@ func (ec *executionContext) unmarshalOMetricViewComponentType2ᚖgithubᚗcomᚋ
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOMetricViewComponentType2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricViewComponentType(ctx context.Context, sel ast.SelectionSet, v *model.MetricViewComponentType) graphql.Marshaler {
+func (ec *executionContext) marshalOMetricViewComponentType2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐMetricViewComponentType(ctx context.Context, sel ast.SelectionSet, v *model.MetricViewComponentType) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return v
 }
 
-func (ec *executionContext) marshalONamedCount2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐNamedCount(ctx context.Context, sel ast.SelectionSet, v []*model.NamedCount) graphql.Marshaler {
+func (ec *executionContext) marshalONamedCount2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐNamedCount(ctx context.Context, sel ast.SelectionSet, v []*model.NamedCount) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -122728,7 +122694,7 @@ func (ec *executionContext) marshalONamedCount2ᚕᚖgithubᚗcomᚋhighlightᚑ
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalONamedCount2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐNamedCount(ctx, sel, v[i])
+			ret[i] = ec.marshalONamedCount2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐNamedCount(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -122742,14 +122708,14 @@ func (ec *executionContext) marshalONamedCount2ᚕᚖgithubᚗcomᚋhighlightᚑ
 	return ret
 }
 
-func (ec *executionContext) marshalONamedCount2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐNamedCount(ctx context.Context, sel ast.SelectionSet, v *model.NamedCount) graphql.Marshaler {
+func (ec *executionContext) marshalONamedCount2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐNamedCount(ctx context.Context, sel ast.SelectionSet, v *model.NamedCount) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._NamedCount(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalONetworkRequestAttribute2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐNetworkRequestAttribute(ctx context.Context, v any) (*model.NetworkRequestAttribute, error) {
+func (ec *executionContext) unmarshalONetworkRequestAttribute2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐNetworkRequestAttribute(ctx context.Context, v any) (*model.NetworkRequestAttribute, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -122758,28 +122724,28 @@ func (ec *executionContext) unmarshalONetworkRequestAttribute2ᚖgithubᚗcomᚋ
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalONetworkRequestAttribute2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐNetworkRequestAttribute(ctx context.Context, sel ast.SelectionSet, v *model.NetworkRequestAttribute) graphql.Marshaler {
+func (ec *executionContext) marshalONetworkRequestAttribute2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐNetworkRequestAttribute(ctx context.Context, sel ast.SelectionSet, v *model.NetworkRequestAttribute) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return v
 }
 
-func (ec *executionContext) marshalONewUsersCount2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐNewUsersCount(ctx context.Context, sel ast.SelectionSet, v *model.NewUsersCount) graphql.Marshaler {
+func (ec *executionContext) marshalONewUsersCount2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐNewUsersCount(ctx context.Context, sel ast.SelectionSet, v *model.NewUsersCount) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._NewUsersCount(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOOAuthClient2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐOAuthClient(ctx context.Context, sel ast.SelectionSet, v *model.OAuthClient) graphql.Marshaler {
+func (ec *executionContext) marshalOOAuthClient2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐOAuthClient(ctx context.Context, sel ast.SelectionSet, v *model.OAuthClient) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._OAuthClient(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOPredictionSettings2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐPredictionSettings(ctx context.Context, v any) (*model.PredictionSettings, error) {
+func (ec *executionContext) unmarshalOPredictionSettings2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐPredictionSettings(ctx context.Context, v any) (*model.PredictionSettings, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -122787,7 +122753,7 @@ func (ec *executionContext) unmarshalOPredictionSettings2ᚖgithubᚗcomᚋhighl
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalOProductType2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐProductType(ctx context.Context, v any) (*model.ProductType, error) {
+func (ec *executionContext) unmarshalOProductType2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐProductType(ctx context.Context, v any) (*model.ProductType, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -122796,18 +122762,18 @@ func (ec *executionContext) unmarshalOProductType2ᚖgithubᚗcomᚋhighlightᚑ
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOProductType2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐProductType(ctx context.Context, sel ast.SelectionSet, v *model.ProductType) graphql.Marshaler {
+func (ec *executionContext) marshalOProductType2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐProductType(ctx context.Context, sel ast.SelectionSet, v *model.ProductType) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return v
 }
 
-func (ec *executionContext) marshalOProject2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐProject(ctx context.Context, sel ast.SelectionSet, v model1.Project) graphql.Marshaler {
+func (ec *executionContext) marshalOProject2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐProject(ctx context.Context, sel ast.SelectionSet, v model1.Project) graphql.Marshaler {
 	return ec._Project(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalOProject2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐProject(ctx context.Context, sel ast.SelectionSet, v []*model1.Project) graphql.Marshaler {
+func (ec *executionContext) marshalOProject2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐProject(ctx context.Context, sel ast.SelectionSet, v []*model1.Project) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -122834,7 +122800,7 @@ func (ec *executionContext) marshalOProject2ᚕᚖgithubᚗcomᚋhighlightᚑrun
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOProject2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐProject(ctx, sel, v[i])
+			ret[i] = ec.marshalOProject2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐProject(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -122848,14 +122814,14 @@ func (ec *executionContext) marshalOProject2ᚕᚖgithubᚗcomᚋhighlightᚑrun
 	return ret
 }
 
-func (ec *executionContext) marshalOProject2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐProject(ctx context.Context, sel ast.SelectionSet, v *model1.Project) graphql.Marshaler {
+func (ec *executionContext) marshalOProject2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐProject(ctx context.Context, sel ast.SelectionSet, v *model1.Project) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Project(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOQueryInput2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐQueryInput(ctx context.Context, v any) (*model.QueryInput, error) {
+func (ec *executionContext) unmarshalOQueryInput2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐQueryInput(ctx context.Context, v any) (*model.QueryInput, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -122863,21 +122829,21 @@ func (ec *executionContext) unmarshalOQueryInput2ᚖgithubᚗcomᚋhighlightᚑr
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOReferrerTablePayload2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐReferrerTablePayload(ctx context.Context, sel ast.SelectionSet, v *model.ReferrerTablePayload) graphql.Marshaler {
+func (ec *executionContext) marshalOReferrerTablePayload2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐReferrerTablePayload(ctx context.Context, sel ast.SelectionSet, v *model.ReferrerTablePayload) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._ReferrerTablePayload(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOSSOLogin2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSSOLogin(ctx context.Context, sel ast.SelectionSet, v *model.SSOLogin) graphql.Marshaler {
+func (ec *executionContext) marshalOSSOLogin2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSSOLogin(ctx context.Context, sel ast.SelectionSet, v *model.SSOLogin) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._SSOLogin(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOSamplingInput2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSamplingInput(ctx context.Context, v any) (*model.SamplingInput, error) {
+func (ec *executionContext) unmarshalOSamplingInput2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSamplingInput(ctx context.Context, v any) (*model.SamplingInput, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -122885,14 +122851,14 @@ func (ec *executionContext) unmarshalOSamplingInput2ᚖgithubᚗcomᚋhighlight�
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOSanitizedAdmin2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSanitizedAdmin(ctx context.Context, sel ast.SelectionSet, v *model.SanitizedAdmin) graphql.Marshaler {
+func (ec *executionContext) marshalOSanitizedAdmin2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSanitizedAdmin(ctx context.Context, sel ast.SelectionSet, v *model.SanitizedAdmin) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._SanitizedAdmin(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOSanitizedAdminInput2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSanitizedAdminInput(ctx context.Context, v any) (*model.SanitizedAdminInput, error) {
+func (ec *executionContext) unmarshalOSanitizedAdminInput2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSanitizedAdminInput(ctx context.Context, v any) (*model.SanitizedAdminInput, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -122900,14 +122866,14 @@ func (ec *executionContext) unmarshalOSanitizedAdminInput2ᚖgithubᚗcomᚋhigh
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOSanitizedSlackChannel2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSanitizedSlackChannel(ctx context.Context, sel ast.SelectionSet, v *model.SanitizedSlackChannel) graphql.Marshaler {
+func (ec *executionContext) marshalOSanitizedSlackChannel2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSanitizedSlackChannel(ctx context.Context, sel ast.SelectionSet, v *model.SanitizedSlackChannel) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._SanitizedSlackChannel(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOSanitizedSlackChannelInput2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSanitizedSlackChannelInput(ctx context.Context, v any) ([]*model.SanitizedSlackChannelInput, error) {
+func (ec *executionContext) unmarshalOSanitizedSlackChannelInput2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSanitizedSlackChannelInput(ctx context.Context, v any) ([]*model.SanitizedSlackChannelInput, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -122917,7 +122883,7 @@ func (ec *executionContext) unmarshalOSanitizedSlackChannelInput2ᚕᚖgithubᚗ
 	res := make([]*model.SanitizedSlackChannelInput, len(vSlice))
 	for i := range vSlice {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalOSanitizedSlackChannelInput2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSanitizedSlackChannelInput(ctx, vSlice[i])
+		res[i], err = ec.unmarshalOSanitizedSlackChannelInput2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSanitizedSlackChannelInput(ctx, vSlice[i])
 		if err != nil {
 			return nil, err
 		}
@@ -122925,7 +122891,7 @@ func (ec *executionContext) unmarshalOSanitizedSlackChannelInput2ᚕᚖgithubᚗ
 	return res, nil
 }
 
-func (ec *executionContext) unmarshalOSanitizedSlackChannelInput2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSanitizedSlackChannelInput(ctx context.Context, v any) (*model.SanitizedSlackChannelInput, error) {
+func (ec *executionContext) unmarshalOSanitizedSlackChannelInput2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSanitizedSlackChannelInput(ctx context.Context, v any) (*model.SanitizedSlackChannelInput, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -122933,7 +122899,7 @@ func (ec *executionContext) unmarshalOSanitizedSlackChannelInput2ᚖgithubᚗcom
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOSavedSegment2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐSavedSegment(ctx context.Context, sel ast.SelectionSet, v []*model1.SavedSegment) graphql.Marshaler {
+func (ec *executionContext) marshalOSavedSegment2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐSavedSegment(ctx context.Context, sel ast.SelectionSet, v []*model1.SavedSegment) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -122960,7 +122926,7 @@ func (ec *executionContext) marshalOSavedSegment2ᚕᚖgithubᚗcomᚋhighlight�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOSavedSegment2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐSavedSegment(ctx, sel, v[i])
+			ret[i] = ec.marshalOSavedSegment2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐSavedSegment(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -122974,42 +122940,42 @@ func (ec *executionContext) marshalOSavedSegment2ᚕᚖgithubᚗcomᚋhighlight�
 	return ret
 }
 
-func (ec *executionContext) marshalOSavedSegment2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐSavedSegment(ctx context.Context, sel ast.SelectionSet, v *model1.SavedSegment) graphql.Marshaler {
+func (ec *executionContext) marshalOSavedSegment2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐSavedSegment(ctx context.Context, sel ast.SelectionSet, v *model1.SavedSegment) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._SavedSegment(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOService2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐService(ctx context.Context, sel ast.SelectionSet, v *model1.Service) graphql.Marshaler {
+func (ec *executionContext) marshalOService2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐService(ctx context.Context, sel ast.SelectionSet, v *model1.Service) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Service(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOServiceConnection2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐServiceConnection(ctx context.Context, sel ast.SelectionSet, v *model.ServiceConnection) graphql.Marshaler {
+func (ec *executionContext) marshalOServiceConnection2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐServiceConnection(ctx context.Context, sel ast.SelectionSet, v *model.ServiceConnection) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._ServiceConnection(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOServiceEdge2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐServiceEdge(ctx context.Context, sel ast.SelectionSet, v *model.ServiceEdge) graphql.Marshaler {
+func (ec *executionContext) marshalOServiceEdge2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐServiceEdge(ctx context.Context, sel ast.SelectionSet, v *model.ServiceEdge) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._ServiceEdge(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOSession2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐSession(ctx context.Context, sel ast.SelectionSet, v *model1.Session) graphql.Marshaler {
+func (ec *executionContext) marshalOSession2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐSession(ctx context.Context, sel ast.SelectionSet, v *model1.Session) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Session(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOSessionAlert2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐSessionAlert(ctx context.Context, sel ast.SelectionSet, v []*model1.SessionAlert) graphql.Marshaler {
+func (ec *executionContext) marshalOSessionAlert2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐSessionAlert(ctx context.Context, sel ast.SelectionSet, v []*model1.SessionAlert) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -123036,7 +123002,7 @@ func (ec *executionContext) marshalOSessionAlert2ᚕᚖgithubᚗcomᚋhighlight�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOSessionAlert2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐSessionAlert(ctx, sel, v[i])
+			ret[i] = ec.marshalOSessionAlert2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐSessionAlert(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -123050,18 +123016,18 @@ func (ec *executionContext) marshalOSessionAlert2ᚕᚖgithubᚗcomᚋhighlight�
 	return ret
 }
 
-func (ec *executionContext) marshalOSessionAlert2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐSessionAlert(ctx context.Context, sel ast.SelectionSet, v *model1.SessionAlert) graphql.Marshaler {
+func (ec *executionContext) marshalOSessionAlert2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐSessionAlert(ctx context.Context, sel ast.SelectionSet, v *model1.SessionAlert) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._SessionAlert(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOSessionComment2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐSessionComment(ctx context.Context, sel ast.SelectionSet, v model1.SessionComment) graphql.Marshaler {
+func (ec *executionContext) marshalOSessionComment2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐSessionComment(ctx context.Context, sel ast.SelectionSet, v model1.SessionComment) graphql.Marshaler {
 	return ec._SessionComment(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalOSessionComment2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐSessionCommentᚄ(ctx context.Context, sel ast.SelectionSet, v []*model1.SessionComment) graphql.Marshaler {
+func (ec *executionContext) marshalOSessionComment2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐSessionCommentᚄ(ctx context.Context, sel ast.SelectionSet, v []*model1.SessionComment) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -123088,7 +123054,7 @@ func (ec *executionContext) marshalOSessionComment2ᚕᚖgithubᚗcomᚋhighligh
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNSessionComment2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐSessionComment(ctx, sel, v[i])
+			ret[i] = ec.marshalNSessionComment2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐSessionComment(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -123108,14 +123074,14 @@ func (ec *executionContext) marshalOSessionComment2ᚕᚖgithubᚗcomᚋhighligh
 	return ret
 }
 
-func (ec *executionContext) marshalOSessionComment2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐSessionComment(ctx context.Context, sel ast.SelectionSet, v *model1.SessionComment) graphql.Marshaler {
+func (ec *executionContext) marshalOSessionComment2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐSessionComment(ctx context.Context, sel ast.SelectionSet, v *model1.SessionComment) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._SessionComment(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOSessionCommentTagInput2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSessionCommentTagInput(ctx context.Context, v any) (*model.SessionCommentTagInput, error) {
+func (ec *executionContext) unmarshalOSessionCommentTagInput2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSessionCommentTagInput(ctx context.Context, v any) (*model.SessionCommentTagInput, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -123123,7 +123089,7 @@ func (ec *executionContext) unmarshalOSessionCommentTagInput2ᚖgithubᚗcomᚋh
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalOSessionExcludedReason2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSessionExcludedReason(ctx context.Context, v any) (*model.SessionExcludedReason, error) {
+func (ec *executionContext) unmarshalOSessionExcludedReason2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSessionExcludedReason(ctx context.Context, v any) (*model.SessionExcludedReason, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -123132,28 +123098,28 @@ func (ec *executionContext) unmarshalOSessionExcludedReason2ᚖgithubᚗcomᚋhi
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOSessionExcludedReason2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSessionExcludedReason(ctx context.Context, sel ast.SelectionSet, v *model.SessionExcludedReason) graphql.Marshaler {
+func (ec *executionContext) marshalOSessionExcludedReason2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSessionExcludedReason(ctx context.Context, sel ast.SelectionSet, v *model.SessionExcludedReason) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return v
 }
 
-func (ec *executionContext) marshalOSessionInsight2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐSessionInsight(ctx context.Context, sel ast.SelectionSet, v *model1.SessionInsight) graphql.Marshaler {
+func (ec *executionContext) marshalOSessionInsight2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐSessionInsight(ctx context.Context, sel ast.SelectionSet, v *model1.SessionInsight) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._SessionInsight(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOSessionPayload2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐSessionPayload(ctx context.Context, sel ast.SelectionSet, v *model1.SessionPayload) graphql.Marshaler {
+func (ec *executionContext) marshalOSessionPayload2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐSessionPayload(ctx context.Context, sel ast.SelectionSet, v *model1.SessionPayload) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._SessionPayload(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOSocialLink2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSocialLink(ctx context.Context, sel ast.SelectionSet, v []*model.SocialLink) graphql.Marshaler {
+func (ec *executionContext) marshalOSocialLink2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSocialLink(ctx context.Context, sel ast.SelectionSet, v []*model.SocialLink) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -123180,7 +123146,7 @@ func (ec *executionContext) marshalOSocialLink2ᚕᚖgithubᚗcomᚋhighlightᚑ
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOSocialLink2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSocialLink(ctx, sel, v[i])
+			ret[i] = ec.marshalOSocialLink2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSocialLink(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -123194,14 +123160,14 @@ func (ec *executionContext) marshalOSocialLink2ᚕᚖgithubᚗcomᚋhighlightᚑ
 	return ret
 }
 
-func (ec *executionContext) marshalOSocialLink2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSocialLink(ctx context.Context, sel ast.SelectionSet, v *model.SocialLink) graphql.Marshaler {
+func (ec *executionContext) marshalOSocialLink2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSocialLink(ctx context.Context, sel ast.SelectionSet, v *model.SocialLink) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._SocialLink(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOSortInput2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSortInput(ctx context.Context, v any) (*model.SortInput, error) {
+func (ec *executionContext) unmarshalOSortInput2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSortInput(ctx context.Context, v any) (*model.SortInput, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -123209,14 +123175,14 @@ func (ec *executionContext) unmarshalOSortInput2ᚖgithubᚗcomᚋhighlightᚑru
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOSourceMappingError2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSourceMappingError(ctx context.Context, sel ast.SelectionSet, v *model.SourceMappingError) graphql.Marshaler {
+func (ec *executionContext) marshalOSourceMappingError2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSourceMappingError(ctx context.Context, sel ast.SelectionSet, v *model.SourceMappingError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._SourceMappingError(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOSourceMappingErrorCode2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSourceMappingErrorCode(ctx context.Context, v any) (*model.SourceMappingErrorCode, error) {
+func (ec *executionContext) unmarshalOSourceMappingErrorCode2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSourceMappingErrorCode(ctx context.Context, v any) (*model.SourceMappingErrorCode, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -123225,7 +123191,7 @@ func (ec *executionContext) unmarshalOSourceMappingErrorCode2ᚖgithubᚗcomᚋh
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOSourceMappingErrorCode2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSourceMappingErrorCode(ctx context.Context, sel ast.SelectionSet, v *model.SourceMappingErrorCode) graphql.Marshaler {
+func (ec *executionContext) marshalOSourceMappingErrorCode2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSourceMappingErrorCode(ctx context.Context, sel ast.SelectionSet, v *model.SourceMappingErrorCode) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -123340,31 +123306,31 @@ func (ec *executionContext) marshalOStringArray2githubᚗcomᚋlibᚋpqᚐString
 	return res
 }
 
-func (ec *executionContext) marshalOSubscriptionDetails2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSubscriptionDetails(ctx context.Context, sel ast.SelectionSet, v *model.SubscriptionDetails) graphql.Marshaler {
+func (ec *executionContext) marshalOSubscriptionDetails2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSubscriptionDetails(ctx context.Context, sel ast.SelectionSet, v *model.SubscriptionDetails) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._SubscriptionDetails(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOSubscriptionDiscount2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSubscriptionDiscount(ctx context.Context, sel ast.SelectionSet, v *model.SubscriptionDiscount) graphql.Marshaler {
+func (ec *executionContext) marshalOSubscriptionDiscount2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐSubscriptionDiscount(ctx context.Context, sel ast.SelectionSet, v *model.SubscriptionDiscount) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._SubscriptionDiscount(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOThresholdCondition2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐThresholdCondition(ctx context.Context, v any) (model.ThresholdCondition, error) {
+func (ec *executionContext) unmarshalOThresholdCondition2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐThresholdCondition(ctx context.Context, v any) (model.ThresholdCondition, error) {
 	var res model.ThresholdCondition
 	err := res.UnmarshalGQL(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOThresholdCondition2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐThresholdCondition(ctx context.Context, sel ast.SelectionSet, v model.ThresholdCondition) graphql.Marshaler {
+func (ec *executionContext) marshalOThresholdCondition2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐThresholdCondition(ctx context.Context, sel ast.SelectionSet, v model.ThresholdCondition) graphql.Marshaler {
 	return v
 }
 
-func (ec *executionContext) unmarshalOThresholdCondition2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐThresholdCondition(ctx context.Context, v any) (*model.ThresholdCondition, error) {
+func (ec *executionContext) unmarshalOThresholdCondition2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐThresholdCondition(ctx context.Context, v any) (*model.ThresholdCondition, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -123373,24 +123339,24 @@ func (ec *executionContext) unmarshalOThresholdCondition2ᚖgithubᚗcomᚋhighl
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOThresholdCondition2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐThresholdCondition(ctx context.Context, sel ast.SelectionSet, v *model.ThresholdCondition) graphql.Marshaler {
+func (ec *executionContext) marshalOThresholdCondition2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐThresholdCondition(ctx context.Context, sel ast.SelectionSet, v *model.ThresholdCondition) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return v
 }
 
-func (ec *executionContext) unmarshalOThresholdType2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐThresholdType(ctx context.Context, v any) (model.ThresholdType, error) {
+func (ec *executionContext) unmarshalOThresholdType2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐThresholdType(ctx context.Context, v any) (model.ThresholdType, error) {
 	var res model.ThresholdType
 	err := res.UnmarshalGQL(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOThresholdType2githubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐThresholdType(ctx context.Context, sel ast.SelectionSet, v model.ThresholdType) graphql.Marshaler {
+func (ec *executionContext) marshalOThresholdType2githubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐThresholdType(ctx context.Context, sel ast.SelectionSet, v model.ThresholdType) graphql.Marshaler {
 	return v
 }
 
-func (ec *executionContext) unmarshalOThresholdType2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐThresholdType(ctx context.Context, v any) (*model.ThresholdType, error) {
+func (ec *executionContext) unmarshalOThresholdType2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐThresholdType(ctx context.Context, v any) (*model.ThresholdType, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -123399,7 +123365,7 @@ func (ec *executionContext) unmarshalOThresholdType2ᚖgithubᚗcomᚋhighlight�
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOThresholdType2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐThresholdType(ctx context.Context, sel ast.SelectionSet, v *model.ThresholdType) graphql.Marshaler {
+func (ec *executionContext) marshalOThresholdType2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐThresholdType(ctx context.Context, sel ast.SelectionSet, v *model.ThresholdType) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -123432,14 +123398,14 @@ func (ec *executionContext) marshalOTimestamp2ᚖtimeᚐTime(ctx context.Context
 	return res
 }
 
-func (ec *executionContext) marshalOTopUsersPayload2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐTopUsersPayload(ctx context.Context, sel ast.SelectionSet, v *model.TopUsersPayload) graphql.Marshaler {
+func (ec *executionContext) marshalOTopUsersPayload2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐTopUsersPayload(ctx context.Context, sel ast.SelectionSet, v *model.TopUsersPayload) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._TopUsersPayload(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOTraceEvent2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐTraceEvent(ctx context.Context, sel ast.SelectionSet, v []*model.TraceEvent) graphql.Marshaler {
+func (ec *executionContext) marshalOTraceEvent2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐTraceEvent(ctx context.Context, sel ast.SelectionSet, v []*model.TraceEvent) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -123466,7 +123432,7 @@ func (ec *executionContext) marshalOTraceEvent2ᚕᚖgithubᚗcomᚋhighlightᚑ
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOTraceEvent2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐTraceEvent(ctx, sel, v[i])
+			ret[i] = ec.marshalOTraceEvent2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐTraceEvent(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -123480,14 +123446,14 @@ func (ec *executionContext) marshalOTraceEvent2ᚕᚖgithubᚗcomᚋhighlightᚑ
 	return ret
 }
 
-func (ec *executionContext) marshalOTraceEvent2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐTraceEvent(ctx context.Context, sel ast.SelectionSet, v *model.TraceEvent) graphql.Marshaler {
+func (ec *executionContext) marshalOTraceEvent2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐTraceEvent(ctx context.Context, sel ast.SelectionSet, v *model.TraceEvent) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._TraceEvent(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOTraceLink2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐTraceLink(ctx context.Context, sel ast.SelectionSet, v []*model.TraceLink) graphql.Marshaler {
+func (ec *executionContext) marshalOTraceLink2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐTraceLink(ctx context.Context, sel ast.SelectionSet, v []*model.TraceLink) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -123514,7 +123480,7 @@ func (ec *executionContext) marshalOTraceLink2ᚕᚖgithubᚗcomᚋhighlightᚑr
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOTraceLink2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐTraceLink(ctx, sel, v[i])
+			ret[i] = ec.marshalOTraceLink2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐTraceLink(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -123528,42 +123494,42 @@ func (ec *executionContext) marshalOTraceLink2ᚕᚖgithubᚗcomᚋhighlightᚑr
 	return ret
 }
 
-func (ec *executionContext) marshalOTraceLink2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐTraceLink(ctx context.Context, sel ast.SelectionSet, v *model.TraceLink) graphql.Marshaler {
+func (ec *executionContext) marshalOTraceLink2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐTraceLink(ctx context.Context, sel ast.SelectionSet, v *model.TraceLink) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._TraceLink(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOTracePayload2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐTracePayload(ctx context.Context, sel ast.SelectionSet, v *model.TracePayload) graphql.Marshaler {
+func (ec *executionContext) marshalOTracePayload2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐTracePayload(ctx context.Context, sel ast.SelectionSet, v *model.TracePayload) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._TracePayload(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOTrackProperty2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐTrackProperty(ctx context.Context, sel ast.SelectionSet, v *model1.TrackProperty) graphql.Marshaler {
+func (ec *executionContext) marshalOTrackProperty2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐTrackProperty(ctx context.Context, sel ast.SelectionSet, v *model1.TrackProperty) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._TrackProperty(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOUserFingerprintCount2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐUserFingerprintCount(ctx context.Context, sel ast.SelectionSet, v *model.UserFingerprintCount) graphql.Marshaler {
+func (ec *executionContext) marshalOUserFingerprintCount2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐUserFingerprintCount(ctx context.Context, sel ast.SelectionSet, v *model.UserFingerprintCount) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._UserFingerprintCount(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOUserProperty2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐUserProperty(ctx context.Context, sel ast.SelectionSet, v *model1.UserProperty) graphql.Marshaler {
+func (ec *executionContext) marshalOUserProperty2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐUserProperty(ctx context.Context, sel ast.SelectionSet, v *model1.UserProperty) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._UserProperty(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOVariableInput2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐVariableInputᚄ(ctx context.Context, v any) ([]*model.VariableInput, error) {
+func (ec *executionContext) unmarshalOVariableInput2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐVariableInputᚄ(ctx context.Context, v any) ([]*model.VariableInput, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -123573,7 +123539,7 @@ func (ec *executionContext) unmarshalOVariableInput2ᚕᚖgithubᚗcomᚋhighlig
 	res := make([]*model.VariableInput, len(vSlice))
 	for i := range vSlice {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalNVariableInput2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐVariableInput(ctx, vSlice[i])
+		res[i], err = ec.unmarshalNVariableInput2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋprivateᚑgraphᚋgraphᚋmodelᚐVariableInput(ctx, vSlice[i])
 		if err != nil {
 			return nil, err
 		}
@@ -123581,7 +123547,7 @@ func (ec *executionContext) unmarshalOVariableInput2ᚕᚖgithubᚗcomᚋhighlig
 	return res, nil
 }
 
-func (ec *executionContext) marshalOWorkspace2ᚕᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐWorkspace(ctx context.Context, sel ast.SelectionSet, v []*model1.Workspace) graphql.Marshaler {
+func (ec *executionContext) marshalOWorkspace2ᚕᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐWorkspace(ctx context.Context, sel ast.SelectionSet, v []*model1.Workspace) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -123608,7 +123574,7 @@ func (ec *executionContext) marshalOWorkspace2ᚕᚖgithubᚗcomᚋhighlightᚑr
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOWorkspace2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐWorkspace(ctx, sel, v[i])
+			ret[i] = ec.marshalOWorkspace2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐWorkspace(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -123622,21 +123588,21 @@ func (ec *executionContext) marshalOWorkspace2ᚕᚖgithubᚗcomᚋhighlightᚑr
 	return ret
 }
 
-func (ec *executionContext) marshalOWorkspace2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐWorkspace(ctx context.Context, sel ast.SelectionSet, v *model1.Workspace) graphql.Marshaler {
+func (ec *executionContext) marshalOWorkspace2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐWorkspace(ctx context.Context, sel ast.SelectionSet, v *model1.Workspace) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Workspace(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOWorkspaceAdminRole2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐWorkspaceAdminRole(ctx context.Context, sel ast.SelectionSet, v *model1.WorkspaceAdminRole) graphql.Marshaler {
+func (ec *executionContext) marshalOWorkspaceAdminRole2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐWorkspaceAdminRole(ctx context.Context, sel ast.SelectionSet, v *model1.WorkspaceAdminRole) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._WorkspaceAdminRole(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOWorkspaceInviteLink2ᚖgithubᚗcomᚋhighlightᚑrunᚋhighlightᚋbackendᚋmodelᚐWorkspaceInviteLink(ctx context.Context, sel ast.SelectionSet, v *model1.WorkspaceInviteLink) graphql.Marshaler {
+func (ec *executionContext) marshalOWorkspaceInviteLink2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐWorkspaceInviteLink(ctx context.Context, sel ast.SelectionSet, v *model1.WorkspaceInviteLink) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

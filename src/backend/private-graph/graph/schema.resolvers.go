@@ -422,7 +422,7 @@ func (r *mutationResolver) UpdateAdminAndCreateWorkspace(ctx context.Context, ad
 		}
 
 		// Create workspace
-		workspace, err := transactionR.CreateWorkspace(ctx, adminAndWorkspaceDetails.WorkspaceName, adminAndWorkspaceDetails.PromoCode)
+		workspace, err := transactionR.CreateWorkspace(ctx, adminAndWorkspaceDetails.WorkspaceName)
 		if err != nil {
 			return e.Wrap(err, "error creating workspace")
 		}
@@ -511,24 +511,13 @@ func (r *mutationResolver) CreateProject(ctx context.Context, name string, works
 }
 
 // CreateWorkspace is the resolver for the createWorkspace field.
-func (r *mutationResolver) CreateWorkspace(ctx context.Context, name string, promoCode *string) (*model.Workspace, error) {
+func (r *mutationResolver) CreateWorkspace(ctx context.Context, name string) (*model.Workspace, error) {
 	admin, err := r.getCurrentAdmin(ctx)
 	if err != nil {
 		return nil, nil
 	}
 
 	trialEnd := time.Now().Add(14 * 24 * time.Hour) // Trial expires 14 days from current day
-	if promoCode != nil {
-		trialDetails, ok := PromoCodes[strings.ToUpper(*promoCode)]
-		if !ok {
-			return nil, e.New("Could not create workspace: promo code is not valid.")
-		}
-		if time.Now().After(trialDetails.ValidUntil) {
-			return nil, e.New("Could not create workspace: promo code has expired.")
-		}
-
-		trialEnd = time.Now().Add(time.Duration(trialDetails.TrialDays*24) * time.Hour)
-	}
 
 	workspace := &model.Workspace{
 		Admins:                    []model.Admin{*admin},
@@ -536,7 +525,6 @@ func (r *mutationResolver) CreateWorkspace(ctx context.Context, name string, pro
 		TrialEndDate:              &trialEnd,
 		EligibleForTrialExtension: true, // Trial can be extended if user integrates + fills out form
 		TrialExtensionEnabled:     false,
-		PromoCode:                 promoCode,
 	}
 
 	if env.IsOnPrem() {
@@ -9702,11 +9690,6 @@ func (r *Resolver) SessionComment() generated.SessionCommentResolver {
 // Subscription returns generated.SubscriptionResolver implementation.
 func (r *Resolver) Subscription() generated.SubscriptionResolver { return &subscriptionResolver{r} }
 
-// SystemConfiguration returns generated.SystemConfigurationResolver implementation.
-func (r *Resolver) SystemConfiguration() generated.SystemConfigurationResolver {
-	return &systemConfigurationResolver{r}
-}
-
 // TimelineIndicatorEvent returns generated.TimelineIndicatorEventResolver implementation.
 func (r *Resolver) TimelineIndicatorEvent() generated.TimelineIndicatorEventResolver {
 	return &timelineIndicatorEventResolver{r}
@@ -9733,6 +9716,18 @@ type sessionResolver struct{ *Resolver }
 type sessionAlertResolver struct{ *Resolver }
 type sessionCommentResolver struct{ *Resolver }
 type subscriptionResolver struct{ *Resolver }
-type systemConfigurationResolver struct{ *Resolver }
 type timelineIndicatorEventResolver struct{ *Resolver }
 type visualizationResolver struct{ *Resolver }
+
+// !!! WARNING !!!
+// The code below was going to be deleted when updating resolvers. It has been copied here so you have
+// one last chance to move it out of harms way if you want. There are two reasons this happens:
+//  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
+//    it when you're done.
+//  - You have helper methods in this file. Move them out to keep these resolver files clean.
+/*
+	func (r *Resolver) SystemConfiguration() generated.SystemConfigurationResolver {
+	return &systemConfigurationResolver{r}
+}
+type systemConfigurationResolver struct{ *Resolver }
+*/

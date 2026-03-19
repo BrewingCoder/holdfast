@@ -91,7 +91,6 @@ type AdminAndWorkspaceDetails struct {
 	Referral                    string  `json:"referral"`
 	WorkspaceName               string  `json:"workspace_name"`
 	AllowedAutoJoinEmailOrigins *string `json:"allowed_auto_join_email_origins,omitempty"`
-	PromoCode                   *string `json:"promo_code,omitempty"`
 }
 
 type AlertDestinationInput struct {
