@@ -286,6 +286,62 @@ These files serve as context anchors for both human readers and AI agents. An ag
 
 ---
 
+## Phase 7: Test Coverage Investment
+
+The inherited test suite is thin — 72 frontend tests and 98 backend tests for a 200K+ line codebase. Most backend tests require a full infrastructure stack (Postgres, ClickHouse, Redis, Kafka) to run. This is tech debt we can't see until something breaks in production.
+
+Same bottom-up approach as module documentation — start at the foundation and work up. Document and test together: you can't write good tests for a module you don't understand, and you can't document a module properly without testing its edge cases.
+
+### Approach
+
+Follow the same dependency order as Phase 6. For each module:
+
+1. **Audit** — what tests exist, what's covered, what's not
+2. **Unit tests first** — pure logic that doesn't need infrastructure (parsers, validators, transformers, serializers)
+3. **Integration tests second** — tests that need a database, using Docker Compose test fixtures
+4. **Contract tests for APIs** — GraphQL schema compliance, SDK-to-backend contract validation
+5. **Ratchet, don't mandate** — set coverage thresholds at current levels, only allow them to go up. No "achieve 80% by Friday" mandates.
+
+### Priority order (highest risk, lowest coverage)
+
+| Module | Current Coverage | Risk | Notes |
+|--------|-----------------|------|-------|
+| `parser/`, `queryparser/` | 87-100% | Low | Already well-tested. Maintain. |
+| `public-graph/` resolvers | ~0% (needs infra) | **Critical** | Data ingestion path. Bugs here = data loss. |
+| `private-graph/` resolvers | ~0% (needs infra) | **High** | Dashboard API. Bugs here = broken UI. |
+| `worker/` handlers | ~0% (needs infra) | **High** | Async processing. Silent failures. |
+| `clickhouse/` queries | ~0% (needs infra) | **High** | Analytics queries. Wrong results = misleading dashboards. |
+| `store/` data access | ~0% (needs infra) | **High** | Core CRUD. Every feature depends on this. |
+| `model/` | ~0% (needs infra) | Medium | GORM models. Migrations are the real risk. |
+| `alerts/` | ~3% | Medium | Alert delivery. False negatives = missed incidents. |
+| `errorgroups/` | ~14% | Medium | Error grouping logic. Bad groups = noise. |
+| `stacktraces/` | ~0% (needs AWS) | Medium | Stack trace enhancement. Needs S3 mock. |
+| Frontend components | ~5% | Medium | UI logic. Search, filters, graphing. |
+| SDKs | ~10% | Medium | Client-facing. Bugs here = broken customer apps. |
+
+### Infrastructure for testing
+
+The biggest blocker is that most backend tests need Postgres + ClickHouse + Redis + Kafka. To make testing practical:
+
+- [ ] Create a `docker-compose.test.yml` with lightweight test instances
+- [ ] Add a `make test-with-infra` target that spins up containers, runs tests, tears down
+- [ ] Set up test database seeding scripts
+- [ ] Add ClickHouse test fixtures
+- [ ] Mock S3 with MinIO for stack trace tests
+- [ ] CI workflow that runs integration tests against Docker services
+
+### Coverage tooling
+
+- **Backend**: `go test -coverprofile` (already in Makefile)
+- **Frontend**: Vitest with v8 coverage provider (configured)
+- **CI**: Coverage artifacts uploaded, thresholds enforced via quality gates
+- [ ] Add coverage badge to README (via Codecov, SonarQube, or custom shield)
+
+### Status
+**Not started.** Pairs naturally with Phase 6 (documentation) — do both per-module as you go.
+
+---
+
 ## Action Items — Claim These Now
 
 These are first-come-first-served and should be grabbed regardless of timeline:
