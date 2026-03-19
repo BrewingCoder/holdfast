@@ -1149,4 +1149,3 @@ func TestUpdateSessionIsPublic(t *testing.T) {
 		assert.False(t, session.IsPublic)
 	})
 }
-
