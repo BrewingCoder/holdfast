@@ -250,6 +250,42 @@ These are not certifications (HoldFast is a tool, not a service) but guidance fo
 
 ---
 
+## Phase 6: Module Documentation
+
+Document every module in the codebase, starting from the deepest layer (storage, data models, core libraries) and working upward through the stack. Documentation serves two audiences: human contributors reading a wiki, and agentic AI contributors that need structured context to work effectively.
+
+### Approach
+
+Work bottom-up through the dependency graph:
+
+1. **Storage layer** — ClickHouse schema, PostgreSQL models (GORM), Redis cache patterns, Kafka topics and message formats, S3/object storage
+2. **Data access** — `store/` package, `clickhouse/` query layer, `model/` structs and migrations
+3. **Core libraries** — `parser/`, `queryparser/`, `errorgroups/`, `stacktraces/`, `embeddings/`, `otel/` extraction
+4. **GraphQL APIs** — `public-graph/` (ingestion) and `private-graph/` (dashboard) schemas, resolvers, middleware
+5. **Workers** — Kafka consumer handlers, scheduled tasks, async processing pipeline
+6. **Alert system** — `alerts/`, `alerts/v2/`, integration destinations (Slack, Discord, Teams, webhooks, issue trackers)
+7. **Frontend** — React component tree, page routing, Apollo Client state, search/filter UI
+8. **SDKs** — Per-SDK architecture, public API surface, configuration options, data flow to collector
+
+### Documentation format
+
+Each module gets a `MODULE.md` file in its directory containing:
+
+- **Purpose** — what this module does, in one paragraph
+- **Dependencies** — what it imports, what imports it
+- **Key types/interfaces** — the public API surface with brief descriptions
+- **Data flow** — how data enters and leaves this module
+- **Configuration** — environment variables and config options
+- **Gotchas** — non-obvious behavior, known issues, historical context
+- **Testing** — how to test this module, what fixtures exist
+
+These files serve as context anchors for both human readers and AI agents. An agent dropping into `store/MODULE.md` should have enough context to make changes without reading every file in the package.
+
+### Status
+**Not started.** This is a significant effort but pays compound interest — every module documented makes future contributions faster for both humans and agents.
+
+---
+
 ## Action Items — Claim These Now
 
 These are first-come-first-served and should be grabbed regardless of timeline:
