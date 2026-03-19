@@ -7349,6 +7349,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@expo-google-fonts/material-symbols@npm:^0.4.1":
+  version: 0.4.27
+  resolution: "@expo-google-fonts/material-symbols@npm:0.4.27"
+  checksum: 10/842b249ff3c128eca356916a908dd813b235d23262e95b555e1ced47dfa1cd027d45f210ad01cd4f67e1defd5294dff5ff8ad9dba7eaa7dadfa69cbbcb788571
+  languageName: node
+  linkType: hard
+
 "@expo/bunyan@npm:^4.0.0":
   version: 4.0.1
   resolution: "@expo/bunyan@npm:4.0.1"
@@ -31847,7 +31854,7 @@ __metadata:
     expo-router: "npm:~4.0.15"
     expo-splash-screen: "npm:~0.29.18"
     expo-status-bar: "npm:~2.0.0"
-    expo-symbols: "npm:~0.2.0"
+    expo-symbols: "npm:~55.0.5"
     expo-system-ui: "npm:~4.0.6"
     expo-web-browser: "npm:~14.0.1"
     jest: "npm:^29.2.1"
@@ -34991,14 +34998,18 @@ __metadata:
   languageName: node
   linkType: hard
 
-"expo-symbols@npm:~0.2.0":
-  version: 0.2.1
-  resolution: "expo-symbols@npm:0.2.1"
+"expo-symbols@npm:~55.0.5":
+  version: 55.0.5
+  resolution: "expo-symbols@npm:55.0.5"
   dependencies:
+    "@expo-google-fonts/material-symbols": "npm:^0.4.1"
     sf-symbols-typescript: "npm:^2.0.0"
   peerDependencies:
     expo: "*"
-  checksum: 10/108c1b286f1fe544a204c70876d06f18a136d82e8dd6db9cd174cdc43e68cc4e317f924fa89c01aa1899d31b9eb70c678885fd269fe4f800fea1233b34c4db4e
+    expo-font: "*"
+    react: "*"
+    react-native: "*"
+  checksum: 10/992834df221bd792ff251fc622bd5c6ecb3f1c1862a58273c9edef5e9934870c8f53693871a53dff20bc37792cd16e886fc5475e2e98de8955f95bcd825cc61d
   languageName: node
   linkType: hard
 
