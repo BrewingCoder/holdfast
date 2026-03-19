@@ -60,3 +60,60 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+
+  frontend:
+    name: Frontend Analysis
+    runs-on: [self-hosted, holdfast]
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Install dependencies
+        run: yarn install
+
+      - name: Build workspace deps
+        run: |
+          yarn workspace @holdfast-io/ui build
+          yarn turbo run build --filter='rrweb...'
+          yarn turbo run build --filter='@rrweb/*' --filter='!@rrweb/web-extension'
+
+      - name: Run tests with coverage
+        run: yarn workspace @holdfast-io/frontend test --run --coverage
+        env:
+          TZ: UTC
+
+      - name: SonarQube Scan
+        uses: SonarSource/sonarqube-scan-action@v6
+        with:
+          projectBaseDir: src/frontend
+          args: >
+            -Dsonar.projectKey=holdfast-frontend
+            -Dsonar.sources=src
+            -Dsonar.exclusions=src/graph/generated/**,src/__generated/**,src/stubs/**,**/*.test.*,**/*.spec.*
+            -Dsonar.tests=src
+            -Dsonar.test.inclusions=**/*.test.ts,**/*.test.tsx
+            -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
+            -Dsonar.scm.revision=${{ github.sha }}
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+
+      - name: SonarQube Quality Gate
+        uses: SonarSource/sonarqube-quality-gate-action@v1
+        timeout-minutes: 5
+        with:
+          scanMetadataReportFile: src/frontend/.scannerwork/report-task.txt
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
