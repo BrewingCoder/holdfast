@@ -38,8 +38,10 @@ jobs:
       - name: Install dependencies
         run: yarn install --immutable
 
-      - name: Build rrweb
-        run: yarn turbo run build --filter='rrweb...'
+      - name: Build rrweb (core + all plugins)
+        run: |
+          yarn turbo run build --filter='rrweb...'
+          yarn turbo run build --filter='@rrweb/*'
 
       - name: Build SDKs (tier order)
         run: |

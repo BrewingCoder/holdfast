@@ -49,11 +49,14 @@ jobs:
       - name: Install dependencies
         run: yarn install
 
-      - name: Build rrweb
-        run: yarn turbo run build --filter='rrweb...'
+      - name: Build rrweb (core + all plugins)
+        run: |
+          yarn turbo run build --filter='rrweb...'
+          yarn turbo run build --filter='@rrweb/*'
 
       - name: Build all SDKs (tier order)
         run: |
+          # Tier 1 — leaf packages
           yarn workspace highlight.run build
           yarn workspace @holdfast-io/cloudflare build
           yarn workspace @holdfast-io/sourcemap-uploader build
