@@ -12,7 +12,7 @@ concurrency:
 jobs:
   backend:
     name: Backend Analysis
-    runs-on: self-hosted
+    runs-on: [self-hosted, holdfast]
     timeout-minutes: 15
     steps:
       - name: Checkout
@@ -63,7 +63,7 @@ jobs:
 
   js-analysis:
     name: JS/TS Analysis (all projects)
-    runs-on: self-hosted
+    runs-on: [self-hosted, holdfast]
     timeout-minutes: 30
     steps:
       - name: Checkout
