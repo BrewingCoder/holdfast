@@ -1,0 +1,60 @@
+name: SonarQube
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Backend Analysis
+    runs-on: [self-hosted, holdfast]
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: 'src/backend/go.mod'
+          cache-dependency-path: 'src/backend/go.sum'
+
+      - name: Run tests with coverage
+        run: |
+          cd src/backend
+          go test -short -coverprofile=coverage.out -covermode=atomic \
+            ./parser/... ./queryparser/... ./env/... ./assets/... \
+            ./errorgroups/... ./vercel/... ./http/... ./alerts/... \
+            ./pricing/...
+        env:
+          ENVIRONMENT: test
+
+      - name: SonarQube Scan
+        uses: SonarSource/sonarqube-scan-action@v4
+        with:
+          projectBaseDir: src/backend
+          args: >
+            -Dsonar.projectKey=holdfast-backend
+            -Dsonar.sources=.
+            -Dsonar.exclusions=**/*_test.go,**/test-files/**,**/migrations/**
+            -Dsonar.tests=.
+            -Dsonar.test.inclusions=**/*_test.go
+            -Dsonar.go.coverage.reportPaths=coverage.out
+            -Dsonar.scm.revision=${{ github.sha }}
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+
+      - name: SonarQube Quality Gate
+        uses: SonarSource/sonarqube-quality-gate-action@v1
+        timeout-minutes: 5
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
