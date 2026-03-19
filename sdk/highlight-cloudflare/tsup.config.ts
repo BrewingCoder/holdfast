@@ -6,5 +6,12 @@ export default defineConfig({
 	dts: true,
 	sourcemap: true,
 	treeshake: 'smallest',
-	external: ['pino-abstract-transport'],
+	noExternal: [/(.*)/],
+	esbuildOptions(options) {
+		options.external = [
+			'pino-abstract-transport',
+			'pino',
+			'pino-pretty',
+		]
+	},
 })
