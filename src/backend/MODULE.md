@@ -142,4 +142,5 @@ Most of these need a running Postgres + ClickHouse + Redis + Kafka to test. The 
 - **`AllWorkspaceSettings` defaults** — all feature flags default to `true`. Don't add new gates without defaulting them to enabled.
 - **GeoLite2-City.mmdb** — the MaxMind GeoIP database was removed during repo migration (corruption). Needs re-download from MaxMind for geolocation features to work.
 - **Enterprise module** — checks for updates against `github.com/BrewingCoder/holdfast/releases`. License validation uses AES-CBC + RSA-PKCS1v15 with a baked-in public key.
+- **Localhost SSL key in repo** — `localhostssl/server.key` is an embedded EC private key for dev HTTPS. SonarQube flags this as a security hotspot. It's a self-signed localhost cert, not a production credential, but should be removed and generated at runtime. See [#16](https://github.com/BrewingCoder/holdfast/issues/16).
 - **OpenAI dependency** — AI features are OpenAI-only (GPT-3.5). Anthropic/Claude replacement is planned (ROADMAP Phase 4).
