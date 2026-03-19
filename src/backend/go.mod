@@ -234,7 +234,7 @@ require (
 	github.com/pierrec/lz4/v4 v4.1.21 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/sendgrid/rest v2.6.9+incompatible // indirect
-	github.com/stretchr/testify v1.10.0
+	github.com/stretchr/testify v1.11.1
 	github.com/tdewolff/parse v2.3.4+incompatible
 	go.opencensus.io v0.24.0 // indirect
 	golang.org/x/crypto v0.36.0
