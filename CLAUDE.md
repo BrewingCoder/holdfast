@@ -24,7 +24,7 @@ HoldFast is a full-stack observability platform that provides session replay, er
 - **Backend** (`src/backend/`): Go-based GraphQL API server with dual public/private GraphQL endpoints
 - **Frontend** (`src/frontend/`): React/TypeScript dashboard application built with Vite
 - **SDKs** (`sdk/`): Multi-language client libraries for integrating with HoldFast
-- **RRWeb** (`rrweb/`): Forked session replay recording library (submodule)
+- **RRWeb** (`rrweb/`): Forked session replay recording library (included as regular files)
 - **Infrastructure** (`infra/docker/`, `infra/deploy/`): Docker compose and deployment configurations
 - **Tests** (`tests/cypress/`, `tests/e2e/`): End-to-end and integration tests
 - **Tools** (`tools/antlr/`, `tools/bin/`, `tools/scripts/`): Build and development utilities
@@ -209,7 +209,7 @@ yarn build:sdk
 
 ### SDK Structure
 - `sdk/highlight-*/`: Language-specific client libraries
-- `sdk/highlight-run/`: Core JavaScript SDK
+- `sdk/highlight-run/`: Core browser SDK (published as `@holdfast-io/browser`)
 - Each SDK follows language-specific patterns and conventions
 
 ## What Was Removed From Upstream

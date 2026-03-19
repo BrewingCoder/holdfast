@@ -40,7 +40,7 @@ All features are enabled by default. No tiers. No feature gates. No billing.
 Deploy a hobby instance on Linux with Docker (minimum: 8GB RAM, 4 CPUs, 64 GB disk):
 
 ```bash
-git clone --recurse-submodules https://github.com/BrewingCoder/holdfast
+git clone https://github.com/BrewingCoder/holdfast
 cd holdfast/infra/docker
 # Edit .env — set ADMIN_PASSWORD
 ./run-hobby.sh
@@ -118,8 +118,8 @@ HoldFast takes this seriously. Our security roadmap (see [ROADMAP.md](docs/ROADM
 
 See [ROADMAP.md](docs/ROADMAP.md) for the full plan. Highlights:
 
-- **Done:** SaaS/marketing strip, feature gate unlock, domain configurability, `@holdfast-io` npm scope, AGPL-3.0 licensing
-- **Next:** Security hardening (encryption at rest, TLS enforcement, OIDC auth, MFA), Go module rename, dependency updates
+- **Done:** SaaS/marketing strip, feature gate unlock, domain configurability, `@holdfast-io` npm scope, browser SDK renamed to `@holdfast-io/browser`, Go module paths renamed, NPM publish workflow passing, AGPL-3.0 licensing
+- **Next:** Security hardening (encryption at rest, TLS enforcement, OIDC auth, MFA), dependency updates
 - **Future:** AI provider modernization (Claude/Anthropic), Helm charts, compliance documentation, ARM64 support
 
 ## Governance

@@ -8,7 +8,7 @@ Packages must be published bottom-up — leaf dependencies first, then packages 
 
 | Package | Path | Notes |
 |---------|------|-------|
-| `highlight.run` | `sdk/highlight-run/` | Core browser SDK |
+| `@holdfast-io/browser` | `sdk/highlight-run/` | Core browser SDK |
 | `@holdfast-io/cloudflare` | `sdk/highlight-cloudflare/` | Cloudflare Workers SDK |
 | `@holdfast-io/sourcemap-uploader` | `packages/sourcemap-uploader/` | CLI tool for uploading sourcemaps |
 
@@ -16,8 +16,8 @@ Packages must be published bottom-up — leaf dependencies first, then packages 
 
 | Package | Path | Internal Deps |
 |---------|------|---------------|
-| `@holdfast-io/node` | `sdk/highlight-node/` | `highlight.run` |
-| `@holdfast-io/react` | `sdk/highlight-react/` | `highlight.run` |
+| `@holdfast-io/node` | `sdk/highlight-node/` | `@holdfast-io/browser` |
+| `@holdfast-io/react` | `sdk/highlight-react/` | `@holdfast-io/browser` |
 
 ### Tier 3 — Depends on Tier 2
 
@@ -27,14 +27,14 @@ Packages must be published bottom-up — leaf dependencies first, then packages 
 | `@holdfast-io/hono` | `sdk/highlight-hono/` | `@holdfast-io/node` |
 | `@holdfast-io/nest` | `sdk/highlight-nest/` | `@holdfast-io/node` |
 | `@holdfast-io/pino` | `sdk/pino/` | `@holdfast-io/node` |
-| `@holdfast-io/remix` | `sdk/highlight-remix/` | `@holdfast-io/node`, `@holdfast-io/react`, `highlight.run` |
+| `@holdfast-io/remix` | `sdk/highlight-remix/` | `@holdfast-io/node`, `@holdfast-io/react`, `@holdfast-io/browser` |
 
 ### Tier 4 — Depends on Tier 3
 
 | Package | Path | Internal Deps |
 |---------|------|---------------|
-| `@holdfast-io/next` | `sdk/highlight-next/` | `@holdfast-io/cloudflare`, `@holdfast-io/node`, `@holdfast-io/react`, `@holdfast-io/sourcemap-uploader`, `highlight.run` |
-| `@holdfast-io/chrome` | `sdk/highlight-chrome/` | `@holdfast-io/react`, `@holdfast-io/ui` (private), `highlight.run` |
+| `@holdfast-io/next` | `sdk/highlight-next/` | `@holdfast-io/cloudflare`, `@holdfast-io/node`, `@holdfast-io/react`, `@holdfast-io/sourcemap-uploader`, `@holdfast-io/browser` |
+| `@holdfast-io/chrome` | `sdk/highlight-chrome/` | `@holdfast-io/react`, `@holdfast-io/ui` (private), `@holdfast-io/browser` |
 
 ### Private Packages (not published to npm)
 
@@ -56,7 +56,7 @@ Packages must be published bottom-up — leaf dependencies first, then packages 
 |----------------|-------|---------|
 | `holdfast-backend` | Go backend — GraphQL APIs, workers, storage, alerts | `/src/backend/` |
 | `holdfast-frontend` | React dashboard application | `/src/frontend/` |
-| `holdfast-sdk-core` | Core browser SDK (most complex JS package) | `sdk/highlight-run/` |
+| `holdfast-sdk-core` | Core browser SDK — `@holdfast-io/browser` | `sdk/highlight-run/` |
 | `holdfast-sdk-node` | Node.js server SDK | `sdk/highlight-node/` |
 | `holdfast-sdk-integrations` | Framework integration SDKs (thin wrappers) | `sdk/highlight-next/`, `sdk/highlight-react/`, `sdk/highlight-remix/`, `sdk/highlight-cloudflare/`, `sdk/highlight-apollo/`, `sdk/highlight-hono/`, `sdk/highlight-nest/`, `sdk/pino/` |
 | `holdfast-infra` | Docker, deployment configs, collector | `/infra/docker/`, `/infra/deploy/` |

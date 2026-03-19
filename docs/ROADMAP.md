@@ -9,25 +9,19 @@ Complete the identity separation from upstream Highlight.io. The codebase still 
 **Status:** DONE
 **npm org:** `holdfast-io` (`https://www.npmjs.com/org/holdfast-io`)
 
-All 17 workspace packages renamed from `@highlight-run/*` to `@holdfast-io/*`. 29 package.json files, 426+ source files, root scripts, and tsconfig references updated. `highlight.run` (core browser SDK) kept unchanged for now. `@highlight-run/react-mentions` left as-is (external package).
+All 17 workspace packages renamed from `@highlight-run/*` to `@holdfast-io/*`. 29 package.json files, 426+ source files, root scripts, and tsconfig references updated. `highlight.run` (core browser SDK) also renamed to `@holdfast-io/browser`. `@highlight-run/react-mentions` left as-is (external package).
 
-**Remaining:** Packages not yet published to npm. First publish needed when ready to release.
+NPM publish workflow is implemented and passing. Publishes in 4 dependency-ordered tiers. Dry-run mode supported. First publish to npm pending when ready to release publicly.
 
-### 1.2 Go Module Path: `github.com/highlight-run/highlight` → new path
+### 1.2 Go Module Path: `github.com/highlight-run/highlight` → `github.com/BrewingCoder/holdfast`
 
-**Status:** Not started
-**Priority:** High
-**Prerequisite:** Create the HoldFast GitHub repo
+**Status:** DONE
 
-Every Go file in `/src/backend` imports from `github.com/highlight-run/highlight/backend/...`. This is the Go module path and must match the actual repository URL for `go get` to work.
-
-**Work involved:**
-- Update `src/backend/go.mod` module declaration to match new repo URL
-- Find-replace all import paths across every Go file (~hundreds of files, mechanical)
-- Update `go.work` workspace file
-- Verify `go build ./...` still passes
-
-**Note:** Massive but simple find-replace. Best done as a single atomic commit.
+All Go module paths have been renamed:
+- Backend module: `github.com/highlight-run/highlight/backend` → `github.com/BrewingCoder/holdfast/src/backend`
+- Go SDK module: `github.com/highlight/highlight/sdk/highlight-go` → `github.com/BrewingCoder/holdfast/sdk/highlight-go`
+- `src/backend/go.mod`, `go.work`, and all import paths across every Go file updated.
+- `go build ./...` passes.
 
 ### 1.3 Other SDK Package Registries
 
@@ -36,7 +30,7 @@ Every Go file in `/src/backend` imports from `github.com/highlight-run/highlight
 
 | Ecosystem | Current Name | Registry | Action |
 |-----------|-------------|----------|--------|
-| Go | `github.com/highlight/highlight/sdk/highlight-go` | pkg.go.dev | Moves automatically with repo rename |
+| Go | `github.com/BrewingCoder/holdfast/sdk/highlight-go` | pkg.go.dev | Module path updated — published at new path |
 | Python | `highlight-io` | PyPI | Claim `holdfast` on PyPI, update `setup.py` |
 | Ruby | `highlight_io` | RubyGems | Claim `holdfast`, update gemspec |
 | Java | `io.highlight` | Maven Central | Update group ID (heavyweight process) |

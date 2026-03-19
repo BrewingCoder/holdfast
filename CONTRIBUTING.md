@@ -1,1 +1,7 @@
-Looking to contribute to HoldFast? Get started [here](https://github.com/highlight/highlight/blob/main/docs-content/general/4_company/open-source/contributing/1_getting-started.md).
+# Contributing to HoldFast
+
+See [GOVERNANCE.md](docs/GOVERNANCE.md) for contribution guidelines, PR standards, and information on agentic contributions.
+
+For development setup and build commands, see [CLAUDE.md](CLAUDE.md).
+
+For the project roadmap and what to work on next, see [docs/ROADMAP.md](docs/ROADMAP.md).

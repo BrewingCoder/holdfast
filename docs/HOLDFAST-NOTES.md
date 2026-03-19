@@ -143,12 +143,16 @@ See **[ROADMAP.md](ROADMAP.md)** for the full roadmap including rebranding, tech
 - [x] AGPL-3.0 license
 - [x] Governance and contribution guidelines
 - [x] NPM scope renamed to `@holdfast-io/*` (17 packages)
+- [x] Core browser SDK renamed: `highlight.run` → `@holdfast-io/browser`
+- [x] Go module path renamed: `github.com/highlight-run/highlight/backend` → `github.com/BrewingCoder/holdfast/src/backend`
+- [x] Go SDK path renamed: `github.com/highlight/highlight/sdk/highlight-go` → `github.com/BrewingCoder/holdfast/sdk/highlight-go`
 - [x] SDK builds standardized on tsup (node, next converted from Rollup)
 - [x] Repo reorganized (`src/`, `docs/`, `tests/`, `tools/`, `infra/`, `packages/`)
 - [x] Repo pushed to GitHub: https://github.com/BrewingCoder/holdfast
 - [x] GitHub Actions CI workflows (backend, frontend, SDK, security)
-- [x] NPM publish workflow (tiered, dry-run support)
-- [x] Self-hosted GitHub Actions runner
+- [x] NPM publish workflow (tiered, dry-run support) — builds passing, publishes in 4 tiers
+- [x] Self-hosted GitHub Actions runner (dedicated Ubuntu 24.04 VM, `runs-on: [self-hosted, holdfast]`)
+- [x] rrweb included as regular files (no longer a git submodule)
 - [x] Deleted: blog-content, docs-content, internal-docs, enterprise directories
 
 ---

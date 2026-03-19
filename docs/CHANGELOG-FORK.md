@@ -216,3 +216,78 @@ These steps should be run before committing but haven't been executed yet:
 | `ENTERPRISE_PLAN_PRICE_ID` | Stripe |
 | `STARTUP_PLAN_PRICE_ID` | Stripe |
 | `REACT_APP_LD_CLIENT_ID` | LaunchDarkly |
+
+---
+
+## 2026-03-19: Go Module Path Rename
+
+Renamed all Go module paths from the upstream `github.com/highlight-run/highlight` namespace to the HoldFast repository path.
+
+**Changes:**
+- `src/backend/go.mod` — module declaration changed from `github.com/highlight-run/highlight/backend` to `github.com/BrewingCoder/holdfast/src/backend`
+- `sdk/highlight-go/go.mod` — module declaration changed from `github.com/highlight/highlight/sdk/highlight-go` to `github.com/BrewingCoder/holdfast/sdk/highlight-go`
+- `go.work` — workspace updated to reflect new module paths
+- All Go import statements across `src/backend/` updated via find-replace (hundreds of files, mechanical change)
+- `go build ./...` passes after rename
+
+---
+
+## 2026-03-19: Browser SDK Renamed — `highlight.run` → `@holdfast-io/browser`
+
+The core browser SDK (`sdk/highlight-run/`) was previously published as `highlight.run` — the upstream Highlight.io package name. It is now published as `@holdfast-io/browser` under the HoldFast npm org.
+
+**Changes:**
+- `sdk/highlight-run/package.json` — `name` changed from `highlight.run` to `@holdfast-io/browser`
+- All internal package.json `dependencies` referencing `highlight.run` updated to `@holdfast-io/browser`
+- All internal source imports updated accordingly
+
+---
+
+## 2026-03-19: NPM Publish Workflow
+
+Added `publish-npm.yml` GitHub Actions workflow for publishing SDK packages to npm.
+
+**Details:**
+- Manual dispatch with inputs: `tier` (1–4 or all), `dry-run`, `version`
+- Publishes packages in dependency order across 4 tiers (leaf packages first)
+- Uses `node -e` for version setting to avoid reliance on `npm version` in workspace context
+- Requires `NPM_TOKEN` secret configured in repository settings
+- Runs on self-hosted runner (`runs-on: [self-hosted, holdfast]`)
+- Builds verified passing for all 4 tiers
+
+---
+
+## 2026-03-19: Self-Hosted GitHub Actions Runner
+
+All CI/CD workflows (`ci-backend.yml`, `ci-frontend.yml`, `ci-sdk.yml`, `security.yml`, `publish-npm.yml`) migrated to a dedicated self-hosted runner.
+
+**Configuration:**
+- `runs-on: [self-hosted, holdfast]` on all workflow jobs
+- Runner OS: Ubuntu 24.04 VM
+- Eliminates GitHub-hosted runner minute consumption and provides consistent build environment
+
+---
+
+## 2026-03-19: Repo Reorganization
+
+The repository directory structure was reorganized from the upstream flat layout to a cleaner monorepo structure:
+
+| Old Path | New Path |
+|----------|----------|
+| `backend/` | `src/backend/` |
+| `frontend/` | `src/frontend/` |
+| `docker/` | `infra/docker/` |
+| `e2e/` | `tests/e2e/` |
+| `cypress/` | `tests/cypress/` |
+| `scripts/` | `tools/scripts/` |
+| (root) | `docs/` for all markdown documentation |
+
+---
+
+## 2026-03-19: rrweb — Submodule Removed
+
+The `rrweb/` directory was previously tracked as a git submodule pointing to a forked rrweb repository. It is now included as regular files directly in the monorepo.
+
+**Why:** Submodule checkout requirements (`--recurse-submodules`) complicated fresh clones and CI setup. Inlining the files removes the dependency on a separate repository and simplifies the clone process.
+
+**Effect:** `git clone https://github.com/BrewingCoder/holdfast` is sufficient — no `--recurse-submodules` flag needed.
