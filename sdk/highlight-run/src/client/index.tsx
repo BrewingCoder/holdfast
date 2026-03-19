@@ -884,12 +884,13 @@ SessionSecureID: ${this.sessionData.sessionSecureID}`,
 					this.logger.log(`highlight got window message `, msg)
 					this.sessionData.projectID = msg.projectID
 					this.sessionData.sessionSecureID = msg.sessionSecureID
-					// reply back that we got the message and are set up
+					// reply back to the parent using the origin from the incoming message
+					const targetOrigin = message.origin || '*'
 					window.parent.postMessage(
 						{
 							highlight: IFRAME_PARENT_RESPONSE,
 						} as HighlightIframeReponse,
-						'*',
+						targetOrigin,
 					)
 					// stop listening to parent messages
 					window.removeEventListener('message', listener)
@@ -907,18 +908,31 @@ SessionSecureID: ${this.sessionData.sessionSecureID}`,
 		// notify iframes that highlight is ready
 		setInterval(() => {
 			window.document.querySelectorAll('iframe').forEach((iframe) => {
+				// derive target origin from iframe src; fall back to '*' for srcdoc/blank iframes
+				let targetOrigin = '*'
+				try {
+					if (iframe.src) {
+						const url = new URL(iframe.src, window.location.href)
+						targetOrigin = url.origin
+					}
+				} catch {
+					// invalid URL, keep '*'
+				}
 				iframe.contentWindow?.postMessage(
 					{
 						highlight: IFRAME_PARENT_READY,
 						projectID: this.sessionData.projectID,
 						sessionSecureID: this.sessionData.sessionSecureID,
 					} as HighlightIframeMessage,
-					'*',
+					targetOrigin,
 				)
 			})
 		}, FIRST_SEND_FREQUENCY)
 		window.addEventListener('message', (message: MessageEvent) => {
-			if (message.data.highlight === IFRAME_PARENT_RESPONSE) {
+			if (
+				message.data.highlight === IFRAME_PARENT_RESPONSE &&
+				message.source instanceof Window
+			) {
 				this.logger.log(
 					`highlight got response from initialized iframe`,
 				)
