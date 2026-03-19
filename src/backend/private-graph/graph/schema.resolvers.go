@@ -3784,22 +3784,6 @@ func (r *mutationResolver) UpdateErrorGroupIsPublic(ctx context.Context, errorGr
 	return errorGroup, nil
 }
 
-// UpdateAllowMeterOverage is the resolver for the updateAllowMeterOverage field.
-func (r *mutationResolver) UpdateAllowMeterOverage(ctx context.Context, workspaceID int, allowMeterOverage bool) (*model.Workspace, error) {
-	workspace, err := r.isUserWorkspaceAdmin(ctx, workspaceID)
-	if err != nil {
-		return nil, err
-	}
-
-	if err := r.DB.WithContext(ctx).Model(&workspace).Updates(map[string]interface{}{
-		"AllowMeterOverage": allowMeterOverage,
-	}).Error; err != nil {
-		return nil, e.Wrap(err, "error updating AllowMeterOverage")
-	}
-
-	return workspace, nil
-}
-
 // SubmitRegistrationForm is the resolver for the submitRegistrationForm field.
 func (r *mutationResolver) SubmitRegistrationForm(ctx context.Context, workspaceID int, teamSize string, role string, useCase string, heardAbout string, pun *string) (*bool, error) {
 	workspace, err := r.isUserInWorkspaceReadOnly(ctx, workspaceID)
@@ -9702,11 +9686,6 @@ func (r *Resolver) SessionComment() generated.SessionCommentResolver {
 // Subscription returns generated.SubscriptionResolver implementation.
 func (r *Resolver) Subscription() generated.SubscriptionResolver { return &subscriptionResolver{r} }
 
-// SystemConfiguration returns generated.SystemConfigurationResolver implementation.
-func (r *Resolver) SystemConfiguration() generated.SystemConfigurationResolver {
-	return &systemConfigurationResolver{r}
-}
-
 // TimelineIndicatorEvent returns generated.TimelineIndicatorEventResolver implementation.
 func (r *Resolver) TimelineIndicatorEvent() generated.TimelineIndicatorEventResolver {
 	return &timelineIndicatorEventResolver{r}
@@ -9733,6 +9712,18 @@ type sessionResolver struct{ *Resolver }
 type sessionAlertResolver struct{ *Resolver }
 type sessionCommentResolver struct{ *Resolver }
 type subscriptionResolver struct{ *Resolver }
-type systemConfigurationResolver struct{ *Resolver }
 type timelineIndicatorEventResolver struct{ *Resolver }
 type visualizationResolver struct{ *Resolver }
+
+// !!! WARNING !!!
+// The code below was going to be deleted when updating resolvers. It has been copied here so you have
+// one last chance to move it out of harms way if you want. There are two reasons this happens:
+//  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
+//    it when you're done.
+//  - You have helper methods in this file. Move them out to keep these resolver files clean.
+/*
+	func (r *Resolver) SystemConfiguration() generated.SystemConfigurationResolver {
+	return &systemConfigurationResolver{r}
+}
+type systemConfigurationResolver struct{ *Resolver }
+*/

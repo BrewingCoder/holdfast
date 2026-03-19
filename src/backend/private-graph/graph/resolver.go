@@ -481,7 +481,6 @@ func (r *Resolver) isUserInWorkspaceReadOnly(ctx context.Context, workspaceID in
 		Model: model.Model{
 			ID: workspace.ID,
 		},
-		AllowMeterOverage:           workspace.AllowMeterOverage,
 		AllowedAutoJoinEmailOrigins: workspace.AllowedAutoJoinEmailOrigins,
 		BillingPeriodEnd:            workspace.BillingPeriodEnd,
 		BillingPeriodStart:          workspace.BillingPeriodStart,
