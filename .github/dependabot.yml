@@ -2,7 +2,7 @@ version: 2
 updates:
     # Maintain dependencies for Golang
     - package-ecosystem: gomod
-      directory: /backend
+      directory: /src/backend
       schedule:
           interval: daily
 
