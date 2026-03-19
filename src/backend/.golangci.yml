@@ -1,13 +1,11 @@
 version: "2"
 
-# options for analysis running
 run:
     timeout: 5m
 
-# output configuration options
 output:
-    # sorts results by: filepath, line and column
-    sort-results: true
+    sort-order:
+        - file
 
 linters:
     exclusions:
@@ -23,20 +21,16 @@ linters:
         - unused
         - depguard
         - exhaustruct
-
-# all available settings of specific linters
-linters-settings:
-    staticcheck:
-        checks: ['all']
-
-    exhaustruct:
-        include:
-            - 'backend/alerts'
-
-    depguard:
-        rules:
-            main:
-                list-mode: lax
-                deny:
-                    - pkg: 'log'
-                      desc: 'logging is allowed only by github.com/sirupsen/logrus'
+    settings:
+        staticcheck:
+            checks: ['all']
+        exhaustruct:
+            include:
+                - 'backend/alerts'
+        depguard:
+            rules:
+                main:
+                    list-mode: lax
+                    deny:
+                        - pkg: 'log'
+                          desc: 'logging is allowed only by github.com/sirupsen/logrus'
