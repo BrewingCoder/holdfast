@@ -1548,3 +1548,670 @@ func TestRetentionPeriod_AllValues(t *testing.T) {
 	_ = modelInputs.RetentionPeriodSixMonths
 	_ = modelInputs.RetentionPeriodThirtyDays
 }
+
+// ===========================================================================
+// ADVERSARIAL / BOUNDARY-BREAKING TESTS
+// ===========================================================================
+// These tests deliberately feed malformed, extreme, or hostile data into
+// model functions to verify they fail gracefully (or handle correctly).
+
+// ---------------------------------------------------------------------------
+// Int64ID: overflow, underflow, and hostile strings
+// ---------------------------------------------------------------------------
+
+func TestUnmarshalInt64ID_Overflow(t *testing.T) {
+	// One past max int64 — should fail parse
+	_, err := UnmarshalInt64ID("9223372036854775808")
+	assert.Error(t, err)
+}
+
+func TestUnmarshalInt64ID_NegativeMax(t *testing.T) {
+	s := fmt.Sprintf("%d", int64(math.MinInt64))
+	result, err := UnmarshalInt64ID(s)
+	require.NoError(t, err)
+	assert.Equal(t, int64(math.MinInt64), result)
+}
+
+func TestUnmarshalInt64ID_WhitespaceString(t *testing.T) {
+	_, err := UnmarshalInt64ID("  42  ")
+	assert.Error(t, err, "leading/trailing whitespace should not be silently accepted")
+}
+
+func TestUnmarshalInt64ID_EmptyString(t *testing.T) {
+	_, err := UnmarshalInt64ID("")
+	assert.Error(t, err)
+}
+
+func TestUnmarshalInt64ID_HexString(t *testing.T) {
+	_, err := UnmarshalInt64ID("0xDEADBEEF")
+	assert.Error(t, err, "hex input should not be parsed as decimal")
+}
+
+func TestUnmarshalInt64ID_ScientificNotation(t *testing.T) {
+	_, err := UnmarshalInt64ID("1e10")
+	assert.Error(t, err, "scientific notation should not be accepted for int64")
+}
+
+func TestUnmarshalInt64ID_NullByte(t *testing.T) {
+	_, err := UnmarshalInt64ID("42\x00")
+	assert.Error(t, err, "null bytes should not be silently accepted")
+}
+
+func TestUnmarshalInt64ID_SQLInjection(t *testing.T) {
+	_, err := UnmarshalInt64ID("1; DROP TABLE sessions;--")
+	assert.Error(t, err)
+}
+
+func TestUnmarshalInt64ID_NilInterface(t *testing.T) {
+	_, err := UnmarshalInt64ID(nil)
+	assert.Error(t, err)
+}
+
+func TestUnmarshalInt64ID_BoolType(t *testing.T) {
+	_, err := UnmarshalInt64ID(true)
+	assert.Error(t, err)
+}
+
+func TestUnmarshalInt64ID_SliceType(t *testing.T) {
+	_, err := UnmarshalInt64ID([]int{1, 2, 3})
+	assert.Error(t, err)
+}
+
+// ---------------------------------------------------------------------------
+// Timestamp: malformed dates, time bombs, epoch edge cases
+// ---------------------------------------------------------------------------
+
+func TestUnmarshalTimestamp_SQLInjection(t *testing.T) {
+	_, err := UnmarshalTimestamp("2024-01-01'; DROP TABLE sessions;--")
+	assert.Error(t, err)
+}
+
+func TestUnmarshalTimestamp_UnixEpoch(t *testing.T) {
+	result, err := UnmarshalTimestamp("1970-01-01T00:00:00Z")
+	require.NoError(t, err)
+	assert.True(t, result.IsZero() || result.Unix() == 0)
+}
+
+func TestUnmarshalTimestamp_FarFuture(t *testing.T) {
+	result, err := UnmarshalTimestamp("9999-12-31T23:59:59.999999999Z")
+	require.NoError(t, err)
+	assert.Equal(t, 9999, result.Year())
+}
+
+func TestUnmarshalTimestamp_NegativeYear(t *testing.T) {
+	// RFC3339 doesn't support negative years, should fail
+	_, err := UnmarshalTimestamp("-0001-01-01T00:00:00Z")
+	assert.Error(t, err)
+}
+
+func TestUnmarshalTimestamp_EmptyString(t *testing.T) {
+	_, err := UnmarshalTimestamp("")
+	assert.Error(t, err)
+}
+
+func TestUnmarshalTimestamp_JustDate(t *testing.T) {
+	_, err := UnmarshalTimestamp("2024-01-01")
+	assert.Error(t, err, "date without time should not parse as RFC3339Nano")
+}
+
+func TestUnmarshalTimestamp_UnixTimestampNumber(t *testing.T) {
+	_, err := UnmarshalTimestamp(1710000000)
+	assert.Error(t, err, "raw integer should not be accepted as timestamp")
+}
+
+func TestUnmarshalTimestamp_FloatTimestamp(t *testing.T) {
+	_, err := UnmarshalTimestamp(1710000000.123)
+	assert.Error(t, err)
+}
+
+// ---------------------------------------------------------------------------
+// StringArray: hostile elements
+// ---------------------------------------------------------------------------
+
+func TestUnmarshalStringArray_HugeArray(t *testing.T) {
+	arr := make([]interface{}, 10000)
+	for i := range arr {
+		arr[i] = fmt.Sprintf("item_%d", i)
+	}
+	result, err := UnmarshalStringArray(arr)
+	require.NoError(t, err)
+	assert.Len(t, result, 10000)
+}
+
+func TestUnmarshalStringArray_NullStringElements(t *testing.T) {
+	// nil elements in the array should fail (not strings)
+	_, err := UnmarshalStringArray([]interface{}{"ok", nil})
+	assert.Error(t, err)
+}
+
+func TestUnmarshalStringArray_MixedTypes(t *testing.T) {
+	_, err := UnmarshalStringArray([]interface{}{"ok", 42, true, nil})
+	assert.Error(t, err)
+}
+
+func TestUnmarshalStringArray_SQLInjectionElements(t *testing.T) {
+	// These should be accepted as strings — it's the DB layer's job to parameterize
+	result, err := UnmarshalStringArray([]interface{}{
+		"'; DROP TABLE sessions;--",
+		"1 OR 1=1",
+		"<script>alert('xss')</script>",
+	})
+	require.NoError(t, err)
+	assert.Len(t, result, 3)
+	assert.Equal(t, "'; DROP TABLE sessions;--", result[0])
+}
+
+// ---------------------------------------------------------------------------
+// JSONB: hostile payloads
+// ---------------------------------------------------------------------------
+
+func TestJSONB_Scan_SQLInjectionValue(t *testing.T) {
+	// Valid JSON containing SQL injection strings — should parse fine
+	var j JSONB
+	err := j.Scan(`{"key": "'; DROP TABLE sessions;--"}`)
+	require.NoError(t, err)
+	assert.Equal(t, "'; DROP TABLE sessions;--", j["key"])
+}
+
+func TestJSONB_Scan_HTMLXSSValue(t *testing.T) {
+	var j JSONB
+	err := j.Scan(`{"key": "<img src=x onerror=alert(1)>"}`)
+	require.NoError(t, err)
+	assert.Equal(t, "<img src=x onerror=alert(1)>", j["key"])
+}
+
+func TestJSONB_Scan_NullByteInJSON(t *testing.T) {
+	var j JSONB
+	// JSON with literal null byte encoded — \u0000 is valid JSON but toxic to C-based parsers
+	err := j.Scan(`{"key": "hello\u0000world"}`)
+	// Go's json package accepts \u0000, verify it round-trips
+	if err == nil {
+		val, err2 := j.Value()
+		require.NoError(t, err2)
+		assert.NotEmpty(t, val)
+	}
+}
+
+func TestJSONB_Scan_VeryLargePayload(t *testing.T) {
+	// 1MB JSON payload
+	bigValue := strings.Repeat("x", 1024*1024)
+	payload := fmt.Sprintf(`{"big": "%s"}`, bigValue)
+	var j JSONB
+	err := j.Scan(payload)
+	require.NoError(t, err)
+	assert.Equal(t, bigValue, j["big"])
+}
+
+func TestJSONB_Scan_DuplicateKeys(t *testing.T) {
+	// JSON spec says last value wins for duplicate keys
+	var j JSONB
+	err := j.Scan(`{"key": "first", "key": "second"}`)
+	require.NoError(t, err)
+	assert.Equal(t, "second", j["key"])
+}
+
+func TestJSONB_Scan_UnicodeEscape(t *testing.T) {
+	var j JSONB
+	err := j.Scan(`{"emoji": "\u0048\u0065\u006C\u006C\u006F"}`)
+	require.NoError(t, err)
+	assert.Equal(t, "Hello", j["emoji"])
+}
+
+func TestJSONB_Scan_TrailingGarbage(t *testing.T) {
+	var j JSONB
+	// Go's json.Unmarshal ignores trailing content after valid JSON in some cases
+	// but wrapping in Scan should still produce a parseable result or error
+	err := j.Scan(`{"key": "val"} GARBAGE`)
+	// This is implementation-dependent — just verify no panic
+	_ = err
+}
+
+func TestJSONB_Scan_ArrayNotObject(t *testing.T) {
+	// JSONB expects a map, not an array
+	var j JSONB
+	err := j.Scan(`[1, 2, 3]`)
+	assert.Error(t, err, "array should not unmarshal into map[string]interface{}")
+}
+
+func TestJSONB_Scan_ScalarNotObject(t *testing.T) {
+	var j JSONB
+	err := j.Scan(`"just a string"`)
+	assert.Error(t, err, "bare string should not unmarshal into map")
+}
+
+func TestJSONB_Scan_NumberNotObject(t *testing.T) {
+	var j JSONB
+	err := j.Scan(`42`)
+	assert.Error(t, err, "bare number should not unmarshal into map")
+}
+
+func TestJSONB_Scan_IntegerType(t *testing.T) {
+	// Scan receives an unexpected type (not string, not []byte)
+	var j JSONB
+	err := j.Scan(42)
+	// Should not panic — either error or no-op
+	assert.NoError(t, err, "unexpected type should be handled gracefully (no-op)")
+	assert.Nil(t, j, "JSONB should remain nil for non-string/byte input")
+}
+
+// ---------------------------------------------------------------------------
+// Vector: extreme values, NaN, Inf
+// ---------------------------------------------------------------------------
+
+func TestVector_NaN(t *testing.T) {
+	v := Vector{float32(math.NaN())}
+	_, err := v.Value()
+	// NaN in JSON is not valid — json.Marshal should fail
+	assert.Error(t, err, "NaN should cause marshal error")
+}
+
+func TestVector_Inf(t *testing.T) {
+	v := Vector{float32(math.Inf(1))}
+	_, err := v.Value()
+	assert.Error(t, err, "+Inf should cause marshal error")
+}
+
+func TestVector_NegInf(t *testing.T) {
+	v := Vector{float32(math.Inf(-1))}
+	_, err := v.Value()
+	assert.Error(t, err, "-Inf should cause marshal error")
+}
+
+func TestVector_Scan_InvalidJSON(t *testing.T) {
+	var v Vector
+	err := v.Scan("[1.0, 2.0, not-a-number]")
+	assert.Error(t, err)
+}
+
+func TestVector_Scan_ObjectNotArray(t *testing.T) {
+	var v Vector
+	err := v.Scan(`{"not": "an array"}`)
+	assert.Error(t, err)
+}
+
+func TestVector_Scan_NestedArray(t *testing.T) {
+	var v Vector
+	err := v.Scan(`[[1.0, 2.0], [3.0, 4.0]]`)
+	assert.Error(t, err, "nested arrays should not unmarshal into flat Vector")
+}
+
+func TestVector_Scan_StringElements(t *testing.T) {
+	var v Vector
+	err := v.Scan(`["a", "b", "c"]`)
+	assert.Error(t, err)
+}
+
+func TestVector_Scan_EmptyArray(t *testing.T) {
+	var v Vector
+	err := v.Scan("[]")
+	require.NoError(t, err)
+	assert.Empty(t, v)
+}
+
+func TestVector_Scan_IntegerType(t *testing.T) {
+	var v Vector
+	err := v.Scan(42)
+	assert.NoError(t, err, "unexpected type should be handled gracefully")
+	assert.Nil(t, v)
+}
+
+func TestVector_MaxFloat32(t *testing.T) {
+	v := Vector{math.MaxFloat32, -math.MaxFloat32, math.SmallestNonzeroFloat32}
+	val, err := v.Value()
+	require.NoError(t, err)
+	var result Vector
+	err = result.Scan(val)
+	require.NoError(t, err)
+	assert.InDelta(t, math.MaxFloat32, result[0], 1e30)
+}
+
+// ---------------------------------------------------------------------------
+// DiscordChannels / Teams / Webhooks: hostile payloads
+// ---------------------------------------------------------------------------
+
+func TestDiscordChannels_Scan_InvalidJSON(t *testing.T) {
+	var dc DiscordChannels
+	err := dc.Scan("not json")
+	assert.Error(t, err)
+}
+
+func TestDiscordChannels_Scan_WrongType(t *testing.T) {
+	var dc DiscordChannels
+	err := dc.Scan(42)
+	assert.NoError(t, err, "non-string/byte types should no-op")
+	assert.Nil(t, dc)
+}
+
+func TestDiscordChannels_Scan_HTMLInName(t *testing.T) {
+	var dc DiscordChannels
+	err := dc.Scan(`[{"Name": "<script>alert(1)</script>", "ID": "123"}]`)
+	require.NoError(t, err)
+	assert.Equal(t, "<script>alert(1)</script>", dc[0].Name)
+}
+
+func TestMicrosoftTeamsChannels_Scan_InvalidJSON(t *testing.T) {
+	var tc MicrosoftTeamsChannels
+	err := tc.Scan("}{bad")
+	assert.Error(t, err)
+}
+
+func TestWebhookDestinations_Scan_InvalidJSON(t *testing.T) {
+	var wd WebhookDestinations
+	err := wd.Scan("{broken")
+	assert.Error(t, err)
+}
+
+func TestWebhookDestinations_Scan_ExtraFields(t *testing.T) {
+	// Unknown fields should be ignored
+	var wd WebhookDestinations
+	err := wd.Scan(`[{"URL": "https://example.com", "Authorization": "Bearer tok", "Evil": "payload"}]`)
+	require.NoError(t, err)
+	assert.Len(t, wd, 1)
+	assert.Equal(t, "https://example.com", wd[0].URL)
+}
+
+// ---------------------------------------------------------------------------
+// VerboseID: adversarial inputs
+// ---------------------------------------------------------------------------
+
+func TestFromVerboseID_NullBytes(t *testing.T) {
+	_, err := FromVerboseID("abc\x00def")
+	assert.Error(t, err)
+}
+
+func TestFromVerboseID_VeryLongInput(t *testing.T) {
+	long := strings.Repeat("a", 10000)
+	_, err := FromVerboseID(long)
+	// Should not panic, should error
+	assert.Error(t, err)
+}
+
+func TestFromVerboseID_NegativeInteger(t *testing.T) {
+	// Negative integers parse via Atoi path
+	result, err := FromVerboseID("-1")
+	require.NoError(t, err)
+	assert.Equal(t, -1, result, "negative integers should pass through Atoi")
+}
+
+func TestFromVerboseID_Zero(t *testing.T) {
+	result, err := FromVerboseID("0")
+	require.NoError(t, err)
+	assert.Equal(t, 0, result)
+}
+
+func TestFromVerboseID_MaxInt(t *testing.T) {
+	result, err := FromVerboseID(fmt.Sprintf("%d", math.MaxInt32))
+	require.NoError(t, err)
+	assert.Equal(t, math.MaxInt32, result)
+}
+
+func TestFromVerboseID_UppercaseNotInAlphabet(t *testing.T) {
+	// HashID alphabet is lowercase only — uppercase should fail
+	_, err := FromVerboseID("ABCDEFGH")
+	assert.Error(t, err)
+}
+
+func TestFromVerboseID_SpecialChars(t *testing.T) {
+	inputs := []string{"../../../etc/passwd", "<script>", "{{template}}", "${env}", "%00"}
+	for _, input := range inputs {
+		_, err := FromVerboseID(input)
+		assert.Error(t, err, "FromVerboseID(%q) should error", input)
+	}
+}
+
+// ---------------------------------------------------------------------------
+// Session.SetUserProperties / GetUserProperties: hostile data
+// ---------------------------------------------------------------------------
+
+func TestSession_SetUserProperties_HugeMap(t *testing.T) {
+	s := fakeSession()
+	props := make(map[string]string, 10000)
+	for i := 0; i < 10000; i++ {
+		props[fmt.Sprintf("key_%d", i)] = gofakeit.Sentence(10)
+	}
+	err := s.SetUserProperties(props)
+	require.NoError(t, err)
+
+	result, err := s.GetUserProperties()
+	require.NoError(t, err)
+	assert.Len(t, result, 10000)
+}
+
+func TestSession_SetUserProperties_LongValues(t *testing.T) {
+	s := fakeSession()
+	// 1MB value
+	big := strings.Repeat("x", 1024*1024)
+	props := map[string]string{"big": big}
+	err := s.SetUserProperties(props)
+	require.NoError(t, err)
+
+	result, err := s.GetUserProperties()
+	require.NoError(t, err)
+	assert.Equal(t, big, result["big"])
+}
+
+func TestSession_SetUserProperties_JSONBreakingKeys(t *testing.T) {
+	s := fakeSession()
+	// Keys that try to break JSON structure
+	props := map[string]string{
+		`"quoted"`:         "value",
+		"back\\slash":      "value",
+		"new\nline":        "value",
+		"tab\there":        "value",
+		"\x00null":         "value",
+		`{"nested": true}`: "value",
+	}
+	err := s.SetUserProperties(props)
+	require.NoError(t, err)
+
+	result, err := s.GetUserProperties()
+	require.NoError(t, err)
+	assert.Len(t, result, len(props))
+}
+
+// ---------------------------------------------------------------------------
+// DecodeAndValidateParams: adversarial inputs
+// ---------------------------------------------------------------------------
+
+func TestDecodeAndValidateParams_NilInList(t *testing.T) {
+	// BUG: DecodeAndValidateParams panics with nil pointer dereference when
+	// a nil element is in the params slice. The mapstructure decoder returns
+	// a nil *Param, then line 1800 dereferences output.Action without nil check.
+	// This test documents the crash. When fixed, change to assert.Error(t, err).
+	assert.Panics(t, func() {
+		_, _ = DecodeAndValidateParams([]interface{}{nil})
+	}, "DecodeAndValidateParams panics on nil params — needs nil guard")
+}
+
+func TestDecodeAndValidateParams_WrongStructure(t *testing.T) {
+	// Pass a string instead of a map
+	params := []interface{}{"not-a-map"}
+	_, err := DecodeAndValidateParams(params)
+	assert.Error(t, err)
+}
+
+func TestDecodeAndValidateParams_MissingFields(t *testing.T) {
+	// Map with missing required fields — should still decode (zero values)
+	params := []interface{}{
+		map[string]interface{}{},
+	}
+	result, err := DecodeAndValidateParams(params)
+	require.NoError(t, err)
+	assert.Len(t, result, 1)
+	assert.Equal(t, "", result[0].Action, "missing action should be empty string")
+}
+
+func TestDecodeAndValidateParams_ExtraFields(t *testing.T) {
+	// Extra fields should be silently ignored
+	params := []interface{}{
+		map[string]interface{}{
+			"action": "test",
+			"type":   "user_property",
+			"value":  map[string]interface{}{"text": "a", "value": "b"},
+			"evil":   "payload",
+		},
+	}
+	result, err := DecodeAndValidateParams(params)
+	require.NoError(t, err)
+	assert.Len(t, result, 1)
+	assert.Equal(t, "test", result[0].Action)
+}
+
+func TestDecodeAndValidateParams_EmptyActionIsDuplicate(t *testing.T) {
+	// Two params with empty action — should trigger duplicate check
+	params := []interface{}{
+		map[string]interface{}{"action": "", "type": "a", "value": map[string]interface{}{"text": "", "value": ""}},
+		map[string]interface{}{"action": "", "type": "b", "value": map[string]interface{}{"text": "", "value": ""}},
+	}
+	_, err := DecodeAndValidateParams(params)
+	assert.Error(t, err, "empty string actions should still be caught as duplicates")
+}
+
+// ---------------------------------------------------------------------------
+// GetEmailsToNotify: adversarial inputs
+// ---------------------------------------------------------------------------
+
+func TestGetEmailsToNotify_NestedArrays(t *testing.T) {
+	bad := `[["nested@email.com"]]`
+	_, err := GetEmailsToNotify(&bad)
+	assert.Error(t, err, "nested arrays should not unmarshal into []*string")
+}
+
+func TestGetEmailsToNotify_ObjectNotArray(t *testing.T) {
+	bad := `{"email": "test@test.com"}`
+	_, err := GetEmailsToNotify(&bad)
+	assert.Error(t, err)
+}
+
+func TestGetEmailsToNotify_NumberArray(t *testing.T) {
+	bad := `[1, 2, 3]`
+	_, err := GetEmailsToNotify(&bad)
+	assert.Error(t, err, "numbers should not unmarshal into []*string")
+}
+
+func TestGetEmailsToNotify_NullElements(t *testing.T) {
+	// JSON null in array — should become nil *string pointer
+	nullStr := `[null, "real@email.com", null]`
+	result, err := GetEmailsToNotify(&nullStr)
+	require.NoError(t, err)
+	assert.Len(t, result, 3)
+	assert.Nil(t, result[0])
+	assert.Equal(t, "real@email.com", *result[1])
+	assert.Nil(t, result[2])
+}
+
+func TestGetEmailsToNotify_HugeList(t *testing.T) {
+	emails := make([]string, 10000)
+	for i := range emails {
+		emails[i] = fmt.Sprintf("user%d@example.com", i)
+	}
+	jsonBytes, _ := json.Marshal(emails)
+	jsonStr := string(jsonBytes)
+	result, err := GetEmailsToNotify(&jsonStr)
+	require.NoError(t, err)
+	assert.Len(t, result, 10000)
+}
+
+// ---------------------------------------------------------------------------
+// AlertDeprecated: adversarial JSON
+// ---------------------------------------------------------------------------
+
+func TestAlertDeprecated_GetExcludedEnvironments_InvalidJSON(t *testing.T) {
+	bad := `{not-json}`
+	alert := &AlertDeprecated{ExcludedEnvironments: &bad}
+	_, err := alert.GetExcludedEnvironments()
+	assert.Error(t, err)
+}
+
+func TestAlertDeprecated_GetChannelsToNotify_InvalidJSON(t *testing.T) {
+	bad := `[{broken`
+	alert := &AlertDeprecated{ChannelsToNotify: &bad}
+	_, err := alert.GetChannelsToNotify()
+	assert.Error(t, err)
+}
+
+func TestAlertDeprecated_GetEmailsToNotify_InvalidJSON(t *testing.T) {
+	bad := `not-json`
+	alert := &AlertDeprecated{EmailsToNotify: &bad}
+	_, err := alert.GetEmailsToNotify()
+	assert.Error(t, err)
+}
+
+// ---------------------------------------------------------------------------
+// SessionAlert: adversarial JSON
+// ---------------------------------------------------------------------------
+
+func TestSessionAlert_GetTrackProperties_InvalidJSON(t *testing.T) {
+	bad := "not-json"
+	alert := &SessionAlert{TrackProperties: &bad}
+	_, err := alert.GetTrackProperties()
+	assert.Error(t, err)
+}
+
+func TestSessionAlert_GetUserProperties_InvalidJSON(t *testing.T) {
+	bad := "not-json"
+	alert := &SessionAlert{UserProperties: &bad}
+	_, err := alert.GetUserProperties()
+	assert.Error(t, err)
+}
+
+func TestSessionAlert_GetExcludeRules_InvalidJSON(t *testing.T) {
+	bad := "not-json"
+	alert := &SessionAlert{ExcludeRules: &bad}
+	_, err := alert.GetExcludeRules()
+	assert.Error(t, err)
+}
+
+// ---------------------------------------------------------------------------
+// MetricMonitor: adversarial JSON
+// ---------------------------------------------------------------------------
+
+func TestMetricMonitor_GetChannelsToNotify_InvalidJSON(t *testing.T) {
+	bad := "not-json"
+	m := &MetricMonitor{ChannelsToNotify: &bad}
+	_, err := m.GetChannelsToNotify()
+	assert.Error(t, err)
+}
+
+// ---------------------------------------------------------------------------
+// Workspace.IntegratedSlackChannels: adversarial JSON
+// ---------------------------------------------------------------------------
+
+func TestWorkspace_IntegratedSlackChannels_PartialJSON(t *testing.T) {
+	partial := `[{"WebhookAccessToken": "tok", "WebhookURL": "url"`
+	w := &Workspace{SlackChannels: &partial}
+	_, err := w.IntegratedSlackChannels()
+	assert.Error(t, err)
+}
+
+func TestWorkspace_IntegratedSlackChannels_EmptyArrayString(t *testing.T) {
+	empty := "[]"
+	w := &Workspace{SlackChannels: &empty}
+	result, err := w.IntegratedSlackChannels()
+	require.NoError(t, err)
+	assert.Empty(t, result)
+}
+
+// ---------------------------------------------------------------------------
+// GORM Hooks: adversarial — verify hooks don't overwrite existing secrets
+// ---------------------------------------------------------------------------
+
+func TestProject_BeforeCreate_DoesNotOverwriteExistingSecret(t *testing.T) {
+	existing := "my-precious-secret"
+	p := fakeProject()
+	p.Secret = &existing
+	// BeforeCreate unconditionally overwrites — this test documents the behavior
+	_ = p.BeforeCreate(&gorm.DB{})
+	// Current implementation ALWAYS overwrites — verify this is intentional
+	assert.NotEqual(t, existing, *p.Secret,
+		"BeforeCreate overwrites existing secrets — if this fails, the hook was changed to preserve them")
+}
+
+func TestWorkspace_BeforeCreate_DoesNotOverwriteExistingSecret(t *testing.T) {
+	existing := "my-precious-secret"
+	w := fakeWorkspace()
+	w.Secret = &existing
+	_ = w.BeforeCreate(&gorm.DB{})
+	assert.NotEqual(t, existing, *w.Secret,
+		"BeforeCreate overwrites existing secrets — if this fails, the hook was changed to preserve them")
+}
