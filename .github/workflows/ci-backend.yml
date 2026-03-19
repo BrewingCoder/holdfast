@@ -43,7 +43,7 @@ jobs:
           fi
 
       - name: Lint
-        uses: golangci/golangci-lint-action@v6
+        uses: golangci/golangci-lint-action@v9
         with:
           args: -v --config ./.golangci.yml
           working-directory: src/backend
