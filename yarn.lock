@@ -10018,9 +10018,24 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@highlight-run/ai@workspace:packages/ai":
+"@highlight-run/react-mentions@npm:4.4.2":
+  version: 4.4.2
+  resolution: "@highlight-run/react-mentions@npm:4.4.2"
+  dependencies:
+    "@babel/runtime": "npm:7.4.5"
+    invariant: "npm:^2.2.4"
+    prop-types: "npm:^15.5.8"
+    substyle: "npm:^9.1.0"
+  peerDependencies:
+    react: ">=16.8.3"
+    react-dom: ">=16.8.3"
+  checksum: 10/82c21c651d8460cbbfad664318aa5d8523298497abdcca6bb2970e60ca0725ae0628e71c6531665ffb4175e4174eada252246d8f83b21a0a0587fce69f1ae71b
+  languageName: node
+  linkType: hard
+
+"@holdfast-io/ai@workspace:packages/ai":
   version: 0.0.0-use.local
-  resolution: "@highlight-run/ai@workspace:packages/ai"
+  resolution: "@holdfast-io/ai@workspace:packages/ai"
   dependencies:
     "@aws-sdk/client-s3": "npm:^3.633.0"
     "@aws-sdk/node-http-handler": "npm:^3.374.0"
@@ -10036,12 +10051,12 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@highlight-run/apollo@workspace:*, @highlight-run/apollo@workspace:sdk/highlight-apollo":
+"@holdfast-io/apollo@workspace:*, @holdfast-io/apollo@workspace:sdk/highlight-apollo":
   version: 0.0.0-use.local
-  resolution: "@highlight-run/apollo@workspace:sdk/highlight-apollo"
+  resolution: "@holdfast-io/apollo@workspace:sdk/highlight-apollo"
   dependencies:
     "@apollo/server": "npm:^4"
-    "@highlight-run/node": "workspace:*"
+    "@holdfast-io/node": "workspace:*"
     apollo-server: "npm:^3.13.0"
     apollo-server-plugin-base: "npm:^3"
     tsup: "npm:^8.3.6"
@@ -10050,13 +10065,13 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@highlight-run/chrome@workspace:sdk/highlight-chrome":
+"@holdfast-io/chrome@workspace:sdk/highlight-chrome":
   version: 0.0.0-use.local
-  resolution: "@highlight-run/chrome@workspace:sdk/highlight-chrome"
+  resolution: "@holdfast-io/chrome@workspace:sdk/highlight-chrome"
   dependencies:
     "@crxjs/vite-plugin": "npm:^2.0.0-beta.23"
-    "@highlight-run/react": "workspace:*"
-    "@highlight-run/ui": "workspace:*"
+    "@holdfast-io/react": "workspace:*"
+    "@holdfast-io/ui": "workspace:*"
     "@types/chrome": "npm:^0.0.268"
     "@vitejs/plugin-react-swc": "npm:^3.7.0"
     gulp: "npm:^5.0.0"
@@ -10068,9 +10083,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@highlight-run/cloudflare@workspace:*, @highlight-run/cloudflare@workspace:sdk/highlight-cloudflare":
+"@holdfast-io/cloudflare@workspace:*, @holdfast-io/cloudflare@workspace:sdk/highlight-cloudflare":
   version: 0.0.0-use.local
-  resolution: "@highlight-run/cloudflare@workspace:sdk/highlight-cloudflare"
+  resolution: "@holdfast-io/cloudflare@workspace:sdk/highlight-cloudflare"
   dependencies:
     "@cloudflare/workers-types": "npm:^4.20250317.0"
     "@opentelemetry/api": "npm:^1.9.0"
@@ -10085,19 +10100,19 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@highlight-run/component-preview@workspace:packages/component-preview":
+"@holdfast-io/component-preview@workspace:packages/component-preview":
   version: 0.0.0-use.local
-  resolution: "@highlight-run/component-preview@workspace:packages/component-preview"
+  resolution: "@holdfast-io/component-preview@workspace:packages/component-preview"
   dependencies:
-    "@highlight-run/react": "workspace:*"
+    "@holdfast-io/react": "workspace:*"
     "@ladle/react": "npm:^4.1.2"
     typescript: "npm:^4.9.5"
   languageName: unknown
   linkType: soft
 
-"@highlight-run/emails@workspace:packages/react-email-templates":
+"@holdfast-io/emails@workspace:packages/react-email-templates":
   version: 0.0.0-use.local
-  resolution: "@highlight-run/emails@workspace:packages/react-email-templates"
+  resolution: "@holdfast-io/emails@workspace:packages/react-email-templates"
   dependencies:
     "@react-email/components": "npm:0.0.6"
     "@react-email/render": "npm:^0.0.7"
@@ -10109,9 +10124,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@highlight-run/frontend@workspace:frontend":
+"@holdfast-io/frontend@workspace:src/frontend":
   version: 0.0.0-use.local
-  resolution: "@highlight-run/frontend@workspace:frontend"
+  resolution: "@holdfast-io/frontend@workspace:src/frontend"
   dependencies:
     "@ant-design/icons": "npm:^4.7.0"
     "@apollo/client": "npm:3.7.17"
@@ -10133,10 +10148,10 @@ __metadata:
     "@graphql-codegen/typescript": "npm:^2.8.1"
     "@graphql-codegen/typescript-operations": "npm:^1.17.14"
     "@graphql-codegen/typescript-react-apollo": "npm:^2.2.1"
-    "@highlight-run/react": "workspace:*"
     "@highlight-run/react-mentions": "npm:4.4.2"
-    "@highlight-run/sourcemap-uploader": "workspace:*"
-    "@highlight-run/ui": "workspace:*"
+    "@holdfast-io/react": "workspace:*"
+    "@holdfast-io/sourcemap-uploader": "workspace:*"
+    "@holdfast-io/ui": "workspace:*"
     "@inkeep/uikit": "npm:^0.3.19"
     "@mux/mux-player": "npm:^2.4.1"
     "@mux/mux-player-react": "npm:^2.4.1"
@@ -10204,7 +10219,6 @@ __metadata:
     framer-motion: "npm:^6.3.15"
     graphql: "npm:^15.9.0"
     happy-dom: "npm:^15.10.2"
-    highlight.io: "workspace:*"
     highlight.run: "workspace:*"
     js-cookie: "npm:^3.0.1"
     jsonc-parser: "npm:^3.2.0"
@@ -10270,9 +10284,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@highlight-run/grafana-datasource@workspace:sdk/highlightinc-highlight-datasource":
+"@holdfast-io/grafana-datasource@workspace:sdk/highlightinc-highlight-datasource":
   version: 0.0.0-use.local
-  resolution: "@highlight-run/grafana-datasource@workspace:sdk/highlightinc-highlight-datasource"
+  resolution: "@holdfast-io/grafana-datasource@workspace:sdk/highlightinc-highlight-datasource"
   dependencies:
     "@babel/core": "npm:^7.21.4"
     "@emotion/css": "npm:^11.1.3"
@@ -10318,11 +10332,11 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@highlight-run/hono@workspace:*, @highlight-run/hono@workspace:sdk/highlight-hono":
+"@holdfast-io/hono@workspace:*, @holdfast-io/hono@workspace:sdk/highlight-hono":
   version: 0.0.0-use.local
-  resolution: "@highlight-run/hono@workspace:sdk/highlight-hono"
+  resolution: "@holdfast-io/hono@workspace:sdk/highlight-hono"
   dependencies:
-    "@highlight-run/node": "workspace:*"
+    "@holdfast-io/node": "workspace:*"
     "@types/node": "npm:^14.18.63"
     hono: "npm:^4.6.10"
     typescript: "npm:^5.0.4"
@@ -10330,11 +10344,11 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@highlight-run/nest@workspace:*, @highlight-run/nest@workspace:sdk/highlight-nest":
+"@holdfast-io/nest@workspace:*, @holdfast-io/nest@workspace:sdk/highlight-nest":
   version: 0.0.0-use.local
-  resolution: "@highlight-run/nest@workspace:sdk/highlight-nest"
+  resolution: "@holdfast-io/nest@workspace:sdk/highlight-nest"
   dependencies:
-    "@highlight-run/node": "workspace:*"
+    "@holdfast-io/node": "workspace:*"
     "@nestjs/common": "npm:^10.3.7"
     "@trpc/server": "npm:^10.45.2"
     "@types/node": "npm:^20.12.3"
@@ -10352,15 +10366,15 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@highlight-run/next@workspace:*, @highlight-run/next@workspace:sdk/highlight-next":
+"@holdfast-io/next@workspace:*, @holdfast-io/next@workspace:sdk/highlight-next":
   version: 0.0.0-use.local
-  resolution: "@highlight-run/next@workspace:sdk/highlight-next"
+  resolution: "@holdfast-io/next@workspace:sdk/highlight-next"
   dependencies:
     "@cloudflare/workers-types": "npm:^4.20231016.0"
-    "@highlight-run/cloudflare": "workspace:*"
-    "@highlight-run/node": "workspace:*"
-    "@highlight-run/react": "workspace:*"
-    "@highlight-run/sourcemap-uploader": "workspace:*"
+    "@holdfast-io/cloudflare": "workspace:*"
+    "@holdfast-io/node": "workspace:*"
+    "@holdfast-io/react": "workspace:*"
+    "@holdfast-io/sourcemap-uploader": "workspace:*"
     "@opentelemetry/api": "npm:^1.9.0"
     "@opentelemetry/resources": "npm:^1.30.1"
     "@trpc/server": "npm:^9.27.4"
@@ -10381,19 +10395,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@highlight-run/node@npm:latest":
-  version: 3.12.0
-  resolution: "@highlight-run/node@npm:3.12.0"
-  dependencies:
-    "@prisma/instrumentation": "npm:>=5.0.0"
-    require-in-the-middle: "npm:^7.4.0"
-  checksum: 10/091efceeb8cb9807e4e9da55ffdccb9343c951f2c1caf4a4b5a5ccaf4d9076f2f76d085fef7fa8e67e4ff5f67de1c870ce822eacc58121f7c0ead6d34c85a738
-  languageName: node
-  linkType: hard
-
-"@highlight-run/node@workspace: *, @highlight-run/node@workspace:*, @highlight-run/node@workspace:sdk/highlight-node":
+"@holdfast-io/node@workspace: *, @holdfast-io/node@workspace:*, @holdfast-io/node@workspace:sdk/highlight-node":
   version: 0.0.0-use.local
-  resolution: "@highlight-run/node@workspace:sdk/highlight-node"
+  resolution: "@holdfast-io/node@workspace:sdk/highlight-node"
   dependencies:
     "@opentelemetry/api": "npm:^1.9.0"
     "@opentelemetry/api-logs": "npm:^0.57.2"
@@ -10425,33 +10429,18 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@highlight-run/pino@workspace:*, @highlight-run/pino@workspace:sdk/pino":
+"@holdfast-io/pino@workspace:*, @holdfast-io/pino@workspace:sdk/pino":
   version: 0.0.0-use.local
-  resolution: "@highlight-run/pino@workspace:sdk/pino"
+  resolution: "@holdfast-io/pino@workspace:sdk/pino"
   dependencies:
-    "@highlight-run/node": "workspace: *"
+    "@holdfast-io/node": "workspace: *"
     tsup: "npm:^8.3.6"
   languageName: unknown
   linkType: soft
 
-"@highlight-run/react-mentions@npm:4.4.2":
-  version: 4.4.2
-  resolution: "@highlight-run/react-mentions@npm:4.4.2"
-  dependencies:
-    "@babel/runtime": "npm:7.4.5"
-    invariant: "npm:^2.2.4"
-    prop-types: "npm:^15.5.8"
-    substyle: "npm:^9.1.0"
-  peerDependencies:
-    react: ">=16.8.3"
-    react-dom: ">=16.8.3"
-  checksum: 10/82c21c651d8460cbbfad664318aa5d8523298497abdcca6bb2970e60ca0725ae0628e71c6531665ffb4175e4174eada252246d8f83b21a0a0587fce69f1ae71b
-  languageName: node
-  linkType: hard
-
-"@highlight-run/react@workspace:*, @highlight-run/react@workspace:sdk/highlight-react":
+"@holdfast-io/react@workspace:*, @holdfast-io/react@workspace:sdk/highlight-react":
   version: 0.0.0-use.local
-  resolution: "@highlight-run/react@workspace:sdk/highlight-react"
+  resolution: "@holdfast-io/react@workspace:sdk/highlight-react"
   dependencies:
     "@types/node": "npm:^20.14.7"
     "@types/react": "npm:^19.0.10"
@@ -10470,12 +10459,12 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@highlight-run/remix@workspace:*, @highlight-run/remix@workspace:sdk/highlight-remix":
+"@holdfast-io/remix@workspace:*, @holdfast-io/remix@workspace:sdk/highlight-remix":
   version: 0.0.0-use.local
-  resolution: "@highlight-run/remix@workspace:sdk/highlight-remix"
+  resolution: "@holdfast-io/remix@workspace:sdk/highlight-remix"
   dependencies:
-    "@highlight-run/node": "workspace:*"
-    "@highlight-run/react": "workspace:*"
+    "@holdfast-io/node": "workspace:*"
+    "@holdfast-io/react": "workspace:*"
     "@opentelemetry/instrumentation": "npm:>=0.53.0"
     "@remix-run/react": "npm:^2.10.0"
     highlight.run: "workspace:*"
@@ -10487,9 +10476,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@highlight-run/sourcemap-uploader@workspace:*, @highlight-run/sourcemap-uploader@workspace:sourcemap-uploader":
+"@holdfast-io/sourcemap-uploader@workspace:*, @holdfast-io/sourcemap-uploader@workspace:packages/sourcemap-uploader":
   version: 0.0.0-use.local
-  resolution: "@highlight-run/sourcemap-uploader@workspace:sourcemap-uploader"
+  resolution: "@holdfast-io/sourcemap-uploader@workspace:packages/sourcemap-uploader"
   dependencies:
     "@types/node": "npm:^18.15.5"
     commander: "npm:^10.0.0"
@@ -10504,9 +10493,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@highlight-run/ui@workspace:*, @highlight-run/ui@workspace:packages/ui":
+"@holdfast-io/ui@workspace:*, @holdfast-io/ui@workspace:packages/ui":
   version: 0.0.0-use.local
-  resolution: "@highlight-run/ui@workspace:packages/ui"
+  resolution: "@holdfast-io/ui@workspace:packages/ui"
   dependencies:
     "@ariakit/react": "npm:^0.4.5"
     "@babel/core": "npm:^7.19.3"
@@ -25491,9 +25480,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"angular.io-example@workspace:e2e/angular":
+"angular.io-example@workspace:tests/e2e/angular":
   version: 0.0.0-use.local
-  resolution: "angular.io-example@workspace:e2e/angular"
+  resolution: "angular.io-example@workspace:tests/e2e/angular"
   dependencies:
     "@angular-devkit/build-angular": "npm:19.1.1"
     "@angular/animations": "npm:19.1.1"
@@ -25550,9 +25539,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ansi-color@patch:ansi-color@npm%3A0.2.1#./.yarn/patches/ansi-color-npm-0.2.1-f7243d10a4.patch::locator=highlight%40workspace%3A.":
+"ansi-color@patch:ansi-color@npm%3A0.2.1#./.yarn/patches/ansi-color-npm-0.2.1-f7243d10a4.patch::locator=holdfast%40workspace%3A.":
   version: 0.2.1
-  resolution: "ansi-color@patch:ansi-color@npm%3A0.2.1#./.yarn/patches/ansi-color-npm-0.2.1-f7243d10a4.patch::version=0.2.1&hash=b45cea&locator=highlight%40workspace%3A."
+  resolution: "ansi-color@patch:ansi-color@npm%3A0.2.1#./.yarn/patches/ansi-color-npm-0.2.1-f7243d10a4.patch::version=0.2.1&hash=b45cea&locator=holdfast%40workspace%3A."
   checksum: 10/89efd6c95a858a95ae4f023269a8dd75b12a5fec88de52b0953361975ba71f56ec904ed17971a73bad5a3ac1832931fc49b57ade078a5d9865fe98388d4e4a38
   languageName: node
   linkType: hard
@@ -28786,12 +28775,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"cloudflare-worker@workspace:e2e/cloudflare-worker":
+"cloudflare-worker@workspace:tests/e2e/cloudflare-worker":
   version: 0.0.0-use.local
-  resolution: "cloudflare-worker@workspace:e2e/cloudflare-worker"
+  resolution: "cloudflare-worker@workspace:tests/e2e/cloudflare-worker"
   dependencies:
     "@cloudflare/workers-types": "npm:^4.20250317.0"
-    "@highlight-run/cloudflare": "workspace:*"
+    "@holdfast-io/cloudflare": "workspace:*"
     typescript: "npm:^5.8.2"
     wrangler: "npm:^4.0.0"
   languageName: unknown
@@ -31654,21 +31643,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"e2e-aws-lambda@workspace:e2e/aws-lambda":
+"e2e-aws-lambda@workspace:tests/e2e/aws-lambda":
   version: 0.0.0-use.local
-  resolution: "e2e-aws-lambda@workspace:e2e/aws-lambda"
+  resolution: "e2e-aws-lambda@workspace:tests/e2e/aws-lambda"
   dependencies:
-    "@highlight-run/node": "npm:latest"
+    "@holdfast-io/node": "workspace:*"
   languageName: unknown
   linkType: soft
 
-"e2e-express-ts@workspace:e2e/express-ts":
+"e2e-express-ts@workspace:tests/e2e/express-ts":
   version: 0.0.0-use.local
-  resolution: "e2e-express-ts@workspace:e2e/express-ts"
+  resolution: "e2e-express-ts@workspace:tests/e2e/express-ts"
   dependencies:
-    "@highlight-run/apollo": "workspace:*"
-    "@highlight-run/node": "workspace:*"
-    "@highlight-run/pino": "workspace:*"
+    "@holdfast-io/apollo": "workspace:*"
+    "@holdfast-io/node": "workspace:*"
+    "@holdfast-io/pino": "workspace:*"
     "@opentelemetry/api": "npm:^1.9.0"
     "@prisma/client": "npm:^6.2.1"
     "@prisma/instrumentation": "npm:^6.2.1"
@@ -31682,18 +31671,18 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"e2e-express@workspace:e2e/express":
+"e2e-express@workspace:tests/e2e/express":
   version: 0.0.0-use.local
-  resolution: "e2e-express@workspace:e2e/express"
+  resolution: "e2e-express@workspace:tests/e2e/express"
   dependencies:
-    "@highlight-run/node": "workspace:*"
+    "@holdfast-io/node": "workspace:*"
     express: "npm:^4.19.2"
   languageName: unknown
   linkType: soft
 
-"e2e-react-native@workspace:e2e/react-native":
+"e2e-react-native@workspace:tests/e2e/react-native":
   version: 0.0.0-use.local
-  resolution: "e2e-react-native@workspace:e2e/react-native"
+  resolution: "e2e-react-native@workspace:tests/e2e/react-native"
   dependencies:
     "@babel/core": "npm:^7.25.2"
     "@expo/ngrok": "npm:^4.1.3"
@@ -36493,11 +36482,11 @@ __metadata:
   languageName: node
   linkType: hard
 
-"functions@workspace:e2e/functions":
+"functions@workspace:tests/e2e/functions":
   version: 0.0.0-use.local
-  resolution: "functions@workspace:e2e/functions"
+  resolution: "functions@workspace:tests/e2e/functions"
   dependencies:
-    "@highlight-run/node": "workspace:*"
+    "@holdfast-io/node": "workspace:*"
     firebase-admin: "npm:^11.5.0"
     firebase-functions: "npm:^4.2.0"
     firebase-functions-test: "npm:^3.0.0"
@@ -38137,11 +38126,11 @@ __metadata:
   languageName: node
   linkType: hard
 
-"highlight-hono-example@workspace:e2e/hono":
+"highlight-hono-example@workspace:tests/e2e/hono":
   version: 0.0.0-use.local
-  resolution: "highlight-hono-example@workspace:e2e/hono"
+  resolution: "highlight-hono-example@workspace:tests/e2e/hono"
   dependencies:
-    "@highlight-run/hono": "workspace:*"
+    "@holdfast-io/hono": "workspace:*"
     "@hono/node-server": "npm:^1.13.7"
     "@opentelemetry/api": "npm:^1.9.0"
     "@types/node": "npm:^20.11.17"
@@ -38156,12 +38145,6 @@ __metadata:
   checksum: 10/6a5364ad8cce0107a387d3f43374f5814fb586cc155b282196bc2b9ce1c25aa9a8b76e8ab04d0c29428403a48225cad8280e00b8adbb6b02e05e3a6ab7ee2ef3
   languageName: node
   linkType: hard
-
-"highlight.io@workspace:*, highlight.io@workspace:highlight.io":
-  version: 0.0.0-use.local
-  resolution: "highlight.io@workspace:highlight.io"
-  languageName: unknown
-  linkType: soft
 
 "highlight.js@npm:^10.4.1, highlight.js@npm:~10.7.0":
   version: 10.7.3
@@ -38222,42 +38205,11 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"highlight@workspace:.":
+"highlight_kafka@workspace:tests/e2e/python/highlight_kafka":
   version: 0.0.0-use.local
-  resolution: "highlight@workspace:."
+  resolution: "highlight_kafka@workspace:tests/e2e/python/highlight_kafka"
   dependencies:
-    "@types/node": "npm:^20.12.12"
-    "@typescript-eslint/eslint-plugin": "npm:^6.1.0"
-    all-contributors-cli: "npm:^6.26.0"
-    antlr4ts-cli: "npm:^0.5.0-alpha.4"
-    chalk: "npm:^5.0.1"
-    chokidar: "npm:^3.5.3"
-    cypress: "npm:^13.7.0"
-    esbuild: "npm:^0.19.5"
-    eslint-plugin-compat: "npm:^4.2.0"
-    eslint-plugin-jest: "npm:^27.9.0"
-    eslint-plugin-tsdoc: "npm:^0.2.17"
-    fflate: "npm:^0.8.1"
-    husky: "npm:^9.1.4"
-    hygen: "npm:^6.2.7"
-    knip: "npm:^5.42.1"
-    node-gyp: "npm:^10.0.1"
-    npm-run-all: "npm:^4.1.5"
-    patch-package: "npm:^6.4.7"
-    postcss-modules: "npm:^4.3.1"
-    prettier: "npm:^3.3.3"
-    pretty-quick: "npm:^4.0.0"
-    readdirp: "npm:^3.6.0"
-    turbo: "npm:^2.2.3"
-    typescript: "npm:^5.5.2"
-  languageName: unknown
-  linkType: soft
-
-"highlight_kafka@workspace:e2e/python/highlight_kafka":
-  version: 0.0.0-use.local
-  resolution: "highlight_kafka@workspace:e2e/python/highlight_kafka"
-  dependencies:
-    "@highlight-run/node": "workspace:*"
+    "@holdfast-io/node": "workspace:*"
     kafkajs: "npm:^2.2.4"
   languageName: unknown
   linkType: soft
@@ -38300,6 +38252,37 @@ __metadata:
   checksum: 10/1acbe85f33e5a39f90c822ad4d28b24daeb60f71c545279431dc98c312cd28a54f8d64788e477fe21dc502b0e3cf58589ebe5c1ad22af27245370391c2d24ea6
   languageName: node
   linkType: hard
+
+"holdfast@workspace:.":
+  version: 0.0.0-use.local
+  resolution: "holdfast@workspace:."
+  dependencies:
+    "@types/node": "npm:^20.12.12"
+    "@typescript-eslint/eslint-plugin": "npm:^6.1.0"
+    all-contributors-cli: "npm:^6.26.0"
+    antlr4ts-cli: "npm:^0.5.0-alpha.4"
+    chalk: "npm:^5.0.1"
+    chokidar: "npm:^3.5.3"
+    cypress: "npm:^13.7.0"
+    esbuild: "npm:^0.19.5"
+    eslint-plugin-compat: "npm:^4.2.0"
+    eslint-plugin-jest: "npm:^27.9.0"
+    eslint-plugin-tsdoc: "npm:^0.2.17"
+    fflate: "npm:^0.8.1"
+    husky: "npm:^9.1.4"
+    hygen: "npm:^6.2.7"
+    knip: "npm:^5.42.1"
+    node-gyp: "npm:^10.0.1"
+    npm-run-all: "npm:^4.1.5"
+    patch-package: "npm:^6.4.7"
+    postcss-modules: "npm:^4.3.1"
+    prettier: "npm:^3.3.3"
+    pretty-quick: "npm:^4.0.0"
+    readdirp: "npm:^3.6.0"
+    turbo: "npm:^2.2.3"
+    typescript: "npm:^5.5.2"
+  languageName: unknown
+  linkType: soft
 
 "homedir-polyfill@npm:^1.0.1":
   version: 1.0.3
@@ -46661,11 +46644,11 @@ __metadata:
   languageName: node
   linkType: hard
 
-"nestjs@workspace:e2e/nestjs":
+"nestjs@workspace:tests/e2e/nestjs":
   version: 0.0.0-use.local
-  resolution: "nestjs@workspace:e2e/nestjs"
+  resolution: "nestjs@workspace:tests/e2e/nestjs"
   dependencies:
-    "@highlight-run/nest": "workspace:*"
+    "@holdfast-io/nest": "workspace:*"
     "@nestjs/axios": "npm:^3.0.2"
     "@nestjs/cli": "npm:^10.4.5"
     "@nestjs/common": "npm:^10.4.5"
@@ -46770,12 +46753,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"nextjs@workspace:e2e/nextjs":
+"nextjs@workspace:tests/e2e/nextjs":
   version: 0.0.0-use.local
-  resolution: "nextjs@workspace:e2e/nextjs"
+  resolution: "nextjs@workspace:tests/e2e/nextjs"
   dependencies:
-    "@highlight-run/next": "workspace:*"
-    "@highlight-run/pino": "workspace:*"
+    "@holdfast-io/next": "workspace:*"
+    "@holdfast-io/pino": "workspace:*"
     "@launchdarkly/js-client-sdk": "npm:^0.4.1"
     "@next/env": "npm:^15.1.9"
     "@prisma/client": "npm:^6.4.1"
@@ -52683,11 +52666,11 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-router@workspace:e2e/react-router":
+"react-router@workspace:tests/e2e/react-router":
   version: 0.0.0-use.local
-  resolution: "react-router@workspace:e2e/react-router"
+  resolution: "react-router@workspace:tests/e2e/react-router"
   dependencies:
-    "@highlight-run/react": "workspace:*"
+    "@holdfast-io/react": "workspace:*"
     "@types/react": "npm:^19.0.4"
     "@types/react-dom": "npm:^19.0.2"
     "@typescript-eslint/eslint-plugin": "npm:^5.61.0"
@@ -52920,9 +52903,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-three-vite@workspace:e2e/react-three-vite":
+"react-three-vite@workspace:tests/e2e/react-three-vite":
   version: 0.0.0-use.local
-  resolution: "react-three-vite@workspace:e2e/react-three-vite"
+  resolution: "react-three-vite@workspace:tests/e2e/react-three-vite"
   dependencies:
     "@pmndrs/assets": "npm:1.6.0"
     "@pmndrs/branding": "npm:0.0.8"
@@ -53664,11 +53647,11 @@ __metadata:
   languageName: node
   linkType: hard
 
-"remix@workspace:e2e/remix":
+"remix@workspace:tests/e2e/remix":
   version: 0.0.0-use.local
-  resolution: "remix@workspace:e2e/remix"
+  resolution: "remix@workspace:tests/e2e/remix"
   dependencies:
-    "@highlight-run/remix": "workspace:*"
+    "@holdfast-io/remix": "workspace:*"
     "@remix-run/css-bundle": "npm:^2.10.0"
     "@remix-run/dev": "npm:^2.13.1"
     "@remix-run/eslint-config": "npm:^2.10.0"
@@ -53713,9 +53696,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"render@workspace:render":
+"render@workspace:packages/render":
   version: 0.0.0-use.local
-  resolution: "render@workspace:render"
+  resolution: "render@workspace:packages/render"
   dependencies:
     "@aws-sdk/client-s3": "npm:^3.623.0"
     "@sparticuz/chromium": "npm:126.0.0"
@@ -54987,9 +54970,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"scripts@workspace:scripts":
+"scripts@workspace:tools/scripts":
   version: 0.0.0-use.local
-  resolution: "scripts@workspace:scripts"
+  resolution: "scripts@workspace:tools/scripts"
   dependencies:
     "@aws-sdk/client-s3": "npm:^3.198.0"
     "@types/yargs": "npm:^17.0.13"
