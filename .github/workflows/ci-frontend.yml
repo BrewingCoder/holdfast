@@ -20,7 +20,7 @@ concurrency:
 jobs:
   build-and-test:
     name: Build, Lint & Test
-    runs-on: [self-hosted, holdfast]
+    runs-on: self-hosted
     timeout-minutes: 20
 
     steps:

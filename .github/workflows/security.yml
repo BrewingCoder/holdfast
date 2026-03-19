@@ -14,7 +14,7 @@ concurrency:
 jobs:
   codeql:
     name: CodeQL Analysis
-    runs-on: [self-hosted, holdfast]
+    runs-on: self-hosted
     timeout-minutes: 30
     permissions:
       security-events: write
@@ -50,7 +50,7 @@ jobs:
 
   dependency-audit:
     name: Dependency Audit
-    runs-on: [self-hosted, holdfast]
+    runs-on: self-hosted
     timeout-minutes: 10
     steps:
       - name: Checkout
@@ -78,7 +78,7 @@ jobs:
 
   secret-scan:
     name: Secret Scanning
-    runs-on: [self-hosted, holdfast]
+    runs-on: self-hosted
     timeout-minutes: 5
     steps:
       - name: Checkout
