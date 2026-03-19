@@ -81,6 +81,8 @@ jobs:
 
       - name: Install dependencies
         run: yarn install
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
 
       - name: Build workspace deps
         run: |
