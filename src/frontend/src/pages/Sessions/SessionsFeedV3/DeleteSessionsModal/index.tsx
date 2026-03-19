@@ -5,7 +5,7 @@ import ModalBody from '@components/ModalBody/ModalBody'
 import { toast } from '@components/Toaster'
 import { useDeleteSessionsMutation } from '@graph/hooks'
 import { useParams } from '@util/react-router/useParams'
-import { H } from 'highlight.run'
+import { H } from '@holdfast-io/browser'
 import moment from 'moment'
 import { useState } from 'react'
 

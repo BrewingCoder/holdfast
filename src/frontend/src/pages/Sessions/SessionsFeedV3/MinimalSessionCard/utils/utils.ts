@@ -1,5 +1,5 @@
 import { Maybe, Session } from '@graph/schemas'
-import { H } from 'highlight.run'
+import { H } from '@holdfast-io/browser'
 import validator from 'validator'
 
 type SessionWithIdentityInformation = Pick<

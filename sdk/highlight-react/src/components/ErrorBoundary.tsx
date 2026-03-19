@@ -197,7 +197,7 @@ function captureReactErrorBoundaryError(
 ): void {
 	const component = getComponentNameFromStack(errorInfo.componentStack ?? '')
 	if (!window.H) {
-		console.warn('You need to install highlight.run.')
+		console.warn('You need to install @holdfast-io/browser.')
 	} else {
 		console.error(
 			'Highlight ErrorBoundary caught an exception while rendering React component',

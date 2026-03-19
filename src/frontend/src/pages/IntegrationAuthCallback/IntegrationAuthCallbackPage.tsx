@@ -1,5 +1,5 @@
 import { Form, Stack, Text } from '@holdfast-io/ui/components'
-import { H } from 'highlight.run'
+import { H } from '@holdfast-io/browser'
 import { useCallback, useEffect, useMemo } from 'react'
 import { Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { StringParam, useQueryParams } from 'use-query-params'

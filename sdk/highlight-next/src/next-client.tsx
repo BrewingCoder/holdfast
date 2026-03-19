@@ -1,4 +1,4 @@
-import { H as localH, HighlightOptions } from 'highlight.run'
+import { H as localH, HighlightOptions } from '@holdfast-io/browser'
 import Cookies from 'js-cookie'
 import { useEffect } from 'react'
 

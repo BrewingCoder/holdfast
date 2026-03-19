@@ -88,7 +88,7 @@ const ErrorStackTrace = ({ errorObject }: Props) => {
 							emphasis="high"
 							onClick={() => {
 								window.open(
-									'https://docs.highlight.run/sourcemaps',
+									'https://docs.@holdfast-io/browser/sourcemaps',
 									'_blank',
 								)
 							}}

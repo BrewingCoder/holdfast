@@ -11,7 +11,7 @@ import {
 import { SampleBuggyButton } from '@holdfast-io/react'
 import { Box, Table } from '@holdfast-io/ui/components'
 import DO_NOT_USE_Canvas from '@pages/Buttons/Canvas'
-import { H } from 'highlight.run'
+import { H } from '@holdfast-io/browser'
 import { useEffect, useState } from 'react'
 import { trace } from '@opentelemetry/api'
 

@@ -1,4 +1,4 @@
-import { H } from 'highlight.run'
+import { H } from '@holdfast-io/browser'
 
 H.init('1', {
 	// Get your project ID from the setup page in the dashboard

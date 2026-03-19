@@ -46,11 +46,11 @@ jobs:
       - name: Build SDKs (tier order)
         run: |
           # Tier 1 — leaf packages
-          yarn workspace highlight.run build
+          yarn workspace @holdfast-io/browser build
           yarn workspace @holdfast-io/cloudflare build
           yarn workspace @holdfast-io/sourcemap-uploader build
 
-          # Tier 2 — depends on highlight.run
+          # Tier 2 — depends on @holdfast-io/browser
           yarn workspace @holdfast-io/node build
           yarn workspace @holdfast-io/react build
 
@@ -68,7 +68,7 @@ jobs:
         run: yarn workspace @holdfast-io/node test --run
 
       - name: Test highlight-run
-        run: yarn workspace highlight.run test --run
+        run: yarn workspace @holdfast-io/browser test --run
         continue-on-error: true  # some tests need built rrweb plugins
 
       - name: Upload build artifacts

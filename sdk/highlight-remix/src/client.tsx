@@ -1,11 +1,11 @@
 import { useEffect } from 'react'
 
-import type { HighlightOptions } from 'highlight.run'
-import { H } from 'highlight.run'
+import type { HighlightOptions } from '@holdfast-io/browser'
+import { H } from '@holdfast-io/browser'
 import Cookies from 'js-cookie'
 import { SESSION_SECURE_ID } from './constants'
 
-export { H } from 'highlight.run'
+export { H } from '@holdfast-io/browser'
 
 interface Props extends HighlightOptions {
 	excludedHostnames?: string[]

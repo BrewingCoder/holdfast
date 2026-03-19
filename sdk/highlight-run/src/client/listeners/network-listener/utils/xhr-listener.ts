@@ -240,7 +240,7 @@ const getBodyData = (postData: any, url: string | undefined) => {
 		if (
 			!(
 				(url?.includes('localhost') ||
-					url?.includes('highlight.run')) &&
+					url?.includes('@holdfast-io/browser')) &&
 				postData.includes('pushPayload')
 			)
 		) {

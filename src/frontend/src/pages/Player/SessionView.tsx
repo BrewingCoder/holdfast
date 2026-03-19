@@ -242,7 +242,7 @@ export const ManualStopCard: React.FC = () => {
 		<ElevatedCard title="Session recording manually stopped">
 			<p>
 				<a
-					href="https://docs.highlight.run/api/hstop"
+					href="https://docs.@holdfast-io/browser/api/hstop"
 					target="_blank"
 					rel="noreferrer"
 				>
@@ -252,7 +252,7 @@ export const ManualStopCard: React.FC = () => {
 				session recording. If you expect the recording to continue
 				please check where you are calling{' '}
 				<a
-					href="https://docs.highlight.run/api/hstop"
+					href="https://docs.@holdfast-io/browser/api/hstop"
 					target="_blank"
 					rel="noreferrer"
 				>

@@ -30,7 +30,7 @@ const layout = (
 			<title>Hono API Tester</title>
 			<meta name="traceparent" content="00-${traceId}-${spanId}-01" />
 
-			<script src="https://unpkg.com/highlight.run"></script>
+			<script src="https://unpkg.com/@holdfast-io/browser"></script>
 			<script>
 				H.init('1jdkoe52', {
 					serviceName: 'hono-e2e-example',

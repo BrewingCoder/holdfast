@@ -1,4 +1,4 @@
-import { HighlightOptions, H as localH } from 'highlight.run'
+import { HighlightOptions, H as localH } from '@holdfast-io/browser'
 import type { NextPageContext } from 'next'
 import NextError, { ErrorProps } from 'next/error.js'
 import React, { useEffect } from 'react'

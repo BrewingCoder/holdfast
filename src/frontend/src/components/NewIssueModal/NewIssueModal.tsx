@@ -35,7 +35,7 @@ import {
 import { IssueTrackerIntegration } from '@pages/IntegrationsPage/IssueTrackerIntegrations'
 import { useParams } from '@util/react-router/useParams'
 import { GetBaseURL } from '@util/window'
-import { H } from 'highlight.run'
+import { H } from '@holdfast-io/browser'
 import React, { useMemo, useState } from 'react'
 
 import { Modal } from '@/components/Modal/ModalV2'

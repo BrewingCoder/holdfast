@@ -1,4 +1,4 @@
-import { H } from 'highlight.run'
+import { H } from '@holdfast-io/browser'
 import { HighlightPublicInterface } from '../client'
 import { LDClientMin } from '../integrations/launchdarkly/types/LDClient'
 

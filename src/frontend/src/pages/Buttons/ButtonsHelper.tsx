@@ -1,4 +1,4 @@
-import { H } from 'highlight.run'
+import { H } from '@holdfast-io/browser'
 import { useEffect, useState } from 'react'
 
 export const CustomError = () => {

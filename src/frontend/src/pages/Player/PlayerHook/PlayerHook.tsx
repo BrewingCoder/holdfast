@@ -30,7 +30,7 @@ import { customEvent, viewportResizeDimension } from '@rrweb/types'
 import { indexedDBFetch, indexedDBString } from '@util/db'
 import log from '@util/log'
 import useMapRef from '@util/useMapRef'
-import { H } from 'highlight.run'
+import { H } from '@holdfast-io/browser'
 import _ from 'lodash'
 import {
 	RefObject,

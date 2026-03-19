@@ -1,4 +1,4 @@
-import { H, Metadata } from 'highlight.run'
+import { H, Metadata } from '@holdfast-io/browser'
 import * as rudderanalytics from 'rudder-sdk-js'
 
 import { DISABLE_ANALYTICS } from '@/constants'

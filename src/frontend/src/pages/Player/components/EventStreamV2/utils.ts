@@ -1,7 +1,7 @@
 import { HighlightEvent } from '@pages/Player/HighlightEvent'
 import { eventWithTime } from '@rrweb/types'
 import { EventType } from 'rrweb'
-import type { ViewportResizeListenerArgs } from 'highlight.run'
+import type { ViewportResizeListenerArgs } from '@holdfast-io/browser'
 
 // used in filter() type methods to fetch events we want
 export const usefulEvent = (e: eventWithTime): boolean => {

@@ -1103,12 +1103,12 @@ SessionSecureID: ${this.sessionData.sessionSecureID}`,
 				// setup electron main thread window visiblity events listener
 				if (window.electron?.ipcRenderer) {
 					window.electron.ipcRenderer.on(
-						'highlight.run',
+						'@holdfast-io/browser',
 						({ visible }: { visible: boolean }) => {
 							this._visibilityHandler(!visible)
 						},
 					)
-					this.logger.log('Set up Electron highlight.run events.')
+					this.logger.log('Set up Electron @holdfast-io/browser events.')
 				} else {
 					// Send the payload every time the page is no longer visible - this includes when the tab is closed, as well
 					// as when switching tabs or apps on mobile. Non-blocking.

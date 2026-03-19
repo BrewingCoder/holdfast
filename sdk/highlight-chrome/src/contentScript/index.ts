@@ -1,4 +1,4 @@
-import { H } from 'highlight.run'
+import { H } from '@holdfast-io/browser'
 
 async function startHighlight(projectId: string) {
   if (H.getRecordingState() === 'Recording') {

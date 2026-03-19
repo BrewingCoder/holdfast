@@ -7,7 +7,7 @@ import {
 } from '@holdfast-io/ui/components'
 import { vars } from '@holdfast-io/ui/vars'
 import { useGenerateSessionsReportCSV } from '@util/session/report'
-import { H } from 'highlight.run'
+import { H } from '@holdfast-io/browser'
 
 export const SessionReport = () => {
 	const { generateSessionsReportCSV } = useGenerateSessionsReportCSV()

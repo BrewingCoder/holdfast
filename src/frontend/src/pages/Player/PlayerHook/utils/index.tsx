@@ -752,7 +752,7 @@ export const EventTypeDescriptions: EventTypeWithDescription = {
 			The client-side segment installation fired a track or identify
 			event.{' '}
 			<a
-				href="https://docs.highlight.run/docs/segment-integration"
+				href="https://docs.@holdfast-io/browser/docs/segment-integration"
 				target="_blank"
 				rel="noreferrer"
 			>

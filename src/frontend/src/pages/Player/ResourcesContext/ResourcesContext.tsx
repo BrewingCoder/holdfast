@@ -1,5 +1,5 @@
 import { Session, SortDirection, TraceEdge } from '@graph/schemas'
-import { RequestResponsePair } from 'highlight.run'
+import { RequestResponsePair } from '@holdfast-io/browser'
 import { RequestType } from '@pages/Player/Toolbar/DevToolsWindowV2/utils'
 import { getGraphQLResolverName } from '@pages/Player/utils/utils'
 import { createContext } from '@util/context/context'
@@ -141,7 +141,7 @@ const buildResources = (traces: TraceEdge[]) => {
 			if (!!a.startTimeAbs && !!b.startTimeAbs) {
 				return a.startTimeAbs - b.startTimeAbs
 			} else {
-				// used in highlight.run <8.8.0 for websocket events and <7.5.4 for requests
+				// used in @holdfast-io/browser <8.8.0 for websocket events and <7.5.4 for requests
 				return a.startTime - b.startTime
 			}
 		})
@@ -160,7 +160,7 @@ const buildResources = (traces: TraceEdge[]) => {
 					duration: resource.responseEndAbs - resource.startTimeAbs,
 				}
 			} else if (resource.responseEnd && resource.startTime) {
-				// used in highlight.run <8.8.0 for websocket events and <7.5.4 for requests
+				// used in @holdfast-io/browser <8.8.0 for websocket events and <7.5.4 for requests
 				updatedResource = {
 					...updatedResource,
 					duration: resource.responseEnd - resource.startTime,

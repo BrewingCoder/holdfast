@@ -17,7 +17,7 @@ describe('login spec', () => {
 		// Try again with different email domain
 		cy.get('[name="email"]')
 			.clear()
-			.type('vadim@highlight.run')
+			.type('vadim@@holdfast-io/browser')
 			.blur()
 			.wait(5000)
 		cy.get('[name="password"]').should('not.exist')

@@ -1,4 +1,4 @@
-import { GenerateSecureID } from 'highlight.run'
+import { GenerateSecureID } from '@holdfast-io/browser'
 import Cookies from 'js-cookie'
 
 export const setAttributionData = () => {

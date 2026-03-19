@@ -58,11 +58,11 @@
 		"react": ">=17"
 	},
 	"dependencies": {
+		"@holdfast-io/browser": "workspace:*",
 		"@holdfast-io/cloudflare": "workspace:*",
 		"@holdfast-io/node": "workspace:*",
 		"@holdfast-io/react": "workspace:*",
 		"@holdfast-io/sourcemap-uploader": "workspace:*",
-		"highlight.run": "workspace:*",
 		"js-cookie": "^3.0.5"
 	},
 	"devDependencies": {

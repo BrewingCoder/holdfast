@@ -81,7 +81,7 @@ export function ReportDialog({
 			})
 		} else {
 			console.warn(
-				'HoldFast is not initialized. Make sure highlight.run is installed and running.',
+				'HoldFast is not initialized. Make sure @holdfast-io/browser is installed and running.',
 			)
 		}
 		// fake a loading state because addSessionFeedback is async

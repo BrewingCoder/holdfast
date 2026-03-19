@@ -59,7 +59,7 @@ jobs:
       - name: Build all SDKs (tier order)
         run: |
           # Tier 1 — leaf packages
-          yarn workspace highlight.run build
+          yarn workspace @holdfast-io/browser build
           yarn workspace @holdfast-io/cloudflare build
           yarn workspace @holdfast-io/sourcemap-uploader build
           yarn workspace @holdfast-io/node build
@@ -108,7 +108,7 @@ jobs:
             node -e "const f='$pkg/package.json'; const p=JSON.parse(require('fs').readFileSync(f)); p.version='${{ inputs.version }}'; require('fs').writeFileSync(f, JSON.stringify(p, null, '\t')+'\n')"
           done
 
-      - name: Publish highlight.run
+      - name: Publish @holdfast-io/browser
         working-directory: sdk/highlight-run
         run: npm publish ${{ inputs.dry-run == true && '--dry-run' || '' }} --access public
         env:

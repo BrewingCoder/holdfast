@@ -3,12 +3,12 @@ import { validateEmail } from './index'
 describe('validateEmail', () => {
 	const CASES = [
 		['', false],
-		['.@highlight.run', false],
+		['.@@holdfast-io/browser', false],
 		['foo@bar.', false],
 		['foo', false],
 		['foo@Æ.run', false],
-		['¥@highlight.run', true],
-		['foo@highlight.run', true],
+		['¥@@holdfast-io/browser', true],
+		['foo@@holdfast-io/browser', true],
 	]
 
 	it.each(CASES)('should validate %s as %s', (email, expected) => {

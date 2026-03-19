@@ -20,8 +20,8 @@
 		"@angular/platform-browser": "19.1.1",
 		"@angular/platform-browser-dynamic": "19.1.1",
 		"@angular/router": "19.1.1",
+		"@holdfast-io/browser": "workspace:*",
 		"angular-in-memory-web-api": "^0.19.0",
-		"highlight.run": "workspace:*",
 		"tslib": "^2.3.0",
 		"zone.js": "~0.14.0"
 	},

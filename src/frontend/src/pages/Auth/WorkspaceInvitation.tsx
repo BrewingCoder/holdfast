@@ -14,7 +14,7 @@ import { Box, Callout, Stack, Text } from '@holdfast-io/ui/components'
 import { AuthBody, AuthFooter, AuthHeader } from '@pages/Auth/Layout'
 import { Landing } from '@pages/Landing/Landing'
 import useLocalStorage from '@rehooks/local-storage'
-import { H } from 'highlight.run'
+import { H } from '@holdfast-io/browser'
 import { useEffect } from 'react'
 import { Navigate, useMatch, useNavigate } from 'react-router-dom'
 

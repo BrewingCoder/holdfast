@@ -1,5 +1,5 @@
 import { formatNumber } from '@util/numbers'
-import { H } from 'highlight.run'
+import { H } from '@holdfast-io/browser'
 import moment from 'moment'
 
 import {

@@ -96,7 +96,7 @@ const SourcemapSettings = () => {
 									minification in your error traces. You can
 									learn more about them in{' '}
 									<a
-										href="https://docs.highlight.run/sourcemaps"
+										href="https://docs.@holdfast-io/browser/sourcemaps"
 										target="_blank"
 										rel="noreferrer"
 									>

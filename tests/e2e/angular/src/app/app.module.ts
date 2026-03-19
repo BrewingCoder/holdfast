@@ -4,7 +4,7 @@ import { ReactiveFormsModule } from '@angular/forms'
 import { BrowserModule } from '@angular/platform-browser'
 import { RouterModule } from '@angular/router'
 
-import { H } from 'highlight.run'
+import { H } from '@holdfast-io/browser'
 import { AppComponent } from './app.component'
 
 H.init('2', {

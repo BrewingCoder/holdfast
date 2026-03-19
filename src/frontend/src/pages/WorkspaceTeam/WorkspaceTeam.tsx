@@ -101,7 +101,7 @@ const WorkspaceTeam = () => {
 								name="Single Sign-On (SSO)"
 								fn={() => {
 									const href =
-										`mailto:support@highlight.run?subject=Highlight SSO Configuration` +
+										`mailto:support@@holdfast-io/browser?subject=Highlight SSO Configuration` +
 										`&body=I would like to configure SSO for my workspace.  My workspace ID is ${workspace_id}.`
 									window.open(href, '_blank')
 								}}

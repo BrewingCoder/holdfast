@@ -113,7 +113,7 @@ const removeHighlightFrameIfExists = (frames: StackFrame[]): StackFrame[] => {
 
 	const firstFrame = frames[0]
 	if (
-		firstFrame.fileName?.includes('highlight.run') ||
+		firstFrame.fileName?.includes('@holdfast-io/browser') ||
 		firstFrame.fileName?.includes('highlight.io') ||
 		firstFrame.functionName === 'new highlightPromise'
 	) {

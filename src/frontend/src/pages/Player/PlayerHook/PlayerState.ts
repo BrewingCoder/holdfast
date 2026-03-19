@@ -50,7 +50,7 @@ import {
 import analytics from '@util/analytics'
 import log, { verboseLoggingEnabled } from '@util/log'
 import { timedCall } from '@util/perf/instrument'
-import { H } from 'highlight.run'
+import { H } from '@holdfast-io/browser'
 import { throttle } from 'lodash'
 import moment from 'moment/moment'
 import { MutableRefObject, RefObject, SetStateAction } from 'react'

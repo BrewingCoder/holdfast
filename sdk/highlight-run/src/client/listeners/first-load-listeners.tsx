@@ -285,7 +285,7 @@ export class FirstLoadListeners {
 
 		if (!sThis.disableNetworkRecording) {
 			const documentTimeOrigin = window?.performance?.timeOrigin || 0
-			// get all resources that don't include 'api.highlight.run'
+			// get all resources that don't include 'api.@holdfast-io/browser'
 			httpResources = performance.getEntriesByType(
 				'resource',
 			) as PerformanceResourceTiming[]

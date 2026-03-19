@@ -49,33 +49,33 @@ const publish = async function (opts: Options) {
 		if (opts.has_sdk_changes) {
 			if (!gt(highlightRunPackageJson.version, publishedVersion)) {
 				console.error(
-					`Current highlight.run version ${highlightRunPackageJson.version} must be > published version ${publishedVersion}`,
+					`Current @holdfast-io/browser version ${highlightRunPackageJson.version} must be > published version ${publishedVersion}`,
 				)
 				process.exit(1)
 			}
 		} else {
 			if (!gte(highlightRunPackageJson.version, publishedVersion)) {
 				console.error(
-					`Current highlight.run version ${highlightRunPackageJson.version} must be >= published version ${publishedVersion}`,
+					`Current @holdfast-io/browser version ${highlightRunPackageJson.version} must be >= published version ${publishedVersion}`,
 				)
 				process.exit(1)
 			}
 		}
 		if (!changelogExists(highlightRunPackageJson.version)) {
 			console.error(
-				`Current highlight.run version ${highlightRunPackageJson.version} must have a changelog in ${docsDir}`,
+				`Current @holdfast-io/browser version ${highlightRunPackageJson.version} must have a changelog in ${docsDir}`,
 			)
 			process.exit(1)
 		}
 
 		console.log(
-			`Validated highlight.run package version ${highlightRunPackageJson.version}`,
+			`Validated @holdfast-io/browser package version ${highlightRunPackageJson.version}`,
 		)
 		process.exit(0)
 	} else if (!opts.replace) {
 		if (!gt(highlightRunPackageJson.version, publishedVersion)) {
 			console.info(
-				`Current highlight.run version ${highlightRunPackageJson.version} is <= published version ${publishedVersion}. Not uploading!`,
+				`Current @holdfast-io/browser version ${highlightRunPackageJson.version} is <= published version ${publishedVersion}. Not uploading!`,
 			)
 			process.exit(0)
 		}

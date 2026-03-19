@@ -483,7 +483,7 @@ export const UnknownRequestStatusCode = ({
 						To enable recording status codes for XHR/Fetch requests,
 						you need to enable{' '}
 						<a
-							href="https://docs.highlight.run/recording-network-requests-and-responses"
+							href="https://docs.@holdfast-io/browser/recording-network-requests-and-responses"
 							target="_blank"
 							rel="noreferrer"
 						>

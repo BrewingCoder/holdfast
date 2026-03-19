@@ -1,7 +1,7 @@
 import { Admin, AdminRole, Maybe } from '@graph/schemas'
 
 const HIGHLIGHT_ADMIN_EMAIL_DOMAINS = [
-	'@highlight.run',
+	'@@holdfast-io/browser',
 	'@highlight.io',
 	'@runhighlight.com',
 ] as const

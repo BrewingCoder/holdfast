@@ -6,7 +6,7 @@ import {
 
 describe('normalizeUrl', () => {
 	vi.stubGlobal('location', {
-		origin: 'https://pub.highlight.run',
+		origin: 'https://pub.@holdfast-io/browser',
 	})
 
 	afterEach(() => {
@@ -14,7 +14,7 @@ describe('normalizeUrl', () => {
 	})
 
 	test.each([
-		['/api/todo/create', 'https://pub.highlight.run/api/todo/create'],
+		['/api/todo/create', 'https://pub.@holdfast-io/browser/api/todo/create'],
 		[
 			'https://example.com/trailing/slash/',
 			'https://example.com/trailing/slash',
@@ -28,7 +28,7 @@ describe('normalizeUrl', () => {
 describe('shouldNetworkRequestBeTraced', () => {
 	beforeEach(() => {
 		vi.stubGlobal('location', {
-			origin: 'https://pub.highlight.run',
+			origin: 'https://pub.@holdfast-io/browser',
 		})
 	})
 
@@ -177,7 +177,7 @@ describe('shouldNetworkRequestBeTraced', () => {
 
 describe('shouldNetworkRequestBeRecorded', () => {
 	vi.stubGlobal('location', {
-		origin: 'https://pub.highlight.run',
+		origin: 'https://pub.@holdfast-io/browser',
 	})
 
 	afterEach(() => {

@@ -10,7 +10,7 @@ import {
 import { indexedDBFetch, IndexedDBLink } from '@util/db'
 import { client } from '@util/graph'
 import log from '@util/log'
-import { H } from 'highlight.run'
+import { H } from '@holdfast-io/browser'
 
 export const loadSession = async function (secureID: string) {
 	if (

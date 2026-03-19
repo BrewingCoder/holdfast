@@ -169,7 +169,7 @@ export declare type HighlightOptions = {
 	 * default - Highlight will redact text data on the page that is associated with personal identifiable data.
 	 * none - Highlight will not redact any text data on the page.
 	 * // Redacted text will be randomized. Instead of seeing "Hello World" in a recording, you will see "1fds1 j59a0".
-	 * @see {@link https://docs.highlight.run/docs/privacy} for more information.
+	 * @see {@link https://docs.@holdfast-io/browser/docs/privacy} for more information.
 	 */
 	privacySetting?: PrivacySettingOption
 
@@ -237,7 +237,7 @@ export declare type HighlightOptions = {
 	integrations?: IntegrationOptions
 	/**
 	 * Specifies the keyboard shortcut to open the current session in Highlight.
-	 * @see {@link https://docs.highlight.run/session-shortcut} for more information.
+	 * @see {@link https://docs.@holdfast-io/browser/session-shortcut} for more information.
 	 */
 	sessionShortcut?: SessionShortcutOptions
 	/**
@@ -295,7 +295,7 @@ export declare interface HighlightPublicInterface {
 	/**
 	 * Calling this method will report metrics to Highlight. You can graph metrics or configure
 	 * alerts  on metrics that exceed a threshold.
-	 * @see {@link https://docs.highlight.run/frontend-observability} for more information.
+	 * @see {@link https://docs.@holdfast-io/browser/frontend-observability} for more information.
 	 */
 	metrics: (metrics: Metric[]) => void
 	/**
@@ -427,7 +427,7 @@ export declare interface HighlightPublicInterface {
 	/**
 	 * Calling this method will report an error in Highlight and map it to the current session being recorded.
 	 * A common use case for `H.error` is calling it right outside of an error boundary.
-	 * @see {@link https://docs.highlight.run/grouping-errors} for more information.
+	 * @see {@link https://docs.@holdfast-io/browser/grouping-errors} for more information.
 	 */
 	consumeError: (
 		error: Error,

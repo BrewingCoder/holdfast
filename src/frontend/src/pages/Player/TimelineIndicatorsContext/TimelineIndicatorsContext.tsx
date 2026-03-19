@@ -2,7 +2,7 @@ import { useGetTimelineIndicatorEventsQuery } from '@graph/hooks'
 import { Session, TimelineIndicatorEvent } from '@graph/schemas'
 import { LoadingError } from '@pages/Player/ResourcesContext/ResourcesContext'
 import { indexedDBFetch } from '@util/db'
-import { H } from 'highlight.run'
+import { H } from '@holdfast-io/browser'
 import { useEffect, useState } from 'react'
 
 interface TimelineIndicatorsContext {

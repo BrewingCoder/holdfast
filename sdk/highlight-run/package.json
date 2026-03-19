@@ -1,5 +1,5 @@
 {
-	"name": "highlight.run",
+	"name": "@holdfast-io/browser",
 	"version": "9.16.0",
 	"description": "Open source, fullstack monitoring. Capture frontend errors, record server side logs, and visualize what broke with session replay.",
 	"keywords": [

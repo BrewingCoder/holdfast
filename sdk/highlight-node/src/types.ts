@@ -1,5 +1,5 @@
 import { Attributes } from '@opentelemetry/api'
-import { HighlightOptions } from 'highlight.run'
+import { HighlightOptions } from '@holdfast-io/browser'
 
 export interface NodeOptions extends HighlightOptions {
 	/**
