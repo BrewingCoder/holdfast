@@ -1,0 +1,61 @@
+name: Security Issue
+description: Report a security vulnerability or concern
+labels: ["security", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **If this is a critical vulnerability**, please email security@brewingcoder.com instead of filing a public issue.
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      description: Which component is affected?
+      options:
+        - Authentication / Authorization
+        - Data exposure / PII leak
+        - Network / TLS
+        - SDK — data capture privacy
+        - Infrastructure — container security
+        - Dependencies — vulnerable package
+        - SonarQube finding
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity
+      options:
+        - Critical — active exploit, data breach risk
+        - High — exploitable with effort
+        - Medium — requires specific conditions
+        - Low — theoretical or informational
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: Describe the vulnerability and its impact.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction / Proof of Concept
+      description: How can this be demonstrated?
+    validations:
+      required: false
+
+  - type: textarea
+    id: remediation
+    attributes:
+      label: Suggested Remediation
+      description: How should this be fixed?
+    validations:
+      required: false

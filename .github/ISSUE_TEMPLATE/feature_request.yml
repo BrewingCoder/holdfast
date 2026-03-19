@@ -1,0 +1,66 @@
+name: Feature Request
+description: Suggest a new feature or improvement
+labels: ["enhancement", "triage"]
+body:
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      description: Which part of HoldFast does this relate to?
+      options:
+        - Backend — API / GraphQL
+        - Backend — Worker / Kafka
+        - Backend — Database / Migrations
+        - Backend — Ingestion
+        - Frontend — Dashboard UI
+        - Frontend — Session Replay Player
+        - Frontend — Error Monitoring
+        - Frontend — Logs / Traces
+        - Frontend — Alerts / Dashboards
+        - SDK — Browser (@holdfast-io/browser)
+        - SDK — Node (@holdfast-io/node)
+        - SDK — Go
+        - SDK — Other (React, Next, Remix, etc.)
+        - Infrastructure — Docker / Deployment
+        - Infrastructure — Collector / OTEL
+        - Security / Auth
+        - Documentation
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem Statement
+      description: What problem does this solve? Who is it for?
+      placeholder: As a [type of user], I want [goal] so that [reason].
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed Solution
+      description: How should this work? Include details, mockups, or API sketches.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives Considered
+      description: What other approaches did you consider?
+    validations:
+      required: false
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      options:
+        - Nice to have
+        - Should have
+        - Must have — blocking deployment
+    validations:
+      required: true

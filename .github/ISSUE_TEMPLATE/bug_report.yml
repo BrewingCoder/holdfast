@@ -1,0 +1,94 @@
+name: Bug Report
+description: Report a bug in HoldFast
+labels: ["bug", "triage"]
+body:
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      description: Which part of HoldFast is affected?
+      options:
+        - Backend — API / GraphQL
+        - Backend — Worker / Kafka
+        - Backend — Database / Migrations
+        - Backend — Ingestion
+        - Frontend — Dashboard UI
+        - Frontend — Session Replay Player
+        - Frontend — Error Monitoring
+        - Frontend — Logs / Traces
+        - Frontend — Alerts / Dashboards
+        - SDK — Browser (@holdfast-io/browser)
+        - SDK — Node (@holdfast-io/node)
+        - SDK — Go
+        - SDK — Other (React, Next, Remix, etc.)
+        - Infrastructure — Docker / Deployment
+        - Infrastructure — Collector / OTEL
+        - CI/CD — GitHub Actions
+        - Documentation
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What happened? Be as specific as possible.
+      placeholder: A clear and concise description of the bug.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to Reproduce
+      description: How can we reproduce this?
+      placeholder: |
+        1. Deploy with docker compose
+        2. Navigate to sessions page
+        3. Click on a session
+        4. See error in console
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: What should have happened?
+    validations:
+      required: true
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity
+      options:
+        - Critical — data loss, crash, security
+        - High — feature broken, no workaround
+        - Medium — feature broken, workaround exists
+        - Low — cosmetic, minor inconvenience
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: How is HoldFast deployed?
+      placeholder: |
+        - Deployment: Docker Compose / Helm / manual
+        - OS: Ubuntu 22.04
+        - Browser: Chrome 124
+        - SDK version: @holdfast-io/browser 0.1.0
+    validations:
+      required: false
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant Logs / Screenshots
+      description: Paste error logs, stack traces, or attach screenshots.
+      render: shell
+    validations:
+      required: false

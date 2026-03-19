@@ -1,0 +1,59 @@
+name: Technical Debt
+description: Code quality, refactoring, test coverage, or cleanup
+labels: ["tech-debt", "triage"]
+body:
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      description: Which part of the codebase?
+      options:
+        - Backend — API / GraphQL
+        - Backend — Worker / Kafka
+        - Backend — Database / Models
+        - Backend — Ingestion
+        - Frontend — Components
+        - Frontend — Pages
+        - Frontend — State / GraphQL
+        - SDK — Browser
+        - SDK — Node
+        - SDK — Integrations
+        - Infrastructure
+        - CI/CD
+        - Documentation
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: Category
+      options:
+        - Test coverage
+        - Code documentation
+        - Dead code removal
+        - Refactoring / simplification
+        - Dependency update
+        - Performance
+        - SonarQube finding
+        - Build / tooling
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What needs to be improved and why?
+    validations:
+      required: true
+
+  - type: textarea
+    id: files
+    attributes:
+      label: Affected Files / Packages
+      description: List the specific files, packages, or modules affected.
+      render: shell
+    validations:
+      required: false

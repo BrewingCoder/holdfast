@@ -1,0 +1,133 @@
+name: Issue Classifier
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  issues: write
+
+jobs:
+  classify:
+    name: AI Classify & Label
+    runs-on: ubuntu-latest
+    steps:
+      - name: Classify issue with Claude
+        uses: actions/github-script@v7
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        with:
+          script: |
+            const issue = context.payload.issue;
+            const title = issue.title;
+            const body = issue.body || '';
+
+            // Extract area from form template if present
+            const areaMatch = body.match(/### Area\s*\n\s*(.+)/);
+            const formArea = areaMatch ? areaMatch[1].trim() : null;
+
+            const prompt = `You are a GitHub issue classifier for HoldFast, an open-source self-hosted observability platform (session replay, error monitoring, logging, tracing).
+
+            Classify this issue and return ONLY a JSON object with these fields:
+            - "labels": array of 1-3 labels from this list ONLY:
+              Area: "area:backend", "area:frontend", "area:sdk", "area:infra", "area:docs", "area:ci"
+              Type: "bug", "enhancement", "security", "tech-debt", "question"
+              Priority: "priority:critical", "priority:high", "priority:medium", "priority:low"
+              Component: "component:session-replay", "component:errors", "component:logs", "component:traces", "component:alerts", "component:auth", "component:graphql", "component:database", "component:docker", "component:sdk-browser", "component:sdk-node"
+            - "comment": a one-sentence summary of what this issue is about (helpful for triage)
+
+            Pick exactly ONE area label, ONE type label (if not already labeled), ONE priority label, and optionally ONE component label. Do not invent labels outside this list.
+
+            ${formArea ? `The user selected area: "${formArea}" from the form template.` : ''}
+
+            Issue title: ${title}
+            Issue body:
+            ${body.substring(0, 3000)}`;
+
+            const response = await fetch('https://api.anthropic.com/v1/messages', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'x-api-key': process.env.ANTHROPIC_API_KEY,
+                'anthropic-version': '2023-06-01'
+              },
+              body: JSON.stringify({
+                model: 'claude-haiku-4-5-20251001',
+                max_tokens: 256,
+                messages: [{ role: 'user', content: prompt }]
+              })
+            });
+
+            if (!response.ok) {
+              console.log('Anthropic API error:', response.status, await response.text());
+              return;
+            }
+
+            const data = await response.json();
+            const text = data.content[0].text;
+
+            // Extract JSON from response
+            const jsonMatch = text.match(/\{[\s\S]*\}/);
+            if (!jsonMatch) {
+              console.log('No JSON in response:', text);
+              return;
+            }
+
+            const result = JSON.parse(jsonMatch[0]);
+            console.log('Classification:', JSON.stringify(result, null, 2));
+
+            // Get existing labels to avoid duplicates
+            const existingLabels = issue.labels.map(l => l.name);
+            const newLabels = result.labels.filter(l => !existingLabels.includes(l));
+
+            if (newLabels.length > 0) {
+              // Ensure labels exist
+              for (const label of newLabels) {
+                try {
+                  await github.rest.issues.getLabel({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    name: label
+                  });
+                } catch {
+                  // Create label with color based on prefix
+                  const colors = {
+                    'area:': '0075ca',
+                    'component:': 'e4e669',
+                    'priority:critical': 'b60205',
+                    'priority:high': 'd93f0b',
+                    'priority:medium': 'fbca04',
+                    'priority:low': '0e8a16',
+                    'bug': 'd73a4a',
+                    'enhancement': 'a2eeef',
+                    'security': 'b60205',
+                    'tech-debt': 'f9d0c4',
+                    'question': 'd876e3'
+                  };
+                  const color = Object.entries(colors).find(([k]) => label.startsWith(k) || label === k)?.[1] || 'ededed';
+                  await github.rest.issues.createLabel({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    name: label,
+                    color: color
+                  });
+                }
+              }
+
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                labels: newLabels
+              });
+            }
+
+            // Add classification comment
+            if (result.comment) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                body: `**AI Triage:** ${result.comment}\n\n_Labels applied: ${[...existingLabels, ...newLabels].join(', ')}_`
+              });
+            }
