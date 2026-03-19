@@ -19,10 +19,10 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sendgrid/sendgrid-go"
 
-	"github.com/highlight-run/go-resthooks"
 	Email "github.com/BrewingCoder/holdfast/src/backend/email"
 	"github.com/BrewingCoder/holdfast/src/backend/model"
 	"github.com/BrewingCoder/holdfast/src/backend/zapier"
+	"github.com/highlight-run/go-resthooks"
 	log "github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 )

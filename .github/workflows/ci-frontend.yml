@@ -32,11 +32,13 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: lts/*
+          node-version: 22
           # cache handled by self-hosted runner
 
       - name: Install dependencies
         run: yarn install --immutable
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
 
       - name: Build workspace deps
         run: |
@@ -51,7 +53,7 @@ jobs:
         run: yarn workspace @holdfast-io/frontend lint
 
       - name: Test with coverage
-        run: yarn workspace @holdfast-io/frontend test --run --coverage
+        run: yarn workspace @holdfast-io/frontend test:coverage
         env:
           TZ: UTC
 

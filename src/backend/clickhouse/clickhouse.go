@@ -13,13 +13,13 @@ import (
 	"github.com/samber/lo"
 	"go.opentelemetry.io/otel/attribute"
 
+	hmetric "github.com/BrewingCoder/holdfast/sdk/highlight-go/metric"
+	"github.com/BrewingCoder/holdfast/src/backend/projectpath"
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 	"github.com/golang-migrate/migrate/v4"
 	clickhouseMigrate "github.com/golang-migrate/migrate/v4/database/clickhouse"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
-	"github.com/BrewingCoder/holdfast/src/backend/projectpath"
-	hmetric "github.com/BrewingCoder/holdfast/sdk/highlight-go/metric"
 	log "github.com/sirupsen/logrus"
 )
 

@@ -3,10 +3,10 @@ package stepfunctions
 import (
 	"context"
 	"encoding/json"
+	"github.com/BrewingCoder/holdfast/src/backend/env"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/sfn"
 	"github.com/google/uuid"
-	"github.com/BrewingCoder/holdfast/src/backend/env"
 	"github.com/openlyinc/pointy"
 	"github.com/pkg/errors"
 

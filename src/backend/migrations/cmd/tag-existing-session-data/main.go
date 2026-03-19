@@ -3,10 +3,10 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/BrewingCoder/holdfast/src/backend/env"
 	"github.com/BrewingCoder/holdfast/src/backend/storage"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/openlyinc/pointy"
 	"github.com/samber/lo"
 	"golang.org/x/exp/slices"

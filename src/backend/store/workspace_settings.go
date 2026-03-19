@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/gofiber/fiber/v2/log"
 	"github.com/BrewingCoder/holdfast/src/backend/model"
 	"github.com/BrewingCoder/holdfast/src/backend/redis"
+	"github.com/gofiber/fiber/v2/log"
 	"gorm.io/gorm/clause"
 )
 

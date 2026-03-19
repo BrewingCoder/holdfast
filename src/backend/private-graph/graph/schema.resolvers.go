@@ -20,10 +20,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/DmitriyVTitov/size"
-	"github.com/PaesslerAG/jsonpath"
-	"github.com/aws/smithy-go/ptr"
-	"github.com/google/uuid"
+	highlight "github.com/BrewingCoder/holdfast/sdk/highlight-go"
 	"github.com/BrewingCoder/holdfast/src/backend/alerts"
 	"github.com/BrewingCoder/holdfast/src/backend/alerts/integrations/discord"
 	microsoft_teams "github.com/BrewingCoder/holdfast/src/backend/alerts/integrations/microsoft-teams"
@@ -53,7 +50,10 @@ import (
 	"github.com/BrewingCoder/holdfast/src/backend/util"
 	"github.com/BrewingCoder/holdfast/src/backend/vercel"
 	"github.com/BrewingCoder/holdfast/src/backend/zapier"
-	highlight "github.com/BrewingCoder/holdfast/sdk/highlight-go"
+	"github.com/DmitriyVTitov/size"
+	"github.com/PaesslerAG/jsonpath"
+	"github.com/aws/smithy-go/ptr"
+	"github.com/google/uuid"
 	"github.com/lib/pq"
 	"github.com/openlyinc/pointy"
 	e "github.com/pkg/errors"
@@ -410,13 +410,13 @@ func (r *mutationResolver) UpdateAdminAndCreateWorkspace(ctx context.Context, ad
 	if err := r.Transaction(func(transactionR *mutationResolver) error {
 		// Update admin details
 		if _, err := transactionR.UpdateAdminAboutYouDetails(ctx, modelInputs.AdminAboutYouDetails{
-			FirstName:               adminAndWorkspaceDetails.FirstName,
-			LastName:                adminAndWorkspaceDetails.LastName,
-			UserDefinedRole:         adminAndWorkspaceDetails.UserDefinedRole,
-			UserDefinedPersona:      "",
-			UserDefinedTeamSize:     adminAndWorkspaceDetails.UserDefinedTeamSize,
-			HeardAbout:              adminAndWorkspaceDetails.HeardAbout,
-			Referral:                adminAndWorkspaceDetails.Referral,
+			FirstName:           adminAndWorkspaceDetails.FirstName,
+			LastName:            adminAndWorkspaceDetails.LastName,
+			UserDefinedRole:     adminAndWorkspaceDetails.UserDefinedRole,
+			UserDefinedPersona:  "",
+			UserDefinedTeamSize: adminAndWorkspaceDetails.UserDefinedTeamSize,
+			HeardAbout:          adminAndWorkspaceDetails.HeardAbout,
+			Referral:            adminAndWorkspaceDetails.Referral,
 		}); err != nil {
 			return e.Wrap(err, "error updating admin details")
 		}
@@ -7983,8 +7983,8 @@ func (r *queryResolver) CustomerPortalURL(ctx context.Context, workspaceID int) 
 // Self-hosted: return enterprise-level defaults with no billing issues
 func (r *queryResolver) SubscriptionDetails(ctx context.Context, workspaceID int) (*modelInputs.SubscriptionDetails, error) {
 	return &modelInputs.SubscriptionDetails{
-		BaseAmount:          0,
-		BillingIssue:        false,
+		BaseAmount:           0,
+		BillingIssue:         false,
 		BillingIngestBlocked: false,
 	}, nil
 }

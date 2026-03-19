@@ -55,6 +55,7 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/golang-jwt/jwt/v4"
+	"github.com/highlight-run/workerpool"
 	"github.com/openlyinc/pointy"
 	e "github.com/pkg/errors"
 	"github.com/sendgrid/sendgrid-go"
@@ -62,15 +63,14 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/slack-go/slack"
 	"github.com/slack-go/slack/slackevents"
-	"github.com/highlight-run/workerpool"
 
+	"github.com/BrewingCoder/holdfast/sdk/highlight-go"
 	Email "github.com/BrewingCoder/holdfast/src/backend/email"
 	"github.com/BrewingCoder/holdfast/src/backend/embeddings"
 	"github.com/BrewingCoder/holdfast/src/backend/model"
 	modelInputs "github.com/BrewingCoder/holdfast/src/backend/private-graph/graph/model"
 	"github.com/BrewingCoder/holdfast/src/backend/storage"
 	"github.com/BrewingCoder/holdfast/src/backend/util"
-	"github.com/BrewingCoder/holdfast/sdk/highlight-go"
 )
 
 // This file will not be regenerated automatically.

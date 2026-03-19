@@ -10,11 +10,11 @@ import (
 	"github.com/BrewingCoder/holdfast/src/backend/redis"
 	"github.com/BrewingCoder/holdfast/src/backend/storage"
 
-	"github.com/aws/smithy-go/ptr"
 	"github.com/BrewingCoder/holdfast/src/backend/model"
 	privateModel "github.com/BrewingCoder/holdfast/src/backend/private-graph/graph/model"
 	"github.com/BrewingCoder/holdfast/src/backend/store"
 	"github.com/BrewingCoder/holdfast/src/backend/util"
+	"github.com/aws/smithy-go/ptr"
 	e "github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"

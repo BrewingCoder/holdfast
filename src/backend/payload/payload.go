@@ -11,8 +11,8 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/BrewingCoder/holdfast/src/backend/model"
 	hmetric "github.com/BrewingCoder/holdfast/sdk/highlight-go/metric"
+	"github.com/BrewingCoder/holdfast/src/backend/model"
 )
 
 type CompressedWriter struct {

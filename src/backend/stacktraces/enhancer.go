@@ -17,11 +17,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/andybalholm/brotli"
-	"github.com/go-sourcemap/sourcemap"
 	privateModel "github.com/BrewingCoder/holdfast/src/backend/private-graph/graph/model"
 	publicModel "github.com/BrewingCoder/holdfast/src/backend/public-graph/graph/model"
 	"github.com/BrewingCoder/holdfast/src/backend/storage"
+	"github.com/andybalholm/brotli"
+	"github.com/go-sourcemap/sourcemap"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/BrewingCoder/holdfast/src/backend/util"

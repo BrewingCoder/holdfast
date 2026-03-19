@@ -10,14 +10,14 @@ import (
 
 	"gorm.io/gorm"
 
-	"github.com/aws/smithy-go/ptr"
-	"github.com/go-test/deep"
 	"github.com/BrewingCoder/holdfast/src/backend/model"
 	modelInputs "github.com/BrewingCoder/holdfast/src/backend/private-graph/graph/model"
 	"github.com/BrewingCoder/holdfast/src/backend/redis"
 	"github.com/BrewingCoder/holdfast/src/backend/storage"
 	"github.com/BrewingCoder/holdfast/src/backend/store"
 	"github.com/BrewingCoder/holdfast/src/backend/util"
+	"github.com/aws/smithy-go/ptr"
+	"github.com/go-test/deep"
 	"github.com/kylelemons/godebug/pretty"
 	e "github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"

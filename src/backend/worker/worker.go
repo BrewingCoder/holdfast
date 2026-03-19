@@ -34,6 +34,8 @@ import (
 	parse "github.com/BrewingCoder/holdfast/src/backend/event-parse"
 	delete_handlers "github.com/BrewingCoder/holdfast/src/backend/lambda-functions/deleteSessions/handlers"
 
+	"github.com/BrewingCoder/holdfast/sdk/highlight-go"
+	hmetric "github.com/BrewingCoder/holdfast/sdk/highlight-go/metric"
 	log_alerts "github.com/BrewingCoder/holdfast/src/backend/jobs/log-alerts"
 	metric_alerts "github.com/BrewingCoder/holdfast/src/backend/jobs/metric-alerts"
 	kafkaqueue "github.com/BrewingCoder/holdfast/src/backend/kafka-queue"
@@ -49,8 +51,6 @@ import (
 	tempalerts "github.com/BrewingCoder/holdfast/src/backend/temp-alerts"
 	"github.com/BrewingCoder/holdfast/src/backend/util"
 	"github.com/BrewingCoder/holdfast/src/backend/zapier"
-	"github.com/BrewingCoder/holdfast/sdk/highlight-go"
-	hmetric "github.com/BrewingCoder/holdfast/sdk/highlight-go/metric"
 )
 
 // Worker is a job runner that parses sessions

@@ -9,9 +9,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/BrewingCoder/holdfast/src/backend/redis"
 	"github.com/bradleyfalzon/ghinstallation/v2"
 	"github.com/google/go-github/v50/github"
-	"github.com/BrewingCoder/holdfast/src/backend/redis"
 	"github.com/openlyinc/pointy"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"

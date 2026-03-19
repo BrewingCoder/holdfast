@@ -9,9 +9,9 @@ import (
 	"os"
 	"testing"
 
-	"github.com/golang/snappy"
-	"github.com/BrewingCoder/holdfast/src/backend/env"
 	"github.com/BrewingCoder/holdfast/sdk/highlight-go"
+	"github.com/BrewingCoder/holdfast/src/backend/env"
+	"github.com/golang/snappy"
 	"go.opentelemetry.io/collector/pdata/plog"
 	"go.opentelemetry.io/collector/pdata/plog/plogotlp"
 	"go.opentelemetry.io/collector/pdata/pmetric/pmetricotlp"

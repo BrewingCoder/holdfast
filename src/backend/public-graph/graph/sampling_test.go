@@ -6,12 +6,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/BrewingCoder/holdfast/src/backend/model"
 	modelInputs "github.com/BrewingCoder/holdfast/src/backend/private-graph/graph/model"
 	model2 "github.com/BrewingCoder/holdfast/src/backend/public-graph/graph/model"
 	"github.com/BrewingCoder/holdfast/src/backend/redis"
 	"github.com/BrewingCoder/holdfast/src/backend/store"
+	"github.com/google/uuid"
 	"github.com/openlyinc/pointy"
 	"github.com/stretchr/testify/assert"
 )

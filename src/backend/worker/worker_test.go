@@ -10,7 +10,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/go-test/deep"
 	"github.com/BrewingCoder/holdfast/src/backend/clickhouse"
 	parse "github.com/BrewingCoder/holdfast/src/backend/event-parse"
 	"github.com/BrewingCoder/holdfast/src/backend/model"
@@ -20,6 +19,7 @@ import (
 	"github.com/BrewingCoder/holdfast/src/backend/redis"
 	"github.com/BrewingCoder/holdfast/src/backend/store"
 	"github.com/BrewingCoder/holdfast/src/backend/util"
+	"github.com/go-test/deep"
 	"github.com/openlyinc/pointy"
 	e "github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"

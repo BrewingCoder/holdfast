@@ -2,8 +2,8 @@ package discord
 
 import (
 	"errors"
-	"github.com/bwmarrin/discordgo"
 	"github.com/BrewingCoder/holdfast/src/backend/env"
+	"github.com/bwmarrin/discordgo"
 )
 
 type Bot struct {

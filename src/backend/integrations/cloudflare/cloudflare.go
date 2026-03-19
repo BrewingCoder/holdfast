@@ -3,8 +3,8 @@ package cloudflare
 import (
 	"context"
 	"fmt"
-	"github.com/cloudflare/cloudflare-go"
 	"github.com/BrewingCoder/holdfast/src/backend/env"
+	"github.com/cloudflare/cloudflare-go"
 	log "github.com/sirupsen/logrus"
 )
 

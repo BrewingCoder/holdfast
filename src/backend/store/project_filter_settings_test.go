@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/aws/smithy-go/ptr"
 	"github.com/BrewingCoder/holdfast/src/backend/model"
+	"github.com/aws/smithy-go/ptr"
 	"github.com/stretchr/testify/assert"
 	_ "gorm.io/driver/postgres"
 )

@@ -5,8 +5,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/bwmarrin/discordgo"
 	"github.com/BrewingCoder/holdfast/src/backend/alerts/integrations"
+	"github.com/bwmarrin/discordgo"
 )
 
 func newMessageEmbed() *discordgo.MessageEmbed {

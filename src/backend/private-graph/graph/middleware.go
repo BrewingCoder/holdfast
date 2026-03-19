@@ -12,13 +12,13 @@ import (
 	"github.com/samber/lo"
 
 	"github.com/99designs/gqlgen/graphql/handler/transport"
-	"github.com/go-oauth2/oauth2/v4"
 	"github.com/BrewingCoder/holdfast/src/backend/enterprise"
 	"github.com/BrewingCoder/holdfast/src/backend/env"
 	"github.com/BrewingCoder/holdfast/src/backend/model"
 	"github.com/BrewingCoder/holdfast/src/backend/oauth"
 	"github.com/BrewingCoder/holdfast/src/backend/store"
 	"github.com/BrewingCoder/holdfast/src/backend/util"
+	"github.com/go-oauth2/oauth2/v4"
 	log "github.com/sirupsen/logrus"
 )
 

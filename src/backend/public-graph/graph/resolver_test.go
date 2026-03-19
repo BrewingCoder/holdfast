@@ -10,7 +10,6 @@ import (
 	"testing"
 	"time"
 
-	golang_lru "github.com/hashicorp/golang-lru/v2"
 	"github.com/BrewingCoder/holdfast/src/backend/clickhouse"
 	"github.com/BrewingCoder/holdfast/src/backend/integrations"
 	kafka_queue "github.com/BrewingCoder/holdfast/src/backend/kafka-queue"
@@ -22,6 +21,7 @@ import (
 	"github.com/BrewingCoder/holdfast/src/backend/storage"
 	"github.com/BrewingCoder/holdfast/src/backend/store"
 	"github.com/BrewingCoder/holdfast/src/backend/util"
+	golang_lru "github.com/hashicorp/golang-lru/v2"
 
 	"github.com/aws/smithy-go/ptr"
 	"github.com/go-test/deep"

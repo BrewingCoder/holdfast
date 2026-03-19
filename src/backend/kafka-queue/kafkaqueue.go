@@ -8,10 +8,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/BrewingCoder/holdfast/src/backend/env"
-	"github.com/BrewingCoder/holdfast/src/backend/util"
 	"github.com/BrewingCoder/holdfast/sdk/highlight-go"
 	hmetric "github.com/BrewingCoder/holdfast/sdk/highlight-go/metric"
+	"github.com/BrewingCoder/holdfast/src/backend/env"
+	"github.com/BrewingCoder/holdfast/src/backend/util"
 	"github.com/pkg/errors"
 	"github.com/samber/lo"
 	"github.com/segmentio/kafka-go"

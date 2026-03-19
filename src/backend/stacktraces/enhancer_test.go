@@ -9,11 +9,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"testing"
 
-	"github.com/aws/smithy-go/ptr"
-	"github.com/go-test/deep"
 	modelInput "github.com/BrewingCoder/holdfast/src/backend/private-graph/graph/model"
 	publicModelInput "github.com/BrewingCoder/holdfast/src/backend/public-graph/graph/model"
 	"github.com/BrewingCoder/holdfast/src/backend/storage"
+	"github.com/aws/smithy-go/ptr"
+	"github.com/go-test/deep"
 	e "github.com/pkg/errors"
 )
 

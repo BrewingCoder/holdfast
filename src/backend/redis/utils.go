@@ -18,9 +18,9 @@ import (
 	"github.com/pkg/errors"
 	"github.com/redis/go-redis/v9"
 
+	hmetric "github.com/BrewingCoder/holdfast/sdk/highlight-go/metric"
 	"github.com/BrewingCoder/holdfast/src/backend/model"
 	"github.com/BrewingCoder/holdfast/src/backend/util"
-	hmetric "github.com/BrewingCoder/holdfast/sdk/highlight-go/metric"
 )
 
 const CacheKeySessionsToProcess = "sessions-to-process"

@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	hmetric "github.com/BrewingCoder/holdfast/sdk/highlight-go/metric"
 	"github.com/BrewingCoder/holdfast/src/backend/clickhouse"
 	"github.com/BrewingCoder/holdfast/src/backend/email"
 	"github.com/BrewingCoder/holdfast/src/backend/env"
@@ -17,7 +18,6 @@ import (
 	privateModel "github.com/BrewingCoder/holdfast/src/backend/private-graph/graph/model"
 	pubgraph "github.com/BrewingCoder/holdfast/src/backend/public-graph/graph"
 	"github.com/BrewingCoder/holdfast/src/backend/util"
-	hmetric "github.com/BrewingCoder/holdfast/sdk/highlight-go/metric"
 	e "github.com/pkg/errors"
 	"github.com/samber/lo"
 	log "github.com/sirupsen/logrus"

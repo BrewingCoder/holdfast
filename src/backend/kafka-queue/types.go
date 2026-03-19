@@ -14,33 +14,33 @@ import (
 type PayloadType = int
 
 const (
-	PushPayload                            PayloadType = iota
-	InitializeSession                      PayloadType = iota
-	IdentifySession                        PayloadType = iota
-	AddTrackProperties                     PayloadType = iota // Deprecated: track events are now processed in pushPayload
-	AddSessionProperties                   PayloadType = iota
-	PushBackendPayload                     PayloadType = iota
-	PushMetrics                            PayloadType = iota // Deprecated: use OTeL native metrics
-	MarkBackendSetup                       PayloadType = iota // Deprecated: setup events are written from other payload processing
-	AddSessionFeedback                     PayloadType = iota
-	PushLogs                               PayloadType = iota // Deprecated: use a LogRowMessage with payload type PushLogsFlattened
-	PushTraces                             PayloadType = iota
-	_ PayloadType = iota // (was HubSpotCreateContactForAdmin, deprecated noop)
-	_ PayloadType = iota // (was HubSpotCreateCompanyForWorkspace, deprecated noop)
-	_ PayloadType = iota // (was HubSpotUpdateContactProperty, deprecated noop)
-	_ PayloadType = iota // (was HubSpotUpdateCompanyProperty, deprecated noop)
-	_ PayloadType = iota // (was HubSpotCreateContactCompanyAssociation, deprecated noop)
-	SessionDataSync                        PayloadType = iota
-	ErrorGroupDataSync                     PayloadType = iota
-	ErrorObjectDataSync                    PayloadType = iota
-	PushCompressedPayload                  PayloadType = iota
-	PushLogsFlattened                      PayloadType = iota
-	PushTracesFlattened                    PayloadType = iota
-	PushSessionEvents                      PayloadType = iota
-	PushOTeLMetricSum                      PayloadType = iota
-	PushOTeLMetricHistogram                PayloadType = iota
-	PushOTeLMetricSummary                  PayloadType = iota
-	HealthCheck                            PayloadType = math.MaxInt
+	PushPayload             PayloadType = iota
+	InitializeSession       PayloadType = iota
+	IdentifySession         PayloadType = iota
+	AddTrackProperties      PayloadType = iota // Deprecated: track events are now processed in pushPayload
+	AddSessionProperties    PayloadType = iota
+	PushBackendPayload      PayloadType = iota
+	PushMetrics             PayloadType = iota // Deprecated: use OTeL native metrics
+	MarkBackendSetup        PayloadType = iota // Deprecated: setup events are written from other payload processing
+	AddSessionFeedback      PayloadType = iota
+	PushLogs                PayloadType = iota // Deprecated: use a LogRowMessage with payload type PushLogsFlattened
+	PushTraces              PayloadType = iota
+	_                       PayloadType = iota // (was HubSpotCreateContactForAdmin, deprecated noop)
+	_                       PayloadType = iota // (was HubSpotCreateCompanyForWorkspace, deprecated noop)
+	_                       PayloadType = iota // (was HubSpotUpdateContactProperty, deprecated noop)
+	_                       PayloadType = iota // (was HubSpotUpdateCompanyProperty, deprecated noop)
+	_                       PayloadType = iota // (was HubSpotCreateContactCompanyAssociation, deprecated noop)
+	SessionDataSync         PayloadType = iota
+	ErrorGroupDataSync      PayloadType = iota
+	ErrorObjectDataSync     PayloadType = iota
+	PushCompressedPayload   PayloadType = iota
+	PushLogsFlattened       PayloadType = iota
+	PushTracesFlattened     PayloadType = iota
+	PushSessionEvents       PayloadType = iota
+	PushOTeLMetricSum       PayloadType = iota
+	PushOTeLMetricHistogram PayloadType = iota
+	PushOTeLMetricSummary   PayloadType = iota
+	HealthCheck             PayloadType = math.MaxInt
 )
 
 type PushCompressedPayloadArgs struct {

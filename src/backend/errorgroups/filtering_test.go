@@ -3,9 +3,9 @@ package errorgroups
 import (
 	"testing"
 
-	"github.com/aws/smithy-go/ptr"
 	"github.com/BrewingCoder/holdfast/src/backend/model"
 	privateModel "github.com/BrewingCoder/holdfast/src/backend/private-graph/graph/model"
+	"github.com/aws/smithy-go/ptr"
 	"github.com/stretchr/testify/assert"
 )
 

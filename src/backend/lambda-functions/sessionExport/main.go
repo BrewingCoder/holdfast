@@ -6,10 +6,10 @@ import (
 	"github.com/BrewingCoder/holdfast/src/backend/model"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/BrewingCoder/holdfast/src/backend/lambda-functions/sessionExport/handlers"
-	"github.com/BrewingCoder/holdfast/src/backend/lambda-functions/sessionExport/utils"
 	"github.com/BrewingCoder/holdfast/sdk/highlight-go"
 	hlog "github.com/BrewingCoder/holdfast/sdk/highlight-go/log"
+	"github.com/BrewingCoder/holdfast/src/backend/lambda-functions/sessionExport/handlers"
+	"github.com/BrewingCoder/holdfast/src/backend/lambda-functions/sessionExport/utils"
 )
 
 // Meant for local invocation for testing the lambda handler stack

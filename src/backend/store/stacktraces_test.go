@@ -7,10 +7,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/aws/smithy-go/ptr"
-	github2 "github.com/google/go-github/v50/github"
 	"github.com/BrewingCoder/holdfast/src/backend/model"
 	privateModel "github.com/BrewingCoder/holdfast/src/backend/private-graph/graph/model"
+	"github.com/aws/smithy-go/ptr"
+	github2 "github.com/google/go-github/v50/github"
 	"github.com/stretchr/testify/assert"
 )
 

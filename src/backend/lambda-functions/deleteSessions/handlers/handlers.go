@@ -11,7 +11,6 @@ import (
 	"github.com/openlyinc/pointy"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/google/uuid"
 	"github.com/BrewingCoder/holdfast/src/backend/clickhouse"
 	"github.com/BrewingCoder/holdfast/src/backend/email"
 	"github.com/BrewingCoder/holdfast/src/backend/enterprise"
@@ -19,6 +18,7 @@ import (
 	"github.com/BrewingCoder/holdfast/src/backend/model"
 	modelInputs "github.com/BrewingCoder/holdfast/src/backend/private-graph/graph/model"
 	storage "github.com/BrewingCoder/holdfast/src/backend/storage"
+	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"github.com/sendgrid/sendgrid-go"
 	"github.com/sendgrid/sendgrid-go/helpers/mail"

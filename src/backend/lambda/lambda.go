@@ -17,10 +17,10 @@ import (
 	"github.com/hashicorp/go-retryablehttp"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/BrewingCoder/holdfast/src/backend/lambda-functions/sessionInsights/utils"
 	"github.com/BrewingCoder/holdfast/src/backend/model"
 	modelInputs "github.com/BrewingCoder/holdfast/src/backend/private-graph/graph/model"
+	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/pkg/errors"
 )
 

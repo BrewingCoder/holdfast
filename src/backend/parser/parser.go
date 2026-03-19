@@ -3,12 +3,12 @@ package parser
 import (
 	"strings"
 
-	"github.com/antlr4-go/antlr/v4"
 	"github.com/BrewingCoder/holdfast/src/backend/model"
 	parser "github.com/BrewingCoder/holdfast/src/backend/parser/antlr"
 	"github.com/BrewingCoder/holdfast/src/backend/parser/listener"
 	modelInputs "github.com/BrewingCoder/holdfast/src/backend/private-graph/graph/model"
 	"github.com/BrewingCoder/holdfast/src/backend/util"
+	"github.com/antlr4-go/antlr/v4"
 	"github.com/huandu/go-sqlbuilder"
 )
 

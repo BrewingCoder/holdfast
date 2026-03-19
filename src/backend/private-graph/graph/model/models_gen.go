@@ -72,14 +72,14 @@ type AccountDetailsMember struct {
 }
 
 type AdminAboutYouDetails struct {
-	FirstName               string  `json:"first_name"`
-	LastName                string  `json:"last_name"`
-	UserDefinedRole         string  `json:"user_defined_role"`
-	UserDefinedPersona      string  `json:"user_defined_persona"`
-	UserDefinedTeamSize     string  `json:"user_defined_team_size"`
-	HeardAbout string  `json:"heard_about"`
-	Referral   string  `json:"referral"`
-	Phone                   *string `json:"phone,omitempty"`
+	FirstName           string  `json:"first_name"`
+	LastName            string  `json:"last_name"`
+	UserDefinedRole     string  `json:"user_defined_role"`
+	UserDefinedPersona  string  `json:"user_defined_persona"`
+	UserDefinedTeamSize string  `json:"user_defined_team_size"`
+	HeardAbout          string  `json:"heard_about"`
+	Referral            string  `json:"referral"`
+	Phone               *string `json:"phone,omitempty"`
 }
 
 type AdminAndWorkspaceDetails struct {
@@ -87,8 +87,8 @@ type AdminAndWorkspaceDetails struct {
 	LastName                    string  `json:"last_name"`
 	UserDefinedRole             string  `json:"user_defined_role"`
 	UserDefinedTeamSize         string  `json:"user_defined_team_size"`
-	HeardAbout string  `json:"heard_about"`
-	Referral   string  `json:"referral"`
+	HeardAbout                  string  `json:"heard_about"`
+	Referral                    string  `json:"referral"`
 	WorkspaceName               string  `json:"workspace_name"`
 	AllowedAutoJoinEmailOrigins *string `json:"allowed_auto_join_email_origins,omitempty"`
 	PromoCode                   *string `json:"promo_code,omitempty"`

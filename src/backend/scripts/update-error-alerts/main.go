@@ -7,10 +7,10 @@ import (
 	"github.com/BrewingCoder/holdfast/src/backend/env"
 	"strings"
 
-	"github.com/aws/smithy-go/ptr"
-	"github.com/BrewingCoder/holdfast/src/backend/model"
 	"github.com/BrewingCoder/holdfast/sdk/highlight-go"
 	hlog "github.com/BrewingCoder/holdfast/sdk/highlight-go/log"
+	"github.com/BrewingCoder/holdfast/src/backend/model"
+	"github.com/aws/smithy-go/ptr"
 	log "github.com/sirupsen/logrus"
 )
 
