@@ -20,7 +20,7 @@ concurrency:
 jobs:
   build-and-test:
     name: Build & Test SDKs
-    runs-on: [self-hosted, va-holdfast]
+    runs-on: [self-hosted, holdfast]
     timeout-minutes: 15
 
     steps:
