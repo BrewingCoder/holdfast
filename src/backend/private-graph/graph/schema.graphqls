@@ -602,7 +602,6 @@ type Account {
 	subscription_start: Timestamp
 	plan_tier: String!
 	unlimited_members: Boolean!
-	stripe_customer_id: String!
 	member_count: Int!
 	member_limit: Int
 }
@@ -619,7 +618,6 @@ type AccountDetails {
 	name: String!
 	session_count_per_month: [NamedCount]
 	session_count_per_day: [NamedCount]
-	stripe_customer_id: String!
 	members: [AccountDetailsMember!]!
 }
 

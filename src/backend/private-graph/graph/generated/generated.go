@@ -95,7 +95,6 @@ type ComplexityRoot struct {
 		SessionCountPrev     func(childComplexity int) int
 		SessionCountPrevPrev func(childComplexity int) int
 		SessionLimit         func(childComplexity int) int
-		StripeCustomerID     func(childComplexity int) int
 		SubscriptionStart    func(childComplexity int) int
 		UnlimitedMembers     func(childComplexity int) int
 		ViewCountCur         func(childComplexity int) int
@@ -108,7 +107,6 @@ type ComplexityRoot struct {
 		Name                 func(childComplexity int) int
 		SessionCountPerDay   func(childComplexity int) int
 		SessionCountPerMonth func(childComplexity int) int
-		StripeCustomerID     func(childComplexity int) int
 	}
 
 	AccountDetailsMember struct {
@@ -2319,13 +2317,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Account.SessionLimit(childComplexity), true
 
-	case "Account.stripe_customer_id":
-		if e.complexity.Account.StripeCustomerID == nil {
-			break
-		}
-
-		return e.complexity.Account.StripeCustomerID(childComplexity), true
-
 	case "Account.subscription_start":
 		if e.complexity.Account.SubscriptionStart == nil {
 			break
@@ -2388,13 +2379,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.AccountDetails.SessionCountPerMonth(childComplexity), true
-
-	case "AccountDetails.stripe_customer_id":
-		if e.complexity.AccountDetails.StripeCustomerID == nil {
-			break
-		}
-
-		return e.complexity.AccountDetails.StripeCustomerID(childComplexity), true
 
 	case "AccountDetailsMember.email":
 		if e.complexity.AccountDetailsMember.Email == nil {
@@ -12737,7 +12721,6 @@ type Account {
 	subscription_start: Timestamp
 	plan_tier: String!
 	unlimited_members: Boolean!
-	stripe_customer_id: String!
 	member_count: Int!
 	member_limit: Int
 }
@@ -12754,7 +12737,6 @@ type AccountDetails {
 	name: String!
 	session_count_per_month: [NamedCount]
 	session_count_per_day: [NamedCount]
-	stripe_customer_id: String!
 	members: [AccountDetailsMember!]!
 }
 
@@ -35167,50 +35149,6 @@ func (ec *executionContext) fieldContext_Account_unlimited_members(_ context.Con
 	return fc, nil
 }
 
-func (ec *executionContext) _Account_stripe_customer_id(ctx context.Context, field graphql.CollectedField, obj *model.Account) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Account_stripe_customer_id(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.StripeCustomerID, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Account_stripe_customer_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Account",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _Account_member_count(ctx context.Context, field graphql.CollectedField, obj *model.Account) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Account_member_count(ctx, field)
 	if err != nil {
@@ -35473,50 +35411,6 @@ func (ec *executionContext) fieldContext_AccountDetails_session_count_per_day(_ 
 				return ec.fieldContext_NamedCount_count(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type NamedCount", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _AccountDetails_stripe_customer_id(ctx context.Context, field graphql.CollectedField, obj *model.AccountDetails) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_AccountDetails_stripe_customer_id(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.StripeCustomerID, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_AccountDetails_stripe_customer_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "AccountDetails",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -67043,8 +66937,6 @@ func (ec *executionContext) fieldContext_Query_accounts(_ context.Context, field
 				return ec.fieldContext_Account_plan_tier(ctx, field)
 			case "unlimited_members":
 				return ec.fieldContext_Account_unlimited_members(ctx, field)
-			case "stripe_customer_id":
-				return ec.fieldContext_Account_stripe_customer_id(ctx, field)
 			case "member_count":
 				return ec.fieldContext_Account_member_count(ctx, field)
 			case "member_limit":
@@ -67103,8 +66995,6 @@ func (ec *executionContext) fieldContext_Query_account_details(ctx context.Conte
 				return ec.fieldContext_AccountDetails_session_count_per_month(ctx, field)
 			case "session_count_per_day":
 				return ec.fieldContext_AccountDetails_session_count_per_day(ctx, field)
-			case "stripe_customer_id":
-				return ec.fieldContext_AccountDetails_stripe_customer_id(ctx, field)
 			case "members":
 				return ec.fieldContext_AccountDetails_members(ctx, field)
 			}
@@ -99645,11 +99535,6 @@ func (ec *executionContext) _Account(ctx context.Context, sel ast.SelectionSet, 
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "stripe_customer_id":
-			out.Values[i] = ec._Account_stripe_customer_id(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
 		case "member_count":
 			out.Values[i] = ec._Account_member_count(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -99705,11 +99590,6 @@ func (ec *executionContext) _AccountDetails(ctx context.Context, sel ast.Selecti
 			out.Values[i] = ec._AccountDetails_session_count_per_month(ctx, field, obj)
 		case "session_count_per_day":
 			out.Values[i] = ec._AccountDetails_session_count_per_day(ctx, field, obj)
-		case "stripe_customer_id":
-			out.Values[i] = ec._AccountDetails_stripe_customer_id(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
 		case "members":
 			out.Values[i] = ec._AccountDetails_members(ctx, field, obj)
 			if out.Values[i] == graphql.Null {

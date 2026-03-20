@@ -254,8 +254,7 @@ type Workspace struct {
 	VercelTeamID                *string
 	CloudflareProxy             *string
 	Projects                    []Project
-	MigratedFromProjectID       *int // Column can be removed after migration is done
-	StripeCustomerID            *string
+	MigratedFromProjectID       *int   // Column can be removed after migration is done
 	PlanTier                    string `gorm:"default:Free"`
 	UnlimitedMembers            bool   `gorm:"default:false"`
 	BillingPeriodStart          *time.Time
@@ -277,11 +276,6 @@ type Workspace struct {
 	LogsMaxCents                *int
 	TracesMaxCents              *int
 	MetricsMaxCents             *int
-	StripeSessionOveragePriceID *string
-	StripeErrorOveragePriceID   *string
-	StripeLogOveragePriceID     *string
-	StripeTracesOveragePriceID  *string
-	StripeMetricsOveragePriceID *string
 	TrialEndDate                *time.Time `json:"trial_end_date"`
 	AllowedAutoJoinEmailOrigins *string    `json:"allowed_auto_join_email_origins"`
 	EligibleForTrialExtension   bool       `gorm:"default:false"`
