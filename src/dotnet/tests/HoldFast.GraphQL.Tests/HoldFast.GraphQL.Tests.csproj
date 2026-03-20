@@ -22,6 +22,7 @@
     <ProjectReference Include="..\..\src\HoldFast.GraphQL.Private\HoldFast.GraphQL.Private.csproj" />
     <ProjectReference Include="..\..\src\HoldFast.GraphQL.Public\HoldFast.GraphQL.Public.csproj" />
     <ProjectReference Include="..\..\src\HoldFast.Domain\HoldFast.Domain.csproj" />
+    <ProjectReference Include="..\..\src\HoldFast.Shared\HoldFast.Shared.csproj" />
   </ItemGroup>
 
 </Project>

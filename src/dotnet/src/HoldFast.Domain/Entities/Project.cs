@@ -1,7 +1,18 @@
+using HashidsNet;
+
 namespace HoldFast.Domain.Entities;
 
 public class Project : BaseEntity
 {
+    /// <summary>
+    /// Shared Hashids instance matching Go's configuration:
+    /// no salt, MinLength=8, alphabet=abcdefghijklmnopqrstuvwxyz1234567890
+    /// </summary>
+    private static readonly Hashids HashIdEncoder = new(
+        salt: "",
+        minHashLength: 8,
+        alphabet: "abcdefghijklmnopqrstuvwxyz1234567890");
+
     public string? Name { get; set; }
     public string? ZapierAccessToken { get; set; }
     public string? BillingEmail { get; set; }
@@ -18,6 +29,28 @@ public class Project : BaseEntity
     public int RageClickRadiusPixels { get; set; } = 8;
     public int RageClickCount { get; set; } = 5;
     public bool? FilterChromeExtension { get; set; } = false;
+
+    /// <summary>
+    /// Computed verbose ID matching Go's HashID encoding.
+    /// Used by SDKs as the project identifier (organization_verbose_id).
+    /// </summary>
+    public string VerboseId => HashIdEncoder.Encode(Id);
+
+    /// <summary>
+    /// Parse a verbose ID back to a numeric project ID.
+    /// Falls back to plain integer parsing for legacy/out-of-date clients.
+    /// </summary>
+    public static int FromVerboseId(string verboseId)
+    {
+        // Legacy clients may send plain integer IDs
+        if (int.TryParse(verboseId, out var plainId))
+            return plainId;
+
+        var decoded = HashIdEncoder.Decode(verboseId);
+        if (decoded.Length != 1)
+            throw new ArgumentException($"Invalid verbose ID: {verboseId}");
+        return decoded[0];
+    }
 
     // Navigation
     public Workspace Workspace { get; set; } = null!;
