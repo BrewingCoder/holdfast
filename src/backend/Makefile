@@ -7,8 +7,14 @@ debug:
 debug-no-doppler:
 		dlv debug --headless --listen=:2345 --api-version=2 --accept-multiclient
 public-gen:
+		@echo "Verifying build cache and package health..."
+		go vet ./model/... ./public-graph/...
+		@echo "Generating public GraphQL code..."
 		(cd ./public-graph; go run github.com/99designs/gqlgen)
 private-gen:
+		@echo "Verifying build cache and package health..."
+		go vet ./model/... ./private-graph/...
+		@echo "Generating private GraphQL code..."
 		(cd ./private-graph; go run github.com/99designs/gqlgen)
 private-test:
 		(cd ./private-graph/graph; CLICKHOUSE_ADDRESS=localhost:9000 CLICKHOUSE_DATABASE=default CLICKHOUSE_TEST_DATABASE=test CLICKHOUSE_USERNAME=default ENVIRONMENT=test LOG_LEVEL=debug PSQL_HOST=localhost PSQL_PORT=5432 PSQL_USER=postgres PSQL_PASSWORD=postgres go test ./... -v)
