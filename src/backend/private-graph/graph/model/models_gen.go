@@ -51,7 +51,6 @@ type Account struct {
 	SubscriptionStart    *time.Time `json:"subscription_start,omitempty"`
 	PlanTier             string     `json:"plan_tier"`
 	UnlimitedMembers     bool       `json:"unlimited_members"`
-	StripeCustomerID     string     `json:"stripe_customer_id"`
 	MemberCount          int        `json:"member_count"`
 	MemberLimit          *int       `json:"member_limit,omitempty"`
 }
@@ -61,7 +60,6 @@ type AccountDetails struct {
 	Name                 string                  `json:"name"`
 	SessionCountPerMonth []*NamedCount           `json:"session_count_per_month,omitempty"`
 	SessionCountPerDay   []*NamedCount           `json:"session_count_per_day,omitempty"`
-	StripeCustomerID     string                  `json:"stripe_customer_id"`
 	Members              []*AccountDetailsMember `json:"members"`
 }
 

@@ -254,8 +254,7 @@ type Workspace struct {
 	VercelTeamID                *string
 	CloudflareProxy             *string
 	Projects                    []Project
-	MigratedFromProjectID       *int // Column can be removed after migration is done
-	StripeCustomerID            *string
+	MigratedFromProjectID       *int   // Column can be removed after migration is done
 	PlanTier                    string `gorm:"default:Free"`
 	UnlimitedMembers            bool   `gorm:"default:false"`
 	BillingPeriodStart          *time.Time
@@ -277,13 +276,7 @@ type Workspace struct {
 	LogsMaxCents                *int
 	TracesMaxCents              *int
 	MetricsMaxCents             *int
-	StripeSessionOveragePriceID *string
-	StripeErrorOveragePriceID   *string
-	StripeLogOveragePriceID     *string
-	StripeTracesOveragePriceID  *string
-	StripeMetricsOveragePriceID *string
 	TrialEndDate                *time.Time `json:"trial_end_date"`
-	AllowMeterOverage           bool       `gorm:"default:true"`
 	AllowedAutoJoinEmailOrigins *string    `json:"allowed_auto_join_email_origins"`
 	EligibleForTrialExtension   bool       `gorm:"default:false"`
 	TrialExtensionEnabled       bool       `gorm:"default:false"`
@@ -458,12 +451,10 @@ type AllWorkspaceSettings struct {
 	ErrorEmbeddingsThreshold  float64 `gorm:"default:0.2"`
 	ReplaceAssets             bool    `gorm:"default:true"`
 	StoreIP                   bool    `gorm:"default:true"`
-	CanShowBillingIssueBanner bool    `gorm:"default:false"`
-
-	EnableUnlimitedDashboards bool `gorm:"default:true"`
-	EnableUnlimitedProjects   bool `gorm:"default:true"`
-	EnableUnlimitedRetention  bool `gorm:"default:true"`
-	EnableUnlimitedSeats      bool `gorm:"default:true"`
+	EnableUnlimitedDashboards bool    `gorm:"default:true"`
+	EnableUnlimitedProjects   bool    `gorm:"default:true"`
+	EnableUnlimitedRetention  bool    `gorm:"default:true"`
+	EnableUnlimitedSeats      bool    `gorm:"default:true"`
 
 	EnableBillingLimits      bool `gorm:"default:true"`
 	EnableGrafanaDashboard   bool `gorm:"default:true"`
@@ -2366,7 +2357,6 @@ func EnableAllWorkspaceSettings(ctx context.Context, db *gorm.DB) error {
 		Where("1 = 1").
 		Updates(&AllWorkspaceSettings{
 			StoreIP:                   true,
-			CanShowBillingIssueBanner: false,
 			EnableUnlimitedDashboards: true,
 			EnableUnlimitedProjects:   true,
 			EnableUnlimitedRetention:  true,

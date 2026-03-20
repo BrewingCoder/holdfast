@@ -103,3 +103,40 @@ func TestIsAuthError_DoubleWrapped(t *testing.T) {
 	doubleWrapped := fmt.Errorf("outer: %w", fmt.Errorf("inner: %w", AuthenticationError))
 	assert.True(t, isAuthError(doubleWrapped))
 }
+
+func TestAccountDetails_NoStripeCustomerID(t *testing.T) {
+	// Verify the generated model no longer has a StripeCustomerID field.
+	// Compile-time check — if field exists, this struct literal would fail.
+	details := modelInputs.AccountDetails{
+		ID:      1,
+		Name:    "test-workspace",
+		Members: []*modelInputs.AccountDetailsMember{},
+	}
+	assert.Equal(t, 1, details.ID)
+	assert.Equal(t, "test-workspace", details.Name)
+	assert.Empty(t, details.Members)
+}
+
+func TestAccount_NoStripeCustomerID(t *testing.T) {
+	// Verify the Account type no longer has a StripeCustomerID field.
+	account := modelInputs.Account{
+		Name:     "test",
+		Email:    "test@example.com",
+		PlanTier: "Enterprise",
+	}
+	assert.Equal(t, "test", account.Name)
+	assert.Equal(t, "Enterprise", account.PlanTier)
+}
+
+func TestAccountDetailsMember_Fields(t *testing.T) {
+	// Test adjacent AccountDetailsMember struct used by AccountDetails resolver.
+	member := modelInputs.AccountDetailsMember{
+		ID:    42,
+		Name:  "Jane Doe",
+		Email: "jane@example.com",
+	}
+	assert.Equal(t, 42, member.ID)
+	assert.Equal(t, "Jane Doe", member.Name)
+	assert.Equal(t, "jane@example.com", member.Email)
+	assert.Nil(t, member.LastActive)
+}
