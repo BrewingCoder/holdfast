@@ -76,7 +76,8 @@ jobs:
           args: >
             -Dsonar.projectKey=holdfast-backend
             -Dsonar.sources=.
-            -Dsonar.exclusions=**/*_test.go,**/test-files/**,**/migrations/**
+            -Dsonar.exclusions=**/*_test.go,**/test-files/**,**/migrations/**,**/generated/**,**/graph/generated/**
+            -Dsonar.coverage.exclusions=**/*_test.go,**/generated/**,**/graph/generated/**
             -Dsonar.tests=.
             -Dsonar.test.inclusions=**/*_test.go
             -Dsonar.go.coverage.reportPaths=coverage.out

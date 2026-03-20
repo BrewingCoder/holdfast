@@ -1,6 +1,6 @@
 module github.com/BrewingCoder/holdfast/src/backend
 
-go 1.23.8
+go 1.25
 
 replace golang.org/x/crypto => golang.org/x/crypto v0.17.0
 
@@ -22,7 +22,7 @@ replace github.com/BrewingCoder/holdfast/sdk/highlight-go => ../../sdk/highlight
 
 require (
 	firebase.google.com/go v3.13.0+incompatible
-	github.com/99designs/gqlgen v0.17.70
+	github.com/99designs/gqlgen v0.17.88
 	github.com/BrewingCoder/holdfast/sdk/highlight-go v0.10.2
 	github.com/DmitriyVTitov/size v1.5.0
 	github.com/PaesslerAG/jsonpath v0.1.1
@@ -80,16 +80,16 @@ require (
 	github.com/slack-go/slack v0.12.5
 	github.com/speps/go-hashids v2.0.0+incompatible
 	github.com/urfave/cli/v2 v2.27.7
-	github.com/vektah/gqlparser/v2 v2.5.30
+	github.com/vektah/gqlparser/v2 v2.5.32
 	go.openly.dev/pointy v1.3.0
 	go.opentelemetry.io/collector/pdata v1.23.0
 	go.opentelemetry.io/otel v1.33.0
 	go.opentelemetry.io/otel/sdk v1.33.0
 	go.opentelemetry.io/otel/trace v1.33.0
-	golang.org/x/mod v0.27.0
+	golang.org/x/mod v0.33.0
 	golang.org/x/oauth2 v0.24.0
-	golang.org/x/sync v0.16.0
-	golang.org/x/text v0.27.0
+	golang.org/x/sync v0.19.0
+	golang.org/x/text v0.34.0
 	google.golang.org/api v0.185.0
 	gorm.io/driver/postgres v1.5.7
 	gorm.io/gorm v1.25.7
@@ -125,7 +125,7 @@ require (
 	github.com/go-logr/logr v1.4.2 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-ole/go-ole v1.3.0 // indirect
-	github.com/go-viper/mapstructure/v2 v2.4.0 // indirect
+	github.com/go-viper/mapstructure/v2 v2.5.0 // indirect
 	github.com/goccy/go-json v0.10.5 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/google/go-github/v60 v60.0.0 // indirect
@@ -157,7 +157,7 @@ require (
 	github.com/rs/zerolog v1.32.0 // indirect
 	github.com/segmentio/asm v1.2.0 // indirect
 	github.com/shopspring/decimal v1.4.0 // indirect
-	github.com/sosodev/duration v1.3.1 // indirect
+	github.com/sosodev/duration v1.4.0 // indirect
 	github.com/tdewolff/test v1.0.7 // indirect
 	github.com/tidwall/btree v1.7.0 // indirect
 	github.com/tidwall/buntdb v1.3.0 // indirect
@@ -232,16 +232,16 @@ require (
 	github.com/pierrec/lz4/v4 v4.1.21 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/sendgrid/rest v2.6.9+incompatible // indirect
-	github.com/stretchr/testify v1.10.0
+	github.com/stretchr/testify v1.11.1
 	github.com/tdewolff/parse v2.3.4+incompatible
 	go.opencensus.io v0.24.0 // indirect
 	golang.org/x/crypto v0.36.0
 	golang.org/x/exp v0.0.0-20240222234643-814bf88cf225
-	golang.org/x/net v0.43.0 // indirect
-	golang.org/x/sys v0.35.0 // indirect
+	golang.org/x/net v0.50.0 // indirect
+	golang.org/x/sys v0.41.0 // indirect
 	golang.org/x/time v0.5.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect
 	google.golang.org/genproto v0.0.0-20240617180043-68d350f18fd4 // indirect
 	google.golang.org/grpc v1.69.2 // indirect
-	google.golang.org/protobuf v1.36.6 // indirect
+	google.golang.org/protobuf v1.36.11 // indirect
 )
