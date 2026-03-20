@@ -11,13 +11,13 @@ import (
 
 func TestRetentionMultiplier_AllPeriods(t *testing.T) {
 	tests := map[backend.RetentionPeriod]float64{
-		backend.RetentionPeriodSevenDays:     1,
-		backend.RetentionPeriodThirtyDays:    1,
-		backend.RetentionPeriodThreeMonths:   1,
-		backend.RetentionPeriodSixMonths:     1.5,
-		backend.RetentionPeriodTwelveMonths:  2,
-		backend.RetentionPeriodTwoYears:      2.5,
-		backend.RetentionPeriodThreeYears:    3,
+		backend.RetentionPeriodSevenDays:    1,
+		backend.RetentionPeriodThirtyDays:   1,
+		backend.RetentionPeriodThreeMonths:  1,
+		backend.RetentionPeriodSixMonths:    1.5,
+		backend.RetentionPeriodTwelveMonths: 2,
+		backend.RetentionPeriodTwoYears:     2.5,
+		backend.RetentionPeriodThreeYears:   3,
 	}
 	for period, expected := range tests {
 		t.Run(string(period), func(t *testing.T) {
