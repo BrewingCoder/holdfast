@@ -602,7 +602,6 @@ type Account {
 	subscription_start: Timestamp
 	plan_tier: String!
 	unlimited_members: Boolean!
-	stripe_customer_id: String!
 	member_count: Int!
 	member_limit: Int
 }
@@ -619,7 +618,6 @@ type AccountDetails {
 	name: String!
 	session_count_per_month: [NamedCount]
 	session_count_per_day: [NamedCount]
-	stripe_customer_id: String!
 	members: [AccountDetailsMember!]!
 }
 
@@ -637,6 +635,8 @@ type Workspace {
 	plan_tier: String!
 	unlimited_members: Boolean!
 	trial_end_date: Timestamp
+	billing_period_end: Timestamp
+	next_invoice_date: Timestamp
 	allowed_auto_join_email_origins: String
 	eligible_for_trial_extension: Boolean!
 	trial_extension_enabled: Boolean!
@@ -3121,10 +3121,6 @@ type Mutation {
 		error_group_secure_id: String!
 		is_public: Boolean!
 	): ErrorGroup
-	updateAllowMeterOverage(
-		workspace_id: ID!
-		allow_meter_overage: Boolean!
-	): Workspace
 	submitRegistrationForm(
 		workspace_id: ID!
 		team_size: String!

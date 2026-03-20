@@ -3772,22 +3772,6 @@ func (r *mutationResolver) UpdateErrorGroupIsPublic(ctx context.Context, errorGr
 	return errorGroup, nil
 }
 
-// UpdateAllowMeterOverage is the resolver for the updateAllowMeterOverage field.
-func (r *mutationResolver) UpdateAllowMeterOverage(ctx context.Context, workspaceID int, allowMeterOverage bool) (*model.Workspace, error) {
-	workspace, err := r.isUserWorkspaceAdmin(ctx, workspaceID)
-	if err != nil {
-		return nil, err
-	}
-
-	if err := r.DB.WithContext(ctx).Model(&workspace).Updates(map[string]interface{}{
-		"AllowMeterOverage": allowMeterOverage,
-	}).Error; err != nil {
-		return nil, e.Wrap(err, "error updating AllowMeterOverage")
-	}
-
-	return workspace, nil
-}
-
 // SubmitRegistrationForm is the resolver for the submitRegistrationForm field.
 func (r *mutationResolver) SubmitRegistrationForm(ctx context.Context, workspaceID int, teamSize string, role string, useCase string, heardAbout string, pun *string) (*bool, error) {
 	workspace, err := r.isUserInWorkspaceReadOnly(ctx, workspaceID)
@@ -4787,11 +4771,6 @@ func (r *queryResolver) AccountDetails(ctx context.Context, workspaceID int) (*m
 		sessionCountsPerDay = append(sessionCountsPerDay, &modelInputs.NamedCount{Name: s.Day, Count: s.Sum})
 	}
 
-	var stripeCustomerId string
-	if workspace.StripeCustomerID != nil {
-		stripeCustomerId = *workspace.StripeCustomerID
-	}
-
 	var members []*modelInputs.AccountDetailsMember
 	if err := r.DB.WithContext(ctx).Raw(`
 	select a.id as id, max(a.name) as name, max(a.email) as email, max(s.created_at) as last_active
@@ -4809,7 +4788,6 @@ func (r *queryResolver) AccountDetails(ctx context.Context, workspaceID int) (*m
 		SessionCountPerDay:   sessionCountsPerDay,
 		Name:                 *workspace.Name,
 		ID:                   workspace.ID,
-		StripeCustomerID:     stripeCustomerId,
 		Members:              members,
 	}
 	return details, nil
