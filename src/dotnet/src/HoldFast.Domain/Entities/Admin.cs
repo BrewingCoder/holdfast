@@ -1,0 +1,51 @@
+namespace HoldFast.Domain.Entities;
+
+public class Admin : BaseEntity
+{
+    public string? Uid { get; set; }
+    public string? Name { get; set; }
+    public string? Email { get; set; }
+    public string? Phone { get; set; }
+    public string? PhotoUrl { get; set; }
+    public string? AboutYouDetailsFilled { get; set; }
+    public string? UserDefinedRole { get; set; }
+    public string? UserDefinedPersona { get; set; }
+    public string? Referral { get; set; }
+    public bool EmailVerified { get; set; }
+    public bool SlackIMChannelID { get; set; }
+
+    // Navigation
+    public ICollection<Organization> Organizations { get; set; } = [];
+    public ICollection<Workspace> Workspaces { get; set; } = [];
+}
+
+public class WorkspaceAdmin
+{
+    public int AdminId { get; set; }
+    public int WorkspaceId { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; }
+    public DateTime? DeletedAt { get; set; }
+    public string? Role { get; set; } = "ADMIN";
+    public List<int>? ProjectIds { get; set; }
+
+    // Navigation
+    public Admin Admin { get; set; } = null!;
+    public Workspace Workspace { get; set; } = null!;
+}
+
+public class WorkspaceInviteLink : BaseEntity
+{
+    public int? WorkspaceId { get; set; }
+    public string? InviteeEmail { get; set; }
+    public string? InviteeRole { get; set; }
+    public DateTime? ExpirationDate { get; set; }
+    public string? Secret { get; set; }
+    public List<int>? ProjectIds { get; set; }
+}
+
+public class WorkspaceAccessRequest : BaseEntity
+{
+    public int AdminId { get; set; }
+    public int LastRequestedWorkspace { get; set; }
+}

@@ -1,0 +1,18 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\HoldFast.Domain\HoldFast.Domain.csproj" />
+    <ProjectReference Include="..\HoldFast.Data\HoldFast.Data.csproj" />
+    <ProjectReference Include="..\HoldFast.Data.ClickHouse\HoldFast.Data.ClickHouse.csproj" />
+    <ProjectReference Include="..\HoldFast.Shared\HoldFast.Shared.csproj" />
+    <ProjectReference Include="..\HoldFast.Storage\HoldFast.Storage.csproj" />
+    <ProjectReference Include="..\HoldFast.Integrations\HoldFast.Integrations.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+</Project>

@@ -1,0 +1,20 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/HoldFast.Api/HoldFast.Api.csproj" />
+    <Project Path="src/HoldFast.Data.ClickHouse/HoldFast.Data.ClickHouse.csproj" />
+    <Project Path="src/HoldFast.Data/HoldFast.Data.csproj" />
+    <Project Path="src/HoldFast.Domain/HoldFast.Domain.csproj" />
+    <Project Path="src/HoldFast.GraphQL.Private/HoldFast.GraphQL.Private.csproj" />
+    <Project Path="src/HoldFast.GraphQL.Public/HoldFast.GraphQL.Public.csproj" />
+    <Project Path="src/HoldFast.Integrations/HoldFast.Integrations.csproj" />
+    <Project Path="src/HoldFast.Shared/HoldFast.Shared.csproj" />
+    <Project Path="src/HoldFast.Storage/HoldFast.Storage.csproj" />
+    <Project Path="src/HoldFast.Worker/HoldFast.Worker.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/HoldFast.Data.Tests/HoldFast.Data.Tests.csproj" />
+    <Project Path="tests/HoldFast.Domain.Tests/HoldFast.Domain.Tests.csproj" />
+    <Project Path="tests/HoldFast.GraphQL.Tests/HoldFast.GraphQL.Tests.csproj" />
+    <Project Path="tests/HoldFast.Worker.Tests/HoldFast.Worker.Tests.csproj" />
+  </Folder>
+</Solution>
