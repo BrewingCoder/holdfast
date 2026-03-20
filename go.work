@@ -1,10 +1,10 @@
-go 1.23.8
+go 1.25
 
 use ./src/backend
 
 use ./sdk/highlight-go
 
 use (
-	./tests/e2e/go
 	./sdk/highlightinc-highlight-datasource
+	./tests/e2e/go
 )
