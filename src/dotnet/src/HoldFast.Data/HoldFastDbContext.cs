@@ -1,5 +1,7 @@
+using System.Text.Json;
 using HoldFast.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace HoldFast.Data;
 
@@ -135,6 +137,10 @@ public class HoldFastDbContext : DbContext
             .WithMany()
             .HasForeignKey(wa => wa.WorkspaceId);
 
+        // Ignore computed properties not mapped to database columns
+        modelBuilder.Entity<Project>()
+            .Ignore(p => p.VerboseId);
+
         // Unique index for AllWorkspaceSettings
         modelBuilder.Entity<AllWorkspaceSettings>()
             .HasIndex(s => s.WorkspaceId)
@@ -155,34 +161,56 @@ public class HoldFastDbContext : DbContext
             .HasIndex(r => r.AdminId)
             .IsUnique();
 
-        // PostgreSQL array columns
-        modelBuilder.Entity<Project>()
-            .Property(p => p.ExcludedUsers)
-            .HasColumnType("text[]");
+        // PostgreSQL array columns — only apply when using Npgsql
+        if (Database.IsNpgsql())
+        {
+            modelBuilder.Entity<Project>()
+                .Property(p => p.ExcludedUsers)
+                .HasColumnType("text[]");
 
-        modelBuilder.Entity<Project>()
-            .Property(p => p.ErrorFilters)
-            .HasColumnType("text[]");
+            modelBuilder.Entity<Project>()
+                .Property(p => p.ErrorFilters)
+                .HasColumnType("text[]");
 
-        modelBuilder.Entity<Project>()
-            .Property(p => p.ErrorJsonPaths)
-            .HasColumnType("text[]");
+            modelBuilder.Entity<Project>()
+                .Property(p => p.ErrorJsonPaths)
+                .HasColumnType("text[]");
 
-        modelBuilder.Entity<Project>()
-            .Property(p => p.Platforms)
-            .HasColumnType("text[]");
+            modelBuilder.Entity<Project>()
+                .Property(p => p.Platforms)
+                .HasColumnType("text[]");
 
-        modelBuilder.Entity<DashboardMetric>()
-            .Property(m => m.Groups)
-            .HasColumnType("text[]");
+            modelBuilder.Entity<DashboardMetric>()
+                .Property(m => m.Groups)
+                .HasColumnType("text[]");
 
-        modelBuilder.Entity<WorkspaceAdmin>()
-            .Property(wa => wa.ProjectIds)
-            .HasColumnType("integer[]");
+            modelBuilder.Entity<WorkspaceAdmin>()
+                .Property(wa => wa.ProjectIds)
+                .HasColumnType("integer[]");
 
-        modelBuilder.Entity<WorkspaceInviteLink>()
-            .Property(wil => wil.ProjectIds)
-            .HasColumnType("integer[]");
+            modelBuilder.Entity<WorkspaceInviteLink>()
+                .Property(wil => wil.ProjectIds)
+                .HasColumnType("integer[]");
+        }
+        else
+        {
+            // Non-PostgreSQL (SQLite for tests): store lists as JSON strings
+            var stringListConverter = new ValueConverter<List<string>, string>(
+                v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
+                v => JsonSerializer.Deserialize<List<string>>(v, (JsonSerializerOptions?)null) ?? new List<string>());
+
+            var intListConverter = new ValueConverter<List<int>?, string>(
+                v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
+                v => JsonSerializer.Deserialize<List<int>?>(v, (JsonSerializerOptions?)null));
+
+            modelBuilder.Entity<Project>().Property(p => p.ExcludedUsers).HasConversion(stringListConverter);
+            modelBuilder.Entity<Project>().Property(p => p.ErrorFilters).HasConversion(stringListConverter);
+            modelBuilder.Entity<Project>().Property(p => p.ErrorJsonPaths).HasConversion(stringListConverter);
+            modelBuilder.Entity<Project>().Property(p => p.Platforms).HasConversion(stringListConverter);
+            modelBuilder.Entity<DashboardMetric>().Property(m => m.Groups).HasConversion(stringListConverter);
+            modelBuilder.Entity<WorkspaceAdmin>().Property(wa => wa.ProjectIds).HasConversion(intListConverter);
+            modelBuilder.Entity<WorkspaceInviteLink>().Property(wil => wil.ProjectIds).HasConversion(intListConverter);
+        }
 
         // RetentionPeriod stored as string
         modelBuilder.Entity<Workspace>()

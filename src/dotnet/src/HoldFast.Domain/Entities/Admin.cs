@@ -42,6 +42,9 @@ public class WorkspaceInviteLink : BaseEntity
     public DateTime? ExpirationDate { get; set; }
     public string? Secret { get; set; }
     public List<int>? ProjectIds { get; set; }
+
+    // Navigation
+    public Workspace? Workspace { get; set; }
 }
 
 public class WorkspaceAccessRequest : BaseEntity

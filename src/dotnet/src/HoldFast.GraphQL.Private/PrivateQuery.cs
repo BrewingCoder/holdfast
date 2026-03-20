@@ -13,9 +13,8 @@ namespace HoldFast.GraphQL.Private;
 /// </summary>
 public class PrivateQuery
 {
-    /// <summary>
-    /// Get a workspace by ID.
-    /// </summary>
+    // ── Workspace ─────────────────────────────────────────────────────
+
     [UseProjection]
     [UseFiltering]
     public async Task<Workspace?> GetWorkspace(
@@ -29,8 +28,78 @@ public class PrivateQuery
     }
 
     /// <summary>
-    /// Get a project by ID.
+    /// Get the workspace that contains a given project.
     /// </summary>
+    public async Task<Workspace?> GetWorkspaceForProject(
+        int projectId,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        return await db.Projects
+            .Where(p => p.Id == projectId)
+            .Select(p => p.Workspace)
+            .FirstOrDefaultAsync(ct);
+    }
+
+    /// <summary>
+    /// Get the workspace for an invite link.
+    /// </summary>
+    public async Task<Workspace?> GetWorkspaceForInviteLink(
+        string secret,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        var link = await db.WorkspaceInviteLinks
+            .Include(l => l.Workspace)
+            .FirstOrDefaultAsync(l => l.Secret == secret, ct);
+        return link?.Workspace;
+    }
+
+    /// <summary>
+    /// List all workspaces an admin belongs to.
+    /// </summary>
+    [UseProjection]
+    [UseFiltering]
+    [UseSorting]
+    public IQueryable<Workspace> GetWorkspaces(
+        int adminId,
+        [Service] HoldFastDbContext db)
+    {
+        return db.WorkspaceAdmins
+            .Where(wa => wa.AdminId == adminId)
+            .Select(wa => wa.Workspace);
+    }
+
+    /// <summary>
+    /// Get workspace invite links.
+    /// </summary>
+    public async Task<List<WorkspaceInviteLink>> GetWorkspaceInviteLinks(
+        int workspaceId,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        return await db.WorkspaceInviteLinks
+            .Where(l => l.WorkspaceId == workspaceId)
+            .ToListAsync(ct);
+    }
+
+    /// <summary>
+    /// List workspace admins with their roles.
+    /// </summary>
+    public async Task<List<WorkspaceAdmin>> GetWorkspaceAdmins(
+        int workspaceId,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        return await db.WorkspaceAdmins
+            .Include(wa => wa.Admin)
+            .Where(wa => wa.WorkspaceId == workspaceId)
+            .OrderBy(wa => wa.Admin.CreatedAt)
+            .ToListAsync(ct);
+    }
+
+    // ── Project ───────────────────────────────────────────────────────
+
     [UseProjection]
     public async Task<Project?> GetProject(
         int id,
@@ -41,9 +110,6 @@ public class PrivateQuery
             .FirstOrDefaultAsync(p => p.Id == id, ct);
     }
 
-    /// <summary>
-    /// List all projects in a workspace.
-    /// </summary>
     [UseProjection]
     [UseFiltering]
     [UseSorting]
@@ -55,8 +121,19 @@ public class PrivateQuery
     }
 
     /// <summary>
-    /// Get an error group by ID.
+    /// Get project settings (filter/sampling configuration).
     /// </summary>
+    public async Task<ProjectFilterSettings?> GetProjectSettings(
+        int projectId,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        return await db.ProjectFilterSettings
+            .FirstOrDefaultAsync(s => s.ProjectId == projectId, ct);
+    }
+
+    // ── Error Groups ──────────────────────────────────────────────────
+
     [UseProjection]
     public async Task<ErrorGroup?> GetErrorGroup(
         int id,
@@ -67,9 +144,6 @@ public class PrivateQuery
             .FirstOrDefaultAsync(eg => eg.Id == id, ct);
     }
 
-    /// <summary>
-    /// List error groups for a project.
-    /// </summary>
     [UseProjection]
     [UseFiltering]
     [UseSorting]
@@ -81,8 +155,45 @@ public class PrivateQuery
     }
 
     /// <summary>
-    /// Get a session by secure ID.
+    /// Get a specific error object by ID.
     /// </summary>
+    public async Task<ErrorObject?> GetErrorObject(
+        int id,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        return await db.ErrorObjects
+            .FirstOrDefaultAsync(eo => eo.Id == id, ct);
+    }
+
+    /// <summary>
+    /// List error objects for an error group.
+    /// </summary>
+    [UseProjection]
+    [UseFiltering]
+    [UseSorting]
+    public IQueryable<ErrorObject> GetErrorObjects(
+        int errorGroupId,
+        [Service] HoldFastDbContext db)
+    {
+        return db.ErrorObjects.Where(eo => eo.ErrorGroupId == errorGroupId);
+    }
+
+    /// <summary>
+    /// Get error group tags.
+    /// </summary>
+    public async Task<List<ErrorTag>> GetErrorGroupTags(
+        int errorGroupId,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        return await db.ErrorTags
+            .Where(t => t.ErrorGroupId == errorGroupId)
+            .ToListAsync(ct);
+    }
+
+    // ── Sessions ──────────────────────────────────────────────────────
+
     [UseProjection]
     public async Task<Session?> GetSession(
         string secureId,
@@ -94,8 +205,104 @@ public class PrivateQuery
     }
 
     /// <summary>
-    /// Get workspace settings.
+    /// Get session intervals for timeline display.
     /// </summary>
+    public async Task<List<SessionInterval>> GetSessionIntervals(
+        int sessionId,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        return await db.SessionIntervals
+            .Where(i => i.SessionId == sessionId)
+            .OrderBy(i => i.StartTime)
+            .ToListAsync(ct);
+    }
+
+    /// <summary>
+    /// Get event chunk URLs for session replay.
+    /// </summary>
+    public async Task<List<EventChunk>> GetEventChunks(
+        int sessionId,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        return await db.EventChunks
+            .Where(c => c.SessionId == sessionId)
+            .OrderBy(c => c.ChunkIndex)
+            .ToListAsync(ct);
+    }
+
+    /// <summary>
+    /// Get rage click events for a session.
+    /// </summary>
+    [UseProjection]
+    [UseFiltering]
+    public IQueryable<RageClickEvent> GetRageClicks(
+        int sessionId,
+        [Service] HoldFastDbContext db)
+    {
+        return db.RageClickEvents.Where(r => r.SessionId == sessionId);
+    }
+
+    /// <summary>
+    /// Get session exports.
+    /// </summary>
+    public async Task<List<SessionExport>> GetSessionExports(
+        int sessionId,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        return await db.SessionExports
+            .Where(e => e.SessionId == sessionId)
+            .ToListAsync(ct);
+    }
+
+    // ── Comments ──────────────────────────────────────────────────────
+
+    /// <summary>
+    /// List session comments for a session.
+    /// </summary>
+    [UseProjection]
+    [UseSorting]
+    public IQueryable<SessionComment> GetSessionComments(
+        int sessionId,
+        [Service] HoldFastDbContext db)
+    {
+        return db.SessionComments
+            .Include(c => c.Tags)
+            .Include(c => c.Replies)
+            .Where(c => c.SessionId == sessionId);
+    }
+
+    /// <summary>
+    /// List session comments for a project.
+    /// </summary>
+    [UseProjection]
+    [UseFiltering]
+    [UseSorting]
+    public IQueryable<SessionComment> GetSessionCommentsForProject(
+        int projectId,
+        [Service] HoldFastDbContext db)
+    {
+        return db.SessionComments
+            .Include(c => c.Tags)
+            .Where(c => c.ProjectId == projectId);
+    }
+
+    /// <summary>
+    /// List error comments for an error group.
+    /// </summary>
+    [UseProjection]
+    [UseSorting]
+    public IQueryable<ErrorComment> GetErrorComments(
+        int errorGroupId,
+        [Service] HoldFastDbContext db)
+    {
+        return db.ErrorComments.Where(c => c.ErrorGroupId == errorGroupId);
+    }
+
+    // ── Workspace Settings ────────────────────────────────────────────
+
     public async Task<AllWorkspaceSettings?> GetWorkspaceSettings(
         int workspaceId,
         [Service] HoldFastDbContext db,
@@ -105,9 +312,8 @@ public class PrivateQuery
             .FirstOrDefaultAsync(s => s.WorkspaceId == workspaceId, ct);
     }
 
-    /// <summary>
-    /// List alerts for a project.
-    /// </summary>
+    // ── Alerts ────────────────────────────────────────────────────────
+
     [UseProjection]
     [UseFiltering]
     [UseSorting]
@@ -120,9 +326,8 @@ public class PrivateQuery
             .Where(a => a.ProjectId == projectId);
     }
 
-    /// <summary>
-    /// List dashboards for a project.
-    /// </summary>
+    // ── Dashboards ────────────────────────────────────────────────────
+
     [UseProjection]
     [UseFiltering]
     public IQueryable<Dashboard> GetDashboards(
@@ -134,9 +339,8 @@ public class PrivateQuery
             .Where(d => d.ProjectId == projectId);
     }
 
-    /// <summary>
-    /// Get the current admin by UID (from auth context).
-    /// </summary>
+    // ── Admin ─────────────────────────────────────────────────────────
+
     public async Task<Admin?> GetAdmin(
         string uid,
         [Service] HoldFastDbContext db,
@@ -144,5 +348,92 @@ public class PrivateQuery
     {
         return await db.Admins
             .FirstOrDefaultAsync(a => a.Uid == uid, ct);
+    }
+
+    // ── Services ──────────────────────────────────────────────────────
+
+    /// <summary>
+    /// List services for a project.
+    /// </summary>
+    [UseProjection]
+    [UseFiltering]
+    [UseSorting]
+    public IQueryable<Domain.Entities.Service> GetServices(
+        int projectId,
+        [Service] HoldFastDbContext db)
+    {
+        return db.Services
+            .Where(s => s.ProjectId == projectId)
+            .OrderBy(s => s.Name);
+    }
+
+    /// <summary>
+    /// Get a service by name within a project.
+    /// </summary>
+    public async Task<Domain.Entities.Service?> GetServiceByName(
+        int projectId,
+        string name,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        return await db.Services
+            .FirstOrDefaultAsync(s => s.ProjectId == projectId && s.Name == name, ct);
+    }
+
+    // ── Saved Segments ────────────────────────────────────────────────
+
+    /// <summary>
+    /// List saved segments for a project, optionally filtered by entity type.
+    /// </summary>
+    public async Task<List<SavedSegment>> GetSavedSegments(
+        int projectId,
+        string? entityType,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        var query = db.SavedSegments.Where(s => s.ProjectId == projectId);
+        if (entityType != null)
+            query = query.Where(s => s.EntityType == entityType);
+        return await query.ToListAsync(ct);
+    }
+
+    // ── Integrations ──────────────────────────────────────────────────
+
+    /// <summary>
+    /// Get integration project mappings.
+    /// </summary>
+    public async Task<List<IntegrationProjectMapping>> GetIntegrationProjectMappings(
+        int projectId,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        return await db.IntegrationProjectMappings
+            .Where(m => m.ProjectId == projectId)
+            .ToListAsync(ct);
+    }
+
+    /// <summary>
+    /// Get integration workspace mappings.
+    /// </summary>
+    public async Task<List<IntegrationWorkspaceMapping>> GetIntegrationWorkspaceMappings(
+        int workspaceId,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        return await db.IntegrationWorkspaceMappings
+            .Where(m => m.WorkspaceId == workspaceId)
+            .ToListAsync(ct);
+    }
+
+    // ── System ────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Get system configuration (self-hosted settings).
+    /// </summary>
+    public async Task<SystemConfiguration?> GetSystemConfiguration(
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        return await db.SystemConfigurations.FirstOrDefaultAsync(ct);
     }
 }
