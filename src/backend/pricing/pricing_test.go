@@ -1,6 +1,7 @@
 package pricing
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -59,11 +60,11 @@ func TestWorker_NoOps(t *testing.T) {
 	w := NewWorker(nil, nil, nil, nil, nil, nil, nil)
 	assert.NotNil(t, w)
 
-	overages, err := w.CalculateOverages(nil, 1)
+	overages, err := w.CalculateOverages(context.TODO(), 1)
 	assert.NoError(t, err)
 	assert.Empty(t, overages)
 
-	assert.NoError(t, w.ReportStripeUsageForWorkspace(nil, 1))
+	assert.NoError(t, w.ReportStripeUsageForWorkspace(context.TODO(), 1))
 }
 
 func TestGetLimitAmount(t *testing.T) {
