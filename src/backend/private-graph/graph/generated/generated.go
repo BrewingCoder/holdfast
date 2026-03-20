@@ -12738,8 +12738,6 @@ type Workspace {
 	plan_tier: String!
 	unlimited_members: Boolean!
 	trial_end_date: Timestamp
-	billing_period_end: Timestamp
-	next_invoice_date: Timestamp
 	allowed_auto_join_email_origins: String
 	eligible_for_trial_extension: Boolean!
 	trial_extension_enabled: Boolean!
@@ -58988,10 +58986,6 @@ func (ec *executionContext) fieldContext_Mutation_createWorkspace(ctx context.Co
 				return ec.fieldContext_Workspace_unlimited_members(ctx, field)
 			case "trial_end_date":
 				return ec.fieldContext_Workspace_trial_end_date(ctx, field)
-			case "billing_period_end":
-				return ec.fieldContext_Workspace_billing_period_end(ctx, field)
-			case "next_invoice_date":
-				return ec.fieldContext_Workspace_next_invoice_date(ctx, field)
 			case "allowed_auto_join_email_origins":
 				return ec.fieldContext_Workspace_allowed_auto_join_email_origins(ctx, field)
 			case "eligible_for_trial_extension":
@@ -59315,10 +59309,6 @@ func (ec *executionContext) fieldContext_Mutation_editWorkspace(ctx context.Cont
 				return ec.fieldContext_Workspace_unlimited_members(ctx, field)
 			case "trial_end_date":
 				return ec.fieldContext_Workspace_trial_end_date(ctx, field)
-			case "billing_period_end":
-				return ec.fieldContext_Workspace_billing_period_end(ctx, field)
-			case "next_invoice_date":
-				return ec.fieldContext_Workspace_next_invoice_date(ctx, field)
 			case "allowed_auto_join_email_origins":
 				return ec.fieldContext_Workspace_allowed_auto_join_email_origins(ctx, field)
 			case "eligible_for_trial_extension":
@@ -66488,10 +66478,6 @@ func (ec *executionContext) fieldContext_Project_workspace(_ context.Context, fi
 				return ec.fieldContext_Workspace_unlimited_members(ctx, field)
 			case "trial_end_date":
 				return ec.fieldContext_Workspace_trial_end_date(ctx, field)
-			case "billing_period_end":
-				return ec.fieldContext_Workspace_billing_period_end(ctx, field)
-			case "next_invoice_date":
-				return ec.fieldContext_Workspace_next_invoice_date(ctx, field)
 			case "allowed_auto_join_email_origins":
 				return ec.fieldContext_Workspace_allowed_auto_join_email_origins(ctx, field)
 			case "eligible_for_trial_extension":
@@ -71176,10 +71162,6 @@ func (ec *executionContext) fieldContext_Query_workspaces(_ context.Context, fie
 				return ec.fieldContext_Workspace_unlimited_members(ctx, field)
 			case "trial_end_date":
 				return ec.fieldContext_Workspace_trial_end_date(ctx, field)
-			case "billing_period_end":
-				return ec.fieldContext_Workspace_billing_period_end(ctx, field)
-			case "next_invoice_date":
-				return ec.fieldContext_Workspace_next_invoice_date(ctx, field)
 			case "allowed_auto_join_email_origins":
 				return ec.fieldContext_Workspace_allowed_auto_join_email_origins(ctx, field)
 			case "eligible_for_trial_extension":
@@ -71313,10 +71295,6 @@ func (ec *executionContext) fieldContext_Query_joinable_workspaces(_ context.Con
 				return ec.fieldContext_Workspace_unlimited_members(ctx, field)
 			case "trial_end_date":
 				return ec.fieldContext_Workspace_trial_end_date(ctx, field)
-			case "billing_period_end":
-				return ec.fieldContext_Workspace_billing_period_end(ctx, field)
-			case "next_invoice_date":
-				return ec.fieldContext_Workspace_next_invoice_date(ctx, field)
 			case "allowed_auto_join_email_origins":
 				return ec.fieldContext_Workspace_allowed_auto_join_email_origins(ctx, field)
 			case "eligible_for_trial_extension":
@@ -74171,10 +74149,6 @@ func (ec *executionContext) fieldContext_Query_workspace(ctx context.Context, fi
 				return ec.fieldContext_Workspace_unlimited_members(ctx, field)
 			case "trial_end_date":
 				return ec.fieldContext_Workspace_trial_end_date(ctx, field)
-			case "billing_period_end":
-				return ec.fieldContext_Workspace_billing_period_end(ctx, field)
-			case "next_invoice_date":
-				return ec.fieldContext_Workspace_next_invoice_date(ctx, field)
 			case "allowed_auto_join_email_origins":
 				return ec.fieldContext_Workspace_allowed_auto_join_email_origins(ctx, field)
 			case "eligible_for_trial_extension":
@@ -74578,10 +74552,6 @@ func (ec *executionContext) fieldContext_Query_workspace_for_project(ctx context
 				return ec.fieldContext_Workspace_unlimited_members(ctx, field)
 			case "trial_end_date":
 				return ec.fieldContext_Workspace_trial_end_date(ctx, field)
-			case "billing_period_end":
-				return ec.fieldContext_Workspace_billing_period_end(ctx, field)
-			case "next_invoice_date":
-				return ec.fieldContext_Workspace_next_invoice_date(ctx, field)
 			case "allowed_auto_join_email_origins":
 				return ec.fieldContext_Workspace_allowed_auto_join_email_origins(ctx, field)
 			case "eligible_for_trial_extension":
@@ -93847,88 +93817,6 @@ func (ec *executionContext) _Workspace_trial_end_date(ctx context.Context, field
 }
 
 func (ec *executionContext) fieldContext_Workspace_trial_end_date(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Workspace",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Timestamp does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Workspace_billing_period_end(ctx context.Context, field graphql.CollectedField, obj *model1.Workspace) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Workspace_billing_period_end(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.BillingPeriodEnd, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*time.Time)
-	fc.Result = res
-	return ec.marshalOTimestamp2ᚖtimeᚐTime(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Workspace_billing_period_end(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Workspace",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Timestamp does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Workspace_next_invoice_date(ctx context.Context, field graphql.CollectedField, obj *model1.Workspace) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Workspace_next_invoice_date(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.NextInvoiceDate, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*time.Time)
-	fc.Result = res
-	return ec.marshalOTimestamp2ᚖtimeᚐTime(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Workspace_next_invoice_date(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Workspace",
 		Field:      field,
@@ -114483,10 +114371,6 @@ func (ec *executionContext) _Workspace(ctx context.Context, sel ast.SelectionSet
 			}
 		case "trial_end_date":
 			out.Values[i] = ec._Workspace_trial_end_date(ctx, field, obj)
-		case "billing_period_end":
-			out.Values[i] = ec._Workspace_billing_period_end(ctx, field, obj)
-		case "next_invoice_date":
-			out.Values[i] = ec._Workspace_next_invoice_date(ctx, field, obj)
 		case "allowed_auto_join_email_origins":
 			out.Values[i] = ec._Workspace_allowed_auto_join_email_origins(ctx, field, obj)
 		case "eligible_for_trial_extension":
