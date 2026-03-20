@@ -46,10 +46,9 @@ export const didUpgradePlan = (
 	return false
 }
 
-export const getTrialEndDateMessage = (trialEndDate: any): string => {
-	return `You have unlimited sessions until ${moment(trialEndDate).format(
-		'MM/DD/YY',
-	)}. After this trial, you will be on the free tier.`
+export const getTrialEndDateMessage = (_trialEndDate: any): string => {
+	// HoldFast: no trials
+	return ''
 }
 
 export const tryCastDate = (date: Maybe<string> | undefined) => {
@@ -95,7 +94,7 @@ export const PLANS_WITH_ENTERPRISE_FEATURES = new Set<PlanType>([
 ])
 
 type meterArgs = {
-	workspace: Maybe<Pick<Workspace, 'trial_end_date'>> | undefined
+	workspace: Maybe<Pick<Workspace, 'id'>> | undefined
 	details:
 		| Maybe<
 				{ __typename?: 'BillingDetails' } & Pick<
@@ -144,10 +143,7 @@ export const getMeterAmounts = ({
 			[ProductType.Events]: [0, undefined],
 		}
 	}
-	const trialActive = workspace?.trial_end_date
-		? moment(workspace?.trial_end_date).isAfter(moment())
-		: false
-	const canChargeOverage = trialActive || details.plan.type !== 'Free'
+	const canChargeOverage = details.plan.type !== 'Free'
 	const sessionsMeter = details?.meter ?? 0
 	const sessionsQuota = canChargeOverage
 		? details?.sessionsBillingLimit

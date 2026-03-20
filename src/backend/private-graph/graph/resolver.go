@@ -463,7 +463,6 @@ func (r *Resolver) isUserInWorkspaceReadOnly(ctx context.Context, workspaceID in
 		BillingPeriodStart:          workspace.BillingPeriodStart,
 		ClearbitEnabled:             workspace.ClearbitEnabled,
 		CloudflareProxy:             workspace.CloudflareProxy,
-		EligibleForTrialExtension:   workspace.EligibleForTrialExtension,
 		ErrorsMaxCents:              workspace.ErrorsMaxCents,
 		ErrorsRetentionPeriod:       workspace.ErrorsRetentionPeriod,
 		LogsMaxCents:                workspace.LogsMaxCents,
@@ -489,8 +488,6 @@ func (r *Resolver) isUserInWorkspaceReadOnly(ctx context.Context, workspaceID in
 		TracesRetentionPeriod:       workspace.TracesRetentionPeriod,
 		MetricsMaxCents:             workspace.MetricsMaxCents,
 		MetricsRetentionPeriod:      workspace.MetricsRetentionPeriod,
-		TrialEndDate:                workspace.TrialEndDate,
-		TrialExtensionEnabled:       workspace.TrialExtensionEnabled,
 		UnlimitedMembers:            workspace.UnlimitedMembers,
 	}, nil
 }

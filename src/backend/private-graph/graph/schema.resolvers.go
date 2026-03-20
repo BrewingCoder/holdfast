@@ -517,14 +517,9 @@ func (r *mutationResolver) CreateWorkspace(ctx context.Context, name string) (*m
 		return nil, nil
 	}
 
-	trialEnd := time.Now().Add(14 * 24 * time.Hour) // Trial expires 14 days from current day
-
 	workspace := &model.Workspace{
-		Admins:                    []model.Admin{*admin},
-		Name:                      &name,
-		TrialEndDate:              &trialEnd,
-		EligibleForTrialExtension: true, // Trial can be extended if user integrates + fills out form
-		TrialExtensionEnabled:     false,
+		Admins: []model.Admin{*admin},
+		Name:   &name,
 	}
 
 	if env.IsOnPrem() {
@@ -3790,8 +3785,7 @@ func (r *mutationResolver) UpdateAllowMeterOverage(ctx context.Context, workspac
 
 // SubmitRegistrationForm is the resolver for the submitRegistrationForm field.
 func (r *mutationResolver) SubmitRegistrationForm(ctx context.Context, workspaceID int, teamSize string, role string, useCase string, heardAbout string, pun *string) (*bool, error) {
-	workspace, err := r.isUserInWorkspaceReadOnly(ctx, workspaceID)
-	if err != nil {
+	if _, err := r.isUserInWorkspaceReadOnly(ctx, workspaceID); err != nil {
 		return nil, e.Wrap(err, "admin is not in workspace")
 	}
 
@@ -3806,15 +3800,6 @@ func (r *mutationResolver) SubmitRegistrationForm(ctx context.Context, workspace
 
 	if err := r.DB.WithContext(ctx).Create(registrationData).Error; err != nil {
 		return nil, e.Wrap(err, "error creating registration")
-	}
-
-	if workspace.EligibleForTrialExtension {
-		if err := r.DB.WithContext(ctx).Model(workspace).Updates(map[string]interface{}{
-			"EligibleForTrialExtension": false,
-			"TrialEndDate":              workspace.TrialEndDate.Add(7 * 24 * time.Hour), // add 7 days to the current end date
-		}).Error; err != nil {
-			return nil, e.Wrap(err, "error clearing EligibleForTrialExtension flag")
-		}
 	}
 
 	return &model.T, nil
@@ -6446,18 +6431,15 @@ func (r *queryResolver) BillingDetails(ctx context.Context, workspaceID int) (*m
 		tracesRetentionPeriod = *workspace.TracesRetentionPeriod
 	}
 
-	var sessionsLimit, errorsLimit, logsLimit, tracesLimit *int64
-	var sessionsRate, errorsRate, logsRate, tracesRate float64
-	if workspace.TrialEndDate == nil || workspace.TrialEndDate.Before(time.Now()) {
-		sessionsLimit = pricing.GetLimitAmount(workspace.SessionsMaxCents, model.PricingProductTypeSessions, planType, sessionsRetentionPeriod)
-		errorsLimit = pricing.GetLimitAmount(workspace.ErrorsMaxCents, model.PricingProductTypeErrors, planType, errorsRetentionPeriod)
-		logsLimit = pricing.GetLimitAmount(workspace.LogsMaxCents, model.PricingProductTypeLogs, planType, logsRetentionPeriod)
-		tracesLimit = pricing.GetLimitAmount(workspace.TracesMaxCents, model.PricingProductTypeTraces, planType, tracesRetentionPeriod)
-		sessionsRate = pricing.ProductToBasePriceCents(model.PricingProductTypeSessions, planType, sessionsMeter)
-		errorsRate = pricing.ProductToBasePriceCents(model.PricingProductTypeErrors, planType, errorsMeter)
-		logsRate = pricing.ProductToBasePriceCents(model.PricingProductTypeLogs, planType, logsMeter)
-		tracesRate = pricing.ProductToBasePriceCents(model.PricingProductTypeTraces, planType, tracesMeter)
-	}
+	// HoldFast: no trials — always compute limits/rates
+	sessionsLimit := pricing.GetLimitAmount(workspace.SessionsMaxCents, model.PricingProductTypeSessions, planType, sessionsRetentionPeriod)
+	errorsLimit := pricing.GetLimitAmount(workspace.ErrorsMaxCents, model.PricingProductTypeErrors, planType, errorsRetentionPeriod)
+	logsLimit := pricing.GetLimitAmount(workspace.LogsMaxCents, model.PricingProductTypeLogs, planType, logsRetentionPeriod)
+	tracesLimit := pricing.GetLimitAmount(workspace.TracesMaxCents, model.PricingProductTypeTraces, planType, tracesRetentionPeriod)
+	sessionsRate := pricing.ProductToBasePriceCents(model.PricingProductTypeSessions, planType, sessionsMeter)
+	errorsRate := pricing.ProductToBasePriceCents(model.PricingProductTypeErrors, planType, errorsMeter)
+	logsRate := pricing.ProductToBasePriceCents(model.PricingProductTypeLogs, planType, logsMeter)
+	tracesRate := pricing.ProductToBasePriceCents(model.PricingProductTypeTraces, planType, tracesMeter)
 
 	details := &modelInputs.BillingDetails{
 		Plan: &modelInputs.Plan{
@@ -9718,16 +9700,3 @@ type sessionCommentResolver struct{ *Resolver }
 type subscriptionResolver struct{ *Resolver }
 type timelineIndicatorEventResolver struct{ *Resolver }
 type visualizationResolver struct{ *Resolver }
-
-// !!! WARNING !!!
-// The code below was going to be deleted when updating resolvers. It has been copied here so you have
-// one last chance to move it out of harms way if you want. There are two reasons this happens:
-//  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
-//    it when you're done.
-//  - You have helper methods in this file. Move them out to keep these resolver files clean.
-/*
-	func (r *Resolver) SystemConfiguration() generated.SystemConfigurationResolver {
-	return &systemConfigurationResolver{r}
-}
-type systemConfigurationResolver struct{ *Resolver }
-*/

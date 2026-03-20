@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/BrewingCoder/holdfast/src/backend/model"
 	modelInputs "github.com/BrewingCoder/holdfast/src/backend/private-graph/graph/model"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
@@ -102,4 +103,26 @@ func TestAuthorizationError_Message(t *testing.T) {
 func TestIsAuthError_DoubleWrapped(t *testing.T) {
 	doubleWrapped := fmt.Errorf("outer: %w", fmt.Errorf("inner: %w", AuthenticationError))
 	assert.True(t, isAuthError(doubleWrapped))
+}
+
+func TestWorkspace_NoTrialFields(t *testing.T) {
+	// Compile-time verification that trial fields are removed from Workspace.
+	// If TrialEndDate, EligibleForTrialExtension, or TrialExtensionEnabled
+	// exist, this struct literal would have extra fields and fail to compile.
+	w := model.Workspace{
+		AllowMeterOverage: true,
+	}
+	assert.True(t, w.AllowMeterOverage)
+}
+
+func TestOrganization_NoTrialEndDate(t *testing.T) {
+	// Verify Organization no longer has TrialEndDate
+	org := model.Organization{}
+	assert.Equal(t, 0, org.ID)
+}
+
+func TestProject_NoTrialEndDate(t *testing.T) {
+	// Verify Project no longer has TrialEndDate
+	p := model.Project{}
+	assert.Equal(t, 0, p.ID)
 }

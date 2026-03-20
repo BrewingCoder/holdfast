@@ -223,9 +223,8 @@ type Organization struct {
 	Model
 	Name         *string
 	BillingEmail *string
-	Secret       *string    `json:"-"`
-	Admins       []Admin    `gorm:"many2many:organization_admins;"`
-	TrialEndDate *time.Time `json:"trial_end_date"`
+	Secret       *string `json:"-"`
+	Admins       []Admin `gorm:"many2many:organization_admins;"`
 	// Slack API Interaction.
 	SlackAccessToken      *string
 	SlackWebhookURL       *string
@@ -282,12 +281,9 @@ type Workspace struct {
 	StripeLogOveragePriceID     *string
 	StripeTracesOveragePriceID  *string
 	StripeMetricsOveragePriceID *string
-	TrialEndDate                *time.Time `json:"trial_end_date"`
-	AllowMeterOverage           bool       `gorm:"default:true"`
-	AllowedAutoJoinEmailOrigins *string    `json:"allowed_auto_join_email_origins"`
-	EligibleForTrialExtension   bool       `gorm:"default:false"`
-	TrialExtensionEnabled       bool       `gorm:"default:false"`
-	ClearbitEnabled             bool       `gorm:"default:false"`
+	AllowMeterOverage           bool    `gorm:"default:true"`
+	AllowedAutoJoinEmailOrigins *string `json:"allowed_auto_join_email_origins"`
+	ClearbitEnabled             bool    `gorm:"default:false"`
 	DiscordGuildId              *string
 	ClickupAccessToken          *string
 }
@@ -365,8 +361,7 @@ type Project struct {
 	Name              *string
 	ZapierAccessToken *string
 	BillingEmail      *string
-	Secret            *string    `json:"-"`
-	TrialEndDate      *time.Time `json:"trial_end_date"`
+	Secret            *string `json:"-"`
 	// Manual monthly session limit override
 	MonthlySessionLimit *int
 	WorkspaceID         int

@@ -1,9 +1,7 @@
 import { PlanType } from '@graph/schemas'
 
-export const isProjectWithinTrial = (project: any) => {
-	if (project?.trial_end_date) {
-		return new Date(project.trial_end_date) >= new Date()
-	}
+export const isProjectWithinTrial = (_project: any) => {
+	// HoldFast: no trials — always return false
 	return false
 }
 

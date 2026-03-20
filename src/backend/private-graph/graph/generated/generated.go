@@ -1736,7 +1736,6 @@ type ComplexityRoot struct {
 		BillingPeriodEnd            func(childComplexity int) int
 		ClearbitEnabled             func(childComplexity int) int
 		CloudflareProxy             func(childComplexity int) int
-		EligibleForTrialExtension   func(childComplexity int) int
 		ErrorsMaxCents              func(childComplexity int) int
 		ErrorsRetentionPeriod       func(childComplexity int) int
 		ID                          func(childComplexity int) int
@@ -1754,8 +1753,6 @@ type ComplexityRoot struct {
 		SlackWebhookChannel         func(childComplexity int) int
 		TracesMaxCents              func(childComplexity int) int
 		TracesRetentionPeriod       func(childComplexity int) int
-		TrialEndDate                func(childComplexity int) int
-		TrialExtensionEnabled       func(childComplexity int) int
 		UnlimitedMembers            func(childComplexity int) int
 	}
 
@@ -11731,13 +11728,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Workspace.CloudflareProxy(childComplexity), true
 
-	case "Workspace.eligible_for_trial_extension":
-		if e.complexity.Workspace.EligibleForTrialExtension == nil {
-			break
-		}
-
-		return e.complexity.Workspace.EligibleForTrialExtension(childComplexity), true
-
 	case "Workspace.errors_max_cents":
 		if e.complexity.Workspace.ErrorsMaxCents == nil {
 			break
@@ -11856,20 +11846,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Workspace.TracesRetentionPeriod(childComplexity), true
-
-	case "Workspace.trial_end_date":
-		if e.complexity.Workspace.TrialEndDate == nil {
-			break
-		}
-
-		return e.complexity.Workspace.TrialEndDate(childComplexity), true
-
-	case "Workspace.trial_extension_enabled":
-		if e.complexity.Workspace.TrialExtensionEnabled == nil {
-			break
-		}
-
-		return e.complexity.Workspace.TrialExtensionEnabled(childComplexity), true
 
 	case "Workspace.unlimited_members":
 		if e.complexity.Workspace.UnlimitedMembers == nil {
@@ -12793,13 +12769,10 @@ type Workspace {
 	projects: [Project]!
 	plan_tier: String!
 	unlimited_members: Boolean!
-	trial_end_date: Timestamp
 	billing_period_end: Timestamp
 	next_invoice_date: Timestamp
 	allow_meter_overage: Boolean!
 	allowed_auto_join_email_origins: String
-	eligible_for_trial_extension: Boolean!
-	trial_extension_enabled: Boolean!
 	clearbit_enabled: Boolean!
 	retention_period: RetentionPeriod!
 	errors_retention_period: RetentionPeriod!
@@ -59186,8 +59159,6 @@ func (ec *executionContext) fieldContext_Mutation_createWorkspace(ctx context.Co
 				return ec.fieldContext_Workspace_plan_tier(ctx, field)
 			case "unlimited_members":
 				return ec.fieldContext_Workspace_unlimited_members(ctx, field)
-			case "trial_end_date":
-				return ec.fieldContext_Workspace_trial_end_date(ctx, field)
 			case "billing_period_end":
 				return ec.fieldContext_Workspace_billing_period_end(ctx, field)
 			case "next_invoice_date":
@@ -59196,10 +59167,6 @@ func (ec *executionContext) fieldContext_Mutation_createWorkspace(ctx context.Co
 				return ec.fieldContext_Workspace_allow_meter_overage(ctx, field)
 			case "allowed_auto_join_email_origins":
 				return ec.fieldContext_Workspace_allowed_auto_join_email_origins(ctx, field)
-			case "eligible_for_trial_extension":
-				return ec.fieldContext_Workspace_eligible_for_trial_extension(ctx, field)
-			case "trial_extension_enabled":
-				return ec.fieldContext_Workspace_trial_extension_enabled(ctx, field)
 			case "clearbit_enabled":
 				return ec.fieldContext_Workspace_clearbit_enabled(ctx, field)
 			case "retention_period":
@@ -59515,8 +59482,6 @@ func (ec *executionContext) fieldContext_Mutation_editWorkspace(ctx context.Cont
 				return ec.fieldContext_Workspace_plan_tier(ctx, field)
 			case "unlimited_members":
 				return ec.fieldContext_Workspace_unlimited_members(ctx, field)
-			case "trial_end_date":
-				return ec.fieldContext_Workspace_trial_end_date(ctx, field)
 			case "billing_period_end":
 				return ec.fieldContext_Workspace_billing_period_end(ctx, field)
 			case "next_invoice_date":
@@ -59525,10 +59490,6 @@ func (ec *executionContext) fieldContext_Mutation_editWorkspace(ctx context.Cont
 				return ec.fieldContext_Workspace_allow_meter_overage(ctx, field)
 			case "allowed_auto_join_email_origins":
 				return ec.fieldContext_Workspace_allowed_auto_join_email_origins(ctx, field)
-			case "eligible_for_trial_extension":
-				return ec.fieldContext_Workspace_eligible_for_trial_extension(ctx, field)
-			case "trial_extension_enabled":
-				return ec.fieldContext_Workspace_trial_extension_enabled(ctx, field)
 			case "clearbit_enabled":
 				return ec.fieldContext_Workspace_clearbit_enabled(ctx, field)
 			case "retention_period":
@@ -64069,8 +64030,6 @@ func (ec *executionContext) fieldContext_Mutation_updateAllowMeterOverage(ctx co
 				return ec.fieldContext_Workspace_plan_tier(ctx, field)
 			case "unlimited_members":
 				return ec.fieldContext_Workspace_unlimited_members(ctx, field)
-			case "trial_end_date":
-				return ec.fieldContext_Workspace_trial_end_date(ctx, field)
 			case "billing_period_end":
 				return ec.fieldContext_Workspace_billing_period_end(ctx, field)
 			case "next_invoice_date":
@@ -64079,10 +64038,6 @@ func (ec *executionContext) fieldContext_Mutation_updateAllowMeterOverage(ctx co
 				return ec.fieldContext_Workspace_allow_meter_overage(ctx, field)
 			case "allowed_auto_join_email_origins":
 				return ec.fieldContext_Workspace_allowed_auto_join_email_origins(ctx, field)
-			case "eligible_for_trial_extension":
-				return ec.fieldContext_Workspace_eligible_for_trial_extension(ctx, field)
-			case "trial_extension_enabled":
-				return ec.fieldContext_Workspace_trial_extension_enabled(ctx, field)
 			case "clearbit_enabled":
 				return ec.fieldContext_Workspace_clearbit_enabled(ctx, field)
 			case "retention_period":
@@ -66796,8 +66751,6 @@ func (ec *executionContext) fieldContext_Project_workspace(_ context.Context, fi
 				return ec.fieldContext_Workspace_plan_tier(ctx, field)
 			case "unlimited_members":
 				return ec.fieldContext_Workspace_unlimited_members(ctx, field)
-			case "trial_end_date":
-				return ec.fieldContext_Workspace_trial_end_date(ctx, field)
 			case "billing_period_end":
 				return ec.fieldContext_Workspace_billing_period_end(ctx, field)
 			case "next_invoice_date":
@@ -66806,10 +66759,6 @@ func (ec *executionContext) fieldContext_Project_workspace(_ context.Context, fi
 				return ec.fieldContext_Workspace_allow_meter_overage(ctx, field)
 			case "allowed_auto_join_email_origins":
 				return ec.fieldContext_Workspace_allowed_auto_join_email_origins(ctx, field)
-			case "eligible_for_trial_extension":
-				return ec.fieldContext_Workspace_eligible_for_trial_extension(ctx, field)
-			case "trial_extension_enabled":
-				return ec.fieldContext_Workspace_trial_extension_enabled(ctx, field)
 			case "clearbit_enabled":
 				return ec.fieldContext_Workspace_clearbit_enabled(ctx, field)
 			case "retention_period":
@@ -71490,8 +71439,6 @@ func (ec *executionContext) fieldContext_Query_workspaces(_ context.Context, fie
 				return ec.fieldContext_Workspace_plan_tier(ctx, field)
 			case "unlimited_members":
 				return ec.fieldContext_Workspace_unlimited_members(ctx, field)
-			case "trial_end_date":
-				return ec.fieldContext_Workspace_trial_end_date(ctx, field)
 			case "billing_period_end":
 				return ec.fieldContext_Workspace_billing_period_end(ctx, field)
 			case "next_invoice_date":
@@ -71500,10 +71447,6 @@ func (ec *executionContext) fieldContext_Query_workspaces(_ context.Context, fie
 				return ec.fieldContext_Workspace_allow_meter_overage(ctx, field)
 			case "allowed_auto_join_email_origins":
 				return ec.fieldContext_Workspace_allowed_auto_join_email_origins(ctx, field)
-			case "eligible_for_trial_extension":
-				return ec.fieldContext_Workspace_eligible_for_trial_extension(ctx, field)
-			case "trial_extension_enabled":
-				return ec.fieldContext_Workspace_trial_extension_enabled(ctx, field)
 			case "clearbit_enabled":
 				return ec.fieldContext_Workspace_clearbit_enabled(ctx, field)
 			case "retention_period":
@@ -71629,8 +71572,6 @@ func (ec *executionContext) fieldContext_Query_joinable_workspaces(_ context.Con
 				return ec.fieldContext_Workspace_plan_tier(ctx, field)
 			case "unlimited_members":
 				return ec.fieldContext_Workspace_unlimited_members(ctx, field)
-			case "trial_end_date":
-				return ec.fieldContext_Workspace_trial_end_date(ctx, field)
 			case "billing_period_end":
 				return ec.fieldContext_Workspace_billing_period_end(ctx, field)
 			case "next_invoice_date":
@@ -71639,10 +71580,6 @@ func (ec *executionContext) fieldContext_Query_joinable_workspaces(_ context.Con
 				return ec.fieldContext_Workspace_allow_meter_overage(ctx, field)
 			case "allowed_auto_join_email_origins":
 				return ec.fieldContext_Workspace_allowed_auto_join_email_origins(ctx, field)
-			case "eligible_for_trial_extension":
-				return ec.fieldContext_Workspace_eligible_for_trial_extension(ctx, field)
-			case "trial_extension_enabled":
-				return ec.fieldContext_Workspace_trial_extension_enabled(ctx, field)
 			case "clearbit_enabled":
 				return ec.fieldContext_Workspace_clearbit_enabled(ctx, field)
 			case "retention_period":
@@ -74489,8 +74426,6 @@ func (ec *executionContext) fieldContext_Query_workspace(ctx context.Context, fi
 				return ec.fieldContext_Workspace_plan_tier(ctx, field)
 			case "unlimited_members":
 				return ec.fieldContext_Workspace_unlimited_members(ctx, field)
-			case "trial_end_date":
-				return ec.fieldContext_Workspace_trial_end_date(ctx, field)
 			case "billing_period_end":
 				return ec.fieldContext_Workspace_billing_period_end(ctx, field)
 			case "next_invoice_date":
@@ -74499,10 +74434,6 @@ func (ec *executionContext) fieldContext_Query_workspace(ctx context.Context, fi
 				return ec.fieldContext_Workspace_allow_meter_overage(ctx, field)
 			case "allowed_auto_join_email_origins":
 				return ec.fieldContext_Workspace_allowed_auto_join_email_origins(ctx, field)
-			case "eligible_for_trial_extension":
-				return ec.fieldContext_Workspace_eligible_for_trial_extension(ctx, field)
-			case "trial_extension_enabled":
-				return ec.fieldContext_Workspace_trial_extension_enabled(ctx, field)
 			case "clearbit_enabled":
 				return ec.fieldContext_Workspace_clearbit_enabled(ctx, field)
 			case "retention_period":
@@ -74898,8 +74829,6 @@ func (ec *executionContext) fieldContext_Query_workspace_for_project(ctx context
 				return ec.fieldContext_Workspace_plan_tier(ctx, field)
 			case "unlimited_members":
 				return ec.fieldContext_Workspace_unlimited_members(ctx, field)
-			case "trial_end_date":
-				return ec.fieldContext_Workspace_trial_end_date(ctx, field)
 			case "billing_period_end":
 				return ec.fieldContext_Workspace_billing_period_end(ctx, field)
 			case "next_invoice_date":
@@ -74908,10 +74837,6 @@ func (ec *executionContext) fieldContext_Query_workspace_for_project(ctx context
 				return ec.fieldContext_Workspace_allow_meter_overage(ctx, field)
 			case "allowed_auto_join_email_origins":
 				return ec.fieldContext_Workspace_allowed_auto_join_email_origins(ctx, field)
-			case "eligible_for_trial_extension":
-				return ec.fieldContext_Workspace_eligible_for_trial_extension(ctx, field)
-			case "trial_extension_enabled":
-				return ec.fieldContext_Workspace_trial_extension_enabled(ctx, field)
 			case "clearbit_enabled":
 				return ec.fieldContext_Workspace_clearbit_enabled(ctx, field)
 			case "retention_period":
@@ -94142,47 +94067,6 @@ func (ec *executionContext) fieldContext_Workspace_unlimited_members(_ context.C
 	return fc, nil
 }
 
-func (ec *executionContext) _Workspace_trial_end_date(ctx context.Context, field graphql.CollectedField, obj *model1.Workspace) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Workspace_trial_end_date(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.TrialEndDate, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*time.Time)
-	fc.Result = res
-	return ec.marshalOTimestamp2ᚖtimeᚐTime(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Workspace_trial_end_date(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Workspace",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Timestamp does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _Workspace_billing_period_end(ctx context.Context, field graphql.CollectedField, obj *model1.Workspace) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Workspace_billing_period_end(ctx, field)
 	if err != nil {
@@ -94345,94 +94229,6 @@ func (ec *executionContext) fieldContext_Workspace_allowed_auto_join_email_origi
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Workspace_eligible_for_trial_extension(ctx context.Context, field graphql.CollectedField, obj *model1.Workspace) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Workspace_eligible_for_trial_extension(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.EligibleForTrialExtension, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(bool)
-	fc.Result = res
-	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Workspace_eligible_for_trial_extension(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Workspace",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Boolean does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Workspace_trial_extension_enabled(ctx context.Context, field graphql.CollectedField, obj *model1.Workspace) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Workspace_trial_extension_enabled(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.TrialExtensionEnabled, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(bool)
-	fc.Result = res
-	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Workspace_trial_extension_enabled(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Workspace",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Boolean does not have child fields")
 		},
 	}
 	return fc, nil
@@ -114863,8 +114659,6 @@ func (ec *executionContext) _Workspace(ctx context.Context, sel ast.SelectionSet
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "trial_end_date":
-			out.Values[i] = ec._Workspace_trial_end_date(ctx, field, obj)
 		case "billing_period_end":
 			out.Values[i] = ec._Workspace_billing_period_end(ctx, field, obj)
 		case "next_invoice_date":
@@ -114876,16 +114670,6 @@ func (ec *executionContext) _Workspace(ctx context.Context, sel ast.SelectionSet
 			}
 		case "allowed_auto_join_email_origins":
 			out.Values[i] = ec._Workspace_allowed_auto_join_email_origins(ctx, field, obj)
-		case "eligible_for_trial_extension":
-			out.Values[i] = ec._Workspace_eligible_for_trial_extension(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "trial_extension_enabled":
-			out.Values[i] = ec._Workspace_trial_extension_enabled(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
 		case "clearbit_enabled":
 			out.Values[i] = ec._Workspace_clearbit_enabled(ctx, field, obj)
 			if out.Values[i] == graphql.Null {

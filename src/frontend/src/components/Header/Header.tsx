@@ -43,10 +43,7 @@ import { vars } from '@holdfast-io/ui/vars'
 import { useLocalStorageProjectId, useProjectId } from '@hooks/useProjectId'
 import SvgHighlightLogoOnLight from '@icons/HighlightLogoOnLight'
 import SvgXIcon from '@icons/XIcon'
-import {
-	getQuotaPercents,
-	getTrialEndDateMessage,
-} from '@pages/Billing/utils/utils'
+import { getQuotaPercents } from '@pages/Billing/utils/utils'
 import useLocalStorage from '@rehooks/local-storage'
 import { useApplicationContext } from '@routers/AppRouter/context/ApplicationContext'
 import { useGlobalContext } from '@routers/ProjectRouter/context/GlobalContext'
@@ -734,33 +731,12 @@ const BillingBanner: React.FC = () => {
 		variables: { project_id: projectId! },
 		skip: !projectId || projectId === 'demo',
 	})
-	const [hasReportedTrialExtension, setHasReportedTrialExtension] =
-		useLocalStorage('highlightReportedTrialExtension', false)
 	const { loading: subscriptionLoading, subscriptionData } = useBillingHook({
 		project_id: projectId,
 	})
 	const billingIssues =
 		!subscriptionLoading &&
 		!!subscriptionData?.subscription_details?.billingIssue
-
-	useEffect(() => {
-		if (
-			!hasReportedTrialExtension &&
-			data?.project?.workspace?.trial_extension_enabled
-		) {
-			analytics.track('TrialExtensionEnabled', {
-				projectId,
-				workspace_id: data?.project?.workspace.id,
-			})
-			setHasReportedTrialExtension(true)
-		}
-	}, [
-		data?.project?.workspace?.id,
-		data?.project?.workspace?.trial_extension_enabled,
-		hasReportedTrialExtension,
-		projectId,
-		setHasReportedTrialExtension,
-	])
 
 	const isMaintenance = moment().isBetween(
 		systemData?.system_configuration?.maintenance_start,
@@ -825,12 +801,6 @@ const BillingBanner: React.FC = () => {
 			toggleShowBanner(false)
 			return null
 		}
-	}
-
-	if (hasTrial) {
-		bannerMessage = getTrialEndDateMessage(
-			data?.project?.workspace?.trial_end_date,
-		)
 	}
 
 	toggleShowBanner(true)
