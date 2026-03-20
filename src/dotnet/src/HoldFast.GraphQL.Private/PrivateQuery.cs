@@ -1,15 +1,18 @@
+using System.Security.Claims;
 using HoldFast.Data;
 using HoldFast.Domain.Entities;
+using HoldFast.Shared.Auth;
 using HotChocolate;
 using HotChocolate.Data;
 using HotChocolate.Types;
 using Microsoft.EntityFrameworkCore;
+using HoldFast.Storage;
 
 namespace HoldFast.GraphQL.Private;
 
 /// <summary>
 /// Private GraphQL queries — dashboard API.
-/// Hot Chocolate code-first: no codegen, no generated files.
+/// All queries require authentication; most require workspace or project authorization.
 /// </summary>
 public class PrivateQuery
 {
@@ -19,9 +22,13 @@ public class PrivateQuery
     [UseFiltering]
     public async Task<Workspace?> GetWorkspace(
         int id,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
         CancellationToken ct)
     {
+        await AuthHelper.RequireWorkspaceAccess(claimsPrincipal, id, authz, ct);
+
         return await db.Workspaces
             .Include(w => w.Projects)
             .FirstOrDefaultAsync(w => w.Id == id, ct);
@@ -32,9 +39,13 @@ public class PrivateQuery
     /// </summary>
     public async Task<Workspace?> GetWorkspaceForProject(
         int projectId,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
         CancellationToken ct)
     {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+
         return await db.Projects
             .Where(p => p.Id == projectId)
             .Select(p => p.Workspace)
@@ -42,13 +53,18 @@ public class PrivateQuery
     }
 
     /// <summary>
-    /// Get the workspace for an invite link.
+    /// Get the workspace for an invite link. No workspace auth required (invite is the auth).
     /// </summary>
     public async Task<Workspace?> GetWorkspaceForInviteLink(
         string secret,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
         CancellationToken ct)
     {
+        // Only require authentication, not workspace membership
+        await AuthHelper.GetRequiredAdmin(claimsPrincipal, authz, ct);
+
         var link = await db.WorkspaceInviteLinks
             .Include(l => l.Workspace)
             .FirstOrDefaultAsync(l => l.Secret == secret, ct);
@@ -56,17 +72,21 @@ public class PrivateQuery
     }
 
     /// <summary>
-    /// List all workspaces an admin belongs to.
+    /// List all workspaces the authenticated admin belongs to.
     /// </summary>
     [UseProjection]
     [UseFiltering]
     [UseSorting]
-    public IQueryable<Workspace> GetWorkspaces(
-        int adminId,
-        [Service] HoldFastDbContext db)
+    public async Task<IQueryable<Workspace>> GetWorkspaces(
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
     {
+        var admin = await AuthHelper.GetRequiredAdmin(claimsPrincipal, authz, ct);
+
         return db.WorkspaceAdmins
-            .Where(wa => wa.AdminId == adminId)
+            .Where(wa => wa.AdminId == admin.Id)
             .Select(wa => wa.Workspace);
     }
 
@@ -75,9 +95,13 @@ public class PrivateQuery
     /// </summary>
     public async Task<List<WorkspaceInviteLink>> GetWorkspaceInviteLinks(
         int workspaceId,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
         CancellationToken ct)
     {
+        await AuthHelper.RequireWorkspaceAccess(claimsPrincipal, workspaceId, authz, ct);
+
         return await db.WorkspaceInviteLinks
             .Where(l => l.WorkspaceId == workspaceId)
             .ToListAsync(ct);
@@ -88,9 +112,13 @@ public class PrivateQuery
     /// </summary>
     public async Task<List<WorkspaceAdmin>> GetWorkspaceAdmins(
         int workspaceId,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
         CancellationToken ct)
     {
+        await AuthHelper.RequireWorkspaceAccess(claimsPrincipal, workspaceId, authz, ct);
+
         return await db.WorkspaceAdmins
             .Include(wa => wa.Admin)
             .Where(wa => wa.WorkspaceId == workspaceId)
@@ -103,9 +131,13 @@ public class PrivateQuery
     [UseProjection]
     public async Task<Project?> GetProject(
         int id,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
         CancellationToken ct)
     {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, id, authz, ct);
+
         return await db.Projects
             .FirstOrDefaultAsync(p => p.Id == id, ct);
     }
@@ -113,10 +145,15 @@ public class PrivateQuery
     [UseProjection]
     [UseFiltering]
     [UseSorting]
-    public IQueryable<Project> GetProjects(
+    public async Task<IQueryable<Project>> GetProjects(
         int workspaceId,
-        [Service] HoldFastDbContext db)
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
     {
+        await AuthHelper.RequireWorkspaceAccess(claimsPrincipal, workspaceId, authz, ct);
+
         return db.Projects.Where(p => p.WorkspaceId == workspaceId);
     }
 
@@ -125,9 +162,13 @@ public class PrivateQuery
     /// </summary>
     public async Task<ProjectFilterSettings?> GetProjectSettings(
         int projectId,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
         CancellationToken ct)
     {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+
         return await db.ProjectFilterSettings
             .FirstOrDefaultAsync(s => s.ProjectId == projectId, ct);
     }
@@ -137,20 +178,32 @@ public class PrivateQuery
     [UseProjection]
     public async Task<ErrorGroup?> GetErrorGroup(
         int id,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
         CancellationToken ct)
     {
-        return await db.ErrorGroups
+        var errorGroup = await db.ErrorGroups
             .FirstOrDefaultAsync(eg => eg.Id == id, ct);
+
+        if (errorGroup != null)
+            await AuthHelper.RequireProjectAccess(claimsPrincipal, errorGroup.ProjectId, authz, ct);
+
+        return errorGroup;
     }
 
     [UseProjection]
     [UseFiltering]
     [UseSorting]
-    public IQueryable<ErrorGroup> GetErrorGroups(
+    public async Task<IQueryable<ErrorGroup>> GetErrorGroups(
         int projectId,
-        [Service] HoldFastDbContext db)
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
     {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+
         return db.ErrorGroups.Where(eg => eg.ProjectId == projectId);
     }
 
@@ -159,11 +212,19 @@ public class PrivateQuery
     /// </summary>
     public async Task<ErrorObject?> GetErrorObject(
         int id,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
         CancellationToken ct)
     {
-        return await db.ErrorObjects
-            .FirstOrDefaultAsync(eo => eo.Id == id, ct);
+        var eo = await db.ErrorObjects
+            .Include(e => e.ErrorGroup)
+            .FirstOrDefaultAsync(e => e.Id == id, ct);
+
+        if (eo != null)
+            await AuthHelper.RequireProjectAccess(claimsPrincipal, eo.ErrorGroup.ProjectId, authz, ct);
+
+        return eo;
     }
 
     /// <summary>
@@ -172,10 +233,17 @@ public class PrivateQuery
     [UseProjection]
     [UseFiltering]
     [UseSorting]
-    public IQueryable<ErrorObject> GetErrorObjects(
+    public async Task<IQueryable<ErrorObject>> GetErrorObjects(
         int errorGroupId,
-        [Service] HoldFastDbContext db)
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
     {
+        var eg = await db.ErrorGroups.FindAsync([errorGroupId], ct);
+        if (eg != null)
+            await AuthHelper.RequireProjectAccess(claimsPrincipal, eg.ProjectId, authz, ct);
+
         return db.ErrorObjects.Where(eo => eo.ErrorGroupId == errorGroupId);
     }
 
@@ -184,9 +252,15 @@ public class PrivateQuery
     /// </summary>
     public async Task<List<ErrorTag>> GetErrorGroupTags(
         int errorGroupId,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
         CancellationToken ct)
     {
+        var eg = await db.ErrorGroups.FindAsync([errorGroupId], ct);
+        if (eg != null)
+            await AuthHelper.RequireProjectAccess(claimsPrincipal, eg.ProjectId, authz, ct);
+
         return await db.ErrorTags
             .Where(t => t.ErrorGroupId == errorGroupId)
             .ToListAsync(ct);
@@ -197,11 +271,18 @@ public class PrivateQuery
     [UseProjection]
     public async Task<Session?> GetSession(
         string secureId,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
         CancellationToken ct)
     {
-        return await db.Sessions
+        var session = await db.Sessions
             .FirstOrDefaultAsync(s => s.SecureId == secureId, ct);
+
+        if (session != null)
+            await AuthHelper.RequireProjectAccess(claimsPrincipal, session.ProjectId, authz, ct);
+
+        return session;
     }
 
     /// <summary>
@@ -209,9 +290,15 @@ public class PrivateQuery
     /// </summary>
     public async Task<List<SessionInterval>> GetSessionIntervals(
         int sessionId,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
         CancellationToken ct)
     {
+        var session = await db.Sessions.FindAsync([sessionId], ct);
+        if (session != null)
+            await AuthHelper.RequireProjectAccess(claimsPrincipal, session.ProjectId, authz, ct);
+
         return await db.SessionIntervals
             .Where(i => i.SessionId == sessionId)
             .OrderBy(i => i.StartTime)
@@ -223,9 +310,15 @@ public class PrivateQuery
     /// </summary>
     public async Task<List<EventChunk>> GetEventChunks(
         int sessionId,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
         CancellationToken ct)
     {
+        var session = await db.Sessions.FindAsync([sessionId], ct);
+        if (session != null)
+            await AuthHelper.RequireProjectAccess(claimsPrincipal, session.ProjectId, authz, ct);
+
         return await db.EventChunks
             .Where(c => c.SessionId == sessionId)
             .OrderBy(c => c.ChunkIndex)
@@ -237,10 +330,17 @@ public class PrivateQuery
     /// </summary>
     [UseProjection]
     [UseFiltering]
-    public IQueryable<RageClickEvent> GetRageClicks(
+    public async Task<IQueryable<RageClickEvent>> GetRageClicks(
         int sessionId,
-        [Service] HoldFastDbContext db)
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
     {
+        var session = await db.Sessions.FindAsync([sessionId], ct);
+        if (session != null)
+            await AuthHelper.RequireProjectAccess(claimsPrincipal, session.ProjectId, authz, ct);
+
         return db.RageClickEvents.Where(r => r.SessionId == sessionId);
     }
 
@@ -249,9 +349,15 @@ public class PrivateQuery
     /// </summary>
     public async Task<List<SessionExport>> GetSessionExports(
         int sessionId,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
         CancellationToken ct)
     {
+        var session = await db.Sessions.FindAsync([sessionId], ct);
+        if (session != null)
+            await AuthHelper.RequireProjectAccess(claimsPrincipal, session.ProjectId, authz, ct);
+
         return await db.SessionExports
             .Where(e => e.SessionId == sessionId)
             .ToListAsync(ct);
@@ -264,10 +370,17 @@ public class PrivateQuery
     /// </summary>
     [UseProjection]
     [UseSorting]
-    public IQueryable<SessionComment> GetSessionComments(
+    public async Task<IQueryable<SessionComment>> GetSessionComments(
         int sessionId,
-        [Service] HoldFastDbContext db)
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
     {
+        var session = await db.Sessions.FindAsync([sessionId], ct);
+        if (session != null)
+            await AuthHelper.RequireProjectAccess(claimsPrincipal, session.ProjectId, authz, ct);
+
         return db.SessionComments
             .Include(c => c.Tags)
             .Include(c => c.Replies)
@@ -280,10 +393,15 @@ public class PrivateQuery
     [UseProjection]
     [UseFiltering]
     [UseSorting]
-    public IQueryable<SessionComment> GetSessionCommentsForProject(
+    public async Task<IQueryable<SessionComment>> GetSessionCommentsForProject(
         int projectId,
-        [Service] HoldFastDbContext db)
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
     {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+
         return db.SessionComments
             .Include(c => c.Tags)
             .Where(c => c.ProjectId == projectId);
@@ -294,10 +412,17 @@ public class PrivateQuery
     /// </summary>
     [UseProjection]
     [UseSorting]
-    public IQueryable<ErrorComment> GetErrorComments(
+    public async Task<IQueryable<ErrorComment>> GetErrorComments(
         int errorGroupId,
-        [Service] HoldFastDbContext db)
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
     {
+        var eg = await db.ErrorGroups.FindAsync([errorGroupId], ct);
+        if (eg != null)
+            await AuthHelper.RequireProjectAccess(claimsPrincipal, eg.ProjectId, authz, ct);
+
         return db.ErrorComments.Where(c => c.ErrorGroupId == errorGroupId);
     }
 
@@ -305,9 +430,13 @@ public class PrivateQuery
 
     public async Task<AllWorkspaceSettings?> GetWorkspaceSettings(
         int workspaceId,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
         CancellationToken ct)
     {
+        await AuthHelper.RequireWorkspaceAccess(claimsPrincipal, workspaceId, authz, ct);
+
         return await db.AllWorkspaceSettings
             .FirstOrDefaultAsync(s => s.WorkspaceId == workspaceId, ct);
     }
@@ -317,10 +446,15 @@ public class PrivateQuery
     [UseProjection]
     [UseFiltering]
     [UseSorting]
-    public IQueryable<Alert> GetAlerts(
+    public async Task<IQueryable<Alert>> GetAlerts(
         int projectId,
-        [Service] HoldFastDbContext db)
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
     {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+
         return db.Alerts
             .Include(a => a.Destinations)
             .Where(a => a.ProjectId == projectId);
@@ -330,10 +464,15 @@ public class PrivateQuery
 
     [UseProjection]
     [UseFiltering]
-    public IQueryable<Dashboard> GetDashboards(
+    public async Task<IQueryable<Dashboard>> GetDashboards(
         int projectId,
-        [Service] HoldFastDbContext db)
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
     {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+
         return db.Dashboards
             .Include(d => d.Metrics)
             .Where(d => d.ProjectId == projectId);
@@ -341,13 +480,15 @@ public class PrivateQuery
 
     // ── Admin ─────────────────────────────────────────────────────────
 
+    /// <summary>
+    /// Get the currently authenticated admin.
+    /// </summary>
     public async Task<Admin?> GetAdmin(
-        string uid,
-        [Service] HoldFastDbContext db,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
         CancellationToken ct)
     {
-        return await db.Admins
-            .FirstOrDefaultAsync(a => a.Uid == uid, ct);
+        return await AuthHelper.GetRequiredAdmin(claimsPrincipal, authz, ct);
     }
 
     // ── Services ──────────────────────────────────────────────────────
@@ -358,10 +499,15 @@ public class PrivateQuery
     [UseProjection]
     [UseFiltering]
     [UseSorting]
-    public IQueryable<Domain.Entities.Service> GetServices(
+    public async Task<IQueryable<Domain.Entities.Service>> GetServices(
         int projectId,
-        [Service] HoldFastDbContext db)
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
     {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+
         return db.Services
             .Where(s => s.ProjectId == projectId)
             .OrderBy(s => s.Name);
@@ -373,9 +519,13 @@ public class PrivateQuery
     public async Task<Domain.Entities.Service?> GetServiceByName(
         int projectId,
         string name,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
         CancellationToken ct)
     {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+
         return await db.Services
             .FirstOrDefaultAsync(s => s.ProjectId == projectId && s.Name == name, ct);
     }
@@ -388,9 +538,13 @@ public class PrivateQuery
     public async Task<List<SavedSegment>> GetSavedSegments(
         int projectId,
         string? entityType,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
         CancellationToken ct)
     {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+
         var query = db.SavedSegments.Where(s => s.ProjectId == projectId);
         if (entityType != null)
             query = query.Where(s => s.EntityType == entityType);
@@ -404,9 +558,13 @@ public class PrivateQuery
     /// </summary>
     public async Task<List<IntegrationProjectMapping>> GetIntegrationProjectMappings(
         int projectId,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
         CancellationToken ct)
     {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+
         return await db.IntegrationProjectMappings
             .Where(m => m.ProjectId == projectId)
             .ToListAsync(ct);
@@ -417,18 +575,71 @@ public class PrivateQuery
     /// </summary>
     public async Task<List<IntegrationWorkspaceMapping>> GetIntegrationWorkspaceMappings(
         int workspaceId,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
         CancellationToken ct)
     {
+        await AuthHelper.RequireWorkspaceAccess(claimsPrincipal, workspaceId, authz, ct);
+
         return await db.IntegrationWorkspaceMappings
             .Where(m => m.WorkspaceId == workspaceId)
             .ToListAsync(ct);
     }
 
+    // ── Source Maps ─────────────────────────────────────────────────
+
+    /// <summary>
+    /// List source map files for a project version.
+    /// </summary>
+    public async Task<List<string>> GetSourcemapFiles(
+        int projectId,
+        string? version,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] Storage.IStorageService storage,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+
+        // Source maps stored under: sourcemaps/{projectId}/{version}/
+        var prefix = version != null
+            ? $"sourcemaps/{projectId}/{version}"
+            : $"sourcemaps/{projectId}";
+
+        // Check if the path exists
+        var exists = await storage.ExistsAsync("sourcemaps", $"{projectId}", ct);
+        if (!exists) return [];
+
+        // Return the download URL for the prefix (listing is storage-implementation specific)
+        var url = await storage.GetDownloadUrlAsync("sourcemaps", $"{projectId}", TimeSpan.FromMinutes(5), ct);
+        return [url];
+    }
+
+    /// <summary>
+    /// List source map versions for a project.
+    /// </summary>
+    public async Task<List<string>> GetSourcemapVersions(
+        int projectId,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+
+        // Versions are tracked via the project's SDK version history
+        // For now return the current version if set
+        var project = await db.Projects.FindAsync([projectId], ct);
+        if (project?.BackendSetup != true) return [];
+
+        return ["latest"];
+    }
+
     // ── System ────────────────────────────────────────────────────────
 
     /// <summary>
-    /// Get system configuration (self-hosted settings).
+    /// Get system configuration (self-hosted settings). No auth required.
     /// </summary>
     public async Task<SystemConfiguration?> GetSystemConfiguration(
         [Service] HoldFastDbContext db,

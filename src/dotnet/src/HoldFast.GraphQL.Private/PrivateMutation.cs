@@ -1,6 +1,8 @@
+using System.Security.Claims;
 using HoldFast.Data;
 using HoldFast.Domain.Entities;
 using HoldFast.Domain.Enums;
+using HoldFast.Shared.Auth;
 using HotChocolate;
 using Microsoft.EntityFrameworkCore;
 
@@ -8,6 +10,7 @@ namespace HoldFast.GraphQL.Private;
 
 /// <summary>
 /// Private GraphQL mutations — dashboard API.
+/// All mutations require authentication and appropriate authorization.
 /// </summary>
 public class PrivateMutation
 {
@@ -18,12 +21,12 @@ public class PrivateMutation
     /// </summary>
     public async Task<Workspace> CreateWorkspace(
         string name,
-        int adminId,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
         CancellationToken ct)
     {
-        var admin = await db.Admins.FindAsync([adminId], ct)
-            ?? throw new GraphQLException("Admin not found");
+        var admin = await AuthHelper.GetRequiredAdmin(claimsPrincipal, authz, ct);
 
         var workspace = new Workspace
         {
@@ -47,14 +50,18 @@ public class PrivateMutation
     }
 
     /// <summary>
-    /// Edit workspace name.
+    /// Edit workspace name. Requires ADMIN role.
     /// </summary>
     public async Task<Workspace> EditWorkspace(
         int workspaceId,
         string? name,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
         CancellationToken ct)
     {
+        await AuthHelper.RequireWorkspaceAdmin(claimsPrincipal, workspaceId, authz, ct);
+
         var workspace = await db.Workspaces.FindAsync([workspaceId], ct)
             ?? throw new GraphQLException("Workspace not found");
 
@@ -66,7 +73,7 @@ public class PrivateMutation
     }
 
     /// <summary>
-    /// Edit workspace settings (feature flags).
+    /// Edit workspace settings (feature flags). Requires ADMIN role.
     /// </summary>
     public async Task<AllWorkspaceSettings> EditWorkspaceSettings(
         int workspaceId,
@@ -76,9 +83,13 @@ public class PrivateMutation
         bool? enableSessionExport,
         bool? enableNetworkTraces,
         bool? enableDataDeletion,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
         CancellationToken ct)
     {
+        await AuthHelper.RequireWorkspaceAdmin(claimsPrincipal, workspaceId, authz, ct);
+
         var settings = await db.AllWorkspaceSettings
             .FirstOrDefaultAsync(s => s.WorkspaceId == workspaceId, ct)
             ?? throw new GraphQLException("Workspace settings not found");
@@ -97,14 +108,18 @@ public class PrivateMutation
     // ── Project ───────────────────────────────────────────────────────
 
     /// <summary>
-    /// Create a new project within a workspace.
+    /// Create a new project within a workspace. Requires workspace membership.
     /// </summary>
     public async Task<Project> CreateProject(
         int workspaceId,
         string name,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
         CancellationToken ct)
     {
+        await AuthHelper.RequireWorkspaceAccess(claimsPrincipal, workspaceId, authz, ct);
+
         var workspace = await db.Workspaces.FindAsync([workspaceId], ct)
             ?? throw new GraphQLException("Workspace not found");
 
@@ -128,15 +143,19 @@ public class PrivateMutation
     }
 
     /// <summary>
-    /// Edit project name and billing email.
+    /// Edit project name and billing email. Requires project access.
     /// </summary>
     public async Task<Project> EditProject(
         int projectId,
         string? name,
         string? billingEmail,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
         CancellationToken ct)
     {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+
         var project = await db.Projects.FindAsync([projectId], ct)
             ?? throw new GraphQLException("Project not found");
 
@@ -149,6 +168,7 @@ public class PrivateMutation
 
     /// <summary>
     /// Edit project settings (rage clicks, excluded users, sampling, etc).
+    /// Requires project access.
     /// </summary>
     public async Task<ProjectFilterSettings> EditProjectSettings(
         int projectId,
@@ -164,9 +184,13 @@ public class PrivateMutation
         double? errorSamplingRate,
         double? logSamplingRate,
         double? traceSamplingRate,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
         CancellationToken ct)
     {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+
         var project = await db.Projects.FindAsync([projectId], ct)
             ?? throw new GraphQLException("Project not found");
 
@@ -202,15 +226,19 @@ public class PrivateMutation
     }
 
     /// <summary>
-    /// Delete a project.
+    /// Delete a project. Requires ADMIN role in workspace.
     /// </summary>
     public async Task<bool> DeleteProject(
         int projectId,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
         CancellationToken ct)
     {
         var project = await db.Projects.FindAsync([projectId], ct)
             ?? throw new GraphQLException("Project not found");
+
+        await AuthHelper.RequireWorkspaceAdmin(claimsPrincipal, project.WorkspaceId, authz, ct);
 
         db.Projects.Remove(project);
         await db.SaveChangesAsync(ct);
@@ -220,8 +248,7 @@ public class PrivateMutation
     // ── Billing / Retention ───────────────────────────────────────────
 
     /// <summary>
-    /// Save retention periods for a workspace.
-    /// No billing limits in self-hosted mode — only retention is configurable.
+    /// Save retention periods for a workspace. Requires ADMIN role.
     /// </summary>
     public async Task<bool> SaveBillingPlan(
         int workspaceId,
@@ -230,9 +257,13 @@ public class PrivateMutation
         RetentionPeriod logsRetention,
         RetentionPeriod tracesRetention,
         RetentionPeriod metricsRetention,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
         CancellationToken ct)
     {
+        await AuthHelper.RequireWorkspaceAdmin(claimsPrincipal, workspaceId, authz, ct);
+
         var workspace = await db.Workspaces.FindAsync([workspaceId], ct)
             ?? throw new GraphQLException("Workspace not found");
 
@@ -249,16 +280,20 @@ public class PrivateMutation
     // ── Error Groups ──────────────────────────────────────────────────
 
     /// <summary>
-    /// Update error group state (open, resolved, ignored).
+    /// Update error group state (open, resolved, ignored). Requires project access.
     /// </summary>
     public async Task<ErrorGroup> UpdateErrorGroupState(
         int errorGroupId,
         ErrorGroupState state,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
         CancellationToken ct)
     {
         var errorGroup = await db.ErrorGroups.FindAsync([errorGroupId], ct)
             ?? throw new GraphQLException("ErrorGroup not found");
+
+        var admin = await AuthHelper.RequireProjectAccess(claimsPrincipal, errorGroup.ProjectId, authz, ct);
 
         errorGroup.State = state;
         await db.SaveChangesAsync(ct);
@@ -266,6 +301,7 @@ public class PrivateMutation
         db.ErrorGroupActivityLogs.Add(new ErrorGroupActivityLog
         {
             ErrorGroupId = errorGroupId,
+            AdminId = admin.Id,
             Action = state.ToString(),
         });
         await db.SaveChangesAsync(ct);
@@ -274,16 +310,20 @@ public class PrivateMutation
     }
 
     /// <summary>
-    /// Update whether an error group is publicly visible.
+    /// Update whether an error group is publicly visible. Requires project access.
     /// </summary>
     public async Task<ErrorGroup> UpdateErrorGroupIsPublic(
         int errorGroupId,
         bool isPublic,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
         CancellationToken ct)
     {
         var errorGroup = await db.ErrorGroups.FindAsync([errorGroupId], ct)
             ?? throw new GraphQLException("ErrorGroup not found");
+
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, errorGroup.ProjectId, authz, ct);
 
         errorGroup.IsPublic = isPublic;
         await db.SaveChangesAsync(ct);
@@ -293,24 +333,27 @@ public class PrivateMutation
     // ── Comments ──────────────────────────────────────────────────────
 
     /// <summary>
-    /// Create a session comment.
+    /// Create a session comment. Admin ID is taken from auth context.
     /// </summary>
     public async Task<SessionComment> CreateSessionComment(
         int projectId,
         int sessionId,
-        int adminId,
         string text,
         int timestamp,
         double xCoordinate,
         double yCoordinate,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
         CancellationToken ct)
     {
+        var admin = await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+
         var comment = new SessionComment
         {
             ProjectId = projectId,
             SessionId = sessionId,
-            AdminId = adminId,
+            AdminId = admin.Id,
             Text = text,
             Timestamp = timestamp,
             XCoordinate = xCoordinate,
@@ -325,15 +368,19 @@ public class PrivateMutation
     }
 
     /// <summary>
-    /// Delete a session comment.
+    /// Delete a session comment. Requires project access.
     /// </summary>
     public async Task<bool> DeleteSessionComment(
         int commentId,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
         CancellationToken ct)
     {
         var comment = await db.SessionComments.FindAsync([commentId], ct)
             ?? throw new GraphQLException("Comment not found");
+
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, comment.ProjectId, authz, ct);
 
         db.SessionComments.Remove(comment);
         await db.SaveChangesAsync(ct);
@@ -341,19 +388,25 @@ public class PrivateMutation
     }
 
     /// <summary>
-    /// Reply to a session comment.
+    /// Reply to a session comment. Admin ID is taken from auth context.
     /// </summary>
     public async Task<CommentReply> ReplyToSessionComment(
         int sessionCommentId,
-        int adminId,
         string text,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
         CancellationToken ct)
     {
+        var comment = await db.SessionComments.FindAsync([sessionCommentId], ct)
+            ?? throw new GraphQLException("Session comment not found");
+
+        var admin = await AuthHelper.RequireProjectAccess(claimsPrincipal, comment.ProjectId, authz, ct);
+
         var reply = new CommentReply
         {
             SessionCommentId = sessionCommentId,
-            AdminId = adminId,
+            AdminId = admin.Id,
             Text = text,
         };
 
@@ -365,7 +418,7 @@ public class PrivateMutation
     // ── Alerts ────────────────────────────────────────────────────────
 
     /// <summary>
-    /// Create or update an alert.
+    /// Create or update an alert. Requires project access.
     /// </summary>
     public async Task<Alert> SaveAlert(
         int projectId,
@@ -377,9 +430,13 @@ public class PrivateMutation
         double? aboveThreshold,
         int? thresholdWindow,
         bool disabled,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
         CancellationToken ct)
     {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+
         var alert = new Alert
         {
             ProjectId = projectId,
@@ -400,16 +457,20 @@ public class PrivateMutation
     }
 
     /// <summary>
-    /// Update alert disabled state.
+    /// Update alert disabled state. Requires project access.
     /// </summary>
     public async Task<bool> UpdateAlertDisabled(
         int alertId,
         bool disabled,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
         CancellationToken ct)
     {
         var alert = await db.Alerts.FindAsync([alertId], ct)
             ?? throw new GraphQLException("Alert not found");
+
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, alert.ProjectId, authz, ct);
 
         alert.Disabled = disabled;
         await db.SaveChangesAsync(ct);
@@ -417,15 +478,19 @@ public class PrivateMutation
     }
 
     /// <summary>
-    /// Delete an alert.
+    /// Delete an alert. Requires project access.
     /// </summary>
     public async Task<bool> DeleteAlert(
         int alertId,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
         CancellationToken ct)
     {
         var alert = await db.Alerts.FindAsync([alertId], ct)
             ?? throw new GraphQLException("Alert not found");
+
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, alert.ProjectId, authz, ct);
 
         db.Alerts.Remove(alert);
         await db.SaveChangesAsync(ct);
@@ -435,15 +500,19 @@ public class PrivateMutation
     // ── Dashboards ────────────────────────────────────────────────────
 
     /// <summary>
-    /// Create or update a dashboard.
+    /// Create or update a dashboard. Requires project access.
     /// </summary>
     public async Task<Dashboard> UpsertDashboard(
         int projectId,
         string name,
         int? dashboardId,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
         CancellationToken ct)
     {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+
         Dashboard dashboard;
 
         if (dashboardId.HasValue)
@@ -463,15 +532,19 @@ public class PrivateMutation
     }
 
     /// <summary>
-    /// Delete a dashboard.
+    /// Delete a dashboard. Requires project access.
     /// </summary>
     public async Task<bool> DeleteDashboard(
         int dashboardId,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
         CancellationToken ct)
     {
         var dashboard = await db.Dashboards.FindAsync([dashboardId], ct)
             ?? throw new GraphQLException("Dashboard not found");
+
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, dashboard.ProjectId, authz, ct);
 
         db.Dashboards.Remove(dashboard);
         await db.SaveChangesAsync(ct);
@@ -481,16 +554,20 @@ public class PrivateMutation
     // ── Saved Segments ────────────────────────────────────────────────
 
     /// <summary>
-    /// Create a saved segment.
+    /// Create a saved segment. Requires project access.
     /// </summary>
     public async Task<SavedSegment> CreateSavedSegment(
         int projectId,
         string name,
         string entityType,
         string? @params,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
         CancellationToken ct)
     {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+
         var segment = new SavedSegment
         {
             ProjectId = projectId,
@@ -505,17 +582,21 @@ public class PrivateMutation
     }
 
     /// <summary>
-    /// Edit a saved segment.
+    /// Edit a saved segment. Requires project access.
     /// </summary>
     public async Task<SavedSegment> EditSavedSegment(
         int segmentId,
         string? name,
         string? @params,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
         CancellationToken ct)
     {
         var segment = await db.SavedSegments.FindAsync([segmentId], ct)
             ?? throw new GraphQLException("Saved segment not found");
+
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, segment.ProjectId, authz, ct);
 
         if (name != null) segment.Name = name;
         if (@params != null) segment.Params = @params;
@@ -525,17 +606,146 @@ public class PrivateMutation
     }
 
     /// <summary>
-    /// Delete a saved segment.
+    /// Delete a saved segment. Requires project access.
     /// </summary>
     public async Task<bool> DeleteSavedSegment(
         int segmentId,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
         CancellationToken ct)
     {
         var segment = await db.SavedSegments.FindAsync([segmentId], ct)
             ?? throw new GraphQLException("Saved segment not found");
 
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, segment.ProjectId, authz, ct);
+
         db.SavedSegments.Remove(segment);
+        await db.SaveChangesAsync(ct);
+        return true;
+    }
+
+    // ── Workspace Invites ────────────────────────────────────────────
+
+    /// <summary>
+    /// Create an invite link for a workspace. Requires ADMIN role.
+    /// </summary>
+    public async Task<WorkspaceInviteLink> CreateWorkspaceInviteLink(
+        int workspaceId,
+        string inviteeEmail,
+        string role,
+        List<int>? projectIds,
+        int? expirationDays,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireWorkspaceAdmin(claimsPrincipal, workspaceId, authz, ct);
+
+        // Check for duplicate invite
+        var existing = await db.WorkspaceInviteLinks
+            .FirstOrDefaultAsync(l =>
+                l.WorkspaceId == workspaceId &&
+                l.InviteeEmail == inviteeEmail &&
+                (l.ExpirationDate == null || l.ExpirationDate > DateTime.UtcNow), ct);
+
+        if (existing != null)
+            throw new GraphQLException("An active invite already exists for this email");
+
+        // Check if already a member
+        var existingAdmin = await db.Admins
+            .FirstOrDefaultAsync(a => a.Email == inviteeEmail, ct);
+
+        if (existingAdmin != null)
+        {
+            var alreadyMember = await db.WorkspaceAdmins
+                .AnyAsync(wa => wa.AdminId == existingAdmin.Id && wa.WorkspaceId == workspaceId, ct);
+
+            if (alreadyMember)
+                throw new GraphQLException("This user is already a member of the workspace");
+        }
+
+        var invite = new WorkspaceInviteLink
+        {
+            WorkspaceId = workspaceId,
+            InviteeEmail = inviteeEmail,
+            InviteeRole = role,
+            ProjectIds = projectIds,
+            Secret = Guid.NewGuid().ToString("N"),
+            ExpirationDate = expirationDays.HasValue
+                ? DateTime.UtcNow.AddDays(expirationDays.Value)
+                : DateTime.UtcNow.AddDays(7), // Default 7-day expiry
+        };
+
+        db.WorkspaceInviteLinks.Add(invite);
+        await db.SaveChangesAsync(ct);
+
+        return invite;
+    }
+
+    /// <summary>
+    /// Accept a workspace invite link. Requires authentication.
+    /// </summary>
+    public async Task<bool> AcceptWorkspaceInvite(
+        string secret,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        var admin = await AuthHelper.GetRequiredAdmin(claimsPrincipal, authz, ct);
+
+        var invite = await db.WorkspaceInviteLinks
+            .FirstOrDefaultAsync(l => l.Secret == secret, ct)
+            ?? throw new GraphQLException("Invite not found");
+
+        if (invite.ExpirationDate.HasValue && invite.ExpirationDate < DateTime.UtcNow)
+            throw new GraphQLException("Invite has expired");
+
+        if (!invite.WorkspaceId.HasValue)
+            throw new GraphQLException("Invalid invite — no workspace");
+
+        // Check not already a member
+        var alreadyMember = await db.WorkspaceAdmins
+            .AnyAsync(wa => wa.AdminId == admin.Id && wa.WorkspaceId == invite.WorkspaceId.Value, ct);
+
+        if (alreadyMember)
+            throw new GraphQLException("Already a member of this workspace");
+
+        // Add admin to workspace with the invite's role
+        db.WorkspaceAdmins.Add(new WorkspaceAdmin
+        {
+            WorkspaceId = invite.WorkspaceId.Value,
+            AdminId = admin.Id,
+            Role = invite.InviteeRole ?? "MEMBER",
+            ProjectIds = invite.ProjectIds,
+        });
+
+        // Remove the invite
+        db.WorkspaceInviteLinks.Remove(invite);
+        await db.SaveChangesAsync(ct);
+
+        return true;
+    }
+
+    /// <summary>
+    /// Delete/revoke a workspace invite link. Requires ADMIN role.
+    /// </summary>
+    public async Task<bool> DeleteWorkspaceInviteLink(
+        int inviteId,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        var invite = await db.WorkspaceInviteLinks.FindAsync([inviteId], ct)
+            ?? throw new GraphQLException("Invite not found");
+
+        if (invite.WorkspaceId.HasValue)
+            await AuthHelper.RequireWorkspaceAdmin(claimsPrincipal, invite.WorkspaceId.Value, authz, ct);
+
+        db.WorkspaceInviteLinks.Remove(invite);
         await db.SaveChangesAsync(ct);
         return true;
     }
@@ -543,15 +753,19 @@ public class PrivateMutation
     // ── Admin ─────────────────────────────────────────────────────────
 
     /// <summary>
-    /// Add an admin to a workspace.
+    /// Add an admin to a workspace. Requires ADMIN role.
     /// </summary>
     public async Task<bool> AddAdminToWorkspace(
         int workspaceId,
         int adminId,
         string role,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
         CancellationToken ct)
     {
+        await AuthHelper.RequireWorkspaceAdmin(claimsPrincipal, workspaceId, authz, ct);
+
         db.WorkspaceAdmins.Add(new WorkspaceAdmin
         {
             WorkspaceId = workspaceId,
@@ -563,15 +777,19 @@ public class PrivateMutation
     }
 
     /// <summary>
-    /// Change an admin's role in a workspace.
+    /// Change an admin's role in a workspace. Requires ADMIN role.
     /// </summary>
     public async Task<bool> ChangeAdminRole(
         int workspaceId,
         int adminId,
         string newRole,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
         CancellationToken ct)
     {
+        await AuthHelper.RequireWorkspaceAdmin(claimsPrincipal, workspaceId, authz, ct);
+
         var wa = await db.WorkspaceAdmins
             .FirstOrDefaultAsync(wa => wa.WorkspaceId == workspaceId && wa.AdminId == adminId, ct)
             ?? throw new GraphQLException("Admin not found in workspace");
@@ -582,14 +800,18 @@ public class PrivateMutation
     }
 
     /// <summary>
-    /// Remove an admin from a workspace.
+    /// Remove an admin from a workspace. Requires ADMIN role.
     /// </summary>
     public async Task<bool> DeleteAdminFromWorkspace(
         int workspaceId,
         int adminId,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
         CancellationToken ct)
     {
+        await AuthHelper.RequireWorkspaceAdmin(claimsPrincipal, workspaceId, authz, ct);
+
         var wa = await db.WorkspaceAdmins
             .FirstOrDefaultAsync(wa => wa.WorkspaceId == workspaceId && wa.AdminId == adminId, ct)
             ?? throw new GraphQLException("Admin not found in workspace");
@@ -602,11 +824,12 @@ public class PrivateMutation
     // ── Sessions ──────────────────────────────────────────────────────
 
     /// <summary>
-    /// Mark a session as viewed by an admin.
+    /// Mark a session as viewed by the current admin.
     /// </summary>
     public async Task<bool> MarkSessionAsViewed(
         string secureId,
-        int adminId,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
         CancellationToken ct)
     {
@@ -614,15 +837,17 @@ public class PrivateMutation
             .FirstOrDefaultAsync(s => s.SecureId == secureId, ct)
             ?? throw new GraphQLException("Session not found");
 
+        var admin = await AuthHelper.RequireProjectAccess(claimsPrincipal, session.ProjectId, authz, ct);
+
         var existing = await db.SessionAdminsViews
-            .FirstOrDefaultAsync(v => v.SessionId == session.Id && v.AdminId == adminId, ct);
+            .FirstOrDefaultAsync(v => v.SessionId == session.Id && v.AdminId == admin.Id, ct);
 
         if (existing == null)
         {
             db.SessionAdminsViews.Add(new SessionAdminsView
             {
                 SessionId = session.Id,
-                AdminId = adminId,
+                AdminId = admin.Id,
             });
             await db.SaveChangesAsync(ct);
         }
@@ -631,14 +856,20 @@ public class PrivateMutation
     }
 
     /// <summary>
-    /// Delete sessions matching criteria (for data deletion).
+    /// Delete sessions matching criteria (for data deletion). Requires ADMIN role.
     /// </summary>
     public async Task<bool> DeleteSessions(
         int projectId,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
         CancellationToken ct)
     {
-        // Create a delete task that will be processed by the worker
+        var project = await db.Projects.FindAsync([projectId], ct)
+            ?? throw new GraphQLException("Project not found");
+
+        await AuthHelper.RequireWorkspaceAdmin(claimsPrincipal, project.WorkspaceId, authz, ct);
+
         db.DeleteSessionsTasks.Add(new DeleteSessionsTask
         {
             ProjectId = projectId,
