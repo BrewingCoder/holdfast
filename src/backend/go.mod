@@ -1,6 +1,6 @@
 module github.com/BrewingCoder/holdfast/src/backend
 
-go 1.25
+go 1.25.0
 
 replace golang.org/x/crypto => golang.org/x/crypto v0.17.0
 
@@ -33,7 +33,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/feature/cloudfront/sign v1.7.9
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.53.1
 	github.com/aws/smithy-go v1.20.2
-	github.com/bradleyfalzon/ghinstallation/v2 v2.10.0
+	github.com/bradleyfalzon/ghinstallation/v2 v2.18.0
 	github.com/brianvoe/gofakeit/v7 v7.14.1
 	github.com/cloudflare/cloudflare-go v0.97.0
 	github.com/coreos/go-oidc/v3 v3.10.0
@@ -47,7 +47,7 @@ require (
 	github.com/go-test/deep v1.1.0
 	github.com/gofiber/fiber/v2 v2.52.5
 	github.com/golang-jwt/jwt v3.2.2+incompatible
-	github.com/golang-jwt/jwt/v4 v4.5.1
+	github.com/golang-jwt/jwt/v4 v4.5.2
 	github.com/golang/snappy v0.0.4
 	github.com/google/go-github/v50 v50.2.0
 	github.com/google/uuid v1.6.0
@@ -128,7 +128,7 @@ require (
 	github.com/go-viper/mapstructure/v2 v2.5.0 // indirect
 	github.com/goccy/go-json v0.10.5 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
-	github.com/google/go-github/v60 v60.0.0 // indirect
+	github.com/google/go-github/v84 v84.0.0 // indirect
 	github.com/google/s2a-go v0.1.7 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.3.2 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.25.1 // indirect
@@ -219,7 +219,7 @@ require (
 	github.com/golang-migrate/migrate/v4 v4.17.0
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
-	github.com/google/go-querystring v1.1.0 // indirect
+	github.com/google/go-querystring v1.2.0 // indirect
 	github.com/googleapis/gax-go/v2 v2.12.4 // indirect
 	github.com/highlight-run/go-resthooks v0.0.0-20220523054100-bf95aa850a20
 	github.com/huandu/go-sqlbuilder v1.27.3
