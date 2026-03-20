@@ -1,34 +1,54 @@
+using HoldFast.Data;
+using HoldFast.GraphQL.Private;
+using Microsoft.EntityFrameworkCore;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// ── Database ──────────────────────────────────────────────────────────
+builder.Services.AddDbContextPool<HoldFastDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("PostgreSQL")));
+
+// ── CORS ──────────────────────────────────────────────────────────────
+var frontendUri = builder.Configuration["Frontend:Uri"] ?? "http://localhost:3000";
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("Private", policy =>
+        policy.WithOrigins(frontendUri)
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials());
+
+    options.AddPolicy("Public", policy =>
+        policy.AllowAnyOrigin()
+              .AllowAnyHeader()
+              .AllowAnyMethod());
+});
+
+// ── GraphQL (Hot Chocolate) ───────────────────────────────────────────
+builder.Services
+    .AddGraphQLServer()
+    .AddQueryType<PrivateQuery>()
+    .AddMutationType<PrivateMutation>()
+    .AddProjections()
+    .AddFiltering()
+    .AddSorting()
+    .RegisterDbContextFactory<HoldFastDbContext>();
+
+// ── Health checks ─────────────────────────────────────────────────────
+builder.Services.AddHealthChecks()
+    .AddNpgSql(builder.Configuration.GetConnectionString("PostgreSQL")!);
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// ── Middleware ─────────────────────────────────────────────────────────
+app.UseCors("Private");
 
-app.UseHttpsRedirection();
+app.MapHealthChecks("/health");
 
-var summaries = new[]
-{
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
+// Private GraphQL endpoint (dashboard API)
+app.MapGraphQL("/private");
 
-app.MapGet("/weatherforecast", () =>
-{
-    var forecast =  Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-});
+// Public GraphQL endpoint (data ingestion) — Phase 2
+// app.MapGraphQL("/public").WithOptions(new() { ... });
 
 app.Run();
-
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}
