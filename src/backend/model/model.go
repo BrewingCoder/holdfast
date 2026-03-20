@@ -349,7 +349,7 @@ type Project struct {
 	FreeTier          bool           `gorm:"default:false"`
 	ExcludedUsers     pq.StringArray `json:"excluded_users" gorm:"type:text[]"`
 	ErrorFilters      pq.StringArray `gorm:"type:text[]"`
-	ErrorJsonPaths    pq.StringArray `gorm:"type:text[]"`
+	ErrorJsonPaths    pq.StringArray `gorm:"type:text[]"` //nolint:staticcheck // database column name
 	Platforms         pq.StringArray `gorm:"type:text[]"`
 
 	// BackendSetup will be true if this is the session where HighlightBackend is run for the first time
