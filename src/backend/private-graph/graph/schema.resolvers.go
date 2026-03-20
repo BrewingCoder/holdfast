@@ -3772,22 +3772,6 @@ func (r *mutationResolver) UpdateErrorGroupIsPublic(ctx context.Context, errorGr
 	return errorGroup, nil
 }
 
-// UpdateAllowMeterOverage is the resolver for the updateAllowMeterOverage field.
-func (r *mutationResolver) UpdateAllowMeterOverage(ctx context.Context, workspaceID int, allowMeterOverage bool) (*model.Workspace, error) {
-	workspace, err := r.isUserWorkspaceAdmin(ctx, workspaceID)
-	if err != nil {
-		return nil, err
-	}
-
-	if err := r.DB.WithContext(ctx).Model(&workspace).Updates(map[string]interface{}{
-		"AllowMeterOverage": allowMeterOverage,
-	}).Error; err != nil {
-		return nil, e.Wrap(err, "error updating AllowMeterOverage")
-	}
-
-	return workspace, nil
-}
-
 // SubmitRegistrationForm is the resolver for the submitRegistrationForm field.
 func (r *mutationResolver) SubmitRegistrationForm(ctx context.Context, workspaceID int, teamSize string, role string, useCase string, heardAbout string, pun *string) (*bool, error) {
 	workspace, err := r.isUserInWorkspaceReadOnly(ctx, workspaceID)

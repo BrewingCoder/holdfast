@@ -283,7 +283,6 @@ type Workspace struct {
 	StripeTracesOveragePriceID  *string
 	StripeMetricsOveragePriceID *string
 	TrialEndDate                *time.Time `json:"trial_end_date"`
-	AllowMeterOverage           bool       `gorm:"default:true"`
 	AllowedAutoJoinEmailOrigins *string    `json:"allowed_auto_join_email_origins"`
 	EligibleForTrialExtension   bool       `gorm:"default:false"`
 	TrialExtensionEnabled       bool       `gorm:"default:false"`
@@ -458,12 +457,10 @@ type AllWorkspaceSettings struct {
 	ErrorEmbeddingsThreshold  float64 `gorm:"default:0.2"`
 	ReplaceAssets             bool    `gorm:"default:true"`
 	StoreIP                   bool    `gorm:"default:true"`
-	CanShowBillingIssueBanner bool    `gorm:"default:false"`
-
-	EnableUnlimitedDashboards bool `gorm:"default:true"`
-	EnableUnlimitedProjects   bool `gorm:"default:true"`
-	EnableUnlimitedRetention  bool `gorm:"default:true"`
-	EnableUnlimitedSeats      bool `gorm:"default:true"`
+	EnableUnlimitedDashboards bool    `gorm:"default:true"`
+	EnableUnlimitedProjects   bool    `gorm:"default:true"`
+	EnableUnlimitedRetention  bool    `gorm:"default:true"`
+	EnableUnlimitedSeats      bool    `gorm:"default:true"`
 
 	EnableBillingLimits      bool `gorm:"default:true"`
 	EnableGrafanaDashboard   bool `gorm:"default:true"`
@@ -2366,7 +2363,6 @@ func EnableAllWorkspaceSettings(ctx context.Context, db *gorm.DB) error {
 		Where("1 = 1").
 		Updates(&AllWorkspaceSettings{
 			StoreIP:                   true,
-			CanShowBillingIssueBanner: false,
 			EnableUnlimitedDashboards: true,
 			EnableUnlimitedProjects:   true,
 			EnableUnlimitedRetention:  true,
