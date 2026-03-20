@@ -4,14 +4,46 @@ on:
   push:
     branches: [main]
   pull_request:
+  schedule:
+    - cron: '0 7 * * 1'  # Weekly Monday 7am UTC — full scan
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
+  changes:
+    name: Detect Changes
+    runs-on: [self-hosted, Linux, holdfast]
+    timeout-minutes: 2
+    outputs:
+      backend: ${{ steps.filter.outputs.backend }}
+      frontend: ${{ steps.filter.outputs.frontend }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Detect changed paths
+        uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            backend:
+              - 'src/backend/**'
+              - 'sdk/highlight-go/**'
+              - 'go.work'
+              - 'go.work.sum'
+            frontend:
+              - 'src/frontend/**'
+              - 'sdk/**'
+              - 'packages/**'
+              - 'yarn.lock'
+              - 'rrweb/**'
+
   backend:
     name: Backend Analysis
+    needs: changes
+    if: needs.changes.outputs.backend == 'true' || github.event_name == 'push' || github.event_name == 'schedule'
     runs-on: [self-hosted, Linux, holdfast]
     timeout-minutes: 15
     steps:
@@ -30,6 +62,7 @@ jobs:
         run: |
           cd src/backend
           go test -short -coverprofile=coverage.out -covermode=atomic \
+            ./model/... \
             ./parser/... ./queryparser/... ./env/... ./assets/... \
             ./errorgroups/... ./vercel/... ./http/... ./alerts/... \
             ./pricing/...
@@ -63,6 +96,8 @@ jobs:
 
   js-analysis:
     name: JS/TS Analysis (all projects)
+    needs: changes
+    if: needs.changes.outputs.frontend == 'true' || github.event_name == 'push' || github.event_name == 'schedule'
     runs-on: [self-hosted, Linux, holdfast]
     timeout-minutes: 30
     steps:

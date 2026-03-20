@@ -964,7 +964,6 @@ type ComplexityRoot struct {
 		UpdateAdminAndCreateWorkspace         func(childComplexity int, adminAndWorkspaceDetails model.AdminAndWorkspaceDetails) int
 		UpdateAlert                           func(childComplexity int, projectID int, alertID int, name *string, productType *model.ProductType, functionType *model.MetricAggregator, functionColumn *string, query *string, groupByKey *string, thresholdValue *float64, thresholdWindow *int, thresholdCooldown *int, thresholdType *model.ThresholdType, thresholdCondition *model.ThresholdCondition, destinations []*model.AlertDestinationInput, sql *string) int
 		UpdateAlertDisabled                   func(childComplexity int, projectID int, alertID int, disabled bool) int
-		UpdateAllowMeterOverage               func(childComplexity int, workspaceID int, allowMeterOverage bool) int
 		UpdateAllowedEmailOrigins             func(childComplexity int, workspaceID int, allowedAutoJoinEmailOrigins string) int
 		UpdateBillingDetails                  func(childComplexity int, workspaceID int) int
 		UpdateClickUpProjectMappings          func(childComplexity int, workspaceID int, projectMappings []*model.ClickUpProjectMappingInput) int
@@ -1729,7 +1728,6 @@ type ComplexityRoot struct {
 	}
 
 	Workspace struct {
-		AllowMeterOverage           func(childComplexity int) int
 		AllowedAutoJoinEmailOrigins func(childComplexity int) int
 		BillingPeriodEnd            func(childComplexity int) int
 		ClearbitEnabled             func(childComplexity int) int
@@ -1918,7 +1916,6 @@ type MutationResolver interface {
 	UpdateLogAlertIsDisabled(ctx context.Context, id int, projectID int, disabled bool) (*model1.LogAlert, error)
 	UpdateSessionIsPublic(ctx context.Context, sessionSecureID string, isPublic bool) (*model1.Session, error)
 	UpdateErrorGroupIsPublic(ctx context.Context, errorGroupSecureID string, isPublic bool) (*model1.ErrorGroup, error)
-	UpdateAllowMeterOverage(ctx context.Context, workspaceID int, allowMeterOverage bool) (*model1.Workspace, error)
 	SubmitRegistrationForm(ctx context.Context, workspaceID int, teamSize string, role string, useCase string, heardAbout string, pun *string) (*bool, error)
 	RequestAccess(ctx context.Context, projectID int) (*bool, error)
 	ModifyClearbitIntegration(ctx context.Context, workspaceID int, enabled bool) (*bool, error)
@@ -6827,18 +6824,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.UpdateAlertDisabled(childComplexity, args["project_id"].(int), args["alert_id"].(int), args["disabled"].(bool)), true
 
-	case "Mutation.updateAllowMeterOverage":
-		if e.complexity.Mutation.UpdateAllowMeterOverage == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_updateAllowMeterOverage_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.UpdateAllowMeterOverage(childComplexity, args["workspace_id"].(int), args["allow_meter_overage"].(bool)), true
-
 	case "Mutation.updateAllowedEmailOrigins":
 		if e.complexity.Mutation.UpdateAllowedEmailOrigins == nil {
 			break
@@ -11680,13 +11665,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.WebhookDestination.URL(childComplexity), true
 
-	case "Workspace.allow_meter_overage":
-		if e.complexity.Workspace.AllowMeterOverage == nil {
-			break
-		}
-
-		return e.complexity.Workspace.AllowMeterOverage(childComplexity), true
-
 	case "Workspace.allowed_auto_join_email_origins":
 		if e.complexity.Workspace.AllowedAutoJoinEmailOrigins == nil {
 			break
@@ -12778,7 +12756,6 @@ type Workspace {
 	trial_end_date: Timestamp
 	billing_period_end: Timestamp
 	next_invoice_date: Timestamp
-	allow_meter_overage: Boolean!
 	allowed_auto_join_email_origins: String
 	eligible_for_trial_extension: Boolean!
 	trial_extension_enabled: Boolean!
@@ -15263,10 +15240,6 @@ type Mutation {
 		error_group_secure_id: String!
 		is_public: Boolean!
 	): ErrorGroup
-	updateAllowMeterOverage(
-		workspace_id: ID!
-		allow_meter_overage: Boolean!
-	): Workspace
 	submitRegistrationForm(
 		workspace_id: ID!
 		team_size: String!
@@ -22445,57 +22418,6 @@ func (ec *executionContext) field_Mutation_updateAlert_argsSQL(
 	}
 
 	var zeroVal *string
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Mutation_updateAllowMeterOverage_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
-	var err error
-	args := map[string]any{}
-	arg0, err := ec.field_Mutation_updateAllowMeterOverage_argsWorkspaceID(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["workspace_id"] = arg0
-	arg1, err := ec.field_Mutation_updateAllowMeterOverage_argsAllowMeterOverage(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["allow_meter_overage"] = arg1
-	return args, nil
-}
-func (ec *executionContext) field_Mutation_updateAllowMeterOverage_argsWorkspaceID(
-	ctx context.Context,
-	rawArgs map[string]any,
-) (int, error) {
-	if _, ok := rawArgs["workspace_id"]; !ok {
-		var zeroVal int
-		return zeroVal, nil
-	}
-
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("workspace_id"))
-	if tmp, ok := rawArgs["workspace_id"]; ok {
-		return ec.unmarshalNID2int(ctx, tmp)
-	}
-
-	var zeroVal int
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Mutation_updateAllowMeterOverage_argsAllowMeterOverage(
-	ctx context.Context,
-	rawArgs map[string]any,
-) (bool, error) {
-	if _, ok := rawArgs["allow_meter_overage"]; !ok {
-		var zeroVal bool
-		return zeroVal, nil
-	}
-
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("allow_meter_overage"))
-	if tmp, ok := rawArgs["allow_meter_overage"]; ok {
-		return ec.unmarshalNBoolean2bool(ctx, tmp)
-	}
-
-	var zeroVal bool
 	return zeroVal, nil
 }
 
@@ -59086,8 +59008,6 @@ func (ec *executionContext) fieldContext_Mutation_createWorkspace(ctx context.Co
 				return ec.fieldContext_Workspace_billing_period_end(ctx, field)
 			case "next_invoice_date":
 				return ec.fieldContext_Workspace_next_invoice_date(ctx, field)
-			case "allow_meter_overage":
-				return ec.fieldContext_Workspace_allow_meter_overage(ctx, field)
 			case "allowed_auto_join_email_origins":
 				return ec.fieldContext_Workspace_allowed_auto_join_email_origins(ctx, field)
 			case "eligible_for_trial_extension":
@@ -59415,8 +59335,6 @@ func (ec *executionContext) fieldContext_Mutation_editWorkspace(ctx context.Cont
 				return ec.fieldContext_Workspace_billing_period_end(ctx, field)
 			case "next_invoice_date":
 				return ec.fieldContext_Workspace_next_invoice_date(ctx, field)
-			case "allow_meter_overage":
-				return ec.fieldContext_Workspace_allow_meter_overage(ctx, field)
 			case "allowed_auto_join_email_origins":
 				return ec.fieldContext_Workspace_allowed_auto_join_email_origins(ctx, field)
 			case "eligible_for_trial_extension":
@@ -63913,112 +63831,6 @@ func (ec *executionContext) fieldContext_Mutation_updateErrorGroupIsPublic(ctx c
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_updateAllowMeterOverage(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_updateAllowMeterOverage(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().UpdateAllowMeterOverage(rctx, fc.Args["workspace_id"].(int), fc.Args["allow_meter_overage"].(bool))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*model1.Workspace)
-	fc.Result = res
-	return ec.marshalOWorkspace2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐWorkspace(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Mutation_updateAllowMeterOverage(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_Workspace_id(ctx, field)
-			case "name":
-				return ec.fieldContext_Workspace_name(ctx, field)
-			case "slack_webhook_channel":
-				return ec.fieldContext_Workspace_slack_webhook_channel(ctx, field)
-			case "slack_channels":
-				return ec.fieldContext_Workspace_slack_channels(ctx, field)
-			case "projects":
-				return ec.fieldContext_Workspace_projects(ctx, field)
-			case "plan_tier":
-				return ec.fieldContext_Workspace_plan_tier(ctx, field)
-			case "unlimited_members":
-				return ec.fieldContext_Workspace_unlimited_members(ctx, field)
-			case "trial_end_date":
-				return ec.fieldContext_Workspace_trial_end_date(ctx, field)
-			case "billing_period_end":
-				return ec.fieldContext_Workspace_billing_period_end(ctx, field)
-			case "next_invoice_date":
-				return ec.fieldContext_Workspace_next_invoice_date(ctx, field)
-			case "allow_meter_overage":
-				return ec.fieldContext_Workspace_allow_meter_overage(ctx, field)
-			case "allowed_auto_join_email_origins":
-				return ec.fieldContext_Workspace_allowed_auto_join_email_origins(ctx, field)
-			case "eligible_for_trial_extension":
-				return ec.fieldContext_Workspace_eligible_for_trial_extension(ctx, field)
-			case "trial_extension_enabled":
-				return ec.fieldContext_Workspace_trial_extension_enabled(ctx, field)
-			case "clearbit_enabled":
-				return ec.fieldContext_Workspace_clearbit_enabled(ctx, field)
-			case "retention_period":
-				return ec.fieldContext_Workspace_retention_period(ctx, field)
-			case "errors_retention_period":
-				return ec.fieldContext_Workspace_errors_retention_period(ctx, field)
-			case "logs_retention_period":
-				return ec.fieldContext_Workspace_logs_retention_period(ctx, field)
-			case "traces_retention_period":
-				return ec.fieldContext_Workspace_traces_retention_period(ctx, field)
-			case "metrics_retention_period":
-				return ec.fieldContext_Workspace_metrics_retention_period(ctx, field)
-			case "sessions_max_cents":
-				return ec.fieldContext_Workspace_sessions_max_cents(ctx, field)
-			case "errors_max_cents":
-				return ec.fieldContext_Workspace_errors_max_cents(ctx, field)
-			case "logs_max_cents":
-				return ec.fieldContext_Workspace_logs_max_cents(ctx, field)
-			case "traces_max_cents":
-				return ec.fieldContext_Workspace_traces_max_cents(ctx, field)
-			case "metrics_max_cents":
-				return ec.fieldContext_Workspace_metrics_max_cents(ctx, field)
-			case "cloudflare_proxy":
-				return ec.fieldContext_Workspace_cloudflare_proxy(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Workspace", field.Name)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_updateAllowMeterOverage_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _Mutation_submitRegistrationForm(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Mutation_submitRegistrationForm(ctx, field)
 	if err != nil {
@@ -66696,8 +66508,6 @@ func (ec *executionContext) fieldContext_Project_workspace(_ context.Context, fi
 				return ec.fieldContext_Workspace_billing_period_end(ctx, field)
 			case "next_invoice_date":
 				return ec.fieldContext_Workspace_next_invoice_date(ctx, field)
-			case "allow_meter_overage":
-				return ec.fieldContext_Workspace_allow_meter_overage(ctx, field)
 			case "allowed_auto_join_email_origins":
 				return ec.fieldContext_Workspace_allowed_auto_join_email_origins(ctx, field)
 			case "eligible_for_trial_extension":
@@ -71386,8 +71196,6 @@ func (ec *executionContext) fieldContext_Query_workspaces(_ context.Context, fie
 				return ec.fieldContext_Workspace_billing_period_end(ctx, field)
 			case "next_invoice_date":
 				return ec.fieldContext_Workspace_next_invoice_date(ctx, field)
-			case "allow_meter_overage":
-				return ec.fieldContext_Workspace_allow_meter_overage(ctx, field)
 			case "allowed_auto_join_email_origins":
 				return ec.fieldContext_Workspace_allowed_auto_join_email_origins(ctx, field)
 			case "eligible_for_trial_extension":
@@ -71525,8 +71333,6 @@ func (ec *executionContext) fieldContext_Query_joinable_workspaces(_ context.Con
 				return ec.fieldContext_Workspace_billing_period_end(ctx, field)
 			case "next_invoice_date":
 				return ec.fieldContext_Workspace_next_invoice_date(ctx, field)
-			case "allow_meter_overage":
-				return ec.fieldContext_Workspace_allow_meter_overage(ctx, field)
 			case "allowed_auto_join_email_origins":
 				return ec.fieldContext_Workspace_allowed_auto_join_email_origins(ctx, field)
 			case "eligible_for_trial_extension":
@@ -74385,8 +74191,6 @@ func (ec *executionContext) fieldContext_Query_workspace(ctx context.Context, fi
 				return ec.fieldContext_Workspace_billing_period_end(ctx, field)
 			case "next_invoice_date":
 				return ec.fieldContext_Workspace_next_invoice_date(ctx, field)
-			case "allow_meter_overage":
-				return ec.fieldContext_Workspace_allow_meter_overage(ctx, field)
 			case "allowed_auto_join_email_origins":
 				return ec.fieldContext_Workspace_allowed_auto_join_email_origins(ctx, field)
 			case "eligible_for_trial_extension":
@@ -74794,8 +74598,6 @@ func (ec *executionContext) fieldContext_Query_workspace_for_project(ctx context
 				return ec.fieldContext_Workspace_billing_period_end(ctx, field)
 			case "next_invoice_date":
 				return ec.fieldContext_Workspace_next_invoice_date(ctx, field)
-			case "allow_meter_overage":
-				return ec.fieldContext_Workspace_allow_meter_overage(ctx, field)
 			case "allowed_auto_join_email_origins":
 				return ec.fieldContext_Workspace_allowed_auto_join_email_origins(ctx, field)
 			case "eligible_for_trial_extension":
@@ -94155,50 +93957,6 @@ func (ec *executionContext) fieldContext_Workspace_next_invoice_date(_ context.C
 	return fc, nil
 }
 
-func (ec *executionContext) _Workspace_allow_meter_overage(ctx context.Context, field graphql.CollectedField, obj *model1.Workspace) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Workspace_allow_meter_overage(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.AllowMeterOverage, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(bool)
-	fc.Result = res
-	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Workspace_allow_meter_overage(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Workspace",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Boolean does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _Workspace_allowed_auto_join_email_origins(ctx context.Context, field graphql.CollectedField, obj *model1.Workspace) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Workspace_allowed_auto_join_email_origins(ctx, field)
 	if err != nil {
@@ -106421,10 +106179,6 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_updateErrorGroupIsPublic(ctx, field)
 			})
-		case "updateAllowMeterOverage":
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_updateAllowMeterOverage(ctx, field)
-			})
 		case "submitRegistrationForm":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_submitRegistrationForm(ctx, field)
@@ -114749,11 +114503,6 @@ func (ec *executionContext) _Workspace(ctx context.Context, sel ast.SelectionSet
 			out.Values[i] = ec._Workspace_billing_period_end(ctx, field, obj)
 		case "next_invoice_date":
 			out.Values[i] = ec._Workspace_next_invoice_date(ctx, field, obj)
-		case "allow_meter_overage":
-			out.Values[i] = ec._Workspace_allow_meter_overage(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
 		case "allowed_auto_join_email_origins":
 			out.Values[i] = ec._Workspace_allowed_auto_join_email_origins(ctx, field, obj)
 		case "eligible_for_trial_extension":
