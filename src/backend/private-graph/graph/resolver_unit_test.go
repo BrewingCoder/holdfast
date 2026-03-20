@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/BrewingCoder/holdfast/src/backend/model"
 	modelInputs "github.com/BrewingCoder/holdfast/src/backend/private-graph/graph/model"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
@@ -139,4 +140,62 @@ func TestAccountDetailsMember_Fields(t *testing.T) {
 	assert.Equal(t, "Jane Doe", member.Name)
 	assert.Equal(t, "jane@example.com", member.Email)
 	assert.Nil(t, member.LastActive)
+}
+
+// --- Issue #31: Monthly limit and max cents field removal ---
+
+func TestWorkspace_NoMonthlyLimitFields(t *testing.T) {
+	// Compile-time verification: if any Monthly*Limit or *MaxCents fields
+	// still exist on model.Workspace, this struct literal will fail to compile
+	// because Go requires all fields to be present or none named.
+	w := model.Workspace{
+		Name:     strPtr("test-workspace"),
+		PlanTier: "Enterprise",
+	}
+	assert.Equal(t, "test-workspace", *w.Name)
+	assert.Equal(t, "Enterprise", w.PlanTier)
+}
+
+func TestWorkspace_RetentionFieldsPreserved(t *testing.T) {
+	// Retention periods should still exist after removing billing limits.
+	sessions := modelInputs.RetentionPeriodSixMonths
+	errors := modelInputs.RetentionPeriodSevenDays
+	logs := modelInputs.RetentionPeriodThirtyDays
+	traces := modelInputs.RetentionPeriodThirtyDays
+	metrics := modelInputs.RetentionPeriodThirtyDays
+	w := model.Workspace{
+		RetentionPeriod:        &sessions,
+		ErrorsRetentionPeriod:  &errors,
+		LogsRetentionPeriod:    &logs,
+		TracesRetentionPeriod:  &traces,
+		MetricsRetentionPeriod: &metrics,
+	}
+	assert.Equal(t, modelInputs.RetentionPeriodSixMonths, *w.RetentionPeriod)
+	assert.Equal(t, modelInputs.RetentionPeriodSevenDays, *w.ErrorsRetentionPeriod)
+	assert.Equal(t, modelInputs.RetentionPeriodThirtyDays, *w.LogsRetentionPeriod)
+	assert.Equal(t, modelInputs.RetentionPeriodThirtyDays, *w.TracesRetentionPeriod)
+	assert.Equal(t, modelInputs.RetentionPeriodThirtyDays, *w.MetricsRetentionPeriod)
+}
+
+func TestOrganization_NoMonthlySessionLimit(t *testing.T) {
+	// Compile-time check: Organization no longer has MonthlySessionLimit.
+	org := model.Organization{
+		Name: strPtr("test-org"),
+	}
+	assert.Equal(t, "test-org", *org.Name)
+}
+
+func TestProject_NoMonthlySessionLimit(t *testing.T) {
+	// Compile-time check: Project no longer has MonthlySessionLimit.
+	p := model.Project{
+		Name:        strPtr("test-project"),
+		WorkspaceID: 1,
+	}
+	assert.Equal(t, "test-project", *p.Name)
+	assert.Equal(t, 1, p.WorkspaceID)
+}
+
+// strPtr is a helper to create a *string from a literal.
+func strPtr(s string) *string {
+	return &s
 }

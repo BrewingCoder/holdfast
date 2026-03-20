@@ -232,8 +232,6 @@ type Organization struct {
 	SlackWebhookChannel   *string
 	SlackWebhookChannelID *string
 	SlackChannels         *string
-	// Manual monthly session limit override
-	MonthlySessionLimit *int
 }
 
 type Workspace struct {
@@ -254,30 +252,19 @@ type Workspace struct {
 	VercelTeamID                *string
 	CloudflareProxy             *string
 	Projects                    []Project
-	MigratedFromProjectID       *int   // Column can be removed after migration is done
-	PlanTier                    string `gorm:"default:Free"`
-	UnlimitedMembers            bool   `gorm:"default:false"`
-	MonthlySessionLimit         *int
-	MonthlyMembersLimit         *int
-	MonthlyErrorsLimit          *int
-	MonthlyLogsLimit            *int
-	MonthlyTracesLimit          *int
-	MonthlyMetricsLimit         *int
+	MigratedFromProjectID       *int                         // Column can be removed after migration is done
+	PlanTier                    string                       `gorm:"default:Free"`
+	UnlimitedMembers            bool                         `gorm:"default:false"`
 	RetentionPeriod             *modelInputs.RetentionPeriod `gorm:"default:SevenDays"`
 	ErrorsRetentionPeriod       *modelInputs.RetentionPeriod `gorm:"default:SevenDays"`
 	LogsRetentionPeriod         *modelInputs.RetentionPeriod `gorm:"default:ThirtyDays"`
 	TracesRetentionPeriod       *modelInputs.RetentionPeriod `gorm:"default:ThirtyDays"`
 	MetricsRetentionPeriod      *modelInputs.RetentionPeriod `gorm:"default:ThirtyDays"`
-	SessionsMaxCents            *int
-	ErrorsMaxCents              *int
-	LogsMaxCents                *int
-	TracesMaxCents              *int
-	MetricsMaxCents             *int
-	TrialEndDate                *time.Time `json:"trial_end_date"`
-	AllowedAutoJoinEmailOrigins *string    `json:"allowed_auto_join_email_origins"`
-	EligibleForTrialExtension   bool       `gorm:"default:false"`
-	TrialExtensionEnabled       bool       `gorm:"default:false"`
-	ClearbitEnabled             bool       `gorm:"default:false"`
+	TrialEndDate                *time.Time                   `json:"trial_end_date"`
+	AllowedAutoJoinEmailOrigins *string                      `json:"allowed_auto_join_email_origins"`
+	EligibleForTrialExtension   bool                         `gorm:"default:false"`
+	TrialExtensionEnabled       bool                         `gorm:"default:false"`
+	ClearbitEnabled             bool                         `gorm:"default:false"`
 	DiscordGuildId              *string
 	ClickupAccessToken          *string
 }
@@ -357,15 +344,13 @@ type Project struct {
 	BillingEmail      *string
 	Secret            *string    `json:"-"`
 	TrialEndDate      *time.Time `json:"trial_end_date"`
-	// Manual monthly session limit override
-	MonthlySessionLimit *int
-	WorkspaceID         int
-	Workspace           *Workspace
-	FreeTier            bool           `gorm:"default:false"`
-	ExcludedUsers       pq.StringArray `json:"excluded_users" gorm:"type:text[]"`
-	ErrorFilters        pq.StringArray `gorm:"type:text[]"`
-	ErrorJsonPaths      pq.StringArray `gorm:"type:text[]"`
-	Platforms           pq.StringArray `gorm:"type:text[]"`
+	WorkspaceID       int
+	Workspace         *Workspace
+	FreeTier          bool           `gorm:"default:false"`
+	ExcludedUsers     pq.StringArray `json:"excluded_users" gorm:"type:text[]"`
+	ErrorFilters      pq.StringArray `gorm:"type:text[]"`
+	ErrorJsonPaths    pq.StringArray `gorm:"type:text[]"`
+	Platforms         pq.StringArray `gorm:"type:text[]"`
 
 	// BackendSetup will be true if this is the session where HighlightBackend is run for the first time
 	BackendSetup *bool         `json:"backend_setup"`

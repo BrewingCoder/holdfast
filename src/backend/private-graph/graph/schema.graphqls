@@ -644,11 +644,6 @@ type Workspace {
 	logs_retention_period: RetentionPeriod!
 	traces_retention_period: RetentionPeriod!
 	metrics_retention_period: RetentionPeriod!
-	sessions_max_cents: Int
-	errors_max_cents: Int
-	logs_max_cents: Int
-	traces_max_cents: Int
-	metrics_max_cents: Int
 	cloudflare_proxy: String
 }
 
@@ -2826,15 +2821,10 @@ type Mutation {
 	updateBillingDetails(workspace_id: ID!): Boolean
 	saveBillingPlan(
 		workspace_id: ID!
-		sessionsLimitCents: Int
 		sessionsRetention: RetentionPeriod!
-		errorsLimitCents: Int
 		errorsRetention: RetentionPeriod!
-		logsLimitCents: Int
 		logsRetention: RetentionPeriod!
-		tracesLimitCents: Int
 		tracesRetention: RetentionPeriod!
-		metricsLimitCents: Int
 		metricsRetention: RetentionPeriod!
 	): Boolean
 	createSessionComment(

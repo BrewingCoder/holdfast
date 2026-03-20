@@ -594,8 +594,7 @@ func Test_WithinQuota_CommittedPricing(t *testing.T) {
 				Model: model.Model{
 					ID: 1,
 				},
-				PlanTier:         privateModel.PlanTypeBasic.String(),
-				SessionsMaxCents: pointy.Int(500),
+				PlanTier: privateModel.PlanTypeBasic.String(),
 			}
 			resolver.DB.Create(&workspaceBasic)
 
@@ -603,8 +602,7 @@ func Test_WithinQuota_CommittedPricing(t *testing.T) {
 				Model: model.Model{
 					ID: 2,
 				},
-				PlanTier:         privateModel.PlanTypeUsageBased.String(),
-				SessionsMaxCents: pointy.Int(500),
+				PlanTier: privateModel.PlanTypeUsageBased.String(),
 			}
 			resolver.DB.Create(&workspaceUsageBased)
 
