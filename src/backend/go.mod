@@ -28,11 +28,11 @@ require (
 	github.com/PaesslerAG/jsonpath v0.1.1
 	github.com/andybalholm/brotli v1.1.1
 	github.com/antlr4-go/antlr/v4 v4.13.0
-	github.com/aws/aws-sdk-go-v2 v1.29.0
+	github.com/aws/aws-sdk-go-v2 v1.41.4
 	github.com/aws/aws-sdk-go-v2/config v1.27.11
-	github.com/aws/aws-sdk-go-v2/feature/cloudfront/sign v1.7.9
+	github.com/aws/aws-sdk-go-v2/feature/cloudfront/sign v1.9.20
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.53.1
-	github.com/aws/smithy-go v1.20.2
+	github.com/aws/smithy-go v1.24.2
 	github.com/bradleyfalzon/ghinstallation/v2 v2.10.0
 	github.com/brianvoe/gofakeit/v7 v7.14.1
 	github.com/cloudflare/cloudflare-go v0.97.0
