@@ -635,8 +635,6 @@ type Workspace {
 	plan_tier: String!
 	unlimited_members: Boolean!
 	trial_end_date: Timestamp
-	billing_period_end: Timestamp
-	next_invoice_date: Timestamp
 	allowed_auto_join_email_origins: String
 	eligible_for_trial_extension: Boolean!
 	trial_extension_enabled: Boolean!

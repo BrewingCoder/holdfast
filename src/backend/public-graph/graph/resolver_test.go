@@ -590,16 +590,12 @@ func Test_WithinQuota_CommittedPricing(t *testing.T) {
 				WorkspaceID: 2,
 			})
 
-			jan1 := time.Date(2023, time.January, 1, 0, 0, 0, 0, time.UTC)
-			feb1 := jan1.AddDate(0, 1, 0)
 			workspaceBasic := model.Workspace{
 				Model: model.Model{
 					ID: 1,
 				},
-				PlanTier:           privateModel.PlanTypeBasic.String(),
-				SessionsMaxCents:   pointy.Int(500),
-				BillingPeriodStart: &jan1,
-				BillingPeriodEnd:   &feb1,
+				PlanTier:         privateModel.PlanTypeBasic.String(),
+				SessionsMaxCents: pointy.Int(500),
 			}
 			resolver.DB.Create(&workspaceBasic)
 
@@ -607,10 +603,8 @@ func Test_WithinQuota_CommittedPricing(t *testing.T) {
 				Model: model.Model{
 					ID: 2,
 				},
-				PlanTier:           privateModel.PlanTypeUsageBased.String(),
-				SessionsMaxCents:   pointy.Int(500),
-				BillingPeriodStart: &jan1,
-				BillingPeriodEnd:   &feb1,
+				PlanTier:         privateModel.PlanTypeUsageBased.String(),
+				SessionsMaxCents: pointy.Int(500),
 			}
 			resolver.DB.Create(&workspaceUsageBased)
 

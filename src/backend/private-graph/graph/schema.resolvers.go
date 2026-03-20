@@ -6299,12 +6299,7 @@ func (r *queryResolver) BillingDetails(ctx context.Context, workspaceID int) (*m
 
 	planType := modelInputs.PlanType(workspace.PlanTier)
 
-	interval := modelInputs.SubscriptionIntervalMonthly
-	if workspace.BillingPeriodStart != nil &&
-		workspace.BillingPeriodEnd != nil &&
-		workspace.BillingPeriodEnd.Sub(*workspace.BillingPeriodStart) >= time.Hour*24*32 {
-		interval = modelInputs.SubscriptionIntervalAnnual
-	}
+	interval := modelInputs.SubscriptionIntervalMonthly // HoldFast: no billing periods
 
 	var g errgroup.Group
 	var sessionsMeter int64

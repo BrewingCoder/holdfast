@@ -904,21 +904,14 @@ func TestCalculateOverages(t *testing.T) {
 		},
 	}
 
-	now := time.Now().AddDate(0, 0, -14)
-	end := now.AddDate(0, 1, 0)
-
 	w := model.Workspace{
-		BillingPeriodStart: &now,
-		BillingPeriodEnd:   &end,
-		PlanTier:           string(model2.PlanTypeGraduated),
+		PlanTier: string(model2.PlanTypeGraduated),
 	}
 	if err := DB.Create(&w).Error; err != nil {
 		t.Fatal(e.Wrap(err, "error inserting workspace"))
 	}
 	wMP := model.Workspace{
-		BillingPeriodStart: &now,
-		BillingPeriodEnd:   &end,
-		PlanTier:           string(model2.PlanTypeGraduated),
+		PlanTier: string(model2.PlanTypeGraduated),
 	}
 	if err := DB.Create(&wMP).Error; err != nil {
 		t.Fatal(e.Wrap(err, "error inserting workspace"))

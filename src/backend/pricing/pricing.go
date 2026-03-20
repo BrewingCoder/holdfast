@@ -463,25 +463,10 @@ func get7DayAverageImpl(ctx context.Context, DB *gorm.DB, ccClient *clickhouse.C
 }
 
 func getWorkspaceMeterImpl(ctx context.Context, DB *gorm.DB, ccClient *clickhouse.Client, workspace *model.Workspace, productType model.PricingProductType) (int64, error) {
-	var startDate time.Time
-	if workspace.NextInvoiceDate != nil {
-		startDate = workspace.NextInvoiceDate.AddDate(0, -1, 0)
-	} else if workspace.BillingPeriodStart != nil {
-		startDate = *workspace.BillingPeriodStart
-	} else {
-		currentYear, currentMonth, _ := time.Now().Date()
-		startDate = time.Date(currentYear, currentMonth, 1, 0, 0, 0, 0, time.UTC)
-	}
-
-	var endDate time.Time
-	if workspace.NextInvoiceDate != nil {
-		endDate = *workspace.NextInvoiceDate
-	} else if workspace.BillingPeriodEnd != nil {
-		endDate = *workspace.BillingPeriodEnd
-	} else {
-		currentYear, currentMonth, _ := time.Now().Date()
-		endDate = time.Date(currentYear, currentMonth, 1, 0, 0, 0, 0, time.UTC).AddDate(0, 1, 0)
-	}
+	// HoldFast: no billing periods — always use current calendar month
+	currentYear, currentMonth, _ := time.Now().Date()
+	startDate := time.Date(currentYear, currentMonth, 1, 0, 0, 0, 0, time.UTC)
+	endDate := startDate.AddDate(0, 1, 0)
 
 	projectIds := lo.Map(workspace.Projects, func(p model.Project, _ int) int {
 		return p.ID

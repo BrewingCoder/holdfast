@@ -1,6 +1,7 @@
 package pricing
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -8,6 +9,63 @@ import (
 	backend "github.com/BrewingCoder/holdfast/src/backend/private-graph/graph/model"
 	"github.com/stretchr/testify/assert"
 )
+
+func TestRetentionMultiplier_AllPeriods(t *testing.T) {
+	tests := map[backend.RetentionPeriod]float64{
+		backend.RetentionPeriodSevenDays:    1,
+		backend.RetentionPeriodThirtyDays:   1,
+		backend.RetentionPeriodThreeMonths:  1,
+		backend.RetentionPeriodSixMonths:    1.5,
+		backend.RetentionPeriodTwelveMonths: 2,
+		backend.RetentionPeriodTwoYears:     2.5,
+		backend.RetentionPeriodThreeYears:   3,
+	}
+	for period, expected := range tests {
+		t.Run(string(period), func(t *testing.T) {
+			assert.Equal(t, expected, RetentionMultiplier(period))
+		})
+	}
+}
+
+func TestRetentionMultiplier_Unknown(t *testing.T) {
+	assert.Equal(t, float64(1), RetentionMultiplier("unknown_period"))
+}
+
+func TestProductToBasePriceCents_AlwaysZero(t *testing.T) {
+	// Self-hosted: no billing, all costs are zero
+	for _, planType := range []backend.PlanType{backend.PlanTypeFree, backend.PlanTypeBasic, backend.PlanTypeEnterprise, backend.PlanTypeUsageBased, backend.PlanTypeGraduated} {
+		for _, productType := range []model.PricingProductType{model.PricingProductTypeSessions, model.PricingProductTypeErrors, model.PricingProductTypeLogs, model.PricingProductTypeTraces} {
+			result := ProductToBasePriceCents(productType, planType, 1000)
+			assert.Equal(t, float64(0), result, "plan=%s product=%s should be zero cost", planType, productType)
+		}
+	}
+}
+
+func TestTypToMemberLimit_AlwaysNil(t *testing.T) {
+	// Self-hosted: unlimited members for all plan types
+	for _, planType := range []backend.PlanType{backend.PlanTypeFree, backend.PlanTypeBasic, backend.PlanTypeEnterprise} {
+		assert.Nil(t, TypeToMemberLimit(planType, false), "plan=%s unlimited=false should be nil", planType)
+		assert.Nil(t, TypeToMemberLimit(planType, true), "plan=%s unlimited=true should be nil", planType)
+	}
+}
+
+func TestMustUpgradeForClearbit_AlwaysFalse(t *testing.T) {
+	// Self-hosted: never require upgrade
+	for _, tier := range []string{"Free", "Basic", "Enterprise", "Graduated", "", "unknown"} {
+		assert.False(t, MustUpgradeForClearbit(tier), "tier=%s should not require upgrade", tier)
+	}
+}
+
+func TestWorker_NoOps(t *testing.T) {
+	w := NewWorker(nil, nil, nil, nil, nil, nil, nil)
+	assert.NotNil(t, w)
+
+	overages, err := w.CalculateOverages(context.TODO(), 1)
+	assert.NoError(t, err)
+	assert.Empty(t, overages)
+
+	assert.NoError(t, w.ReportStripeUsageForWorkspace(context.TODO(), 1))
+}
 
 func TestGetLimitAmount(t *testing.T) {
 	type Testcase struct {
