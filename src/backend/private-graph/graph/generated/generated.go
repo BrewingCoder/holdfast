@@ -10634,12 +10634,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Workspace.AllowedAutoJoinEmailOrigins(childComplexity), true
-	case "Workspace.billing_period_end":
-		if e.ComplexityRoot.Workspace.BillingPeriodEnd == nil {
-			break
-		}
-
-		return e.ComplexityRoot.Workspace.BillingPeriodEnd(childComplexity), true
 	case "Workspace.clearbit_enabled":
 		if e.ComplexityRoot.Workspace.ClearbitEnabled == nil {
 			break
@@ -10706,12 +10700,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Workspace.Name(childComplexity), true
-	case "Workspace.next_invoice_date":
-		if e.ComplexityRoot.Workspace.NextInvoiceDate == nil {
-			break
-		}
-
-		return e.ComplexityRoot.Workspace.NextInvoiceDate(childComplexity), true
 	case "Workspace.plan_tier":
 		if e.ComplexityRoot.Workspace.PlanTier == nil {
 			break
@@ -62799,64 +62787,6 @@ func (ec *executionContext) _Workspace_trial_end_date(ctx context.Context, field
 }
 
 func (ec *executionContext) fieldContext_Workspace_trial_end_date(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Workspace",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Timestamp does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Workspace_billing_period_end(ctx context.Context, field graphql.CollectedField, obj *model1.Workspace) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Workspace_billing_period_end,
-		func(ctx context.Context) (any, error) {
-			return obj.BillingPeriodEnd, nil
-		},
-		nil,
-		ec.marshalOTimestamp2ᚖtimeᚐTime,
-		true,
-		false,
-	)
-}
-
-func (ec *executionContext) fieldContext_Workspace_billing_period_end(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Workspace",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Timestamp does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Workspace_next_invoice_date(ctx context.Context, field graphql.CollectedField, obj *model1.Workspace) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Workspace_next_invoice_date,
-		func(ctx context.Context) (any, error) {
-			return obj.NextInvoiceDate, nil
-		},
-		nil,
-		ec.marshalOTimestamp2ᚖtimeᚐTime,
-		true,
-		false,
-	)
-}
-
-func (ec *executionContext) fieldContext_Workspace_next_invoice_date(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Workspace",
 		Field:      field,
