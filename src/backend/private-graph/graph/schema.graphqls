@@ -1420,7 +1420,6 @@ input AdminAndWorkspaceDetails {
 	# Workspace
 	workspace_name: String!
 	allowed_auto_join_email_origins: String
-	promo_code: String
 }
 
 input SessionAlertInput {
@@ -2747,7 +2746,7 @@ type Mutation {
 	updateAdminAboutYouDetails(adminDetails: AdminAboutYouDetails!): Boolean!
 	createAdmin: Admin!
 	createProject(name: String!, workspace_id: ID!): Project
-	createWorkspace(name: String!, promo_code: String): Workspace
+	createWorkspace(name: String!): Workspace
 	editProject(id: ID!, name: String, billing_email: String): Project
 	editProjectSettings(
 		projectId: ID!

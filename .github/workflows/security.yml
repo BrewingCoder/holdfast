@@ -5,22 +5,49 @@ on:
     branches: [main]
   pull_request:
   schedule:
-    - cron: '0 6 * * 1'  # Weekly Monday 6am UTC
+    - cron: '0 6 * * 1'  # Weekly Monday 6am UTC — full scan regardless of paths
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  codeql:
-    name: CodeQL Analysis
+  changes:
+    name: Detect Changes
     runs-on: [self-hosted, Linux, holdfast]
-    timeout-minutes: 30
+    timeout-minutes: 2
+    outputs:
+      backend: ${{ steps.filter.outputs.backend }}
+      frontend: ${{ steps.filter.outputs.frontend }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Detect changed paths
+        uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            backend:
+              - 'src/backend/**'
+              - 'sdk/highlight-go/**'
+              - 'go.work'
+              - 'go.work.sum'
+            frontend:
+              - 'src/frontend/**'
+              - 'sdk/**'
+              - 'packages/**'
+              - 'yarn.lock'
+              - 'rrweb/**'
+
+  codeql-go:
+    name: CodeQL Analysis (go)
+    needs: changes
+    if: needs.changes.outputs.backend == 'true' || github.event_name == 'schedule' || github.event_name == 'push'
+    runs-on: [self-hosted, Linux, holdfast]
+    timeout-minutes: 15
     permissions:
       security-events: write
-    strategy:
-      matrix:
-        language: [go, javascript-typescript]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -30,23 +57,46 @@ jobs:
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v4
         with:
-          languages: ${{ matrix.language }}
+          languages: go
           queries: security-extended
 
       - name: Setup Go
-        if: matrix.language == 'go'
         uses: actions/setup-go@v5
         with:
           go-version-file: 'src/backend/go.mod'
 
       - name: Build Go
-        if: matrix.language == 'go'
         run: go build ./src/backend/...
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v4
         with:
-          category: '/language:${{ matrix.language }}'
+          category: '/language:go'
+
+  codeql-js:
+    name: CodeQL Analysis (javascript-typescript)
+    needs: changes
+    if: needs.changes.outputs.frontend == 'true' || github.event_name == 'schedule' || github.event_name == 'push'
+    runs-on: [self-hosted, Linux, holdfast]
+    timeout-minutes: 15
+    permissions:
+      security-events: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v4
+        with:
+          languages: javascript-typescript
+          queries: security-extended
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v4
+        with:
+          category: '/language:javascript-typescript'
 
   dependency-audit:
     name: Dependency Audit

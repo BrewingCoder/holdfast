@@ -289,7 +289,6 @@ type Workspace struct {
 	ClearbitEnabled             bool       `gorm:"default:false"`
 	DiscordGuildId              *string
 	ClickupAccessToken          *string
-	PromoCode                   *string
 }
 
 func (w *Workspace) GetRetentionPeriod() modelInputs.RetentionPeriod {

@@ -917,7 +917,7 @@ type ComplexityRoot struct {
 		CreateSavedSegment                    func(childComplexity int, projectID int, name string, entityType model.SavedSegmentEntityType, query string) int
 		CreateSessionComment                  func(childComplexity int, projectID int, sessionSecureID string, sessionTimestamp int, text string, textForEmail string, xCoordinate float64, yCoordinate float64, taggedAdmins []*model.SanitizedAdminInput, taggedSlackUsers []*model.SanitizedSlackChannelInput, sessionURL string, time float64, authorName string, sessionImage *string, issueTitle *string, issueDescription *string, issueTeamID *string, issueTypeID *string, integrations []*model.IntegrationType, tags []*model.SessionCommentTagInput, additionalContext *string) int
 		CreateSessionCommentWithExistingIssue func(childComplexity int, projectID int, sessionSecureID string, sessionTimestamp int, text string, textForEmail string, xCoordinate float64, yCoordinate float64, taggedAdmins []*model.SanitizedAdminInput, taggedSlackUsers []*model.SanitizedSlackChannelInput, sessionURL string, time float64, authorName string, sessionImage *string, tags []*model.SessionCommentTagInput, integrations []*model.IntegrationType, issueTitle *string, issueURL string, issueID string, additionalContext *string) int
-		CreateWorkspace                       func(childComplexity int, name string, promoCode *string) int
+		CreateWorkspace                       func(childComplexity int, name string) int
 		DeleteAdminFromWorkspace              func(childComplexity int, workspaceID int, adminID int) int
 		DeleteAlert                           func(childComplexity int, projectID int, alertID int) int
 		DeleteDashboard                       func(childComplexity int, id int) int
@@ -1852,7 +1852,7 @@ type MutationResolver interface {
 	UpdateAdminAboutYouDetails(ctx context.Context, adminDetails model.AdminAboutYouDetails) (bool, error)
 	CreateAdmin(ctx context.Context) (*model1.Admin, error)
 	CreateProject(ctx context.Context, name string, workspaceID int) (*model1.Project, error)
-	CreateWorkspace(ctx context.Context, name string, promoCode *string) (*model1.Workspace, error)
+	CreateWorkspace(ctx context.Context, name string) (*model1.Workspace, error)
 	EditProject(ctx context.Context, id int, name *string, billingEmail *string) (*model1.Project, error)
 	EditProjectSettings(ctx context.Context, projectID int, excludedUsers pq.StringArray, errorFilters pq.StringArray, errorJSONPaths pq.StringArray, rageClickWindowSeconds *int, rageClickRadiusPixels *int, rageClickCount *int, filterChromeExtension *bool, filterSessionsWithoutError *bool, autoResolveStaleErrorsDayInterval *int, sampling *model.SamplingInput) (*model.AllProjectSettings, error)
 	EditProjectPlatforms(ctx context.Context, projectID int, platforms pq.StringArray) (bool, error)
@@ -6262,7 +6262,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CreateWorkspace(childComplexity, args["name"].(string), args["promo_code"].(*string)), true
+		return e.complexity.Mutation.CreateWorkspace(childComplexity, args["name"].(string)), true
 
 	case "Mutation.deleteAdminFromWorkspace":
 		if e.complexity.Mutation.DeleteAdminFromWorkspace == nil {
@@ -13555,7 +13555,6 @@ input AdminAndWorkspaceDetails {
 	# Workspace
 	workspace_name: String!
 	allowed_auto_join_email_origins: String
-	promo_code: String
 }
 
 input SessionAlertInput {
@@ -14882,7 +14881,7 @@ type Mutation {
 	updateAdminAboutYouDetails(adminDetails: AdminAboutYouDetails!): Boolean!
 	createAdmin: Admin!
 	createProject(name: String!, workspace_id: ID!): Project
-	createWorkspace(name: String!, promo_code: String): Workspace
+	createWorkspace(name: String!): Workspace
 	editProject(id: ID!, name: String, billing_email: String): Project
 	editProjectSettings(
 		projectId: ID!
@@ -18592,11 +18591,6 @@ func (ec *executionContext) field_Mutation_createWorkspace_args(ctx context.Cont
 		return nil, err
 	}
 	args["name"] = arg0
-	arg1, err := ec.field_Mutation_createWorkspace_argsPromoCode(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["promo_code"] = arg1
 	return args, nil
 }
 func (ec *executionContext) field_Mutation_createWorkspace_argsName(
@@ -18614,24 +18608,6 @@ func (ec *executionContext) field_Mutation_createWorkspace_argsName(
 	}
 
 	var zeroVal string
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Mutation_createWorkspace_argsPromoCode(
-	ctx context.Context,
-	rawArgs map[string]any,
-) (*string, error) {
-	if _, ok := rawArgs["promo_code"]; !ok {
-		var zeroVal *string
-		return zeroVal, nil
-	}
-
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("promo_code"))
-	if tmp, ok := rawArgs["promo_code"]; ok {
-		return ec.unmarshalOString2ᚖstring(ctx, tmp)
-	}
-
-	var zeroVal *string
 	return zeroVal, nil
 }
 
@@ -59096,7 +59072,7 @@ func (ec *executionContext) _Mutation_createWorkspace(ctx context.Context, field
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().CreateWorkspace(rctx, fc.Args["name"].(string), fc.Args["promo_code"].(*string))
+		return ec.resolvers.Mutation().CreateWorkspace(rctx, fc.Args["name"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -63955,6 +63931,112 @@ func (ec *executionContext) fieldContext_Mutation_updateErrorGroupIsPublic(ctx c
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_updateErrorGroupIsPublic_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_updateAllowMeterOverage(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_updateAllowMeterOverage(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().UpdateAllowMeterOverage(rctx, fc.Args["workspace_id"].(int), fc.Args["allow_meter_overage"].(bool))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model1.Workspace)
+	fc.Result = res
+	return ec.marshalOWorkspace2ᚖgithubᚗcomᚋBrewingCoderᚋholdfastᚋsrcᚋbackendᚋmodelᚐWorkspace(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_updateAllowMeterOverage(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Workspace_id(ctx, field)
+			case "name":
+				return ec.fieldContext_Workspace_name(ctx, field)
+			case "slack_webhook_channel":
+				return ec.fieldContext_Workspace_slack_webhook_channel(ctx, field)
+			case "slack_channels":
+				return ec.fieldContext_Workspace_slack_channels(ctx, field)
+			case "projects":
+				return ec.fieldContext_Workspace_projects(ctx, field)
+			case "plan_tier":
+				return ec.fieldContext_Workspace_plan_tier(ctx, field)
+			case "unlimited_members":
+				return ec.fieldContext_Workspace_unlimited_members(ctx, field)
+			case "trial_end_date":
+				return ec.fieldContext_Workspace_trial_end_date(ctx, field)
+			case "billing_period_end":
+				return ec.fieldContext_Workspace_billing_period_end(ctx, field)
+			case "next_invoice_date":
+				return ec.fieldContext_Workspace_next_invoice_date(ctx, field)
+			case "allow_meter_overage":
+				return ec.fieldContext_Workspace_allow_meter_overage(ctx, field)
+			case "allowed_auto_join_email_origins":
+				return ec.fieldContext_Workspace_allowed_auto_join_email_origins(ctx, field)
+			case "eligible_for_trial_extension":
+				return ec.fieldContext_Workspace_eligible_for_trial_extension(ctx, field)
+			case "trial_extension_enabled":
+				return ec.fieldContext_Workspace_trial_extension_enabled(ctx, field)
+			case "clearbit_enabled":
+				return ec.fieldContext_Workspace_clearbit_enabled(ctx, field)
+			case "retention_period":
+				return ec.fieldContext_Workspace_retention_period(ctx, field)
+			case "errors_retention_period":
+				return ec.fieldContext_Workspace_errors_retention_period(ctx, field)
+			case "logs_retention_period":
+				return ec.fieldContext_Workspace_logs_retention_period(ctx, field)
+			case "traces_retention_period":
+				return ec.fieldContext_Workspace_traces_retention_period(ctx, field)
+			case "metrics_retention_period":
+				return ec.fieldContext_Workspace_metrics_retention_period(ctx, field)
+			case "sessions_max_cents":
+				return ec.fieldContext_Workspace_sessions_max_cents(ctx, field)
+			case "errors_max_cents":
+				return ec.fieldContext_Workspace_errors_max_cents(ctx, field)
+			case "logs_max_cents":
+				return ec.fieldContext_Workspace_logs_max_cents(ctx, field)
+			case "traces_max_cents":
+				return ec.fieldContext_Workspace_traces_max_cents(ctx, field)
+			case "metrics_max_cents":
+				return ec.fieldContext_Workspace_metrics_max_cents(ctx, field)
+			case "cloudflare_proxy":
+				return ec.fieldContext_Workspace_cloudflare_proxy(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Workspace", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_updateAllowMeterOverage_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -97535,7 +97617,7 @@ func (ec *executionContext) unmarshalInputAdminAndWorkspaceDetails(ctx context.C
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"first_name", "last_name", "user_defined_role", "user_defined_team_size", "heard_about", "referral", "workspace_name", "allowed_auto_join_email_origins", "promo_code"}
+	fieldsInOrder := [...]string{"first_name", "last_name", "user_defined_role", "user_defined_team_size", "heard_about", "referral", "workspace_name", "allowed_auto_join_email_origins"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -97598,13 +97680,6 @@ func (ec *executionContext) unmarshalInputAdminAndWorkspaceDetails(ctx context.C
 				return it, err
 			}
 			it.AllowedAutoJoinEmailOrigins = data
-		case "promo_code":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("promo_code"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.PromoCode = data
 		}
 	}
 

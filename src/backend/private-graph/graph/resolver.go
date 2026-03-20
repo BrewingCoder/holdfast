@@ -100,30 +100,6 @@ var BytesConversion = map[string]int64{
 	"pb": 1024 * 1024 * 1024 * 1024 * 1024,
 }
 
-type PromoCode struct {
-	TrialDays  int
-	ValidUntil time.Time
-}
-
-var PromoCodes = map[string]PromoCode{
-	"WEBDEVSIMPLIFIED": {
-		TrialDays:  60,
-		ValidUntil: time.Date(2023, time.May, 15, 0, 0, 0, 0, time.UTC),
-	},
-	"CATCHMYERRORS": {
-		TrialDays:  7,
-		ValidUntil: time.Date(2023, time.January, 17, 0, 0, 0, 0, time.UTC),
-	},
-	"SIMPLIFIEDHIGHLIGHT": {
-		TrialDays:  60,
-		ValidUntil: time.Date(2023, time.August, 7, 0, 0, 0, 0, time.UTC),
-	},
-	"USEGOLANG": {
-		TrialDays:  14,
-		ValidUntil: time.Date(2024, time.January, 1, 0, 0, 0, 0, time.UTC),
-	},
-}
-
 func isAuthError(err error) bool {
 	return e.Is(err, AuthenticationError) || e.Is(err, AuthorizationError)
 }
