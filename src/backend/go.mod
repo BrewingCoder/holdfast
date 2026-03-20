@@ -44,14 +44,14 @@ require (
 	github.com/go-redis/cache/v9 v9.0.0
 	github.com/go-redsync/redsync/v4 v4.12.1
 	github.com/go-sourcemap/sourcemap v2.1.3+incompatible
-	github.com/go-test/deep v1.1.0
+	github.com/go-test/deep v1.1.1
 	github.com/gofiber/fiber/v2 v2.52.5
 	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/golang-jwt/jwt/v4 v4.5.1
 	github.com/golang/snappy v0.0.4
 	github.com/google/go-github/v50 v50.2.0
 	github.com/google/uuid v1.6.0
-	github.com/gorilla/websocket v1.5.1
+	github.com/gorilla/websocket v1.5.3
 	github.com/hashicorp/go-retryablehttp v0.7.7
 	github.com/hashicorp/golang-lru/v2 v2.0.7
 	github.com/highlight-run/workerpool v1.3.0
@@ -77,7 +77,7 @@ require (
 	github.com/sendgrid/sendgrid-go v3.14.0+incompatible
 	github.com/shirou/gopsutil v3.21.11+incompatible
 	github.com/sirupsen/logrus v1.9.3
-	github.com/slack-go/slack v0.12.5
+	github.com/slack-go/slack v0.19.0
 	github.com/speps/go-hashids v2.0.0+incompatible
 	github.com/urfave/cli/v2 v2.27.7
 	github.com/vektah/gqlparser/v2 v2.5.32
