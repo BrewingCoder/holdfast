@@ -57,6 +57,7 @@ jobs:
         run: |
           cd src/backend
           go test -short -coverprofile=coverage.out -covermode=atomic \
+            ./model/... \
             ./parser/... ./queryparser/... ./env/... ./assets/... \
             ./errorgroups/... ./vercel/... ./http/... ./alerts/... \
             ./pricing/...
