@@ -685,6 +685,79 @@ public class KeysAndMetricsQueryTests : IDisposable
     }
 
     // ══════════════════════════════════════════════════════════════════
+    // SearchIssues (stub)
+    // ══════════════════════════════════════════════════════════════════
+
+    [Fact]
+    public async Task SearchIssues_ReturnsEmptyList()
+    {
+        var result = await _query.SearchIssues(
+            Domain.Enums.IntegrationType.Linear, _project.Id, "bug", _principal);
+
+        Assert.Empty(result);
+    }
+
+    [Fact]
+    public async Task SearchIssues_AllIntegrationTypes_ReturnEmpty()
+    {
+        foreach (var intType in Enum.GetValues<Domain.Enums.IntegrationType>())
+        {
+            var result = await _query.SearchIssues(intType, _project.Id, "test query", _principal);
+            Assert.Empty(result);
+        }
+    }
+
+    [Fact]
+    public async Task SearchIssues_EmptyQuery_ReturnsEmpty()
+    {
+        var result = await _query.SearchIssues(
+            Domain.Enums.IntegrationType.GitHub, _project.Id, "", _principal);
+
+        Assert.Empty(result);
+    }
+
+    // ══════════════════════════════════════════════════════════════════
+    // GenerateZapierAccessToken
+    // ══════════════════════════════════════════════════════════════════
+
+    [Fact]
+    public async Task GenerateZapierAccessToken_ReturnsNonEmptyToken()
+    {
+        var result = await _query.GenerateZapierAccessToken(_project.Id, _principal);
+
+        Assert.NotNull(result);
+        Assert.NotEmpty(result);
+    }
+
+    [Fact]
+    public async Task GenerateZapierAccessToken_IsValidBase64()
+    {
+        var result = await _query.GenerateZapierAccessToken(_project.Id, _principal);
+
+        var bytes = Convert.FromBase64String(result);
+        var decoded = Encoding.UTF8.GetString(bytes);
+        Assert.StartsWith("zapier:", decoded);
+    }
+
+    [Fact]
+    public async Task GenerateZapierAccessToken_ContainsProjectId()
+    {
+        var result = await _query.GenerateZapierAccessToken(_project.Id, _principal);
+
+        var decoded = Encoding.UTF8.GetString(Convert.FromBase64String(result));
+        Assert.Contains($"{_project.Id}", decoded);
+    }
+
+    [Fact]
+    public async Task GenerateZapierAccessToken_DifferentProjectIds_DifferentTokens()
+    {
+        var token1 = await _query.GenerateZapierAccessToken(1, _principal);
+        var token2 = await _query.GenerateZapierAccessToken(2, _principal);
+
+        Assert.NotEqual(token1, token2);
+    }
+
+    // ══════════════════════════════════════════════════════════════════
     // Fakes
     // ══════════════════════════════════════════════════════════════════
 

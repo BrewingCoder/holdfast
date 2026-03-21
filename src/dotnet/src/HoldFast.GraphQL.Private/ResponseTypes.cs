@@ -218,3 +218,11 @@ public record LogLine(
     string Body,
     string? Severity,
     string Labels);
+
+/// <summary>
+/// Search result from external issue tracker (Linear, Jira, GitHub, etc.).
+/// </summary>
+public record IssuesSearchResult(
+    string Id,
+    string Title,
+    string IssueUrl);

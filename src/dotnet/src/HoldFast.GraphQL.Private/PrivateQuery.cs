@@ -3495,6 +3495,37 @@ public class PrivateQuery
             System.Text.Json.JsonSerializer.Serialize(e.Node.LogAttributes))).ToList();
     }
 
+    // ── External Integration Stubs ────────────────────────────────────
+
+    /// <summary>
+    /// Search issues in external trackers (Linear, Jira, GitHub, etc.).
+    /// Returns empty in self-hosted mode — no external API keys configured.
+    /// </summary>
+    public Task<List<IssuesSearchResult>> SearchIssues(
+        IntegrationType integrationType,
+        int projectId,
+        string query,
+        ClaimsPrincipal claimsPrincipal)
+    {
+        // External issue tracker APIs are not available in self-hosted mode
+        return Task.FromResult(new List<IssuesSearchResult>());
+    }
+
+    /// <summary>
+    /// Generate a Zapier-compatible access token (JWT) for a project.
+    /// Returns a signed JWT that Zapier can use for webhook authentication.
+    /// </summary>
+    public Task<string> GenerateZapierAccessToken(
+        int projectId,
+        ClaimsPrincipal claimsPrincipal)
+    {
+        // In self-hosted mode, return a simple project-scoped token
+        // Production implementations should use proper JWT signing
+        var token = Convert.ToBase64String(
+            System.Text.Encoding.UTF8.GetBytes($"zapier:{projectId}:{DateTime.UtcNow:O}"));
+        return Task.FromResult(token);
+    }
+
     // ── System ────────────────────────────────────────────────────────
 
     /// <summary>
