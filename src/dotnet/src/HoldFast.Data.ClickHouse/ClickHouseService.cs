@@ -693,6 +693,119 @@ public class ClickHouseService : IClickHouseService, IDisposable
         return new string(name.Where(c => char.IsLetterOrDigit(c) || c == '_').ToArray());
     }
 
+    // ── Write Methods (Worker ingestion) ──────────────────────────
+
+    public async Task WriteMetricAsync(
+        int projectId,
+        string metricName,
+        double metricValue,
+        string? category,
+        DateTime timestamp,
+        Dictionary<string, string>? tags,
+        string? sessionSecureId,
+        CancellationToken ct)
+    {
+        var sql =
+            "INSERT INTO metric_sum_rows (ProjectId, MetricName, MetricValue, " +
+            "Category, Timestamp, Tags.Name, Tags.Value, SecureSessionId) " +
+            "VALUES ({projectId:Int32}, {metricName:String}, {metricValue:Float64}, " +
+            "{category:String}, {timestamp:DateTime64(9)}, {tagNames:Array(String)}, " +
+            "{tagValues:Array(String)}, {sessionSecureId:String})";
+
+        var tagNames = tags?.Keys.ToArray() ?? [];
+        var tagValues = tags?.Values.ToArray() ?? [];
+
+        using var cmd = _conn.CreateCommand();
+        cmd.CommandText = sql;
+        cmd.AddParameter("projectId", projectId);
+        cmd.AddParameter("metricName", metricName);
+        cmd.AddParameter("metricValue", metricValue);
+        cmd.AddParameter("category", category ?? "");
+        cmd.AddParameter("timestamp", timestamp);
+        cmd.AddParameter("tagNames", tagNames);
+        cmd.AddParameter("tagValues", tagValues);
+        cmd.AddParameter("sessionSecureId", sessionSecureId ?? "");
+
+        await EnsureOpenAsync(_conn, ct);
+        await cmd.ExecuteNonQueryAsync(ct);
+    }
+
+    public async Task WriteLogsAsync(IEnumerable<LogRowInput> logs, CancellationToken ct)
+    {
+        var logList = logs.ToList();
+        if (logList.Count == 0) return;
+
+        await EnsureOpenAsync(_conn, ct);
+
+        foreach (var l in logList)
+        {
+            var sql =
+                "INSERT INTO log_rows (ProjectId, Timestamp, TraceId, SpanId, " +
+                "SecureSessionId, SeverityText, SeverityNumber, Source, " +
+                "ServiceName, ServiceVersion, Body, Environment) " +
+                "VALUES ({projectId:Int32}, {ts:DateTime64(9)}, {traceId:String}, {spanId:String}, " +
+                "{sessionId:String}, {severity:String}, {severityNum:Int32}, {source:String}, " +
+                "{svcName:String}, {svcVer:String}, {body:String}, {env:String})";
+
+            using var cmd = _conn.CreateCommand();
+            cmd.CommandText = sql;
+            cmd.AddParameter("projectId", l.ProjectId);
+            cmd.AddParameter("ts", l.Timestamp);
+            cmd.AddParameter("traceId", l.TraceId);
+            cmd.AddParameter("spanId", l.SpanId);
+            cmd.AddParameter("sessionId", l.SecureSessionId);
+            cmd.AddParameter("severity", l.SeverityText);
+            cmd.AddParameter("severityNum", l.SeverityNumber);
+            cmd.AddParameter("source", l.Source);
+            cmd.AddParameter("svcName", l.ServiceName);
+            cmd.AddParameter("svcVer", l.ServiceVersion);
+            cmd.AddParameter("body", l.Body);
+            cmd.AddParameter("env", l.Environment);
+
+            await cmd.ExecuteNonQueryAsync(ct);
+        }
+    }
+
+    public async Task WriteTracesAsync(IEnumerable<TraceRowInput> traces, CancellationToken ct)
+    {
+        var traceList = traces.ToList();
+        if (traceList.Count == 0) return;
+
+        await EnsureOpenAsync(_conn, ct);
+
+        foreach (var t in traceList)
+        {
+            var sql =
+                "INSERT INTO trace_rows (ProjectId, Timestamp, TraceId, SpanId, ParentSpanId, " +
+                "SecureSessionId, ServiceName, ServiceVersion, Environment, " +
+                "SpanName, SpanKind, Duration, StatusCode, StatusMessage, HasErrors) " +
+                "VALUES ({projectId:Int32}, {ts:DateTime64(9)}, {traceId:String}, {spanId:String}, " +
+                "{parentSpanId:String}, {sessionId:String}, {svcName:String}, {svcVer:String}, " +
+                "{env:String}, {spanName:String}, {spanKind:String}, {duration:Int64}, " +
+                "{statusCode:String}, {statusMsg:String}, {hasErrors:UInt8})";
+
+            using var cmd = _conn.CreateCommand();
+            cmd.CommandText = sql;
+            cmd.AddParameter("projectId", t.ProjectId);
+            cmd.AddParameter("ts", t.Timestamp);
+            cmd.AddParameter("traceId", t.TraceId);
+            cmd.AddParameter("spanId", t.SpanId);
+            cmd.AddParameter("parentSpanId", t.ParentSpanId);
+            cmd.AddParameter("sessionId", t.SecureSessionId);
+            cmd.AddParameter("svcName", t.ServiceName);
+            cmd.AddParameter("svcVer", t.ServiceVersion);
+            cmd.AddParameter("env", t.Environment);
+            cmd.AddParameter("spanName", t.SpanName);
+            cmd.AddParameter("spanKind", t.SpanKind);
+            cmd.AddParameter("duration", t.Duration);
+            cmd.AddParameter("statusCode", t.StatusCode);
+            cmd.AddParameter("statusMsg", t.StatusMessage);
+            cmd.AddParameter("hasErrors", t.HasErrors ? (byte)1 : (byte)0);
+
+            await cmd.ExecuteNonQueryAsync(ct);
+        }
+    }
+
     public void Dispose()
     {
         _conn.Dispose();

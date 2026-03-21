@@ -5,6 +5,7 @@ using HoldFast.Data.ClickHouse;
 using HoldFast.GraphQL.Private;
 using HoldFast.GraphQL.Public;
 using HoldFast.Shared.Auth;
+using HoldFast.Shared.ErrorGrouping;
 using HoldFast.Shared.Kafka;
 using HoldFast.Shared.Redis;
 using HoldFast.Storage;
@@ -65,6 +66,10 @@ else
     builder.Services.AddSingleton<IStorageService, FilesystemStorageService>();
 }
 
+// ── Business Services ─────────────────────────────────────────────────
+builder.Services.AddScoped<IErrorGroupingService, ErrorGroupingService>();
+builder.Services.AddScoped<ISessionEventsProcessor, SessionEventsProcessor>();
+
 // ── Workers (Kafka consumers as BackgroundServices) ───────────────────
 builder.Services.AddSingleton<SessionEventsConsumer>();
 builder.Services.AddHostedService<SessionEventsWorker>();
@@ -72,6 +77,10 @@ builder.Services.AddSingleton<ErrorGroupingConsumer>();
 builder.Services.AddHostedService<ErrorGroupingWorker>();
 builder.Services.AddSingleton<MetricsConsumer>();
 builder.Services.AddHostedService<MetricsWorker>();
+builder.Services.AddSingleton<LogIngestionConsumer>();
+builder.Services.AddHostedService<LogIngestionWorker>();
+builder.Services.AddSingleton<TraceIngestionConsumer>();
+builder.Services.AddHostedService<TraceIngestionWorker>();
 
 // ── CORS ──────────────────────────────────────────────────────────────
 var frontendUri = builder.Configuration["Frontend:Uri"] ?? "http://localhost:3000";

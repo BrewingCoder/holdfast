@@ -142,4 +142,33 @@ public interface IClickHouseService
         int? count,
         string? eventName,
         CancellationToken ct = default);
+
+    // ── Write Methods (Worker ingestion) ──────────────────────────
+
+    /// <summary>
+    /// Write a metric data point to ClickHouse.
+    /// </summary>
+    Task WriteMetricAsync(
+        int projectId,
+        string metricName,
+        double metricValue,
+        string? category,
+        DateTime timestamp,
+        Dictionary<string, string>? tags,
+        string? sessionSecureId,
+        CancellationToken ct = default);
+
+    /// <summary>
+    /// Write a batch of log rows to ClickHouse.
+    /// </summary>
+    Task WriteLogsAsync(
+        IEnumerable<LogRowInput> logs,
+        CancellationToken ct = default);
+
+    /// <summary>
+    /// Write a batch of trace span rows to ClickHouse.
+    /// </summary>
+    Task WriteTracesAsync(
+        IEnumerable<TraceRowInput> traces,
+        CancellationToken ct = default);
 }

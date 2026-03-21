@@ -1,4 +1,6 @@
+using HoldFast.Data.ClickHouse;
 using HoldFast.Shared.Kafka;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -22,13 +24,16 @@ public record MetricsMessage(
 /// </summary>
 public class MetricsConsumer : KafkaConsumerService<MetricsMessage>
 {
+    private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<MetricsConsumer> _logger;
 
     public MetricsConsumer(
         IOptions<KafkaOptions> options,
+        IServiceScopeFactory scopeFactory,
         ILogger<MetricsConsumer> logger)
         : base(options, KafkaTopics.Metrics, "metrics-worker", logger)
     {
+        _scopeFactory = scopeFactory;
         _logger = logger;
     }
 
@@ -36,8 +41,22 @@ public class MetricsConsumer : KafkaConsumerService<MetricsMessage>
     {
         _logger.LogDebug("Processing metric: {Name} = {Value}", value.Name, value.Value);
 
-        // TODO Phase 3: Write to ClickHouse via HoldFast.Data.ClickHouse
-        await Task.CompletedTask;
+        using var scope = _scopeFactory.CreateScope();
+        var clickHouse = scope.ServiceProvider.GetRequiredService<IClickHouseService>();
+
+        // Resolve project ID from session (if available) — for now, use 0 as fallback
+        // Full session lookup will be wired in Phase 3
+        var projectId = 0;
+
+        await clickHouse.WriteMetricAsync(
+            projectId,
+            value.Name,
+            value.Value,
+            value.Category,
+            value.Timestamp,
+            value.Tags,
+            value.SessionSecureId,
+            ct);
     }
 }
 

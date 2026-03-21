@@ -55,6 +55,7 @@ public class ErrorObject : BaseEntity
 
 public class ErrorFingerprint : BaseEntity
 {
+    public int ProjectId { get; set; }
     public int ErrorGroupId { get; set; }
     public string Type { get; set; } = string.Empty;
     public string Value { get; set; } = string.Empty;

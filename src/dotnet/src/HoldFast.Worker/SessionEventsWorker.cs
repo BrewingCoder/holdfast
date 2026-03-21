@@ -1,4 +1,3 @@
-using HoldFast.Data;
 using HoldFast.Shared.Kafka;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -37,15 +36,21 @@ public class SessionEventsConsumer : KafkaConsumerService<SessionEventsMessage>
     protected override async Task ProcessAsync(string key, SessionEventsMessage value, CancellationToken ct)
     {
         using var scope = _scopeFactory.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<HoldFastDbContext>();
+        var processor = scope.ServiceProvider.GetRequiredService<ISessionEventsProcessor>();
 
         _logger.LogDebug(
             "Processing session events for {SecureId}, payload {PayloadId}",
             value.SessionSecureId, value.PayloadId);
 
-        // TODO Phase 2: Decompress payload, parse replay events, store to S3/filesystem,
-        // process errors, update session metadata, create event chunks
-        await Task.CompletedTask;
+        var result = await processor.ProcessCompressedPayloadAsync(
+            value.SessionSecureId, value.PayloadId, value.Data, ct);
+
+        if (result.SessionId > 0)
+        {
+            _logger.LogInformation(
+                "Session {SessionId}: {Chunks} chunks, {Bytes} bytes",
+                result.SessionId, result.ChunksCreated, result.TotalBytes);
+        }
     }
 }
 

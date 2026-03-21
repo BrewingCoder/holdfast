@@ -452,5 +452,11 @@ public class ClickHouseQueryResolverTests : IDisposable
         { LastCalledMethod = nameof(GetEventsKeysAsync); LastProjectId = projectId; return Task.FromResult(new List<QueryKey>()); }
         public Task<List<string>> GetEventsKeyValuesAsync(int projectId, string keyName, DateTime startDate, DateTime endDate, string? query, int? count, string? eventName, CancellationToken ct)
         { LastCalledMethod = nameof(GetEventsKeyValuesAsync); LastProjectId = projectId; return Task.FromResult(new List<string>()); }
+        public Task WriteMetricAsync(int projectId, string metricName, double metricValue, string? category, DateTime timestamp, Dictionary<string, string>? tags, string? sessionSecureId, CancellationToken ct)
+        { LastCalledMethod = nameof(WriteMetricAsync); LastProjectId = projectId; return Task.CompletedTask; }
+        public Task WriteLogsAsync(IEnumerable<LogRowInput> logs, CancellationToken ct)
+        { LastCalledMethod = nameof(WriteLogsAsync); return Task.CompletedTask; }
+        public Task WriteTracesAsync(IEnumerable<TraceRowInput> traces, CancellationToken ct)
+        { LastCalledMethod = nameof(WriteTracesAsync); return Task.CompletedTask; }
     }
 }

@@ -1,6 +1,8 @@
 using HoldFast.Data;
 using HoldFast.Domain.Entities;
+using HoldFast.Shared.ErrorGrouping;
 using HoldFast.Shared.Kafka;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -50,12 +52,51 @@ public class ErrorGroupingConsumer : KafkaConsumerService<BackendErrorMessage>
     {
         using var scope = _scopeFactory.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<HoldFastDbContext>();
+        var groupingService = scope.ServiceProvider.GetRequiredService<IErrorGroupingService>();
 
         _logger.LogDebug("Processing backend error: {Type} - {Event}", value.Type, value.Event);
 
-        // TODO Phase 3: Match error to existing group via fingerprint/embeddings,
-        // create ErrorObject, update ErrorGroup counts, evaluate alerts
-        await Task.CompletedTask;
+        // Resolve project ID
+        int projectId;
+        if (!string.IsNullOrEmpty(value.ProjectId) && int.TryParse(value.ProjectId, out var pid))
+        {
+            projectId = pid;
+        }
+        else
+        {
+            _logger.LogWarning("Backend error has no valid ProjectId, skipping");
+            return;
+        }
+
+        // Resolve session if present
+        int? sessionId = null;
+        if (!string.IsNullOrEmpty(value.SessionSecureId))
+        {
+            var session = await db.Sessions
+                .FirstOrDefaultAsync(s => s.SecureId == value.SessionSecureId, ct);
+            sessionId = session?.Id;
+        }
+
+        var result = await groupingService.GroupErrorAsync(
+            projectId,
+            value.Event,
+            value.Type,
+            value.StackTrace,
+            value.Timestamp,
+            value.Url,
+            value.Source,
+            value.Payload,
+            value.Environment,
+            value.ServiceName,
+            value.ServiceVersion,
+            sessionId,
+            value.TraceId,
+            value.SpanId,
+            ct);
+
+        _logger.LogInformation(
+            "Error grouped: GroupId={GroupId}, IsNew={IsNew}, Event={Event}",
+            result.ErrorGroup.Id, result.IsNewGroup, value.Event);
     }
 }
 
