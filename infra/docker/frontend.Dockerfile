@@ -4,46 +4,33 @@ RUN apk update && apk add --no-cache build-base python3
 
 WORKDIR /highlight
 
-# Copy workspace config files
+# ── Dependency installation layer ────────────────────────────────────────────
+# Copy workspace manifests and full workspace dirs so `yarn install --immutable`
+# resolves all workspace members. Full dirs are needed because the workspace
+# globs (packages/*, tests/e2e/*, rrweb/packages/*) reference many subdirs.
 COPY .yarnrc.yml package.json yarn.lock turbo.json tsconfig.json graphql.config.js ./
 COPY .yarn/patches ./.yarn/patches
 COPY .yarn/releases ./.yarn/releases
-
-# Copy package.json files for all workspace members that exist.
-# tests/e2e/* is a workspace glob — copy the whole dir to satisfy it.
+COPY packages ./packages
+COPY sdk ./sdk
+COPY rrweb ./rrweb
 COPY tests/e2e ./tests/e2e
-COPY src/frontend/package.json ./src/frontend/package.json
-COPY packages/render/package.json ./packages/render/package.json
-COPY packages/sourcemap-uploader/package.json ./packages/sourcemap-uploader/package.json
 COPY tools/scripts/package.json ./tools/scripts/package.json
-COPY sdk/highlight-apollo/package.json ./sdk/highlight-apollo/package.json
-COPY sdk/highlight-chrome/package.json ./sdk/highlight-chrome/package.json
-COPY sdk/highlight-cloudflare/package.json ./sdk/highlight-cloudflare/package.json
-COPY sdk/highlight-hono/package.json ./sdk/highlight-hono/package.json
-COPY sdk/highlight-nest/package.json ./sdk/highlight-nest/package.json
-COPY sdk/highlight-next/package.json ./sdk/highlight-next/package.json
-COPY sdk/highlight-node/package.json ./sdk/highlight-node/package.json
-COPY sdk/highlight-react/package.json ./sdk/highlight-react/package.json
-COPY sdk/highlight-remix/package.json ./sdk/highlight-remix/package.json
-COPY sdk/highlight-run/package.json ./sdk/highlight-run/package.json
-COPY sdk/highlightinc-highlight-datasource/package.json ./sdk/highlightinc-highlight-datasource/package.json
-COPY sdk/pino/package.json ./sdk/pino/package.json
+COPY src/frontend/package.json ./src/frontend/package.json
 
 RUN yarn install --immutable
 
-# Copy source files (tests/e2e already copied above for yarn install)
+# ── Source copy ──────────────────────────────────────────────────────────────
 COPY src/backend/localhostssl ./src/backend/localhostssl
 COPY src/backend/private-graph ./src/backend/private-graph
 COPY src/backend/public-graph ./src/backend/public-graph
 COPY src/frontend ./src/frontend
-COPY packages ./packages
-COPY rrweb ./rrweb
 COPY tools/scripts ./tools/scripts
-COPY sdk ./sdk
 
+# ── Build ────────────────────────────────────────────────────────────────────
 # Bake in the same placeholder URLs the entrypoint knows to replace at runtime.
 # REACT_APP_AUTH_MODE=firebase matches the entrypoint's replacement target.
-# All other URLs match upstream defaults the entrypoint expects to find.
+# All other URLs match the upstream defaults the entrypoint expects to find.
 ARG NODE_OPTIONS="--max-old-space-size=8192"
 ARG REACT_APP_AUTH_MODE=firebase
 ARG REACT_APP_FRONTEND_URI=https://app.highlight.io
@@ -61,7 +48,7 @@ ENV REACT_APP_IN_DOCKER=$REACT_APP_IN_DOCKER
 
 RUN yarn build:frontend
 
-# ── Runtime image ──────────────────────────────────────────────────────────
+# ── Runtime image ─────────────────────────────────────────────────────────────
 FROM nginx:stable-alpine AS frontend-prod
 
 RUN apk update && apk add --no-cache python3
