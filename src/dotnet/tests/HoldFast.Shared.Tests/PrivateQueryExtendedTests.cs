@@ -611,6 +611,8 @@ public class PrivateQueryExtendedTests : IDisposable
         { LastCalledMethod = nameof(GetSessionsKeysAsync); return Task.FromResult(new List<QueryKey>()); }
         public Task<List<string>> GetSessionsKeyValuesAsync(int projectId, string keyName, DateTime startDate, DateTime endDate, string? query, int? count, CancellationToken ct)
         { LastCalledMethod = nameof(GetSessionsKeyValuesAsync); return Task.FromResult(new List<string>()); }
+        public Task<List<QueryKey>> GetErrorsKeysAsync(int projectId, DateTime startDate, DateTime endDate, string? query, CancellationToken ct)
+        { LastCalledMethod = nameof(GetErrorsKeysAsync); return Task.FromResult(new List<QueryKey>()); }
         public Task<List<string>> GetErrorsKeyValuesAsync(int projectId, string keyName, DateTime startDate, DateTime endDate, string? query, int? count, CancellationToken ct)
         { LastCalledMethod = nameof(GetErrorsKeyValuesAsync); return Task.FromResult(new List<string>()); }
         public Task<List<QueryKey>> GetEventsKeysAsync(int projectId, DateTime startDate, DateTime endDate, string? query, string? eventName, CancellationToken ct)

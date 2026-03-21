@@ -480,6 +480,9 @@ internal class FakeClickHouseService : IClickHouseService
     public Task<List<string>> GetSessionsKeyValuesAsync(int projectId, string keyName, DateTime startDate, DateTime endDate, string? query, int? count, CancellationToken ct) =>
         throw new NotImplementedException();
 
+    public Task<List<QueryKey>> GetErrorsKeysAsync(int projectId, DateTime startDate, DateTime endDate, string? query, CancellationToken ct) =>
+        throw new NotImplementedException();
+
     public Task<List<string>> GetErrorsKeyValuesAsync(int projectId, string keyName, DateTime startDate, DateTime endDate, string? query, int? count, CancellationToken ct) =>
         throw new NotImplementedException();
 

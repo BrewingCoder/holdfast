@@ -621,6 +621,22 @@ public class ClickHouseService : IClickHouseService, IDisposable
         return rows.ToList();
     }
 
+    public async Task<List<QueryKey>> GetErrorsKeysAsync(
+        int projectId, DateTime startDate, DateTime endDate, string? query, CancellationToken ct)
+    {
+        var reservedKeys = new[] {
+            "event", "type", "url", "source", "stackTrace", "timestamp",
+            "os", "browser", "environment", "service_name", "service_version"
+        };
+
+        var keys = reservedKeys
+            .Where(k => string.IsNullOrEmpty(query) || k.Contains(query, StringComparison.OrdinalIgnoreCase))
+            .Select(k => new QueryKey { Name = k, Type = "String" })
+            .ToList();
+
+        return await Task.FromResult(keys);
+    }
+
     public async Task<List<string>> GetErrorsKeyValuesAsync(
         int projectId, string keyName, DateTime startDate, DateTime endDate,
         string? query, int? count, CancellationToken ct)

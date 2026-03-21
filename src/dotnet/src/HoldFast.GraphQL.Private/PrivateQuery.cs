@@ -3019,6 +3019,482 @@ public class PrivateQuery
             ct: ct);
     }
 
+    // ── Generic Keys/Key Values (product-agnostic) ─────────────────
+
+    /// <summary>
+    /// Get keys for any product type (logs, traces, errors, sessions, events).
+    /// Dispatches to the product-specific ClickHouse method.
+    /// </summary>
+    public async Task<List<QueryKey>> GetKeys(
+        string? productType,
+        int projectId,
+        DateTime dateRangeStart,
+        DateTime dateRangeEnd,
+        string? query,
+        string? type,
+        string? eventName,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] IClickHouseService clickHouse,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+
+        return (productType?.ToUpperInvariant()) switch
+        {
+            "LOGS" => (await clickHouse.GetLogKeysAsync(projectId,
+                new QueryInput { Query = query ?? "", DateRangeStart = dateRangeStart, DateRangeEnd = dateRangeEnd }, ct))
+                .Select(k => new QueryKey { Name = k, Type = type ?? "String" }).ToList(),
+            "TRACES" => (await clickHouse.GetTraceKeysAsync(projectId,
+                new QueryInput { Query = query ?? "", DateRangeStart = dateRangeStart, DateRangeEnd = dateRangeEnd }, ct))
+                .Select(k => new QueryKey { Name = k, Type = type ?? "String" }).ToList(),
+            "ERRORS" => await clickHouse.GetErrorsKeysAsync(projectId, dateRangeStart, dateRangeEnd, query, ct),
+            "SESSIONS" => await clickHouse.GetSessionsKeysAsync(projectId, dateRangeStart, dateRangeEnd, query, ct),
+            "EVENTS" => await clickHouse.GetEventsKeysAsync(projectId, dateRangeStart, dateRangeEnd, query, eventName, ct),
+            _ => await clickHouse.GetSessionsKeysAsync(projectId, dateRangeStart, dateRangeEnd, query, ct),
+        };
+    }
+
+    /// <summary>
+    /// Get key values for any product type.
+    /// </summary>
+    public async Task<List<string>> GetKeyValues(
+        string? productType,
+        int projectId,
+        string keyName,
+        DateTime dateRangeStart,
+        DateTime dateRangeEnd,
+        string? query,
+        int? count,
+        string? eventName,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] IClickHouseService clickHouse,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+
+        return (productType?.ToUpperInvariant()) switch
+        {
+            "LOGS" => await clickHouse.GetLogKeyValuesAsync(projectId, keyName,
+                new QueryInput { Query = query ?? "", DateRangeStart = dateRangeStart, DateRangeEnd = dateRangeEnd }, ct),
+            "TRACES" => await clickHouse.GetTraceKeyValuesAsync(projectId, keyName,
+                new QueryInput { Query = query ?? "", DateRangeStart = dateRangeStart, DateRangeEnd = dateRangeEnd }, ct),
+            "ERRORS" => await clickHouse.GetErrorsKeyValuesAsync(projectId, keyName, dateRangeStart, dateRangeEnd, query, count, ct),
+            "SESSIONS" => await clickHouse.GetSessionsKeyValuesAsync(projectId, keyName, dateRangeStart, dateRangeEnd, query, count, ct),
+            "EVENTS" => await clickHouse.GetEventsKeyValuesAsync(projectId, keyName, dateRangeStart, dateRangeEnd, query, count, eventName, ct),
+            _ => await clickHouse.GetSessionsKeyValuesAsync(projectId, keyName, dateRangeStart, dateRangeEnd, query, count, ct),
+        };
+    }
+
+    /// <summary>
+    /// Get key-value suggestions for multiple keys at once.
+    /// </summary>
+    public async Task<List<KeyValueSuggestion>> GetKeyValuesSuggestions(
+        string productType,
+        int projectId,
+        DateTime dateRangeStart,
+        DateTime dateRangeEnd,
+        List<string> keys,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] IClickHouseService clickHouse,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+
+        var results = new List<KeyValueSuggestion>();
+        foreach (var key in keys)
+        {
+            var values = await GetKeyValues(productType, projectId, key,
+                dateRangeStart, dateRangeEnd, null, 10, null,
+                claimsPrincipal, authz, clickHouse, ct);
+
+            results.Add(new KeyValueSuggestion(
+                key,
+                values.Select((v, i) => new ValueSuggestion(v, 0, (long)i)).ToList()));
+        }
+        return results;
+    }
+
+    // ── Product-Specific Keys/Key Values ─────────────────────────────
+
+    /// <summary>
+    /// Get log attribute keys (schema-aligned, returns QueryKey).
+    /// </summary>
+    public async Task<List<QueryKey>> GetLogsKeys(
+        int projectId,
+        DateTime dateRangeStart,
+        DateTime dateRangeEnd,
+        string? query,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] IClickHouseService clickHouse,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+
+        var keys = await clickHouse.GetLogKeysAsync(projectId,
+            new QueryInput { Query = query ?? "", DateRangeStart = dateRangeStart, DateRangeEnd = dateRangeEnd }, ct);
+        return keys.Select(k => new QueryKey { Name = k, Type = "String" }).ToList();
+    }
+
+    /// <summary>
+    /// Get log attribute key values.
+    /// </summary>
+    public async Task<List<string>> GetLogsKeyValues(
+        int projectId,
+        string keyName,
+        DateTime dateRangeStart,
+        DateTime dateRangeEnd,
+        string? query,
+        int? count,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] IClickHouseService clickHouse,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+
+        return await clickHouse.GetLogKeyValuesAsync(projectId, keyName,
+            new QueryInput { Query = query ?? "", DateRangeStart = dateRangeStart, DateRangeEnd = dateRangeEnd }, ct);
+    }
+
+    /// <summary>
+    /// Get trace attribute keys (schema-aligned, returns QueryKey).
+    /// </summary>
+    public async Task<List<QueryKey>> GetTracesKeys(
+        int projectId,
+        DateTime dateRangeStart,
+        DateTime dateRangeEnd,
+        string? query,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] IClickHouseService clickHouse,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+
+        var keys = await clickHouse.GetTraceKeysAsync(projectId,
+            new QueryInput { Query = query ?? "", DateRangeStart = dateRangeStart, DateRangeEnd = dateRangeEnd }, ct);
+        return keys.Select(k => new QueryKey { Name = k, Type = "String" }).ToList();
+    }
+
+    /// <summary>
+    /// Get trace attribute key values.
+    /// </summary>
+    public async Task<List<string>> GetTracesKeyValues(
+        int projectId,
+        string keyName,
+        DateTime dateRangeStart,
+        DateTime dateRangeEnd,
+        string? query,
+        int? count,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] IClickHouseService clickHouse,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+
+        return await clickHouse.GetTraceKeyValuesAsync(projectId, keyName,
+            new QueryInput { Query = query ?? "", DateRangeStart = dateRangeStart, DateRangeEnd = dateRangeEnd }, ct);
+    }
+
+    /// <summary>
+    /// Get error attribute keys.
+    /// </summary>
+    public async Task<List<QueryKey>> GetErrorsKeys(
+        int projectId,
+        DateTime dateRangeStart,
+        DateTime dateRangeEnd,
+        string? query,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] IClickHouseService clickHouse,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+
+        return await clickHouse.GetErrorsKeysAsync(projectId, dateRangeStart, dateRangeEnd, query, ct);
+    }
+
+    // ── Deprecated Metrics Queries (dispatch to ReadMetricsAsync) ────
+
+    /// <summary>
+    /// Get logs metrics (deprecated — use GetMetrics with productType instead).
+    /// </summary>
+    public async Task<MetricsBuckets> GetLogsMetrics(
+        int projectId,
+        QueryInput queryParams,
+        List<string> groupBy,
+        string bucketBy,
+        string? column,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] IClickHouseService clickHouse,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+
+        return await clickHouse.ReadMetricsAsync(projectId, queryParams,
+            bucketBy, groupBy, "Count", column, ct);
+    }
+
+    /// <summary>
+    /// Get traces metrics (deprecated — use GetMetrics with productType instead).
+    /// </summary>
+    public async Task<MetricsBuckets> GetTracesMetrics(
+        int projectId,
+        QueryInput queryParams,
+        List<string> groupBy,
+        string? bucketBy,
+        string? column,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] IClickHouseService clickHouse,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+
+        return await clickHouse.ReadMetricsAsync(projectId, queryParams,
+            bucketBy ?? "Timestamp", groupBy, "Count", column, ct);
+    }
+
+    /// <summary>
+    /// Get errors metrics (deprecated — use GetMetrics with productType instead).
+    /// </summary>
+    public async Task<MetricsBuckets> GetErrorsMetrics(
+        int projectId,
+        QueryInput queryParams,
+        List<string> groupBy,
+        string bucketBy,
+        string? column,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] IClickHouseService clickHouse,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+
+        return await clickHouse.ReadMetricsAsync(projectId, queryParams,
+            bucketBy, groupBy, "Count", column, ct);
+    }
+
+    /// <summary>
+    /// Get sessions metrics (deprecated — use GetMetrics with productType instead).
+    /// </summary>
+    public async Task<MetricsBuckets> GetSessionsMetrics(
+        int projectId,
+        QueryInput queryParams,
+        List<string> groupBy,
+        string bucketBy,
+        string? column,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] IClickHouseService clickHouse,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+
+        return await clickHouse.ReadMetricsAsync(projectId, queryParams,
+            bucketBy, groupBy, "Count", column, ct);
+    }
+
+    /// <summary>
+    /// Get events metrics (deprecated — use GetMetrics with productType instead).
+    /// </summary>
+    public async Task<MetricsBuckets> GetEventsMetrics(
+        int projectId,
+        QueryInput queryParams,
+        List<string> groupBy,
+        string bucketBy,
+        string? column,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] IClickHouseService clickHouse,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+
+        return await clickHouse.ReadMetricsAsync(projectId, queryParams,
+            bucketBy, groupBy, "Count", column, ct);
+    }
+
+    // ── Event Sessions ───────────────────────────────────────────────
+
+    /// <summary>
+    /// Get sessions matching event criteria (for events page session list).
+    /// </summary>
+    public async Task<SessionResults> GetEventSessions(
+        int projectId,
+        int count,
+        QueryInput queryParams,
+        string? sortField,
+        bool sortDesc,
+        int? page,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] IClickHouseService clickHouse,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+
+        var (ids, total) = await clickHouse.QuerySessionIdsAsync(
+            projectId, queryParams, count, page ?? 0, sortField, sortDesc, ct);
+
+        if (ids.Count == 0)
+            return new SessionResults([], total, 0, 0);
+
+        var sessions = await db.Sessions
+            .Where(s => ids.Contains(s.Id))
+            .ToListAsync(ct);
+
+        // Maintain ClickHouse ordering
+        var ordered = ids
+            .Select(id => sessions.FirstOrDefault(s => s.Id == id))
+            .Where(s => s != null)
+            .Cast<Session>()
+            .ToList();
+
+        var totalLength = ordered.Sum(s => (long)(s.Length ?? 0));
+        var totalActiveLength = ordered.Sum(s => (long)(s.ActiveLength ?? 0));
+
+        return new SessionResults(ordered, total, totalLength, totalActiveLength);
+    }
+
+    // ── Cross-Entity Correlation ─────────────────────────────────────
+
+    /// <summary>
+    /// Check which trace IDs from a list actually exist in ClickHouse logs.
+    /// Returns the subset of trace IDs that have corresponding log entries.
+    /// </summary>
+    public async Task<List<string>> GetExistingLogsTraces(
+        int projectId,
+        List<string> traceIds,
+        DateTime dateRangeStart,
+        DateTime dateRangeEnd,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] IClickHouseService clickHouse,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+
+        if (traceIds.Count == 0)
+            return [];
+
+        // Check each trace ID by querying logs for it
+        var existing = new List<string>();
+        foreach (var traceId in traceIds)
+        {
+            var logs = await clickHouse.ReadLogsAsync(projectId,
+                new QueryInput
+                {
+                    Query = $"trace_id={traceId}",
+                    DateRangeStart = dateRangeStart,
+                    DateRangeEnd = dateRangeEnd,
+                },
+                new ClickHousePagination { Limit = 1 }, ct);
+
+            if (logs.Edges.Count > 0)
+                existing.Add(traceId);
+        }
+        return existing;
+    }
+
+    /// <summary>
+    /// Get error objects associated with log cursors.
+    /// Log cursors contain timestamps that correlate to error objects created around the same time.
+    /// </summary>
+    public async Task<List<ErrorObject>> GetLogsErrorObjects(
+        List<string> logCursors,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        if (logCursors.Count == 0)
+            return [];
+
+        // Log cursors encode a timestamp; find error objects near those timestamps
+        var timestamps = new List<DateTime>();
+        foreach (var cursor in logCursors)
+        {
+            try
+            {
+                var decoded = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(cursor));
+                var parts = decoded.Split(',');
+                if (parts.Length > 0 && DateTime.TryParse(parts[0], out var ts))
+                    timestamps.Add(ts);
+            }
+            catch { /* skip invalid cursors */ }
+        }
+
+        if (timestamps.Count == 0)
+            return [];
+
+        var earliest = timestamps.Min().AddSeconds(-1);
+        var latest = timestamps.Max().AddSeconds(1);
+
+        return await db.Set<ErrorObject>()
+            .Where(e => e.CreatedAt >= earliest && e.CreatedAt <= latest)
+            .OrderByDescending(e => e.CreatedAt)
+            .Take(100)
+            .ToListAsync(ct);
+    }
+
+    // ── Source Map Upload ────────────────────────────────────────────
+
+    /// <summary>
+    /// Get pre-signed upload URLs for source map files.
+    /// In self-hosted mode, returns local storage paths.
+    /// </summary>
+    public async Task<List<string>> GetSourceMapUploadUrls(
+        string apiKey,
+        List<string> paths,
+        [Service] HoldFastDbContext db,
+        [Service] IStorageService storage,
+        CancellationToken ct)
+    {
+        var project = await db.Projects.FirstOrDefaultAsync(p => p.Secret == apiKey, ct)
+            ?? throw new ArgumentException("Invalid API key");
+
+        var urls = new List<string>();
+        foreach (var path in paths)
+        {
+            var key = $"{project.Id}/sourcemaps/{path}";
+            var url = await storage.GetDownloadUrlAsync("sourcemaps", key, TimeSpan.FromHours(1), ct);
+            urls.Add(url);
+        }
+        return urls;
+    }
+
+    // ── Log Lines ───────────────────────────────────────────────────
+
+    /// <summary>
+    /// Get structured log lines for a product type and query.
+    /// </summary>
+    public async Task<List<LogLine>> GetLogLines(
+        string productType,
+        int projectId,
+        QueryInput queryParams,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] IClickHouseService clickHouse,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+
+        var logs = await clickHouse.ReadLogsAsync(projectId, queryParams,
+            new ClickHousePagination { Limit = 100 }, ct);
+
+        return logs.Edges.Select(e => new LogLine(
+            e.Node.Timestamp,
+            e.Node.Body ?? "",
+            e.Node.SeverityText,
+            System.Text.Json.JsonSerializer.Serialize(e.Node.LogAttributes))).ToList();
+    }
+
     // ── System ────────────────────────────────────────────────────────
 
     /// <summary>

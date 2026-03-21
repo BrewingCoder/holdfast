@@ -116,6 +116,13 @@ public interface IClickHouseService
         int? count,
         CancellationToken ct = default);
 
+    Task<List<QueryKey>> GetErrorsKeysAsync(
+        int projectId,
+        DateTime startDate,
+        DateTime endDate,
+        string? query,
+        CancellationToken ct = default);
+
     Task<List<string>> GetErrorsKeyValuesAsync(
         int projectId,
         string keyName,

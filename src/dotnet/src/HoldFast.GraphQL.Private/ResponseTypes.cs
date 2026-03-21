@@ -185,3 +185,36 @@ public record AlertsPagePayload(
 /// </summary>
 public record LogAlertsPagePayload(
     List<LogAlert> LogAlerts);
+
+/// <summary>
+/// Session search results with totals.
+/// </summary>
+public record SessionResults(
+    List<Session> Sessions,
+    long TotalCount,
+    long TotalLength,
+    long TotalActiveLength);
+
+/// <summary>
+/// A single value suggestion with count and rank.
+/// </summary>
+public record ValueSuggestion(
+    string Value,
+    long Count,
+    long Rank);
+
+/// <summary>
+/// Key-value suggestion pairing a key with its top values.
+/// </summary>
+public record KeyValueSuggestion(
+    string Key,
+    List<ValueSuggestion> Values);
+
+/// <summary>
+/// A structured log line.
+/// </summary>
+public record LogLine(
+    DateTime Timestamp,
+    string Body,
+    string? Severity,
+    string Labels);
