@@ -165,6 +165,22 @@ public class ClickHouseService : IClickHouseService, IDisposable
 
     // ── Sessions ─────────────────────────────────────────────────────
 
+    public async Task<List<HistogramBucket>> ReadSessionsHistogramAsync(
+        int projectId, QueryInput query, CancellationToken ct = default)
+    {
+        var sb = new SqlBuilder();
+        sb.Append("SELECT toStartOfInterval(CreatedAt, INTERVAL 1 hour) AS BucketStart, ");
+        sb.Append("toStartOfInterval(CreatedAt, INTERVAL 1 hour) + INTERVAL 1 hour AS BucketEnd, ");
+        sb.Append("count(DISTINCT SecureSessionId) AS Count ");
+        sb.Append("FROM sessions ");
+        sb.Append($"WHERE ProjectId = {projectId} ");
+        sb.Append($"AND CreatedAt >= '{query.DateRangeStart:yyyy-MM-dd HH:mm:ss}' ");
+        sb.Append($"AND CreatedAt <= '{query.DateRangeEnd:yyyy-MM-dd HH:mm:ss}' ");
+        sb.Append("GROUP BY BucketStart, BucketEnd ORDER BY BucketStart");
+
+        return (await QueryAsync<HistogramBucket>(sb, ct)).ToList();
+    }
+
     public async Task<(List<int> Ids, long Total)> QuerySessionIdsAsync(
         int projectId, QueryInput query, int count, int page,
         string? sortField = null, bool sortDesc = true, CancellationToken ct = default)

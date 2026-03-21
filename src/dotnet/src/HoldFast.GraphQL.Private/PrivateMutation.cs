@@ -1732,6 +1732,138 @@ public class PrivateMutation
         return true;
     }
 
+    // ── Workspace Invite ────────────────────────────────────────────
+
+    /// <summary>
+    /// Send an admin workspace invite via email address.
+    /// Creates an invite link record. Self-hosted: no email sending, just creates the link.
+    /// </summary>
+    public async Task<string> SendAdminWorkspaceInvite(
+        int workspaceId,
+        string email,
+        string role,
+        List<int>? projectIds,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireWorkspaceAdmin(claimsPrincipal, workspaceId, authz, ct);
+
+        if (role != "ADMIN" && role != "MEMBER")
+            throw new GraphQLException($"Invalid role: {role}");
+
+        // Check for existing invite
+        var existingInvite = await db.WorkspaceInviteLinks
+            .FirstOrDefaultAsync(i => i.WorkspaceId == workspaceId
+                && i.InviteeEmail != null
+                && i.InviteeEmail.ToLower() == email.ToLower(), ct);
+        if (existingInvite != null)
+            throw new GraphQLException($"\"{email}\" has already been invited to this workspace.");
+
+        // Check if admin already exists in workspace
+        var existingAdmin = await db.Admins.FirstOrDefaultAsync(a => a.Email != null && a.Email.ToLower() == email.ToLower(), ct);
+        if (existingAdmin != null)
+        {
+            var isAlreadyMember = await db.WorkspaceAdmins
+                .AnyAsync(wa => wa.AdminId == existingAdmin.Id && wa.WorkspaceId == workspaceId, ct);
+            if (isAlreadyMember)
+                throw new GraphQLException($"\"{email}\" is already a member of this workspace.");
+        }
+
+        var secret = Guid.NewGuid().ToString("N");
+        var inviteLink = new WorkspaceInviteLink
+        {
+            WorkspaceId = workspaceId,
+            InviteeEmail = email,
+            InviteeRole = role,
+            Secret = secret,
+            ExpirationDate = DateTime.UtcNow.AddDays(7),
+            ProjectIds = projectIds,
+        };
+
+        db.WorkspaceInviteLinks.Add(inviteLink);
+        await db.SaveChangesAsync(ct);
+
+        return secret;
+    }
+
+    /// <summary>
+    /// Join a workspace (for workspaces with auto-join email origins).
+    /// </summary>
+    public async Task<int> JoinWorkspace(
+        int workspaceId,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        var admin = await AuthHelper.GetRequiredAdmin(claimsPrincipal, authz, ct);
+
+        // Check if already a member
+        var alreadyMember = await db.WorkspaceAdmins
+            .AnyAsync(wa => wa.AdminId == admin.Id && wa.WorkspaceId == workspaceId, ct);
+        if (alreadyMember)
+            throw new GraphQLException("Already a member of this workspace");
+
+        var workspace = await db.Workspaces.FindAsync([workspaceId], ct)
+            ?? throw new GraphQLException("Workspace not found");
+
+        // Add as MEMBER
+        db.WorkspaceAdmins.Add(new WorkspaceAdmin
+        {
+            AdminId = admin.Id,
+            WorkspaceId = workspaceId,
+            Role = "MEMBER",
+        });
+        await db.SaveChangesAsync(ct);
+
+        return workspaceId;
+    }
+
+    // ── Session Export ────────────────────────────────────────────────
+
+    /// <summary>
+    /// Request a session export (creates a SessionExport record).
+    /// The actual export is handled by a background worker.
+    /// </summary>
+    public async Task<bool> ExportSession(
+        string sessionSecureId,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        var admin = await AuthHelper.GetRequiredAdmin(claimsPrincipal, authz, ct);
+
+        var session = await db.Sessions
+            .FirstOrDefaultAsync(s => s.SecureId == sessionSecureId, ct)
+            ?? throw new GraphQLException("Session not found");
+
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, session.ProjectId, authz, ct);
+
+        // Create or update export record
+        var existing = await db.SessionExports
+            .FirstOrDefaultAsync(e => e.SessionId == session.Id && e.Type == "mp4", ct);
+
+        if (existing != null)
+        {
+            existing.Url = null;
+            existing.Error = null;
+        }
+        else
+        {
+            db.SessionExports.Add(new SessionExport
+            {
+                SessionId = session.Id,
+                Type = "mp4",
+            });
+        }
+
+        await db.SaveChangesAsync(ct);
+        return true;
+    }
+
     // ── Edit Project Platforms ────────────────────────────────────────
 
     /// <summary>

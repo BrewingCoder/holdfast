@@ -410,6 +410,9 @@ public class ClickHouseQueryResolverTests : IDisposable
             return Task.FromResult(new List<string>());
         }
 
+        public Task<List<HistogramBucket>> ReadSessionsHistogramAsync(int projectId, QueryInput query, CancellationToken ct)
+        { LastCalledMethod = nameof(ReadSessionsHistogramAsync); LastProjectId = projectId; return Task.FromResult(new List<HistogramBucket>()); }
+
         public Task<(List<int> Ids, long Total)> QuerySessionIdsAsync(int projectId, QueryInput query, int count, int page, string? sortField, bool sortDesc, CancellationToken ct)
         {
             LastCalledMethod = nameof(QuerySessionIdsAsync);

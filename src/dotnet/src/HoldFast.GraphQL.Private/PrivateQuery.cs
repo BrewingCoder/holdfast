@@ -1733,6 +1733,158 @@ public class PrivateQuery
         return await db.EmailOptOuts.Where(e => e.AdminId == admin.Id).ToListAsync(ct);
     }
 
+    // ── Dashboard Definitions ────────────────────────────────────────
+
+    /// <summary>
+    /// Get dashboard definitions with metrics and filters for a project.
+    /// </summary>
+    public async Task<List<Dashboard>> GetDashboardDefinitions(
+        int projectId,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+        return await db.Dashboards
+            .Where(d => d.ProjectId == projectId)
+            .Include(d => d.Metrics)
+            .OrderByDescending(d => d.UpdatedAt)
+            .ToListAsync(ct);
+    }
+
+    // ── Metric Tags/Values ───────────────────────────────────────────
+
+    /// <summary>
+    /// Get metric tag keys (delegates to trace keys with 30-day lookback).
+    /// </summary>
+    public async Task<List<string>> GetMetricTags(
+        int projectId,
+        string metricName,
+        string? query,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] IClickHouseService clickHouse,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+        var keys = await clickHouse.GetTraceKeysAsync(
+            projectId,
+            new QueryInput
+            {
+                Query = query ?? "",
+                DateRangeStart = DateTime.UtcNow.AddDays(-30),
+                DateRangeEnd = DateTime.UtcNow
+            },
+            ct);
+        return keys;
+    }
+
+    /// <summary>
+    /// Get metric tag values for a given tag key.
+    /// </summary>
+    public async Task<List<string>> GetMetricTagValues(
+        int projectId,
+        string metricName,
+        string tagName,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] IClickHouseService clickHouse,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+        return await clickHouse.GetTraceKeyValuesAsync(
+            projectId,
+            tagName,
+            new QueryInput
+            {
+                Query = "",
+                DateRangeStart = DateTime.UtcNow.AddDays(-30),
+                DateRangeEnd = DateTime.UtcNow
+            },
+            ct);
+    }
+
+    // ── Session Histogram ────────────────────────────────────────────
+
+    /// <summary>
+    /// Get sessions histogram (delegates to ClickHouse).
+    /// </summary>
+    public async Task<List<HistogramBucket>> GetSessionsHistogram(
+        int projectId,
+        string query,
+        DateTime startDate,
+        DateTime endDate,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] IClickHouseService clickHouse,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+        return await clickHouse.ReadSessionsHistogramAsync(
+            projectId,
+            new QueryInput { Query = query, DateRangeStart = startDate, DateRangeEnd = endDate },
+            ct);
+    }
+
+    /// <summary>
+    /// Get errors histogram (delegates to ClickHouse).
+    /// </summary>
+    public async Task<List<HistogramBucket>> GetErrorsHistogram(
+        int projectId,
+        string query,
+        DateTime startDate,
+        DateTime endDate,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] IClickHouseService clickHouse,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+        return await clickHouse.ReadErrorObjectsHistogramAsync(
+            projectId,
+            new QueryInput { Query = query, DateRangeStart = startDate, DateRangeEnd = endDate },
+            ct);
+    }
+
+    // ── Error Issue & Enhanced Details ────────────────────────────────
+
+    /// <summary>
+    /// Get enhanced user details by email lookup.
+    /// </summary>
+    public async Task<EnhancedUserDetails?> GetEnhancedUserDetails(
+        string email,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        await AuthHelper.GetRequiredAdmin(claimsPrincipal, authz, ct);
+        return await db.Set<EnhancedUserDetails>()
+            .FirstOrDefaultAsync(e => e.Email != null && e.Email.ToLower() == email.ToLower(), ct);
+    }
+
+    /// <summary>
+    /// Get a single trace by ID (for trace detail view).
+    /// </summary>
+    public async Task<TraceConnection> GetTrace(
+        int projectId,
+        string traceId,
+        string? sessionSecureId,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] IClickHouseService clickHouse,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+        return await clickHouse.ReadTracesAsync(
+            projectId,
+            new QueryInput { Query = $"trace_id={traceId}", DateRangeStart = DateTime.UtcNow.AddDays(-30), DateRangeEnd = DateTime.UtcNow },
+            new ClickHousePagination { Limit = 1000 },
+            omitBody: false,
+            ct: ct);
+    }
+
     // ── System ────────────────────────────────────────────────────────
 
     /// <summary>

@@ -597,6 +597,8 @@ public class PrivateQueryExtendedTests : IDisposable
         { LastCalledMethod = nameof(GetTraceKeysAsync); return Task.FromResult(new List<string>()); }
         public Task<List<string>> GetTraceKeyValuesAsync(int projectId, string key, QueryInput query, CancellationToken ct)
         { LastCalledMethod = nameof(GetTraceKeyValuesAsync); return Task.FromResult(new List<string>()); }
+        public Task<List<HistogramBucket>> ReadSessionsHistogramAsync(int projectId, QueryInput query, CancellationToken ct)
+        { LastCalledMethod = nameof(ReadSessionsHistogramAsync); return Task.FromResult(new List<HistogramBucket>()); }
         public Task<(List<int> Ids, long Total)> QuerySessionIdsAsync(int projectId, QueryInput query, int count, int page, string? sortField, bool sortDesc, CancellationToken ct)
         { LastCalledMethod = nameof(QuerySessionIdsAsync); return Task.FromResult((new List<int>(), 0L)); }
         public Task<(List<int> Ids, long Total)> QueryErrorGroupIdsAsync(int projectId, QueryInput query, int count, int page, CancellationToken ct)

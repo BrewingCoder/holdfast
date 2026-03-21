@@ -59,6 +59,11 @@ public interface IClickHouseService
 
     // ── Sessions ─────────────────────────────────────────────────────
 
+    Task<List<HistogramBucket>> ReadSessionsHistogramAsync(
+        int projectId,
+        QueryInput query,
+        CancellationToken ct = default);
+
     Task<(List<int> Ids, long Total)> QuerySessionIdsAsync(
         int projectId,
         QueryInput query,
