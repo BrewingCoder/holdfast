@@ -5,6 +5,9 @@ using Microsoft.Extensions.Options;
 
 namespace HoldFast.Shared.Kafka;
 
+/// <summary>
+/// Configuration for Kafka connections. BootstrapServers is comma-separated broker addresses.
+/// </summary>
 public class KafkaOptions
 {
     public string BootstrapServers { get; set; } = "localhost:9092";

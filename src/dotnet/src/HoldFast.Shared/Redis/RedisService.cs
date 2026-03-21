@@ -5,6 +5,9 @@ using Expiration = StackExchange.Redis.Expiration;
 
 namespace HoldFast.Shared.Redis;
 
+/// <summary>
+/// Configuration for Redis connections. Uses StackExchange.Redis connection string format.
+/// </summary>
 public class RedisOptions
 {
     public string Configuration { get; set; } = "localhost:6379";

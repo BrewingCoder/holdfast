@@ -3,6 +3,10 @@ using Microsoft.Extensions.Options;
 
 namespace HoldFast.Storage;
 
+/// <summary>
+/// Storage backend configuration. Type selects "filesystem" (default) or "s3".
+/// FilesystemRoot is the base directory for local storage. S3 settings apply when Type="s3".
+/// </summary>
 public class StorageOptions
 {
     public string Type { get; set; } = "filesystem";
