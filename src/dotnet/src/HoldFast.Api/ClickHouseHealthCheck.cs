@@ -3,6 +3,9 @@ using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 namespace HoldFast.Api;
 
+/// <summary>
+/// Health check for ClickHouse connectivity. Reports degraded if the ping query fails.
+/// </summary>
 public class ClickHouseHealthCheck(IClickHouseService clickHouse) : IHealthCheck
 {
     public async Task<HealthCheckResult> CheckHealthAsync(

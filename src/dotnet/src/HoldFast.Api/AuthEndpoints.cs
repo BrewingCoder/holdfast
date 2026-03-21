@@ -118,6 +118,8 @@ public static class AuthEndpoints
         }
     }
 
+    /// <summary>Request body for the /auth/login endpoint.</summary>
     public record LoginRequest(string? Email, string? Password);
+    /// <summary>Response body from /auth/login containing the JWT and admin details.</summary>
     public record LoginResponse(string Token, int AdminId, string Email);
 }

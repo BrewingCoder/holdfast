@@ -43,24 +43,29 @@ public record SamplingConfig(
     List<SpanSamplingConfig>? Spans = null,
     List<LogSamplingConfig>? Logs = null);
 
+/// <summary>A match condition: either a regex pattern or an exact value.</summary>
 public record MatchConfig(
     string? RegexValue = null,
     object? MatchValue = null);
 
+/// <summary>Matches a span/log attribute by key and value conditions.</summary>
 public record AttributeMatchConfig(
     MatchConfig Key,
     MatchConfig Attribute);
 
+/// <summary>Matches a span event by name and/or attributes.</summary>
 public record SpanEventMatchConfig(
     MatchConfig? Name = null,
     List<AttributeMatchConfig>? Attributes = null);
 
+/// <summary>Sampling rule for spans: filters by name, attributes, events, and ratio.</summary>
 public record SpanSamplingConfig(
     MatchConfig? Name = null,
     List<AttributeMatchConfig>? Attributes = null,
     List<SpanEventMatchConfig>? Events = null,
     int SamplingRatio = 1);
 
+/// <summary>Sampling rule for logs: filters by attributes, message, severity, and ratio.</summary>
 public record LogSamplingConfig(
     List<AttributeMatchConfig>? Attributes = null,
     MatchConfig? Message = null,
