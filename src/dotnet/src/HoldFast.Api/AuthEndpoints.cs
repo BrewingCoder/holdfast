@@ -53,7 +53,7 @@ public static class AuthEndpoints
             }
 
             var demoToken = authService.GenerateToken(demoAdmin);
-            return Results.Ok(new LoginResponse(demoToken, demoAdmin.Id, demoAdmin.Email ?? "demo@example.com"));
+            return Results.Ok(new LoginResponse(demoToken, new LoginUserInfo(demoAdmin.Uid ?? "demo", demoAdmin.Email ?? "demo@example.com")));
         }
 
         // Password mode: validate password
@@ -83,7 +83,7 @@ public static class AuthEndpoints
 
         var token = authService.GenerateToken(admin);
 
-        return Results.Ok(new LoginResponse(token, admin.Id, admin.Email!));
+        return Results.Ok(new LoginResponse(token, new LoginUserInfo(admin.Uid ?? admin.Email!, admin.Email!)));
     }
 
     /// <summary>
@@ -123,6 +123,8 @@ public static class AuthEndpoints
 
     /// <summary>Request body for the /auth/login endpoint.</summary>
     public record LoginRequest(string? Email, string? Password);
-    /// <summary>Response body from /auth/login containing the JWT and admin details.</summary>
-    public record LoginResponse(string Token, int AdminId, string Email);
+    /// <summary>User object nested inside LoginResponse — matches the shape the frontend expects.</summary>
+    public record LoginUserInfo(string Uid, string Email);
+    /// <summary>Response body from /auth/login — {token, user: {uid, email}}.</summary>
+    public record LoginResponse(string Token, LoginUserInfo User);
 }

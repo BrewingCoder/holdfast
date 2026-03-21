@@ -1,5 +1,6 @@
 using Amazon.S3;
 using HoldFast.Api;
+using HoldFast.Api.Bootstrap;
 using HoldFast.Data;
 using HoldFast.Data.ClickHouse;
 using HoldFast.GraphQL.Private;
@@ -15,6 +16,9 @@ using HoldFast.Shared.Redis;
 using HoldFast.Storage;
 using HoldFast.Worker;
 using Microsoft.EntityFrameworkCore;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -42,6 +46,44 @@ builder.Services.AddDbContextPool<HoldFastDbContext>(options =>
 
 // ── HttpContext accessor (needed for ClaimsPrincipal in GraphQL resolvers)
 builder.Services.AddHttpContextAccessor();
+
+// ── Self-telemetry (eat our own dogfood) ──────────────────────────────
+// Every HoldFast deployment automatically sends its own telemetry to itself.
+// OTEL_EXPORTER_OTLP_ENDPOINT defaults to the local backend — in Docker Compose
+// this is http://backend:8082 so the backend reports to itself via the public endpoint.
+var systemProjectState = new SystemProjectState();
+builder.Services.AddSingleton(systemProjectState);
+builder.Services.AddHostedService<SystemBootstrapService>();
+
+var otlpEndpoint = builder.Configuration["OTEL_EXPORTER_OTLP_ENDPOINT"]
+    ?? builder.Configuration["Otel:Endpoint"]
+    ?? "http://localhost:8082";
+
+builder.Services.AddOpenTelemetry()
+    .ConfigureResource(r => r
+        .AddService("holdfast-backend")
+        .AddAttributes([new("deployment.environment", builder.Environment.EnvironmentName)]))
+    .WithTracing(tracing => tracing
+        .AddAspNetCoreInstrumentation(opts => opts.Filter = ctx =>
+            // Skip health checks and self-ingestion endpoints from trace noise
+            !ctx.Request.Path.StartsWithSegments("/health") &&
+            !ctx.Request.Path.StartsWithSegments("/otel"))
+        .AddHttpClientInstrumentation()
+        .AddOtlpExporter(otlp =>
+        {
+            otlp.Endpoint = new Uri($"{otlpEndpoint}/otel/v1/traces");
+            otlp.Protocol = OpenTelemetry.Exporter.OtlpExportProtocol.HttpProtobuf;
+            otlp.Headers = $"x-highlight-project={systemProjectState.ProjectId}";
+        }))
+    .WithMetrics(metrics => metrics
+        .AddAspNetCoreInstrumentation()
+        .AddRuntimeInstrumentation()
+        .AddOtlpExporter(otlp =>
+        {
+            otlp.Endpoint = new Uri($"{otlpEndpoint}/otel/v1/metrics");
+            otlp.Protocol = OpenTelemetry.Exporter.OtlpExportProtocol.HttpProtobuf;
+            otlp.Headers = $"x-highlight-project={systemProjectState.ProjectId}";
+        }));
 
 // ── Dev seed ──────────────────────────────────────────────────────────
 builder.Services.Configure<HoldFast.Api.DevSeed.DevSeedOptions>(

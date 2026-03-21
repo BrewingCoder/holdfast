@@ -29,6 +29,7 @@ services:
             - DevSeed__Enabled=${DEV_SEED_ENABLED:-false}
             - DevSeed__AdminEmail=${DEV_SEED_ADMIN_EMAIL:-dev@holdfast.local}
             - DevSeed__AdminName=${DEV_SEED_ADMIN_NAME:-Dev Admin}
+            - OTEL_EXPORTER_OTLP_ENDPOINT=http://backend:8082
         env_file: .env
         healthcheck:
             test: ['CMD', 'curl', '-f', 'http://localhost:8082/health']
