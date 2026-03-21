@@ -1,5 +1,6 @@
 using HoldFast.Data;
 using HoldFast.Domain.Entities;
+using HoldFast.Shared.AlertEvaluation;
 using HoldFast.Shared.ErrorGrouping;
 using HoldFast.Shared.Kafka;
 using Microsoft.EntityFrameworkCore;
@@ -97,6 +98,18 @@ public class ErrorGroupingConsumer : KafkaConsumerService<BackendErrorMessage>
         _logger.LogInformation(
             "Error grouped: GroupId={GroupId}, IsNew={IsNew}, Event={Event}",
             result.ErrorGroup.Id, result.IsNewGroup, value.Event);
+
+        // Evaluate alerts inline after grouping (matches Go behavior)
+        var alertService = scope.ServiceProvider.GetRequiredService<IAlertEvaluationService>();
+        var alertResult = await alertService.EvaluateErrorAlertsAsync(
+            projectId, result.ErrorGroup, result.ErrorObject, ct);
+
+        if (alertResult.AlertsTriggered > 0)
+        {
+            _logger.LogInformation(
+                "Alerts triggered: {Triggered}/{Evaluated} for error group {GroupId}",
+                alertResult.AlertsTriggered, alertResult.AlertsEvaluated, result.ErrorGroup.Id);
+        }
     }
 }
 

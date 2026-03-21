@@ -4,9 +4,11 @@ using HoldFast.Data;
 using HoldFast.Data.ClickHouse;
 using HoldFast.GraphQL.Private;
 using HoldFast.GraphQL.Public;
+using HoldFast.Shared.AlertEvaluation;
 using HoldFast.Shared.Auth;
 using HoldFast.Shared.ErrorGrouping;
 using HoldFast.Shared.Kafka;
+using HoldFast.Shared.SessionProcessing;
 using HoldFast.Shared.Redis;
 using HoldFast.Storage;
 using HoldFast.Worker;
@@ -69,6 +71,9 @@ else
 // ── Business Services ─────────────────────────────────────────────────
 builder.Services.AddScoped<IErrorGroupingService, ErrorGroupingService>();
 builder.Services.AddScoped<ISessionEventsProcessor, SessionEventsProcessor>();
+builder.Services.AddScoped<ISessionProcessingService, SessionProcessingService>();
+builder.Services.AddScoped<IAlertEvaluationService, AlertEvaluationService>();
+builder.Services.AddHttpClient("AlertWebhooks");
 
 // ── Workers (Kafka consumers as BackgroundServices) ───────────────────
 builder.Services.AddSingleton<SessionEventsConsumer>();
