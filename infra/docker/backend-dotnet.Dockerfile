@@ -16,16 +16,14 @@ COPY src/dotnet/src/HoldFast.Shared/HoldFast.Shared.csproj src/HoldFast.Shared/
 COPY src/dotnet/src/HoldFast.Storage/HoldFast.Storage.csproj src/HoldFast.Storage/
 COPY src/dotnet/src/HoldFast.Worker/HoldFast.Worker.csproj src/HoldFast.Worker/
 
-RUN dotnet restore HoldFast.Backend.slnx --runtime linux-x64
+RUN dotnet restore src/HoldFast.Api/HoldFast.Api.csproj
 
 # Copy all source and publish
 COPY src/dotnet/src/ src/
-ARG TARGETARCH
 RUN dotnet publish src/HoldFast.Api/HoldFast.Api.csproj \
     -c Release \
     -o /app \
-    --no-restore \
-    --self-contained false
+    --no-restore
 
 # ── Runtime stage ─────────────────────────────────────────────────────
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
