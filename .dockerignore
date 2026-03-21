@@ -8,3 +8,6 @@
 .vercel
 .yarn/cache
 build
+# .NET build artifacts — prevent Windows obj/bin from polluting Linux container builds
+src/dotnet/**/obj
+src/dotnet/**/bin

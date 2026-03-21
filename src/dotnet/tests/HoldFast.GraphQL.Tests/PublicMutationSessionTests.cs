@@ -238,11 +238,11 @@ public class PublicMutationSessionTests : IDisposable
         _db.Sessions.Add(new Session { SecureId = "id-sess-obj", ProjectId = _project.Id });
         _db.SaveChanges();
 
-        var userObj = new Dictionary<string, object>
+        var userObj = System.Text.Json.JsonSerializer.SerializeToElement(new Dictionary<string, object>
         {
             ["name"] = "Scott",
             ["role"] = "admin",
-        };
+        });
 
         var input = new IdentifySessionInput("id-sess-obj", "scott@example.com", userObj);
 
@@ -355,31 +355,17 @@ public class PublicMutationSessionTests : IDisposable
         _db.Sessions.Add(session);
         _db.SaveChanges();
 
-        // Feedback needs AdminId for FK — use the seeded admin
         var input = new AddSessionFeedbackInput(
             "fb-sess", "Scott", "scott@example.com", "Great product!", DateTime.UtcNow);
 
-        // The mutation doesn't set AdminId, so we verify it throws FK constraint.
-        // This reveals a real issue: SDK feedback has no admin context.
-        // For now, test by pre-setting the admin on intercepted save:
-        var ex = await Record.ExceptionAsync(() =>
-            _mutation.AddSessionFeedback(input, _db, CancellationToken.None));
+        var result = await _mutation.AddSessionFeedback(input, _db, CancellationToken.None);
 
-        // FK constraint fails because AdminId=0 has no matching Admin.
-        // This is expected — in production, the DB schema should allow nullable AdminId
-        // for SDK-originated feedback. Document this as a known issue.
-        if (ex != null)
-        {
-            Assert.Contains("FOREIGN KEY", ex.InnerException?.Message ?? ex.Message);
-        }
-        else
-        {
-            // If it succeeds (e.g. FK enforcement off), verify the comment
-            var comment = await _db.SessionComments.FirstOrDefaultAsync();
-            Assert.NotNull(comment);
-            Assert.Equal("Great product!", comment!.Text);
-            Assert.Equal("FEEDBACK", comment.Type);
-        }
+        Assert.Equal("fb-sess", result);
+        var comment = await _db.SessionComments.FirstOrDefaultAsync();
+        Assert.NotNull(comment);
+        Assert.Equal("Great product!", comment!.Text);
+        Assert.Equal("FEEDBACK", comment.Type);
+        Assert.Null(comment.AdminId); // SDK feedback has no admin
     }
 
     [Fact]
@@ -393,7 +379,7 @@ public class PublicMutationSessionTests : IDisposable
     }
 
     [Fact]
-    public async Task AddSessionFeedback_EmptyVerbatim_FKConstraint()
+    public async Task AddSessionFeedback_EmptyVerbatim_StillCreatesComment()
     {
         _db.Sessions.Add(new Session { SecureId = "fb-empty", ProjectId = _project.Id });
         _db.SaveChanges();
@@ -401,29 +387,29 @@ public class PublicMutationSessionTests : IDisposable
         var input = new AddSessionFeedbackInput(
             "fb-empty", null, null, "", DateTime.UtcNow);
 
-        // Same FK issue as above — AdminId=0 not in Admins table
-        var ex = await Record.ExceptionAsync(() =>
-            _mutation.AddSessionFeedback(input, _db, CancellationToken.None));
+        var result = await _mutation.AddSessionFeedback(input, _db, CancellationToken.None);
 
-        if (ex != null)
-            Assert.Contains("FOREIGN KEY", ex.InnerException?.Message ?? ex.Message);
+        Assert.Equal("fb-empty", result);
+        var comment = await _db.SessionComments.FirstOrDefaultAsync();
+        Assert.NotNull(comment);
+        Assert.Equal("", comment!.Text);
+        Assert.Null(comment.AdminId);
     }
 
     [Fact]
     public async Task AddSessionFeedback_MultipleFeedbacks_SameSession()
     {
-        // Test the mutation finds the session correctly for multiple calls
         _db.Sessions.Add(new Session { SecureId = "fb-multi", ProjectId = _project.Id });
         _db.SaveChanges();
 
         var input1 = new AddSessionFeedbackInput("fb-multi", null, null, "First", DateTime.UtcNow);
+        var input2 = new AddSessionFeedbackInput("fb-multi", null, null, "Second", DateTime.UtcNow);
 
-        // FK will fail, but session lookup should succeed
-        var ex = await Record.ExceptionAsync(() =>
-            _mutation.AddSessionFeedback(input1, _db, CancellationToken.None));
+        await _mutation.AddSessionFeedback(input1, _db, CancellationToken.None);
+        await _mutation.AddSessionFeedback(input2, _db, CancellationToken.None);
 
-        // Either succeeds or fails on FK — session lookup works either way
-        Assert.True(ex == null || (ex.InnerException?.Message ?? "").Contains("FOREIGN KEY"));
+        var count = await _db.SessionComments.CountAsync();
+        Assert.Equal(2, count);
     }
 
     // ── PublicQuery ──────────────────────────────────────────────────

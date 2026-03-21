@@ -8,7 +8,7 @@ public class SessionComment : BaseEntity
 {
     public int ProjectId { get; set; }
     public int SessionId { get; set; }
-    public int AdminId { get; set; }
+    public int? AdminId { get; set; }
     public int SessionSecureId { get; set; }
     public int Timestamp { get; set; }
     public string? Text { get; set; }
@@ -19,7 +19,7 @@ public class SessionComment : BaseEntity
 
     // Navigation
     public Session Session { get; set; } = null!;
-    public Admin Admin { get; set; } = null!;
+    public Admin? Admin { get; set; }
     public ICollection<SessionCommentTag> Tags { get; set; } = [];
     public ICollection<CommentReply> Replies { get; set; } = [];
     public ICollection<CommentFollower> Followers { get; set; } = [];

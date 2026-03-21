@@ -14,7 +14,7 @@ public class LogRow
     public string SpanId { get; set; } = string.Empty;
     public string SecureSessionId { get; set; } = string.Empty;
     public string UUID { get; set; } = string.Empty;
-    public uint TraceFlags { get; set; }
+    public int TraceFlags { get; set; }
     public string SeverityText { get; set; } = string.Empty;
     public int SeverityNumber { get; set; }
     public LogSource Source { get; set; }

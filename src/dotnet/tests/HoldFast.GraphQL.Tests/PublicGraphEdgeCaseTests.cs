@@ -146,7 +146,8 @@ public class PublicGraphEdgeCaseTests : IDisposable
         _db.Sessions.Add(session);
         await _db.SaveChangesAsync();
 
-        var input = new AddSessionPropertiesInput("props-test", new { role = "admin" });
+        var input = new AddSessionPropertiesInput("props-test",
+            System.Text.Json.JsonSerializer.SerializeToElement(new { role = "admin" }));
         var result = await _mutation.AddSessionProperties(input, _db, default);
 
         Assert.Equal("props-test", result);

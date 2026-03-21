@@ -23,7 +23,8 @@ public class ClickHouseOptionsTests
         var opts = new ClickHouseOptions();
         var cs = opts.GetConnectionString();
         Assert.Contains("Protocol=http", cs);
-        Assert.Contains("Host=localhost:8123", cs);
+        Assert.Contains("Host=localhost", cs);
+        Assert.Contains("Port=8123", cs);
         Assert.Contains("Database=default", cs);
         Assert.Contains("Username=default", cs);
     }
@@ -143,7 +144,8 @@ public class ClickHouseOptionsTests
             Password = "mypass",
         };
         var cs = opts.GetConnectionString();
-        Assert.Contains("Host=myhost:8123", cs);
+        Assert.Contains("Host=myhost", cs);
+        Assert.Contains("Port=8123", cs);
         Assert.Contains("Protocol=http", cs);
         Assert.Contains("Database=mydb", cs);
         Assert.Contains("Username=myuser", cs);
@@ -176,7 +178,8 @@ public class ClickHouseOptionsTests
     {
         var opts = new ClickHouseOptions { Address = "[::1]:8123" };
         var cs = opts.GetConnectionString();
-        Assert.Contains("Host=[::1]:8123", cs);
+        Assert.Contains("Host=[::1]", cs);
+        Assert.Contains("Port=8123", cs);
         Assert.Contains("Protocol=http", cs);
     }
 
@@ -185,7 +188,8 @@ public class ClickHouseOptionsTests
     {
         var opts = new ClickHouseOptions { Address = "10.0.0.1:8123" };
         var cs = opts.GetConnectionString();
-        Assert.Contains("Host=10.0.0.1:8123", cs);
+        Assert.Contains("Host=10.0.0.1", cs);
+        Assert.Contains("Port=8123", cs);
     }
 
     [Fact]

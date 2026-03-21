@@ -166,8 +166,19 @@ builder.Services.AddHealthChecks()
 
 var app = builder.Build();
 
+// ── Database initialization ────────────────────────────────────────────
+// EnsureCreated creates the PostgreSQL schema from the EF model if it doesn't exist.
+// In production the schema should already exist from the Go migration system,
+// but this ensures a clean bootstrap on first run.
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<HoldFastDbContext>();
+    await db.Database.EnsureCreatedAsync();
+}
+
 // ── Middleware ─────────────────────────────────────────────────────────
 app.MapHealthChecks("/health");
+app.UseCors(); // Must be before UseMiddleware and MapGraphQL
 
 // Only register auth middleware and endpoints for graph modes
 if (runtime.IsPrivateGraph() || runtime.IsPublicGraph())

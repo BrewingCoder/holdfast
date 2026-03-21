@@ -1,3 +1,5 @@
+using System.Text.Json;
+
 namespace HoldFast.GraphQL.Public.InputTypes;
 
 /// <summary>
@@ -27,14 +29,14 @@ public record InitializeSessionInput(
 public record IdentifySessionInput(
     string SessionSecureId,
     string UserIdentifier,
-    object? UserObject);
+    JsonElement? UserObject);
 
 /// <summary>
 /// Input for addSessionProperties — adds custom properties to a session.
 /// </summary>
 public record AddSessionPropertiesInput(
     string SessionSecureId,
-    object? PropertiesObject);
+    JsonElement? PropertiesObject);
 
 /// <summary>
 /// Input for addSessionFeedback — user feedback during a session.
