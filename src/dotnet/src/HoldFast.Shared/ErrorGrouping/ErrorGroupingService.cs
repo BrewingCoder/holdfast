@@ -50,6 +50,7 @@ public class ErrorGroupingService : IErrorGroupingService
         for (var i = 0; i < limit; i++)
         {
             var frame = frames[i];
+            if (frame == null) continue;
 
             // CODE fingerprint: line content (before + current + after)
             var codeParts = new List<string>();
