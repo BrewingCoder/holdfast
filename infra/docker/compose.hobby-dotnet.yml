@@ -38,16 +38,19 @@ services:
 
     frontend:
         container_name: frontend
-        image: ${FRONTEND_IMAGE_NAME-ghcr.io/highlight/highlight-frontend:latest}
+        image: ${FRONTEND_IMAGE_NAME:-ghcr.io/highlight/highlight-frontend:latest}
         restart: on-failure
-        volumes:
-            - ../../src/backend/localhostssl/server.key:/etc/ssl/private/ssl-cert.key
-            - ../../src/backend/localhostssl/server.pem:/etc/ssl/certs/ssl-cert.pem
         ports:
             - '0.0.0.0:3000:3000'
-            - '0.0.0.0:6006:6006'
             - '0.0.0.0:8080:8080'
-        env_file: .env
+        environment:
+            - SSL=false
+            - REACT_APP_AUTH_MODE=${REACT_APP_AUTH_MODE:-Password}
+            - REACT_APP_FRONTEND_URI=${REACT_APP_FRONTEND_URI:-http://localhost:3000}
+            - REACT_APP_PRIVATE_GRAPH_URI=${REACT_APP_PRIVATE_GRAPH_URI:-http://localhost:8082/private}
+            - REACT_APP_PUBLIC_GRAPH_URI=${REACT_APP_PUBLIC_GRAPH_URI:-http://localhost:8082/public}
+            - REACT_APP_DISABLE_ANALYTICS=true
+            - REACT_APP_OTLP_ENDPOINT=${REACT_APP_OTLP_ENDPOINT:-}
 
 volumes:
     highlight-data:
