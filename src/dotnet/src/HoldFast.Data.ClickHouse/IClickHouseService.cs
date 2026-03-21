@@ -171,4 +171,25 @@ public interface IClickHouseService
     Task WriteTracesAsync(
         IEnumerable<TraceRowInput> traces,
         CancellationToken ct = default);
+
+    /// <summary>
+    /// Write a batch of session rows to ClickHouse for analytics queries.
+    /// </summary>
+    Task WriteSessionsAsync(
+        IEnumerable<SessionRowInput> sessions,
+        CancellationToken ct = default);
+
+    /// <summary>
+    /// Write a batch of error group rows to ClickHouse for analytics queries.
+    /// </summary>
+    Task WriteErrorGroupsAsync(
+        IEnumerable<ErrorGroupRowInput> errorGroups,
+        CancellationToken ct = default);
+
+    /// <summary>
+    /// Write a batch of error object rows to ClickHouse for analytics queries.
+    /// </summary>
+    Task WriteErrorObjectsAsync(
+        IEnumerable<ErrorObjectRowInput> errorObjects,
+        CancellationToken ct = default);
 }

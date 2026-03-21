@@ -623,5 +623,11 @@ public class PrivateQueryExtendedTests : IDisposable
         { LastCalledMethod = nameof(WriteLogsAsync); return Task.CompletedTask; }
         public Task WriteTracesAsync(IEnumerable<TraceRowInput> traces, CancellationToken ct)
         { LastCalledMethod = nameof(WriteTracesAsync); return Task.CompletedTask; }
+        public Task WriteSessionsAsync(IEnumerable<SessionRowInput> sessions, CancellationToken ct)
+        { LastCalledMethod = nameof(WriteSessionsAsync); return Task.CompletedTask; }
+        public Task WriteErrorGroupsAsync(IEnumerable<ErrorGroupRowInput> errorGroups, CancellationToken ct)
+        { LastCalledMethod = nameof(WriteErrorGroupsAsync); return Task.CompletedTask; }
+        public Task WriteErrorObjectsAsync(IEnumerable<ErrorObjectRowInput> errorObjects, CancellationToken ct)
+        { LastCalledMethod = nameof(WriteErrorObjectsAsync); return Task.CompletedTask; }
     }
 }

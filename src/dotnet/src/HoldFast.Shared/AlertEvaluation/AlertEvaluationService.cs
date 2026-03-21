@@ -4,6 +4,7 @@ using System.Text.RegularExpressions;
 using HoldFast.Data;
 using HoldFast.Domain.Entities;
 using HoldFast.Domain.Enums;
+using HoldFast.Shared.Notifications;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
@@ -24,15 +25,18 @@ public class AlertEvaluationService : IAlertEvaluationService
 {
     private readonly HoldFastDbContext _db;
     private readonly IHttpClientFactory _httpClientFactory;
+    private readonly INotificationService _notificationService;
     private readonly ILogger<AlertEvaluationService> _logger;
 
     public AlertEvaluationService(
         HoldFastDbContext db,
         IHttpClientFactory httpClientFactory,
+        INotificationService notificationService,
         ILogger<AlertEvaluationService> logger)
     {
         _db = db;
         _httpClientFactory = httpClientFactory;
+        _notificationService = notificationService;
         _logger = logger;
     }
 
@@ -139,12 +143,18 @@ public class AlertEvaluationService : IAlertEvaluationService
         });
         await _db.SaveChangesAsync(ct);
 
+        // Pre-load workspace data (must happen on the main thread, before fire-and-forget)
+        var project = await _db.Projects
+            .Include(p => p.Workspace)
+            .FirstOrDefaultAsync(p => p.Id == alert.ProjectId, ct);
+
         // Send notifications (fire-and-forget, don't block grouping)
+        // All DB work is done above; only HTTP calls happen in the background.
         _ = Task.Run(async () =>
         {
             try
             {
-                await SendNotificationsAsync(alert, errorGroup, errorObject);
+                await SendNotificationsAsync(alert, errorGroup, errorObject, project);
             }
             catch (Exception ex)
             {
@@ -208,71 +218,129 @@ public class AlertEvaluationService : IAlertEvaluationService
     }
 
     /// <summary>
-    /// Send notifications via webhook destinations.
-    /// Supports generic webhooks, Discord, and Microsoft Teams.
+    /// Send notifications via webhook destinations AND workspace-level
+    /// Slack, Discord, and Teams integrations.
+    /// The project parameter must be pre-loaded (with Workspace included)
+    /// before calling this method — no DB access happens here.
     /// </summary>
     private async Task SendNotificationsAsync(
         ErrorAlert alert,
         ErrorGroup errorGroup,
-        ErrorObject errorObject)
+        ErrorObject errorObject,
+        Project? project)
     {
-        if (string.IsNullOrEmpty(alert.WebhookDestinations))
-            return;
+        var tasks = new List<Task>();
 
-        List<WebhookDestination>? destinations;
+        // Build a generic AlertNotification for platform-specific builders
+        var notification = new AlertNotification
+        {
+            AlertType = "error",
+            Title = alert.Name ?? "Error Alert",
+            Description = Truncate(errorGroup.Event, 500),
+            ProjectName = project?.Name,
+            Severity = "critical",
+            Count = null,
+            Timestamp = errorObject.Timestamp,
+            Metadata = new Dictionary<string, string>
+            {
+                ["Service"] = errorObject.ServiceName ?? "N/A",
+                ["Environment"] = errorObject.Environment ?? "N/A",
+                ["Type"] = errorGroup.Type ?? "N/A",
+            },
+        };
+
+        if (project != null)
+        {
+            var workspace = project.Workspace;
+
+            if (workspace != null)
+            {
+                // Slack: workspace-level integration via OAuth token
+                if (!string.IsNullOrEmpty(workspace.SlackAccessToken) &&
+                    !string.IsNullOrEmpty(alert.ChannelsToNotify))
+                {
+                    var slackMessage = AlertNotificationBuilder.BuildSlackMessage(notification);
+                    var channelIds = ParseChannelIds(alert.ChannelsToNotify);
+                    foreach (var channelId in channelIds)
+                    {
+                        tasks.Add(_notificationService.SendSlackMessageAsync(
+                            workspace.SlackAccessToken, channelId, slackMessage, CancellationToken.None));
+                    }
+                }
+
+                // Discord and Teams via webhook destinations are handled below
+            }
+        }
+
+        // Webhook destinations (generic, Discord, Teams)
+        if (!string.IsNullOrEmpty(alert.WebhookDestinations))
+        {
+            List<WebhookDestination>? destinations;
+            try
+            {
+                destinations = JsonSerializer.Deserialize<List<WebhookDestination>>(
+                    alert.WebhookDestinations,
+                    new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            }
+            catch (JsonException)
+            {
+                destinations = null;
+            }
+
+            if (destinations != null)
+            {
+                foreach (var dest in destinations)
+                {
+                    if (string.IsNullOrEmpty(dest.Url)) continue;
+
+                    switch (dest.Type?.ToLowerInvariant())
+                    {
+                        case "discord":
+                            var discordMsg = AlertNotificationBuilder.BuildDiscordMessage(notification);
+                            tasks.Add(_notificationService.SendDiscordMessageAsync(dest.Url, discordMsg, CancellationToken.None));
+                            break;
+                        case "microsoft_teams" or "teams":
+                            var teamsMsg = AlertNotificationBuilder.BuildTeamsMessage(notification);
+                            tasks.Add(_notificationService.SendTeamsMessageAsync(dest.Url, teamsMsg, CancellationToken.None));
+                            break;
+                        default:
+                            var genericPayload = BuildGenericPayload(alert, errorGroup, errorObject);
+                            tasks.Add(_notificationService.SendWebhookAsync(dest.Url, genericPayload, CancellationToken.None));
+                            break;
+                    }
+                }
+            }
+        }
+
+        if (tasks.Count > 0)
+            await Task.WhenAll(tasks);
+    }
+
+    /// <summary>
+    /// Parse a JSON array of channel IDs from ChannelsToNotify.
+    /// </summary>
+    internal static List<string> ParseChannelIds(string? channelsJson)
+    {
+        if (string.IsNullOrEmpty(channelsJson))
+            return [];
+
         try
         {
-            destinations = JsonSerializer.Deserialize<List<WebhookDestination>>(
-                alert.WebhookDestinations,
+            var channels = JsonSerializer.Deserialize<List<ChannelRef>>(
+                channelsJson,
                 new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            return channels?
+                .Where(c => !string.IsNullOrEmpty(c.WebhookChannelId))
+                .Select(c => c.WebhookChannelId!)
+                .ToList() ?? [];
         }
         catch (JsonException)
         {
-            return;
-        }
-
-        if (destinations == null) return;
-
-        var client = _httpClientFactory.CreateClient("AlertWebhooks");
-        client.Timeout = TimeSpan.FromSeconds(10);
-
-        var tasks = destinations.Select(dest => SendWebhookAsync(client, dest, alert, errorGroup, errorObject));
-        await Task.WhenAll(tasks);
-    }
-
-    private async Task SendWebhookAsync(
-        HttpClient client,
-        WebhookDestination destination,
-        ErrorAlert alert,
-        ErrorGroup errorGroup,
-        ErrorObject errorObject)
-    {
-        if (string.IsNullOrEmpty(destination.Url))
-            return;
-
-        try
-        {
-            object payload = destination.Type?.ToLowerInvariant() switch
-            {
-                "discord" => BuildDiscordPayload(alert, errorGroup, errorObject),
-                "microsoft_teams" or "teams" => BuildTeamsPayload(alert, errorGroup, errorObject),
-                _ => BuildGenericPayload(alert, errorGroup, errorObject),
-            };
-
-            var response = await client.PostAsJsonAsync(destination.Url, payload);
-
-            if (!response.IsSuccessStatusCode)
-            {
-                _logger.LogWarning(
-                    "Webhook {Url} returned {StatusCode} for alert {AlertId}",
-                    destination.Url, response.StatusCode, alert.Id);
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Failed to send webhook to {Url}", destination.Url);
+            return [];
         }
     }
+
+    internal record ChannelRef(string? WebhookChannel, string? WebhookChannelId);
 
     private static object BuildGenericPayload(ErrorAlert alert, ErrorGroup errorGroup, ErrorObject errorObject) =>
         new
@@ -286,50 +354,6 @@ public class AlertEvaluationService : IAlertEvaluationService
             environment = errorObject.Environment,
             service_name = errorObject.ServiceName,
             timestamp = errorObject.Timestamp,
-        };
-
-    private static object BuildDiscordPayload(ErrorAlert alert, ErrorGroup errorGroup, ErrorObject errorObject) =>
-        new
-        {
-            content = $"**{alert.Name ?? "Error Alert"}** triggered",
-            embeds = new[]
-            {
-                new
-                {
-                    title = Truncate(errorGroup.Event, 256),
-                    description = $"Type: {errorGroup.Type}\nService: {errorObject.ServiceName ?? "N/A"}\nEnvironment: {errorObject.Environment ?? "N/A"}",
-                    color = 0xFF0000,
-                }
-            }
-        };
-
-    private static object BuildTeamsPayload(ErrorAlert alert, ErrorGroup errorGroup, ErrorObject errorObject) =>
-        new
-        {
-            type = "message",
-            attachments = new[]
-            {
-                new
-                {
-                    contentType = "application/vnd.microsoft.card.adaptive",
-                    content = new
-                    {
-                        type = "AdaptiveCard",
-                        version = "1.4",
-                        body = new object[]
-                        {
-                            new { type = "TextBlock", text = alert.Name ?? "Error Alert", weight = "Bolder", size = "Medium" },
-                            new { type = "TextBlock", text = Truncate(errorGroup.Event, 500), wrap = true },
-                            new { type = "FactSet", facts = new[]
-                            {
-                                new { title = "Type", value = errorGroup.Type },
-                                new { title = "Service", value = errorObject.ServiceName ?? "N/A" },
-                                new { title = "Environment", value = errorObject.Environment ?? "N/A" },
-                            }},
-                        }
-                    }
-                }
-            }
         };
 
     private static string Truncate(string? text, int maxLength) =>

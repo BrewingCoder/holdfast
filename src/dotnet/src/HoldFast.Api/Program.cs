@@ -6,6 +6,7 @@ using HoldFast.GraphQL.Private;
 using HoldFast.GraphQL.Public;
 using HoldFast.Shared.AlertEvaluation;
 using HoldFast.Shared.Auth;
+using HoldFast.Shared.Notifications;
 using HoldFast.Shared.ErrorGrouping;
 using HoldFast.Shared.Kafka;
 using HoldFast.Shared.SessionProcessing;
@@ -73,6 +74,7 @@ builder.Services.AddScoped<IErrorGroupingService, ErrorGroupingService>();
 builder.Services.AddScoped<ISessionEventsProcessor, SessionEventsProcessor>();
 builder.Services.AddScoped<ISessionProcessingService, SessionProcessingService>();
 builder.Services.AddScoped<ISessionInitializationService, SessionInitializationService>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IAlertEvaluationService, AlertEvaluationService>();
 builder.Services.AddHttpClient("AlertWebhooks");
 
@@ -89,6 +91,7 @@ builder.Services.AddSingleton<TraceIngestionConsumer>();
 builder.Services.AddHostedService<TraceIngestionWorker>();
 builder.Services.AddHostedService<AutoResolveWorker>();
 builder.Services.AddHostedService<DataRetentionWorker>();
+builder.Services.AddHostedService<DataSyncWorker>();
 
 // ── CORS ──────────────────────────────────────────────────────────────
 var frontendUri = builder.Configuration["Frontend:Uri"] ?? "http://localhost:3000";

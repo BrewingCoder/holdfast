@@ -24,6 +24,7 @@
     <ProjectReference Include="..\..\src\HoldFast.Worker\HoldFast.Worker.csproj" />
     <ProjectReference Include="..\..\src\HoldFast.Domain\HoldFast.Domain.csproj" />
     <ProjectReference Include="..\..\src\HoldFast.Data\HoldFast.Data.csproj" />
+    <ProjectReference Include="..\..\src\HoldFast.Data.ClickHouse\HoldFast.Data.ClickHouse.csproj" />
     <ProjectReference Include="..\..\src\HoldFast.Storage\HoldFast.Storage.csproj" />
   </ItemGroup>
 

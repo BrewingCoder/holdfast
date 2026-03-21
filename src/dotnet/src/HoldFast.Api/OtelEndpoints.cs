@@ -19,7 +19,7 @@ namespace HoldFast.Api;
 /// </summary>
 public static class OtelEndpoints
 {
-    private static readonly JsonSerializerOptions JsonOptions = new()
+    internal static readonly JsonSerializerOptions JsonOptions = new()
     {
         PropertyNameCaseInsensitive = true,
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
@@ -105,7 +105,7 @@ public static class OtelEndpoints
     /// <summary>
     /// Read request body with decompression support (gzip, snappy).
     /// </summary>
-    private static async Task<byte[]> ReadBodyAsync(HttpRequest request)
+    internal static async Task<byte[]> ReadBodyAsync(HttpRequest request)
     {
         var encoding = request.Headers.ContentEncoding.FirstOrDefault()?.ToLowerInvariant();
 
@@ -120,6 +120,13 @@ public static class OtelEndpoints
                 }
                 break;
 
+            case "snappy":
+                var compressed = new MemoryStream();
+                await request.Body.CopyToAsync(compressed);
+                var decompressed = IronSnappy.Snappy.Decode(compressed.ToArray());
+                output.Write(decompressed);
+                break;
+
             default:
                 await request.Body.CopyToAsync(output);
                 break;
@@ -132,7 +139,7 @@ public static class OtelEndpoints
     /// Parse OTeL ExportLogsServiceRequest JSON format.
     /// Structure: { resourceLogs: [{ scopeLogs: [{ logRecords: [...] }] }] }
     /// </summary>
-    private static List<LogInput>? ParseOtelLogs(byte[] body)
+    internal static List<LogInput>? ParseOtelLogs(byte[] body)
     {
         try
         {
@@ -194,7 +201,7 @@ public static class OtelEndpoints
     /// Parse OTeL ExportTraceServiceRequest JSON format.
     /// Structure: { resourceSpans: [{ scopeSpans: [{ spans: [...] }] }] }
     /// </summary>
-    private static List<TraceInput>? ParseOtelTraces(byte[] body)
+    internal static List<TraceInput>? ParseOtelTraces(byte[] body)
     {
         try
         {
@@ -274,7 +281,7 @@ public static class OtelEndpoints
     /// Parse OTeL ExportMetricsServiceRequest JSON format.
     /// Structure: { resourceMetrics: [{ scopeMetrics: [{ metrics: [...] }] }] }
     /// </summary>
-    private static List<MetricInput>? ParseOtelMetrics(byte[] body)
+    internal static List<MetricInput>? ParseOtelMetrics(byte[] body)
     {
         try
         {
@@ -336,7 +343,7 @@ public static class OtelEndpoints
 
     // ── Helper methods ───────────────────────────────────────────────────
 
-    private static (string? ServiceName, string? ServiceVersion, int ProjectId, string? Environment)
+    internal static (string? ServiceName, string? ServiceVersion, int ProjectId, string? Environment)
         ExtractResourceAttributes(JsonElement resource)
     {
         string? serviceName = null, serviceVersion = null, environment = null;
@@ -372,7 +379,7 @@ public static class OtelEndpoints
         return (serviceName, serviceVersion, projectId, environment);
     }
 
-    private static Dictionary<string, string> ExtractAttributes(JsonElement element)
+    internal static Dictionary<string, string> ExtractAttributes(JsonElement element)
     {
         var result = new Dictionary<string, string>();
 
@@ -391,7 +398,7 @@ public static class OtelEndpoints
         return result;
     }
 
-    private static string? ExtractAttributeValue(JsonElement attr)
+    internal static string? ExtractAttributeValue(JsonElement attr)
     {
         if (!attr.TryGetProperty("value", out var val))
             return null;
@@ -408,7 +415,7 @@ public static class OtelEndpoints
         return val.ToString();
     }
 
-    private static string ExtractBody(JsonElement logRecord)
+    internal static string ExtractBody(JsonElement logRecord)
     {
         if (!logRecord.TryGetProperty("body", out var body))
             return "";
@@ -419,7 +426,7 @@ public static class OtelEndpoints
         return body.ToString();
     }
 
-    private static DateTime ParseTimestamp(JsonElement element, params string[] fields)
+    internal static DateTime ParseTimestamp(JsonElement element, params string[] fields)
     {
         foreach (var field in fields)
         {
@@ -435,7 +442,7 @@ public static class OtelEndpoints
         return DateTime.UtcNow;
     }
 
-    private static string ParseSpanKind(JsonElement kind)
+    internal static string ParseSpanKind(JsonElement kind)
     {
         if (kind.ValueKind == JsonValueKind.Number)
         {
@@ -454,7 +461,7 @@ public static class OtelEndpoints
         return str.Replace("SPAN_KIND_", "");
     }
 
-    private static string ParseStatusCode(JsonElement code)
+    internal static string ParseStatusCode(JsonElement code)
     {
         if (code.ValueKind == JsonValueKind.Number)
         {
@@ -470,9 +477,9 @@ public static class OtelEndpoints
         return code.GetString() ?? "UNSET";
     }
 
-    private record MetricDataPoint(double Value, DateTime Timestamp, List<string>? Tags, string? SessionId);
+    internal record MetricDataPoint(double Value, DateTime Timestamp, List<string>? Tags, string? SessionId);
 
-    private static List<MetricDataPoint> ExtractMetricDataPoints(JsonElement metric)
+    internal static List<MetricDataPoint> ExtractMetricDataPoints(JsonElement metric)
     {
         var points = new List<MetricDataPoint>();
 

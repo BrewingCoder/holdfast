@@ -806,6 +806,128 @@ public class ClickHouseService : IClickHouseService, IDisposable
         }
     }
 
+    public async Task WriteSessionsAsync(IEnumerable<SessionRowInput> sessions, CancellationToken ct)
+    {
+        var list = sessions.ToList();
+        if (list.Count == 0) return;
+
+        await EnsureOpenAsync(_conn, ct);
+
+        foreach (var s in list)
+        {
+            var sql =
+                "INSERT INTO sessions (ProjectId, SessionId, SecureSessionId, CreatedAt, " +
+                "Identifier, OSName, OSVersion, BrowserName, BrowserVersion, " +
+                "City, State, Country, Environment, AppVersion, ServiceName, " +
+                "ActiveLength, Length, PagesVisited, HasErrors, HasRageClicks, " +
+                "Processed, FirstTime) " +
+                "VALUES ({projectId:Int32}, {sessionId:Int32}, {secureSessionId:String}, " +
+                "{createdAt:DateTime64(9)}, {identifier:String}, {osName:String}, " +
+                "{osVersion:String}, {browserName:String}, {browserVersion:String}, " +
+                "{city:String}, {state:String}, {country:String}, {env:String}, " +
+                "{appVersion:String}, {serviceName:String}, {activeLength:Int32}, " +
+                "{length:Int32}, {pagesVisited:Int32}, {hasErrors:UInt8}, " +
+                "{hasRageClicks:UInt8}, {processed:UInt8}, {firstTime:UInt8})";
+
+            using var cmd = _conn.CreateCommand();
+            cmd.CommandText = sql;
+            cmd.AddParameter("projectId", s.ProjectId);
+            cmd.AddParameter("sessionId", s.SessionId);
+            cmd.AddParameter("secureSessionId", s.SecureSessionId);
+            cmd.AddParameter("createdAt", s.CreatedAt);
+            cmd.AddParameter("identifier", s.Identifier ?? "");
+            cmd.AddParameter("osName", s.OSName ?? "");
+            cmd.AddParameter("osVersion", s.OSVersion ?? "");
+            cmd.AddParameter("browserName", s.BrowserName ?? "");
+            cmd.AddParameter("browserVersion", s.BrowserVersion ?? "");
+            cmd.AddParameter("city", s.City ?? "");
+            cmd.AddParameter("state", s.State ?? "");
+            cmd.AddParameter("country", s.Country ?? "");
+            cmd.AddParameter("env", s.Environment ?? "");
+            cmd.AddParameter("appVersion", s.AppVersion ?? "");
+            cmd.AddParameter("serviceName", s.ServiceName ?? "");
+            cmd.AddParameter("activeLength", s.ActiveLength);
+            cmd.AddParameter("length", s.Length);
+            cmd.AddParameter("pagesVisited", s.PagesVisited);
+            cmd.AddParameter("hasErrors", s.HasErrors ? (byte)1 : (byte)0);
+            cmd.AddParameter("hasRageClicks", s.HasRageClicks ? (byte)1 : (byte)0);
+            cmd.AddParameter("processed", s.Processed ? (byte)1 : (byte)0);
+            cmd.AddParameter("firstTime", s.FirstTime ? (byte)1 : (byte)0);
+
+            await cmd.ExecuteNonQueryAsync(ct);
+        }
+    }
+
+    public async Task WriteErrorGroupsAsync(IEnumerable<ErrorGroupRowInput> errorGroups, CancellationToken ct)
+    {
+        var list = errorGroups.ToList();
+        if (list.Count == 0) return;
+
+        await EnsureOpenAsync(_conn, ct);
+
+        foreach (var g in list)
+        {
+            var sql =
+                "INSERT INTO error_groups (ProjectID, ErrorGroupID, SecureID, CreatedAt, " +
+                "UpdatedAt, Event, Type, State, ServiceName, Environments) " +
+                "VALUES ({projectId:Int32}, {errorGroupId:Int32}, {secureId:String}, " +
+                "{createdAt:DateTime64(9)}, {updatedAt:DateTime64(9)}, {event:String}, " +
+                "{type:String}, {state:String}, {serviceName:String}, {environments:String})";
+
+            using var cmd = _conn.CreateCommand();
+            cmd.CommandText = sql;
+            cmd.AddParameter("projectId", g.ProjectId);
+            cmd.AddParameter("errorGroupId", g.ErrorGroupId);
+            cmd.AddParameter("secureId", g.SecureId);
+            cmd.AddParameter("createdAt", g.CreatedAt);
+            cmd.AddParameter("updatedAt", g.UpdatedAt);
+            cmd.AddParameter("event", g.Event ?? "");
+            cmd.AddParameter("type", g.Type ?? "");
+            cmd.AddParameter("state", g.State);
+            cmd.AddParameter("serviceName", g.ServiceName ?? "");
+            cmd.AddParameter("environments", g.Environments ?? "");
+
+            await cmd.ExecuteNonQueryAsync(ct);
+        }
+    }
+
+    public async Task WriteErrorObjectsAsync(IEnumerable<ErrorObjectRowInput> errorObjects, CancellationToken ct)
+    {
+        var list = errorObjects.ToList();
+        if (list.Count == 0) return;
+
+        await EnsureOpenAsync(_conn, ct);
+
+        foreach (var e in list)
+        {
+            var sql =
+                "INSERT INTO error_objects (ProjectID, ErrorObjectID, ErrorGroupID, " +
+                "Timestamp, Event, Type, URL, Environment, OS, Browser, " +
+                "ServiceName, ServiceVersion) " +
+                "VALUES ({projectId:Int32}, {errorObjectId:Int32}, {errorGroupId:Int32}, " +
+                "{ts:DateTime64(9)}, {event:String}, {type:String}, {url:String}, " +
+                "{env:String}, {os:String}, {browser:String}, " +
+                "{serviceName:String}, {serviceVersion:String})";
+
+            using var cmd = _conn.CreateCommand();
+            cmd.CommandText = sql;
+            cmd.AddParameter("projectId", e.ProjectId);
+            cmd.AddParameter("errorObjectId", e.ErrorObjectId);
+            cmd.AddParameter("errorGroupId", e.ErrorGroupId);
+            cmd.AddParameter("ts", e.Timestamp);
+            cmd.AddParameter("event", e.Event ?? "");
+            cmd.AddParameter("type", e.Type ?? "");
+            cmd.AddParameter("url", e.Url ?? "");
+            cmd.AddParameter("env", e.Environment ?? "");
+            cmd.AddParameter("os", e.OS ?? "");
+            cmd.AddParameter("browser", e.Browser ?? "");
+            cmd.AddParameter("serviceName", e.ServiceName ?? "");
+            cmd.AddParameter("serviceVersion", e.ServiceVersion ?? "");
+
+            await cmd.ExecuteNonQueryAsync(ct);
+        }
+    }
+
     public void Dispose()
     {
         _conn.Dispose();

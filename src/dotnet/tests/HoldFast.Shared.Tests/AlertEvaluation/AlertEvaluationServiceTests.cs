@@ -39,9 +39,11 @@ public class AlertEvaluationServiceTests : IDisposable
         _db.SaveChanges();
 
         var httpFactory = new StubHttpClientFactory();
+        var notificationService = new StubNotificationService();
         _service = new AlertEvaluationService(
             _db,
             httpFactory,
+            notificationService,
             NullLogger<AlertEvaluationService>.Instance);
     }
 
@@ -492,5 +494,15 @@ public class AlertEvaluationServiceTests : IDisposable
                 return Task.FromResult(new HttpResponseMessage(System.Net.HttpStatusCode.OK));
             }
         }
+    }
+
+    // ── Stub NotificationService ────────────────────────────────────────
+
+    private class StubNotificationService : HoldFast.Shared.Notifications.INotificationService
+    {
+        public Task SendSlackMessageAsync(string accessToken, string channelId, HoldFast.Shared.Notifications.SlackMessage message, CancellationToken ct) => Task.CompletedTask;
+        public Task SendDiscordMessageAsync(string webhookUrl, HoldFast.Shared.Notifications.DiscordMessage message, CancellationToken ct) => Task.CompletedTask;
+        public Task SendTeamsMessageAsync(string webhookUrl, HoldFast.Shared.Notifications.TeamsMessage message, CancellationToken ct) => Task.CompletedTask;
+        public Task SendWebhookAsync(string url, object payload, CancellationToken ct) => Task.CompletedTask;
     }
 }
