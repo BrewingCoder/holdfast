@@ -2522,7 +2522,7 @@ public class PrivateQuery
     /// <summary>
     /// Get error group tag aggregations (browser, OS, environment, etc.).
     /// </summary>
-    public async Task<List<ErrorGroupTagAggregation>> GetErrorGroupTags(
+    public async Task<List<ErrorGroupTagAggregation>> GetErrorGroupTagAggregations(
         string errorGroupSecureId,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,

@@ -512,6 +512,69 @@ public class MetricAggregatorDetailTests
     }
 }
 
+// ── IntegrationType Tests ───────────────────────────────────────────
+
+public class IntegrationTypeTests
+{
+    [Fact]
+    public void IntegrationType_Has13Values()
+    {
+        Assert.Equal(13, Enum.GetValues<IntegrationType>().Length);
+    }
+
+    [Theory]
+    [InlineData(IntegrationType.Slack)]
+    [InlineData(IntegrationType.Linear)]
+    [InlineData(IntegrationType.Zapier)]
+    [InlineData(IntegrationType.Vercel)]
+    [InlineData(IntegrationType.Discord)]
+    [InlineData(IntegrationType.ClickUp)]
+    [InlineData(IntegrationType.Height)]
+    [InlineData(IntegrationType.GitHub)]
+    [InlineData(IntegrationType.Jira)]
+    [InlineData(IntegrationType.MicrosoftTeams)]
+    [InlineData(IntegrationType.GitLab)]
+    [InlineData(IntegrationType.Heroku)]
+    [InlineData(IntegrationType.Cloudflare)]
+    public void IntegrationType_AllValuesDefined(IntegrationType type)
+    {
+        Assert.True(Enum.IsDefined(type));
+    }
+
+    [Fact]
+    public void IntegrationType_DistinctValues()
+    {
+        var values = Enum.GetValues<IntegrationType>().Select(v => (int)v).ToList();
+        Assert.Equal(values.Count, values.Distinct().Count());
+    }
+
+    [Fact]
+    public void IntegrationType_ToString_MatchesGoSchema()
+    {
+        // These names must match the Go GraphQL schema enum values exactly
+        Assert.Equal("Slack", IntegrationType.Slack.ToString());
+        Assert.Equal("GitHub", IntegrationType.GitHub.ToString());
+        Assert.Equal("MicrosoftTeams", IntegrationType.MicrosoftTeams.ToString());
+        Assert.Equal("Cloudflare", IntegrationType.Cloudflare.ToString());
+    }
+
+    [Theory]
+    [InlineData("Slack", IntegrationType.Slack)]
+    [InlineData("GitHub", IntegrationType.GitHub)]
+    [InlineData("Jira", IntegrationType.Jira)]
+    [InlineData("Discord", IntegrationType.Discord)]
+    public void IntegrationType_ParseFromString(string input, IntegrationType expected)
+    {
+        Assert.Equal(expected, Enum.Parse<IntegrationType>(input));
+    }
+
+    [Fact]
+    public void IntegrationType_InvalidStringThrows()
+    {
+        Assert.Throws<ArgumentException>(() => Enum.Parse<IntegrationType>("InvalidType"));
+    }
+}
+
 public class ProductTypeDetailTests
 {
     [Fact]

@@ -157,7 +157,7 @@ public class AnalyticsQueryTests : IDisposable
         _db.ErrorGroups.Add(eg);
         _db.SaveChanges();
 
-        var result = await _query.GetErrorGroupTags(
+        var result = await _query.GetErrorGroupTagAggregations(
             "eg-tags-empty", _principal, _authz, _db, CancellationToken.None);
 
         Assert.Empty(result);
@@ -167,7 +167,7 @@ public class AnalyticsQueryTests : IDisposable
     public async Task GetErrorGroupTags_ErrorGroupNotFound_Throws()
     {
         await Assert.ThrowsAsync<ArgumentException>(() =>
-            _query.GetErrorGroupTags("nonexistent-eg", _principal, _authz, _db, CancellationToken.None));
+            _query.GetErrorGroupTagAggregations("nonexistent-eg", _principal, _authz, _db, CancellationToken.None));
     }
 
     [Fact]
@@ -183,7 +183,7 @@ public class AnalyticsQueryTests : IDisposable
             new ErrorObject { ProjectId = _project.Id, ErrorGroupId = eg.Id, Browser = "Firefox", OS = "Windows", Environment = "staging", Event = "e3" });
         _db.SaveChanges();
 
-        var result = await _query.GetErrorGroupTags(
+        var result = await _query.GetErrorGroupTagAggregations(
             "eg-tags-agg", _principal, _authz, _db, CancellationToken.None);
 
         Assert.Equal(3, result.Count); // browser, os, environment
@@ -214,7 +214,7 @@ public class AnalyticsQueryTests : IDisposable
         });
         _db.SaveChanges();
 
-        var result = await _query.GetErrorGroupTags(
+        var result = await _query.GetErrorGroupTagAggregations(
             "eg-tags-null", _principal, _authz, _db, CancellationToken.None);
 
         Assert.Empty(result); // no non-null fields => no aggregations
@@ -234,7 +234,7 @@ public class AnalyticsQueryTests : IDisposable
         });
         _db.SaveChanges();
 
-        var result = await _query.GetErrorGroupTags(
+        var result = await _query.GetErrorGroupTagAggregations(
             "eg-tags-emptystr", _principal, _authz, _db, CancellationToken.None);
 
         Assert.Empty(result);
@@ -254,7 +254,7 @@ public class AnalyticsQueryTests : IDisposable
             new ErrorObject { ProjectId = _project.Id, ErrorGroupId = eg.Id, Browser = "Firefox", Event = "e4" });
         _db.SaveChanges();
 
-        var result = await _query.GetErrorGroupTags(
+        var result = await _query.GetErrorGroupTagAggregations(
             "eg-tags-pct", _principal, _authz, _db, CancellationToken.None);
 
         var browserAgg = result.First(r => r.Key == "browser");
