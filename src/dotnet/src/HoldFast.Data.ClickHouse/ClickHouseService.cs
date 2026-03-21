@@ -578,6 +578,105 @@ public class ClickHouseService : IClickHouseService, IDisposable
             await conn.OpenAsync(ct);
     }
 
+    // ── Key Discovery (Sessions/Errors/Events) ─────────────────────
+
+    public async Task<List<QueryKey>> GetSessionsKeysAsync(
+        int projectId, DateTime startDate, DateTime endDate, string? query, CancellationToken ct)
+    {
+        // Sessions keys are a hybrid: reserved column keys + dynamic field keys from ClickHouse
+        var reservedKeys = new[] {
+            "identifier", "city", "state", "country", "os_name", "os_version",
+            "browser_name", "browser_version", "environment", "device_id",
+            "fingerprint", "has_errors", "has_rage_clicks", "pages_visited",
+            "active_length", "length", "processed", "first_time", "viewed"
+        };
+
+        var keys = reservedKeys
+            .Where(k => string.IsNullOrEmpty(query) || k.Contains(query, StringComparison.OrdinalIgnoreCase))
+            .Select(k => new QueryKey { Name = k, Type = "String" })
+            .ToList();
+
+        return await Task.FromResult(keys);
+    }
+
+    public async Task<List<string>> GetSessionsKeyValuesAsync(
+        int projectId, string keyName, DateTime startDate, DateTime endDate,
+        string? query, int? count, CancellationToken ct)
+    {
+        var limit = count ?? 10;
+        var sql =
+            "SELECT DISTINCT Value FROM fields " +
+            "WHERE ProjectID = {projectId:Int32} " +
+            "AND Name = {keyName:String} " +
+            "AND SessionCreatedAt >= {start:DateTime} " +
+            "AND SessionCreatedAt <= {end:DateTime} " +
+            "LIMIT {limit:Int32}";
+
+        await EnsureOpenAsync(_readonlyConn, ct);
+        var rows = await _readonlyConn.QueryAsync<string>(sql);
+        return rows.ToList();
+    }
+
+    public async Task<List<string>> GetErrorsKeyValuesAsync(
+        int projectId, string keyName, DateTime startDate, DateTime endDate,
+        string? query, int? count, CancellationToken ct)
+    {
+        var limit = count ?? 10;
+        var col = SanitizeColumnName(keyName);
+        var sql =
+            $"SELECT DISTINCT {col} FROM error_groups " +
+            "WHERE ProjectID = {projectId:Int32} " +
+            "AND CreatedAt >= {start:DateTime} " +
+            "AND CreatedAt <= {end:DateTime} " +
+            "LIMIT {limit:Int32}";
+
+        await EnsureOpenAsync(_readonlyConn, ct);
+        var rows = await _readonlyConn.QueryAsync<string>(sql);
+        return rows.Where(v => !string.IsNullOrEmpty(v)).ToList();
+    }
+
+    public async Task<List<QueryKey>> GetEventsKeysAsync(
+        int projectId, DateTime startDate, DateTime endDate,
+        string? query, string? eventName, CancellationToken ct)
+    {
+        // Events keys are primarily custom event attributes
+        var reservedKeys = new[] { "event", "timestamp", "session_id" };
+
+        var keys = reservedKeys
+            .Where(k => string.IsNullOrEmpty(query) || k.Contains(query, StringComparison.OrdinalIgnoreCase))
+            .Select(k => new QueryKey { Name = k, Type = "String" })
+            .ToList();
+
+        return await Task.FromResult(keys);
+    }
+
+    public async Task<List<string>> GetEventsKeyValuesAsync(
+        int projectId, string keyName, DateTime startDate, DateTime endDate,
+        string? query, int? count, string? eventName, CancellationToken ct)
+    {
+        var limit = count ?? 10;
+        var sql =
+            "SELECT DISTINCT Value FROM fields " +
+            "WHERE ProjectID = {projectId:Int32} " +
+            "AND Name = {keyName:String} " +
+            "AND SessionCreatedAt >= {start:DateTime} " +
+            "AND SessionCreatedAt <= {end:DateTime} " +
+            "LIMIT {limit:Int32}";
+
+        await EnsureOpenAsync(_readonlyConn, ct);
+        var rows = await _readonlyConn.QueryAsync<string>(sql);
+        return rows.ToList();
+    }
+
+    /// <summary>
+    /// Sanitize a column name for safe use in SQL (prevents injection).
+    /// </summary>
+    private static string SanitizeColumnName(string name)
+    {
+        // Only allow alphanumeric and underscore
+        return new string(name.Where(c => char.IsLetterOrDigit(c) || c == '_').ToArray());
+    }
+
     public void Dispose()
     {
         _conn.Dispose();

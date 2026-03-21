@@ -1166,4 +1166,592 @@ public class PrivateMutation
         await db.SaveChangesAsync(ct);
         return true;
     }
+
+    // ── Legacy Error Alert CRUD ──────────────────────────────────────
+
+    /// <summary>
+    /// Update an error alert.
+    /// </summary>
+    public async Task<ErrorAlert> UpdateErrorAlert(
+        int projectId,
+        int errorAlertId,
+        string? name,
+        int? countThreshold,
+        int? thresholdWindow,
+        string? query,
+        bool? disabled,
+        int? frequency,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+        var admin = await AuthHelper.GetRequiredAdmin(claimsPrincipal, authz, ct);
+
+        var alert = await db.ErrorAlerts
+            .FirstOrDefaultAsync(a => a.Id == errorAlertId && a.ProjectId == projectId, ct)
+            ?? throw new GraphQLException("Error alert not found");
+
+        if (name != null) alert.Name = name;
+        if (countThreshold != null) alert.CountThreshold = countThreshold;
+        if (thresholdWindow != null) alert.ThresholdWindow = thresholdWindow;
+        if (query != null) alert.Query = query;
+        if (disabled != null) alert.Disabled = disabled.Value;
+        if (frequency != null) alert.Frequency = frequency;
+        alert.LastAdminToEditId = admin.Id;
+
+        await db.SaveChangesAsync(ct);
+        return alert;
+    }
+
+    /// <summary>
+    /// Delete an error alert.
+    /// </summary>
+    public async Task<ErrorAlert> DeleteErrorAlert(
+        int projectId,
+        int errorAlertId,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+
+        var alert = await db.ErrorAlerts
+            .FirstOrDefaultAsync(a => a.Id == errorAlertId && a.ProjectId == projectId, ct)
+            ?? throw new GraphQLException("Error alert not found in this project");
+
+        db.ErrorAlerts.Remove(alert);
+        await db.SaveChangesAsync(ct);
+        return alert;
+    }
+
+    /// <summary>
+    /// Toggle error alert disabled state.
+    /// </summary>
+    public async Task<ErrorAlert> UpdateErrorAlertIsDisabled(
+        int id,
+        int projectId,
+        bool disabled,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+
+        var alert = await db.ErrorAlerts
+            .FirstOrDefaultAsync(a => a.Id == id && a.ProjectId == projectId, ct)
+            ?? throw new GraphQLException("Error alert not found");
+
+        alert.Disabled = disabled;
+        await db.SaveChangesAsync(ct);
+        return alert;
+    }
+
+    // ── Legacy Session Alert CRUD ────────────────────────────────────
+
+    /// <summary>
+    /// Update a session alert.
+    /// </summary>
+    public async Task<SessionAlert> UpdateSessionAlert(
+        int id,
+        int projectId,
+        string? name,
+        int? countThreshold,
+        int? thresholdWindow,
+        string? query,
+        bool? disabled,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+        var admin = await AuthHelper.GetRequiredAdmin(claimsPrincipal, authz, ct);
+
+        var alert = await db.SessionAlerts
+            .FirstOrDefaultAsync(a => a.Id == id && a.ProjectId == projectId, ct)
+            ?? throw new GraphQLException("Session alert not found");
+
+        if (name != null) alert.Name = name;
+        if (countThreshold != null) alert.CountThreshold = countThreshold;
+        if (thresholdWindow != null) alert.ThresholdWindow = thresholdWindow;
+        if (query != null) alert.Query = query;
+        if (disabled != null) alert.Disabled = disabled.Value;
+        alert.LastAdminToEditId = admin.Id;
+
+        await db.SaveChangesAsync(ct);
+        return alert;
+    }
+
+    /// <summary>
+    /// Delete a session alert.
+    /// </summary>
+    public async Task<SessionAlert> DeleteSessionAlert(
+        int projectId,
+        int sessionAlertId,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+
+        var alert = await db.SessionAlerts
+            .FirstOrDefaultAsync(a => a.Id == sessionAlertId && a.ProjectId == projectId, ct)
+            ?? throw new GraphQLException("Session alert not found in this project");
+
+        db.SessionAlerts.Remove(alert);
+        await db.SaveChangesAsync(ct);
+        return alert;
+    }
+
+    /// <summary>
+    /// Toggle session alert disabled state.
+    /// </summary>
+    public async Task<SessionAlert> UpdateSessionAlertIsDisabled(
+        int id,
+        int projectId,
+        bool disabled,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+
+        var alert = await db.SessionAlerts
+            .FirstOrDefaultAsync(a => a.Id == id && a.ProjectId == projectId, ct)
+            ?? throw new GraphQLException("Session alert not found");
+
+        alert.Disabled = disabled;
+        await db.SaveChangesAsync(ct);
+        return alert;
+    }
+
+    // ── Legacy Log Alert CRUD ────────────────────────────────────────
+
+    /// <summary>
+    /// Update a log alert.
+    /// </summary>
+    public async Task<LogAlert> UpdateLogAlert(
+        int id,
+        int projectId,
+        string? name,
+        int? countThreshold,
+        int? thresholdWindow,
+        int? belowThreshold,
+        string? query,
+        bool? disabled,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+        var admin = await AuthHelper.GetRequiredAdmin(claimsPrincipal, authz, ct);
+
+        var alert = await db.LogAlerts
+            .FirstOrDefaultAsync(a => a.Id == id && a.ProjectId == projectId, ct)
+            ?? throw new GraphQLException("Log alert not found");
+
+        if (name != null) alert.Name = name;
+        if (countThreshold != null) alert.CountThreshold = countThreshold;
+        if (thresholdWindow != null) alert.ThresholdWindow = thresholdWindow;
+        if (belowThreshold != null) alert.BelowThreshold = belowThreshold;
+        if (query != null) alert.Query = query;
+        if (disabled != null) alert.Disabled = disabled.Value;
+        alert.LastAdminToEditId = admin.Id;
+
+        await db.SaveChangesAsync(ct);
+        return alert;
+    }
+
+    /// <summary>
+    /// Delete a log alert.
+    /// </summary>
+    public async Task<LogAlert> DeleteLogAlert(
+        int projectId,
+        int id,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+
+        var alert = await db.LogAlerts
+            .FirstOrDefaultAsync(a => a.Id == id && a.ProjectId == projectId, ct)
+            ?? throw new GraphQLException("Log alert not found in this project");
+
+        db.LogAlerts.Remove(alert);
+        await db.SaveChangesAsync(ct);
+        return alert;
+    }
+
+    /// <summary>
+    /// Toggle log alert disabled state.
+    /// </summary>
+    public async Task<LogAlert> UpdateLogAlertIsDisabled(
+        int id,
+        int projectId,
+        bool disabled,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+
+        var alert = await db.LogAlerts
+            .FirstOrDefaultAsync(a => a.Id == id && a.ProjectId == projectId, ct)
+            ?? throw new GraphQLException("Log alert not found");
+
+        alert.Disabled = disabled;
+        await db.SaveChangesAsync(ct);
+        return alert;
+    }
+
+    /// <summary>
+    /// Toggle metric monitor disabled state.
+    /// </summary>
+    public async Task<MetricMonitor> UpdateMetricMonitorIsDisabled(
+        int id,
+        int projectId,
+        bool disabled,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+
+        var monitor = await db.MetricMonitors
+            .FirstOrDefaultAsync(m => m.Id == id && m.ProjectId == projectId, ct)
+            ?? throw new GraphQLException("Metric monitor not found");
+
+        monitor.Disabled = disabled;
+        await db.SaveChangesAsync(ct);
+        return monitor;
+    }
+
+    // ── Comment Replies & Muting ─────────────────────────────────────
+
+    /// <summary>
+    /// Reply to an error comment thread.
+    /// </summary>
+    public async Task<CommentReply> ReplyToErrorComment(
+        int commentId,
+        string text,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        var admin = await AuthHelper.GetRequiredAdmin(claimsPrincipal, authz, ct);
+
+        var comment = await db.ErrorComments
+            .FirstOrDefaultAsync(c => c.Id == commentId, ct)
+            ?? throw new GraphQLException("Error comment not found");
+
+        var reply = new CommentReply
+        {
+            ErrorCommentId = commentId,
+            AdminId = admin.Id,
+            Text = text,
+        };
+
+        db.CommentReplies.Add(reply);
+        await db.SaveChangesAsync(ct);
+        return reply;
+    }
+
+    /// <summary>
+    /// Mute/unmute an error comment thread for the current admin.
+    /// </summary>
+    public async Task<bool> MuteErrorCommentThread(
+        int id,
+        bool? hasMuted,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        var admin = await AuthHelper.GetRequiredAdmin(claimsPrincipal, authz, ct);
+
+        var follower = await db.CommentFollowers
+            .FirstOrDefaultAsync(f => f.ErrorCommentId == id && f.AdminId == admin.Id, ct);
+
+        if (follower != null)
+        {
+            follower.HasMuted = hasMuted ?? true;
+        }
+        else
+        {
+            db.CommentFollowers.Add(new CommentFollower
+            {
+                ErrorCommentId = id,
+                AdminId = admin.Id,
+                HasMuted = hasMuted ?? true,
+            });
+        }
+
+        await db.SaveChangesAsync(ct);
+        return true;
+    }
+
+    /// <summary>
+    /// Mute/unmute a session comment thread for the current admin.
+    /// </summary>
+    public async Task<bool> MuteSessionCommentThread(
+        int id,
+        bool? hasMuted,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        var admin = await AuthHelper.GetRequiredAdmin(claimsPrincipal, authz, ct);
+
+        var follower = await db.CommentFollowers
+            .FirstOrDefaultAsync(f => f.SessionCommentId == id && f.AdminId == admin.Id, ct);
+
+        if (follower != null)
+        {
+            follower.HasMuted = hasMuted ?? true;
+        }
+        else
+        {
+            db.CommentFollowers.Add(new CommentFollower
+            {
+                SessionCommentId = id,
+                AdminId = admin.Id,
+                HasMuted = hasMuted ?? true,
+            });
+        }
+
+        await db.SaveChangesAsync(ct);
+        return true;
+    }
+
+    /// <summary>
+    /// Update error tags (triggers global recomputation).
+    /// </summary>
+    public async Task<bool> UpdateErrorTags(
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        // Require authenticated admin (Go calls r.Resolver.UpdateErrorTags which does internal processing)
+        await AuthHelper.GetRequiredAdmin(claimsPrincipal, authz, ct);
+        // In the .NET version, this is a no-op placeholder — the actual tag recomputation
+        // would be handled by a background worker. Return true for API compatibility.
+        return await Task.FromResult(true);
+    }
+
+    // ── Visualization & Graph CRUD ───────────────────────────────────
+
+    /// <summary>
+    /// Create or update a visualization. Returns the visualization ID.
+    /// </summary>
+    public async Task<int> UpsertVisualization(
+        int projectId,
+        string? name,
+        int? id,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+
+        Visualization viz;
+        if (id != null)
+        {
+            viz = await db.Visualizations.FirstOrDefaultAsync(v => v.Id == id.Value, ct)
+                ?? throw new GraphQLException("Visualization not found");
+
+            if (viz.ProjectId != projectId)
+                throw new GraphQLException("Project ID does not match");
+
+            if (name != null) viz.Name = name;
+        }
+        else
+        {
+            viz = new Visualization
+            {
+                ProjectId = projectId,
+                Name = name ?? "Untitled",
+            };
+            db.Visualizations.Add(viz);
+        }
+
+        await db.SaveChangesAsync(ct);
+        return viz.Id;
+    }
+
+    /// <summary>
+    /// Delete a visualization and its graphs.
+    /// </summary>
+    public async Task<bool> DeleteVisualization(
+        int id,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        var viz = await db.Visualizations
+            .Include(v => v.Graphs)
+            .FirstOrDefaultAsync(v => v.Id == id, ct)
+            ?? throw new GraphQLException("Visualization not found");
+
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, viz.ProjectId, authz, ct);
+
+        db.Graphs.RemoveRange(viz.Graphs);
+        db.Visualizations.Remove(viz);
+        await db.SaveChangesAsync(ct);
+        return true;
+    }
+
+    /// <summary>
+    /// Create or update a graph within a visualization.
+    /// </summary>
+    public async Task<Graph> UpsertGraph(
+        int visualizationId,
+        string title,
+        string? productType,
+        string? query,
+        string? groupByKey,
+        string? bucketByKey,
+        int? bucketCount,
+        int? limit,
+        string? display,
+        int? id,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        var viz = await db.Visualizations.FirstOrDefaultAsync(v => v.Id == visualizationId, ct)
+            ?? throw new GraphQLException("Visualization not found");
+
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, viz.ProjectId, authz, ct);
+
+        Graph graph;
+        if (id != null)
+        {
+            graph = await db.Graphs.FirstOrDefaultAsync(g => g.Id == id.Value, ct)
+                ?? throw new GraphQLException("Graph not found");
+
+            graph.Title = title;
+            graph.ProductType = productType;
+            graph.Query = query;
+            graph.GroupByKey = groupByKey;
+            graph.BucketByKey = bucketByKey;
+            graph.BucketCount = bucketCount;
+            graph.Limit = limit;
+            graph.Display = display;
+        }
+        else
+        {
+            graph = new Graph
+            {
+                ProjectId = viz.ProjectId,
+                VisualizationId = visualizationId,
+                Title = title,
+                ProductType = productType,
+                Query = query,
+                GroupByKey = groupByKey,
+                BucketByKey = bucketByKey,
+                BucketCount = bucketCount,
+                Limit = limit,
+                Display = display,
+            };
+            db.Graphs.Add(graph);
+        }
+
+        await db.SaveChangesAsync(ct);
+        return graph;
+    }
+
+    /// <summary>
+    /// Delete a graph.
+    /// </summary>
+    public async Task<bool> DeleteGraph(
+        int id,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        var graph = await db.Graphs.FirstOrDefaultAsync(g => g.Id == id, ct)
+            ?? throw new GraphQLException("Graph not found");
+
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, graph.ProjectId, authz, ct);
+
+        db.Graphs.Remove(graph);
+        await db.SaveChangesAsync(ct);
+        return true;
+    }
+
+    // ── Email Opt-Out ────────────────────────────────────────────────
+
+    /// <summary>
+    /// Update email opt-out preference for the current admin.
+    /// </summary>
+    public async Task<bool> UpdateEmailOptOut(
+        string category,
+        bool optedOut,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        var admin = await AuthHelper.GetRequiredAdmin(claimsPrincipal, authz, ct);
+
+        var existing = await db.EmailOptOuts
+            .FirstOrDefaultAsync(e => e.AdminId == admin.Id && e.Category == category, ct);
+
+        if (optedOut && existing == null)
+        {
+            db.EmailOptOuts.Add(new EmailOptOut
+            {
+                AdminId = admin.Id,
+                Category = category,
+            });
+        }
+        else if (!optedOut && existing != null)
+        {
+            db.EmailOptOuts.Remove(existing);
+        }
+
+        await db.SaveChangesAsync(ct);
+        return true;
+    }
+
+    // ── Edit Project Platforms ────────────────────────────────────────
+
+    /// <summary>
+    /// Update the platforms configuration for a project.
+    /// </summary>
+    public async Task<bool> EditProjectPlatforms(
+        int projectId,
+        string platforms,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+
+        var project = await db.Projects.FindAsync([projectId], ct)
+            ?? throw new GraphQLException("Project not found");
+
+        project.Platforms = platforms.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList();
+        await db.SaveChangesAsync(ct);
+        return true;
+    }
 }

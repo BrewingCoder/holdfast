@@ -34,6 +34,15 @@ public class HistogramBucket
 }
 
 /// <summary>
+/// A searchable key returned by key-discovery queries (sessions_keys, events_keys, etc.).
+/// </summary>
+public class QueryKey
+{
+    public string Name { get; set; } = string.Empty;
+    public string Type { get; set; } = "String";
+}
+
+/// <summary>
 /// Common query input matching Go's QueryInput.
 /// </summary>
 public class QueryInput

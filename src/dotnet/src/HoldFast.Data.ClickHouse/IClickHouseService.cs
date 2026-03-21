@@ -92,4 +92,49 @@ public interface IClickHouseService
         string aggregator,
         string? column,
         CancellationToken ct = default);
+
+    // ── Key Discovery (Sessions/Errors/Events) ─────────────────────
+
+    Task<List<QueryKey>> GetSessionsKeysAsync(
+        int projectId,
+        DateTime startDate,
+        DateTime endDate,
+        string? query,
+        CancellationToken ct = default);
+
+    Task<List<string>> GetSessionsKeyValuesAsync(
+        int projectId,
+        string keyName,
+        DateTime startDate,
+        DateTime endDate,
+        string? query,
+        int? count,
+        CancellationToken ct = default);
+
+    Task<List<string>> GetErrorsKeyValuesAsync(
+        int projectId,
+        string keyName,
+        DateTime startDate,
+        DateTime endDate,
+        string? query,
+        int? count,
+        CancellationToken ct = default);
+
+    Task<List<QueryKey>> GetEventsKeysAsync(
+        int projectId,
+        DateTime startDate,
+        DateTime endDate,
+        string? query,
+        string? eventName,
+        CancellationToken ct = default);
+
+    Task<List<string>> GetEventsKeyValuesAsync(
+        int projectId,
+        string keyName,
+        DateTime startDate,
+        DateTime endDate,
+        string? query,
+        int? count,
+        string? eventName,
+        CancellationToken ct = default);
 }

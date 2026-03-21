@@ -31,7 +31,7 @@ public class SessionCommentTag : BaseEntity
 
 public class CommentReply : BaseEntity
 {
-    public int SessionCommentId { get; set; }
+    public int? SessionCommentId { get; set; }
     public int? ErrorCommentId { get; set; }
     public int AdminId { get; set; }
     public string? Text { get; set; }
@@ -41,7 +41,7 @@ public class CommentReply : BaseEntity
 
 public class CommentFollower : BaseEntity
 {
-    public int SessionCommentId { get; set; }
+    public int? SessionCommentId { get; set; }
     public int? ErrorCommentId { get; set; }
     public int AdminId { get; set; }
     public bool HasMuted { get; set; }
@@ -51,7 +51,7 @@ public class CommentFollower : BaseEntity
 
 public class CommentSlackThread : BaseEntity
 {
-    public int SessionCommentId { get; set; }
+    public int? SessionCommentId { get; set; }
     public int? ErrorCommentId { get; set; }
     public string? SlackChannelId { get; set; }
     public string? ThreadTs { get; set; }

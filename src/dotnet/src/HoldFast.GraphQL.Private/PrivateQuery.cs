@@ -1354,6 +1354,385 @@ public class PrivateQuery
         return await db.Sessions.AnyAsync(s => s.ProjectId == projectId && s.ViewedByAdmins != null && s.ViewedByAdmins > 0, ct);
     }
 
+    // ── Legacy Alert Queries ──────────────────────────────────────────
+
+    /// <summary>
+    /// Get error alerts for a project.
+    /// </summary>
+    public async Task<List<ErrorAlert>> GetErrorAlerts(
+        int projectId,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+        return await db.ErrorAlerts.Where(a => a.ProjectId == projectId).OrderByDescending(a => a.CreatedAt).ToListAsync(ct);
+    }
+
+    /// <summary>
+    /// Get session alerts for a project, optionally filtered by type.
+    /// </summary>
+    public async Task<List<SessionAlert>> GetSessionAlerts(
+        int projectId,
+        string? type,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+        var query = db.SessionAlerts.Where(a => a.ProjectId == projectId);
+        if (!string.IsNullOrEmpty(type))
+            query = query.Where(a => a.Type == type);
+        return await query.OrderByDescending(a => a.CreatedAt).ToListAsync(ct);
+    }
+
+    /// <summary>
+    /// Get log alerts for a project.
+    /// </summary>
+    public async Task<List<LogAlert>> GetLogAlerts(
+        int projectId,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+        return await db.LogAlerts.Where(a => a.ProjectId == projectId).OrderByDescending(a => a.CreatedAt).ToListAsync(ct);
+    }
+
+    /// <summary>
+    /// Get a single log alert by id.
+    /// </summary>
+    public async Task<LogAlert?> GetLogAlert(
+        int id,
+        int projectId,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+        return await db.LogAlerts.FirstOrDefaultAsync(a => a.Id == id && a.ProjectId == projectId, ct);
+    }
+
+    // ── Visualization & Graph Queries ────────────────────────────────
+
+    /// <summary>
+    /// Get all visualizations for a project.
+    /// </summary>
+    public async Task<List<Visualization>> GetVisualizations(
+        int projectId,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+        return await db.Visualizations
+            .Where(v => v.ProjectId == projectId)
+            .Include(v => v.Graphs)
+            .OrderByDescending(v => v.CreatedAt)
+            .ToListAsync(ct);
+    }
+
+    /// <summary>
+    /// Get a single visualization by id.
+    /// </summary>
+    public async Task<Visualization?> GetVisualization(
+        int id,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        var viz = await db.Visualizations
+            .Include(v => v.Graphs)
+            .FirstOrDefaultAsync(v => v.Id == id, ct);
+        if (viz == null) return null;
+
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, viz.ProjectId, authz, ct);
+        return viz;
+    }
+
+    /// <summary>
+    /// Get a single graph by id.
+    /// </summary>
+    public async Task<Graph?> GetGraph(
+        int id,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        var graph = await db.Graphs.FirstOrDefaultAsync(g => g.Id == id, ct);
+        if (graph == null) return null;
+
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, graph.ProjectId, authz, ct);
+        return graph;
+    }
+
+    // ── Analytics Queries ────────────────────────────────────────────
+
+    /// <summary>
+    /// Count unprocessed sessions (last 4h10m window, matching Go lookback).
+    /// </summary>
+    public async Task<long> GetUnprocessedSessionsCount(
+        int projectId,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+        var cutoff = DateTime.UtcNow.AddHours(-4).AddMinutes(-10);
+        return await db.Sessions
+            .Where(s => s.ProjectId == projectId
+                && s.Processed != true
+                && s.Excluded != true
+                && s.CreatedAt > cutoff)
+            .LongCountAsync(ct);
+    }
+
+    /// <summary>
+    /// Count distinct live users (unprocessed sessions in last 4h10m).
+    /// </summary>
+    public async Task<long> GetLiveUsersCount(
+        int projectId,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+        var cutoff = DateTime.UtcNow.AddHours(-4).AddMinutes(-10);
+        return await db.Sessions
+            .Where(s => s.ProjectId == projectId
+                && s.Processed != true
+                && s.Excluded != true
+                && s.CreatedAt > cutoff)
+            .Select(s => string.IsNullOrEmpty(s.Identifier) ? s.Fingerprint.ToString() : s.Identifier)
+            .Distinct()
+            .LongCountAsync(ct);
+    }
+
+    /// <summary>
+    /// Daily session counts for a date range (from materialized view).
+    /// </summary>
+    public async Task<List<DailySessionCount>> GetDailySessionsCount(
+        int projectId,
+        DateTime startDate,
+        DateTime endDate,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+        var start = startDate.Date;
+        var end = endDate.Date;
+        return await db.DailySessionCounts
+            .Where(d => d.ProjectId == projectId && d.Date >= start && d.Date <= end)
+            .OrderBy(d => d.Date)
+            .ToListAsync(ct);
+    }
+
+    /// <summary>
+    /// Daily error counts for a date range (from materialized view).
+    /// </summary>
+    public async Task<List<DailyErrorCount>> GetDailyErrorsCount(
+        int projectId,
+        DateTime startDate,
+        DateTime endDate,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+        var start = startDate.Date;
+        var end = endDate.Date;
+        return await db.DailyErrorCounts
+            .Where(d => d.ProjectId == projectId && d.Date >= start && d.Date <= end)
+            .OrderBy(d => d.Date)
+            .ToListAsync(ct);
+    }
+
+    /// <summary>
+    /// Workspace admins filtered by project-level access.
+    /// </summary>
+    public async Task<List<Admin>> GetWorkspaceAdminsByProjectId(
+        int projectId,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+
+        var project = await db.Projects.FindAsync([projectId], ct)
+            ?? throw new GraphQLException("Project not found");
+
+        // Get all workspace admins via join table
+        var adminIds = await db.WorkspaceAdmins
+            .Where(wa => wa.WorkspaceId == project.WorkspaceId)
+            .Select(wa => wa.AdminId)
+            .ToListAsync(ct);
+
+        return await db.Admins.Where(a => adminIds.Contains(a.Id)).ToListAsync(ct);
+    }
+
+    // ── ClickHouse Key Queries (Sessions/Errors/Events) ─────────────
+
+    /// <summary>
+    /// Get searchable keys for sessions.
+    /// </summary>
+    public async Task<List<QueryKey>> GetSessionsKeys(
+        int projectId,
+        DateTime startDate,
+        DateTime endDate,
+        string? query,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] IClickHouseService clickHouse,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+        return await clickHouse.GetSessionsKeysAsync(projectId, startDate, endDate, query, ct);
+    }
+
+    /// <summary>
+    /// Get key values for sessions.
+    /// </summary>
+    public async Task<List<string>> GetSessionsKeyValues(
+        int projectId,
+        string keyName,
+        DateTime startDate,
+        DateTime endDate,
+        string? query,
+        int? count,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] IClickHouseService clickHouse,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+        return await clickHouse.GetSessionsKeyValuesAsync(projectId, keyName, startDate, endDate, query, count, ct);
+    }
+
+    /// <summary>
+    /// Get searchable keys for errors (reserved key set, matching Go).
+    /// </summary>
+    public Task<List<QueryKey>> GetErrorsKeys(
+        int projectId,
+        string? query,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        CancellationToken ct)
+    {
+        // Go returns a static list of reserved error keys, filtered by query
+        var reservedKeys = new[] {
+            "browser", "environment", "event", "os_name", "service_name",
+            "service_version", "secure_session_id", "status", "tag", "type",
+            "visited_url"
+        };
+
+        var keys = reservedKeys
+            .Where(k => string.IsNullOrEmpty(query) || k.Contains(query, StringComparison.OrdinalIgnoreCase))
+            .Select(k => new QueryKey { Name = k, Type = "String" })
+            .ToList();
+
+        return Task.FromResult(keys);
+    }
+
+    /// <summary>
+    /// Get key values for errors (delegates to ClickHouse).
+    /// </summary>
+    public async Task<List<string>> GetErrorsKeyValues(
+        int projectId,
+        string keyName,
+        DateTime startDate,
+        DateTime endDate,
+        string? query,
+        int? count,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] IClickHouseService clickHouse,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+        return await clickHouse.GetErrorsKeyValuesAsync(projectId, keyName, startDate, endDate, query, count, ct);
+    }
+
+    /// <summary>
+    /// Get searchable keys for events (delegates to ClickHouse).
+    /// </summary>
+    public async Task<List<QueryKey>> GetEventsKeys(
+        int projectId,
+        DateTime startDate,
+        DateTime endDate,
+        string? query,
+        string? eventName,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] IClickHouseService clickHouse,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+        return await clickHouse.GetEventsKeysAsync(projectId, startDate, endDate, query, eventName, ct);
+    }
+
+    /// <summary>
+    /// Get key values for events (delegates to ClickHouse).
+    /// </summary>
+    public async Task<List<string>> GetEventsKeyValues(
+        int projectId,
+        string keyName,
+        DateTime startDate,
+        DateTime endDate,
+        string? query,
+        int? count,
+        string? eventName,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] IClickHouseService clickHouse,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+        return await clickHouse.GetEventsKeyValuesAsync(projectId, keyName, startDate, endDate, query, count, eventName, ct);
+    }
+
+    /// <summary>
+    /// Get workspaces count for the current admin.
+    /// </summary>
+    public async Task<long> GetWorkspacesCount(
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        var admin = await AuthHelper.GetRequiredAdmin(claimsPrincipal, authz, ct);
+        return await db.WorkspaceAdmins
+            .Where(wa => wa.AdminId == admin.Id)
+            .Select(wa => wa.WorkspaceId)
+            .Distinct()
+            .LongCountAsync(ct);
+    }
+
+    /// <summary>
+    /// Get email opt-outs for the current admin.
+    /// </summary>
+    public async Task<List<EmailOptOut>> GetEmailOptOuts(
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        var admin = await AuthHelper.GetRequiredAdmin(claimsPrincipal, authz, ct);
+        return await db.EmailOptOuts.Where(e => e.AdminId == admin.Id).ToListAsync(ct);
+    }
+
     // ── System ────────────────────────────────────────────────────────
 
     /// <summary>
