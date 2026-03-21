@@ -172,7 +172,7 @@ public class SessionProcessingServiceTests : IDisposable
             .ToListAsync();
 
         Assert.True(intervals.Count >= 2);
-        Assert.True(intervals.Any(i => !i.Active)); // At least one inactive
+        Assert.Contains(intervals, i => !i.Active); // At least one inactive
     }
 
     [Fact]

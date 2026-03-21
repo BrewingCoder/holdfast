@@ -379,7 +379,7 @@ public class InputTypeExtendedTests
             ]);
 
         Assert.Single(config.Logs!);
-        Assert.Equal(100, config.Logs[0].SamplingRatio);
+        Assert.Equal(100, config.Logs![0].SamplingRatio);
     }
 
     [Fact]
@@ -415,7 +415,7 @@ public class InputTypeExtendedTests
             ]);
 
         Assert.Single(config.Events!);
-        Assert.Equal("exception.*", config.Events[0].Name!.RegexValue);
+        Assert.Equal("exception.*", config.Events![0].Name!.RegexValue);
     }
 
     [Fact]
@@ -451,9 +451,9 @@ public class InputTypeExtendedTests
         var back = JsonSerializer.Deserialize<SamplingConfig>(json);
 
         Assert.Single(back!.Spans!);
-        Assert.Equal(50, back.Spans[0].SamplingRatio);
+        Assert.Equal(50, back.Spans![0].SamplingRatio);
         Assert.Single(back.Logs!);
-        Assert.Equal(1000, back.Logs[0].SamplingRatio);
+        Assert.Equal(1000, back.Logs![0].SamplingRatio);
     }
 
     // ── SearchResults ─────────────────────────────────────────────────

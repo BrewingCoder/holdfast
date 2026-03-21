@@ -41,7 +41,9 @@ public class ClickHouseHealthCheckTests
         var check = new ClickHouseHealthCheck(stub);
         // HealthCheckContext with null properties should not throw
         var result = await check.CheckHealthAsync(new HealthCheckContext());
-        Assert.NotNull(result);
+        // HealthCheckResult is a value type — verify no exception and a valid result
+        // Stub doesn't have a real ClickHouse, so it returns Degraded
+        Assert.Equal(HealthStatus.Degraded, result.Status);
     }
 
     [Fact]

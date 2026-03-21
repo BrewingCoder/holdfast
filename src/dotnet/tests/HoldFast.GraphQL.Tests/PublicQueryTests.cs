@@ -307,8 +307,8 @@ public class PublicQueryTests : IDisposable
             });
 
         Assert.Single(span.Events!);
-        Assert.Equal("exception", span.Events[0].Name!.MatchValue as string);
-        Assert.Single(span.Events[0].Attributes!);
+        Assert.Equal("exception", span.Events![0].Name!.MatchValue as string);
+        Assert.Single(span.Events![0].Attributes!);
     }
 
     [Fact]

@@ -241,7 +241,7 @@ public class PageInfoComputationTests
         var pageInfo = ClickHouseService.ComputePageInfo(cursors, ref edges, 1, pagination);
 
         Assert.True(pageInfo.HasNextPage);
-        Assert.Equal(1, edges.Count);
+        Assert.Single(edges);
     }
 
     [Fact]
