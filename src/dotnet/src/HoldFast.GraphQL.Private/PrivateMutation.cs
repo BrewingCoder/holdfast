@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using HoldFast.Data;
+using HoldFast.Domain;
 using HoldFast.Domain.Entities;
 using HoldFast.Domain.Enums;
 using HoldFast.Shared.Auth;
@@ -1009,7 +1010,7 @@ public class PrivateMutation
         {
             WorkspaceId = invite.WorkspaceId.Value,
             AdminId = admin.Id,
-            Role = invite.InviteeRole ?? "MEMBER",
+            Role = invite.InviteeRole ?? WorkspaceRoles.Member,
             ProjectIds = invite.ProjectIds,
         });
 
@@ -1752,7 +1753,7 @@ public class PrivateMutation
     {
         await AuthHelper.RequireWorkspaceAdmin(claimsPrincipal, workspaceId, authz, ct);
 
-        if (role != "ADMIN" && role != "MEMBER")
+        if (role != WorkspaceRoles.Admin && role != WorkspaceRoles.Member)
             throw new GraphQLException($"Invalid role: {role}");
 
         // Check for existing invite
@@ -1816,7 +1817,7 @@ public class PrivateMutation
         {
             AdminId = admin.Id,
             WorkspaceId = workspaceId,
-            Role = "MEMBER",
+            Role = WorkspaceRoles.Member,
         });
         await db.SaveChangesAsync(ct);
 

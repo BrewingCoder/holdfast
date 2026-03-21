@@ -1,4 +1,5 @@
 using HoldFast.Data;
+using HoldFast.Domain;
 using HoldFast.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 
@@ -57,7 +58,7 @@ public class AuthorizationService : IAuthorizationService
             .FirstOrDefaultAsync(wa =>
                 wa.AdminId == adminId &&
                 wa.WorkspaceId == workspaceId &&
-                (wa.Role == "ADMIN" || wa.ProjectIds == null),
+                (wa.Role == WorkspaceRoles.Admin || wa.ProjectIds == null),
                 ct);
 
         if (membership == null)
@@ -100,13 +101,13 @@ public class AuthorizationService : IAuthorizationService
         if (membership == null)
             return null;
 
-        return (membership.Role ?? "MEMBER", membership.ProjectIds);
+        return (membership.Role ?? WorkspaceRoles.Member, membership.ProjectIds);
     }
 
     public async Task ValidateAdminRoleAsync(int adminId, int workspaceId, CancellationToken ct = default)
     {
         var role = await GetAdminRoleAsync(adminId, workspaceId, ct);
-        if (role == null || role.Value.Role != "ADMIN")
+        if (role == null || role.Value.Role != WorkspaceRoles.Admin)
             throw AuthErrors.AuthorizationError;
     }
 }
