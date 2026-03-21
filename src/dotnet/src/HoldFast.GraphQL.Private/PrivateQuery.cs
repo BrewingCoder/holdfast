@@ -1,5 +1,7 @@
 using System.Security.Claims;
 using HoldFast.Data;
+using HoldFast.Data.ClickHouse;
+using HoldFast.Data.ClickHouse.Models;
 using HoldFast.Domain.Entities;
 using HoldFast.Shared.Auth;
 using HotChocolate;
@@ -634,6 +636,283 @@ public class PrivateQuery
         if (project?.BackendSetup != true) return [];
 
         return ["latest"];
+    }
+
+    // ── Logs (ClickHouse) ──────────────────────────────────────────────
+
+    /// <summary>
+    /// Query logs from ClickHouse with cursor-based pagination.
+    /// </summary>
+    public async Task<LogConnection> GetLogs(
+        int projectId,
+        string query,
+        DateTime dateRangeStart,
+        DateTime dateRangeEnd,
+        string? after,
+        string? before,
+        string? at,
+        string direction,
+        int limit,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] IClickHouseService clickHouse,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+
+        return await clickHouse.ReadLogsAsync(projectId,
+            new QueryInput { Query = query, DateRangeStart = dateRangeStart, DateRangeEnd = dateRangeEnd },
+            new ClickHousePagination { After = after, Before = before, At = at, Direction = direction, Limit = limit },
+            ct);
+    }
+
+    /// <summary>
+    /// Get log histogram buckets for chart display.
+    /// </summary>
+    public async Task<List<HistogramBucket>> GetLogsHistogram(
+        int projectId,
+        string query,
+        DateTime dateRangeStart,
+        DateTime dateRangeEnd,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] IClickHouseService clickHouse,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+
+        return await clickHouse.ReadLogsHistogramAsync(projectId,
+            new QueryInput { Query = query, DateRangeStart = dateRangeStart, DateRangeEnd = dateRangeEnd },
+            ct);
+    }
+
+    /// <summary>
+    /// Get available log attribute keys for filter UI.
+    /// </summary>
+    public async Task<List<string>> GetLogKeys(
+        int projectId,
+        DateTime dateRangeStart,
+        DateTime dateRangeEnd,
+        string? query,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] IClickHouseService clickHouse,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+
+        return await clickHouse.GetLogKeysAsync(projectId,
+            new QueryInput { Query = query ?? "", DateRangeStart = dateRangeStart, DateRangeEnd = dateRangeEnd },
+            ct);
+    }
+
+    /// <summary>
+    /// Get values for a specific log attribute key.
+    /// </summary>
+    public async Task<List<string>> GetLogKeyValues(
+        int projectId,
+        string key,
+        DateTime dateRangeStart,
+        DateTime dateRangeEnd,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] IClickHouseService clickHouse,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+
+        return await clickHouse.GetLogKeyValuesAsync(projectId, key,
+            new QueryInput { DateRangeStart = dateRangeStart, DateRangeEnd = dateRangeEnd },
+            ct);
+    }
+
+    // ── Traces (ClickHouse) ─────────────────────────────────────────
+
+    /// <summary>
+    /// Query traces from ClickHouse with cursor-based pagination.
+    /// </summary>
+    public async Task<TraceConnection> GetTraces(
+        int projectId,
+        string query,
+        DateTime dateRangeStart,
+        DateTime dateRangeEnd,
+        string? after,
+        string? before,
+        string? at,
+        string direction,
+        int limit,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] IClickHouseService clickHouse,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+
+        return await clickHouse.ReadTracesAsync(projectId,
+            new QueryInput { Query = query, DateRangeStart = dateRangeStart, DateRangeEnd = dateRangeEnd },
+            new ClickHousePagination { After = after, Before = before, At = at, Direction = direction, Limit = limit },
+            ct: ct);
+    }
+
+    /// <summary>
+    /// Get trace histogram buckets for chart display.
+    /// </summary>
+    public async Task<List<HistogramBucket>> GetTracesHistogram(
+        int projectId,
+        string query,
+        DateTime dateRangeStart,
+        DateTime dateRangeEnd,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] IClickHouseService clickHouse,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+
+        return await clickHouse.ReadTracesHistogramAsync(projectId,
+            new QueryInput { Query = query, DateRangeStart = dateRangeStart, DateRangeEnd = dateRangeEnd },
+            ct);
+    }
+
+    /// <summary>
+    /// Get available trace attribute keys for filter UI.
+    /// </summary>
+    public async Task<List<string>> GetTraceKeys(
+        int projectId,
+        DateTime dateRangeStart,
+        DateTime dateRangeEnd,
+        string? query,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] IClickHouseService clickHouse,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+
+        return await clickHouse.GetTraceKeysAsync(projectId,
+            new QueryInput { Query = query ?? "", DateRangeStart = dateRangeStart, DateRangeEnd = dateRangeEnd },
+            ct);
+    }
+
+    /// <summary>
+    /// Get values for a specific trace attribute key.
+    /// </summary>
+    public async Task<List<string>> GetTraceKeyValues(
+        int projectId,
+        string key,
+        DateTime dateRangeStart,
+        DateTime dateRangeEnd,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] IClickHouseService clickHouse,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+
+        return await clickHouse.GetTraceKeyValuesAsync(projectId, key,
+            new QueryInput { DateRangeStart = dateRangeStart, DateRangeEnd = dateRangeEnd },
+            ct);
+    }
+
+    // ── Metrics (ClickHouse) ────────────────────────────────────────
+
+    /// <summary>
+    /// Query metrics from ClickHouse with time bucketing and aggregation.
+    /// </summary>
+    public async Task<MetricsBuckets> GetMetrics(
+        int projectId,
+        string query,
+        DateTime dateRangeStart,
+        DateTime dateRangeEnd,
+        string bucketBy,
+        List<string>? groupBy,
+        string aggregator,
+        string? column,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] IClickHouseService clickHouse,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+
+        return await clickHouse.ReadMetricsAsync(projectId,
+            new QueryInput { Query = query, DateRangeStart = dateRangeStart, DateRangeEnd = dateRangeEnd },
+            bucketBy, groupBy, aggregator, column, ct);
+    }
+
+    // ── Error Group Search (ClickHouse) ─────────────────────────────
+
+    /// <summary>
+    /// Search error group IDs via ClickHouse (for the error groups list page).
+    /// Returns IDs and total count for pagination.
+    /// </summary>
+    public async Task<ErrorGroupSearchResult> SearchErrorGroups(
+        int projectId,
+        string query,
+        DateTime dateRangeStart,
+        DateTime dateRangeEnd,
+        int count,
+        int page,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] IClickHouseService clickHouse,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+
+        var (ids, total) = await clickHouse.QueryErrorGroupIdsAsync(projectId,
+            new QueryInput { Query = query, DateRangeStart = dateRangeStart, DateRangeEnd = dateRangeEnd },
+            count, page, ct);
+
+        return new ErrorGroupSearchResult { ErrorGroupIds = ids, TotalCount = total };
+    }
+
+    /// <summary>
+    /// Get error objects histogram for charts.
+    /// </summary>
+    public async Task<List<HistogramBucket>> GetErrorObjectsHistogram(
+        int projectId,
+        string query,
+        DateTime dateRangeStart,
+        DateTime dateRangeEnd,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] IClickHouseService clickHouse,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+
+        return await clickHouse.ReadErrorObjectsHistogramAsync(projectId,
+            new QueryInput { Query = query, DateRangeStart = dateRangeStart, DateRangeEnd = dateRangeEnd },
+            ct);
+    }
+
+    // ── Session Search (ClickHouse) ─────────────────────────────────
+
+    /// <summary>
+    /// Search session IDs via ClickHouse (for the sessions list page).
+    /// </summary>
+    public async Task<SessionSearchResult> SearchSessions(
+        int projectId,
+        string query,
+        DateTime dateRangeStart,
+        DateTime dateRangeEnd,
+        int count,
+        int page,
+        string? sortField,
+        bool sortDesc,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] IClickHouseService clickHouse,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+
+        var (ids, total) = await clickHouse.QuerySessionIdsAsync(projectId,
+            new QueryInput { Query = query, DateRangeStart = dateRangeStart, DateRangeEnd = dateRangeEnd },
+            count, page, sortField, sortDesc, ct);
+
+        return new SessionSearchResult { SessionIds = ids, TotalCount = total };
     }
 
     // ── System ────────────────────────────────────────────────────────
