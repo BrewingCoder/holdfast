@@ -181,7 +181,7 @@ public class PrivateMutationSessionMgmtTests : IDisposable
     public async Task UpdateAdminAboutYouDetails_UpdatesName()
     {
         var updated = await _mutation.UpdateAdminAboutYouDetails(
-            "Updated Name", null, null, _principal, _authz, CancellationToken.None);
+            "Updated Name", null, null, _principal, _authz, _db, CancellationToken.None);
 
         Assert.Equal("Updated Name", updated.Name);
     }
@@ -191,7 +191,7 @@ public class PrivateMutationSessionMgmtTests : IDisposable
     {
         var updated = await _mutation.UpdateAdminAboutYouDetails(
             "New Name", "word-of-mouth", "Developer",
-            _principal, _authz, CancellationToken.None);
+            _principal, _authz, _db, CancellationToken.None);
 
         Assert.Equal("New Name", updated.Name);
     }
@@ -200,7 +200,7 @@ public class PrivateMutationSessionMgmtTests : IDisposable
     public async Task UpdateAdminAboutYouDetails_NullsLeaveUnchanged()
     {
         var updated = await _mutation.UpdateAdminAboutYouDetails(
-            null, null, null, _principal, _authz, CancellationToken.None);
+            null, null, null, _principal, _authz, _db, CancellationToken.None);
 
         Assert.Equal("Test Admin", updated.Name); // Original name preserved
     }

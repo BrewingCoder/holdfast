@@ -418,7 +418,7 @@ public class PrivateMutationSessionCommentTests : IDisposable
     {
         var result = await _mutation.UpdateAdminAboutYouDetails(
             "New Name", null, null,
-            MakePrincipal("sc-admin"), _authz, CancellationToken.None);
+            MakePrincipal("sc-admin"), _authz, _db, CancellationToken.None);
 
         Assert.Equal("New Name", result.Name);
     }
@@ -428,7 +428,7 @@ public class PrivateMutationSessionCommentTests : IDisposable
     {
         var result = await _mutation.UpdateAdminAboutYouDetails(
             "Scott", "friend", "developer",
-            MakePrincipal("sc-admin"), _authz, CancellationToken.None);
+            MakePrincipal("sc-admin"), _authz, _db, CancellationToken.None);
 
         Assert.Equal("Scott", result.Name);
         Assert.Equal("friend", result.Referral);
@@ -445,7 +445,7 @@ public class PrivateMutationSessionCommentTests : IDisposable
 
         var result = await _mutation.UpdateAdminAboutYouDetails(
             null, null, null,
-            MakePrincipal("sc-admin"), _authz, CancellationToken.None);
+            MakePrincipal("sc-admin"), _authz, _db, CancellationToken.None);
 
         Assert.Equal("Original", result.Name);
         Assert.Equal("google", result.Referral);
@@ -457,6 +457,6 @@ public class PrivateMutationSessionCommentTests : IDisposable
         await Assert.ThrowsAsync<GraphQLException>(() =>
             _mutation.UpdateAdminAboutYouDetails(
                 "Name", null, null,
-                AnonymousPrincipal, _authz, CancellationToken.None));
+                AnonymousPrincipal, _authz, _db, CancellationToken.None));
     }
 }

@@ -559,6 +559,7 @@ public class PrivateMutation
         string? role,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
         CancellationToken ct)
     {
         var admin = await AuthHelper.GetRequiredAdmin(claimsPrincipal, authz, ct);
@@ -567,6 +568,7 @@ public class PrivateMutation
         if (referral != null) admin.Referral = referral;
         if (role != null) admin.UserDefinedRole = role;
 
+        await db.SaveChangesAsync(ct);
         return admin;
     }
 
