@@ -29,7 +29,7 @@ public class TraceRow
     public List<TraceEvent> Events { get; set; } = [];
     public List<TraceLink> Links { get; set; } = [];
 
-    public string Cursor => $"{Timestamp:o}_{UUID}";
+    public string Cursor => CursorHelper.Encode(Timestamp, UUID);
 }
 
 public class TraceEvent

@@ -25,10 +25,10 @@ public class LogRow
     public string Environment { get; set; } = string.Empty;
 
     /// <summary>
-    /// Generate a cursor string for pagination (matching Go's Cursor() method).
-    /// Format: "{timestamp}_{uuid}"
+    /// Generate a cursor string for pagination (matching Go's encodeCursor).
+    /// Format: base64("{RFC3339},{uuid}")
     /// </summary>
-    public string Cursor => $"{Timestamp:o}_{UUID}";
+    public string Cursor => CursorHelper.Encode(Timestamp, UUID);
 }
 
 /// <summary>

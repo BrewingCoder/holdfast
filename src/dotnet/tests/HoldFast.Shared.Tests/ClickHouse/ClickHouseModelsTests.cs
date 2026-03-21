@@ -1,3 +1,4 @@
+using HoldFast.Data.ClickHouse;
 using HoldFast.Data.ClickHouse.Models;
 using HoldFast.Domain.Enums;
 
@@ -25,26 +26,33 @@ public class ClickHouseModelsTests
     }
 
     [Fact]
-    public void LogRow_Cursor_Format()
+    public void LogRow_Cursor_IsBase64Encoded()
     {
         var row = new LogRow
         {
             Timestamp = new DateTime(2026, 3, 20, 12, 0, 0, DateTimeKind.Utc),
             UUID = "abc123",
         };
-        Assert.Contains("abc123", row.Cursor);
-        Assert.Contains("_", row.Cursor);
+        // Should be valid base64
+        var bytes = Convert.FromBase64String(row.Cursor);
+        Assert.NotEmpty(bytes);
+        // Should decode to timestamp,uuid
+        var (ts, uuid) = CursorHelper.Decode(row.Cursor);
+        Assert.Equal("abc123", uuid);
+        Assert.Equal(new DateTime(2026, 3, 20, 12, 0, 0, DateTimeKind.Utc), ts);
     }
 
     [Fact]
-    public void LogRow_Cursor_IncludesTimestamp()
+    public void LogRow_Cursor_RoundTrips()
     {
         var row = new LogRow
         {
             Timestamp = new DateTime(2026, 1, 15, 10, 30, 0, DateTimeKind.Utc),
             UUID = "xyz",
         };
-        Assert.Contains("2026", row.Cursor);
+        var (ts, uuid) = CursorHelper.Decode(row.Cursor);
+        Assert.Equal(row.Timestamp, ts);
+        Assert.Equal(row.UUID, uuid);
     }
 
     [Fact]
@@ -105,15 +113,16 @@ public class ClickHouseModelsTests
     }
 
     [Fact]
-    public void TraceRow_Cursor_Format()
+    public void TraceRow_Cursor_IsBase64Encoded()
     {
         var row = new TraceRow
         {
-            Timestamp = DateTime.UtcNow,
+            Timestamp = new DateTime(2026, 6, 1, 8, 0, 0, DateTimeKind.Utc),
             UUID = "trace-uuid",
         };
-        Assert.Contains("trace-uuid", row.Cursor);
-        Assert.Contains("_", row.Cursor);
+        var (ts, uuid) = CursorHelper.Decode(row.Cursor);
+        Assert.Equal("trace-uuid", uuid);
+        Assert.Equal(new DateTime(2026, 6, 1, 8, 0, 0, DateTimeKind.Utc), ts);
     }
 
     [Fact]

@@ -7,6 +7,8 @@
   <ItemGroup>
     <PackageReference Include="ClickHouse.Client" Version="7.14.0" />
     <PackageReference Include="Dapper" Version="2.1.72" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.5" />
+    <PackageReference Include="Microsoft.Extensions.Options" Version="10.0.5" />
   </ItemGroup>
 
   <PropertyGroup>
@@ -14,5 +16,9 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="HoldFast.Shared.Tests" />
+  </ItemGroup>
 
 </Project>

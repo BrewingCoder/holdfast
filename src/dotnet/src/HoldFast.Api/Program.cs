@@ -1,6 +1,7 @@
 using Amazon.S3;
 using HoldFast.Api;
 using HoldFast.Data;
+using HoldFast.Data.ClickHouse;
 using HoldFast.GraphQL.Private;
 using HoldFast.GraphQL.Public;
 using HoldFast.Shared.Auth;
@@ -43,6 +44,11 @@ builder.Services.AddSingleton<IKafkaProducer, KafkaProducerAdapter>();
 builder.Services.Configure<RedisOptions>(
     builder.Configuration.GetSection("Redis"));
 builder.Services.AddSingleton<RedisService>();
+
+// ── ClickHouse ────────────────────────────────────────────────────────
+builder.Services.Configure<ClickHouseOptions>(
+    builder.Configuration.GetSection("ClickHouse"));
+builder.Services.AddSingleton<IClickHouseService, ClickHouseService>();
 
 // ── Storage ───────────────────────────────────────────────────────────
 builder.Services.Configure<StorageOptions>(
@@ -102,7 +108,8 @@ builder.Services
 
 // ── Health checks ─────────────────────────────────────────────────────
 builder.Services.AddHealthChecks()
-    .AddNpgSql(builder.Configuration.GetConnectionString("PostgreSQL")!);
+    .AddNpgSql(builder.Configuration.GetConnectionString("PostgreSQL")!)
+    .AddCheck<ClickHouseHealthCheck>("clickhouse");
 
 var app = builder.Build();
 
