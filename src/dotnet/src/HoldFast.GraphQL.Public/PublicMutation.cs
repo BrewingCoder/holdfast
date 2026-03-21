@@ -95,6 +95,47 @@ public class PublicMutation
     }
 
     /// <summary>
+    /// [DEPRECATED] Push uncompressed session payload with separate fields.
+    /// Older SDKs send events, messages, resources, errors as separate parameters.
+    /// New SDKs should use PushSessionEvents instead.
+    /// </summary>
+    [GraphQLDeprecated("Use pushSessionEvents instead")]
+    public async Task<int> PushPayload(
+        string sessionSecureId,
+        int? payloadId,
+        string events,
+        string messages,
+        string resources,
+        string? webSocketEvents,
+        List<ErrorObjectInput> errors,
+        bool? isBeacon,
+        bool? hasSessionUnloaded,
+        string? highlightLogs,
+        [Service] IKafkaProducer kafka,
+        CancellationToken ct)
+    {
+        await kafka.ProducePushPayloadAsync(
+            sessionSecureId, payloadId ?? 0, events, messages, resources,
+            webSocketEvents, errors, isBeacon, hasSessionUnloaded, highlightLogs, ct);
+        return events.Length;
+    }
+
+    /// <summary>
+    /// [DEPRECATED] Push compressed session payload. Delegates to PushSessionEvents.
+    /// </summary>
+    [GraphQLDeprecated("Use pushSessionEvents instead")]
+    public async Task<bool> PushPayloadCompressed(
+        string sessionSecureId,
+        int payloadId,
+        string data,
+        [Service] IKafkaProducer kafka,
+        CancellationToken ct)
+    {
+        await kafka.ProduceSessionEventsAsync(sessionSecureId, payloadId, data, ct);
+        return true;
+    }
+
+    /// <summary>
     /// Push compressed session events (replay data, errors, resources).
     /// This is the primary data ingestion path for new SDKs.
     /// The compressed payload is forwarded to Kafka for async processing.

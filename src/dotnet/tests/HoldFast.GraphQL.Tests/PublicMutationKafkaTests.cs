@@ -17,6 +17,7 @@ public class PublicMutationKafkaTests
     private class FakeKafkaProducer : IKafkaProducer
     {
         public List<(string SessionSecureId, long PayloadId, string Data)> SessionEvents { get; } = [];
+        public List<(string SessionSecureId, long PayloadId, string Events, string Messages, string Resources)> PushPayloads { get; } = [];
         public List<(string? ProjectId, BackendErrorObjectInput Error)> BackendErrors { get; } = [];
         public List<MetricInput> Metrics { get; } = [];
         public List<LogInput> Logs { get; } = [];
@@ -25,6 +26,15 @@ public class PublicMutationKafkaTests
         public Task ProduceSessionEventsAsync(string sessionSecureId, long payloadId, string data, CancellationToken ct)
         {
             SessionEvents.Add((sessionSecureId, payloadId, data));
+            return Task.CompletedTask;
+        }
+
+        public Task ProducePushPayloadAsync(string sessionSecureId, long payloadId, string events,
+            string messages, string resources, string? webSocketEvents,
+            List<ErrorObjectInput> errors, bool? isBeacon, bool? hasSessionUnloaded,
+            string? highlightLogs, CancellationToken ct)
+        {
+            PushPayloads.Add((sessionSecureId, payloadId, events, messages, resources));
             return Task.CompletedTask;
         }
 
@@ -261,5 +271,114 @@ public class PublicMutationKafkaTests
         Assert.Equal("trace-123", produced.TraceId);
         Assert.Equal("mygroup", produced.Group);
         Assert.Equal(ts, produced.Timestamp);
+    }
+
+    // ── PushPayload (deprecated) ──────────────────────────────────────
+
+    [Fact]
+    public async Task PushPayload_ProducesToKafka()
+    {
+        var kafka = new FakeKafkaProducer();
+
+        var result = await _mutation.PushPayload(
+            "sess-legacy", 1, "[{\"type\":\"click\"}]",
+            "[{\"msg\":\"hello\"}]", "[{\"url\":\"script.js\"}]",
+            null, [], null, null, null,
+            kafka, CancellationToken.None);
+
+        Assert.True(result > 0);
+        Assert.Single(kafka.PushPayloads);
+        Assert.Equal("sess-legacy", kafka.PushPayloads[0].SessionSecureId);
+        Assert.Equal(1, kafka.PushPayloads[0].PayloadId);
+        Assert.Contains("click", kafka.PushPayloads[0].Events);
+    }
+
+    [Fact]
+    public async Task PushPayload_NullPayloadId_DefaultsToZero()
+    {
+        var kafka = new FakeKafkaProducer();
+
+        await _mutation.PushPayload(
+            "sess-1", null, "events", "msgs", "res",
+            null, [], null, null, null,
+            kafka, CancellationToken.None);
+
+        Assert.Equal(0, kafka.PushPayloads[0].PayloadId);
+    }
+
+    [Fact]
+    public async Task PushPayload_ReturnsEventLength()
+    {
+        var kafka = new FakeKafkaProducer();
+        var events = "[{\"type\":\"scroll\",\"data\":{\"x\":100,\"y\":200}}]";
+
+        var result = await _mutation.PushPayload(
+            "sess-1", 1, events, "", "", null, [], null, null, null,
+            kafka, CancellationToken.None);
+
+        Assert.Equal(events.Length, result);
+    }
+
+    [Fact]
+    public async Task PushPayload_WithErrors()
+    {
+        var kafka = new FakeKafkaProducer();
+        var errors = new List<ErrorObjectInput>
+        {
+            new("TypeError", "TypeError", "/app", "bundle.js",
+                42, 10, [], DateTime.UtcNow, null),
+        };
+
+        var result = await _mutation.PushPayload(
+            "sess-1", 1, "[]", "", "", null, errors, null, null, null,
+            kafka, CancellationToken.None);
+
+        Assert.Equal(2, result); // "[]" has length 2
+        Assert.Single(kafka.PushPayloads);
+    }
+
+    [Fact]
+    public async Task PushPayload_WithBeaconAndUnload()
+    {
+        var kafka = new FakeKafkaProducer();
+
+        await _mutation.PushPayload(
+            "sess-1", 99, "[]", "", "", "ws-events",
+            [], true, true, "sdk logs",
+            kafka, CancellationToken.None);
+
+        Assert.Single(kafka.PushPayloads);
+    }
+
+    // ── PushPayloadCompressed (deprecated) ────────────────────────────
+
+    [Fact]
+    public async Task PushPayloadCompressed_DelegatesToSessionEvents()
+    {
+        var kafka = new FakeKafkaProducer();
+
+        var result = await _mutation.PushPayloadCompressed(
+            "sess-compressed", 7, "compressed-data",
+            kafka, CancellationToken.None);
+
+        Assert.True(result);
+        Assert.Single(kafka.SessionEvents);
+        Assert.Equal("sess-compressed", kafka.SessionEvents[0].SessionSecureId);
+        Assert.Equal(7, kafka.SessionEvents[0].PayloadId);
+        Assert.Equal("compressed-data", kafka.SessionEvents[0].Data);
+    }
+
+    [Fact]
+    public async Task PushPayloadCompressed_EmptyData()
+    {
+        var kafka = new FakeKafkaProducer();
+
+        var result = await _mutation.PushPayloadCompressed(
+            "sess-1", 0, "",
+            kafka, CancellationToken.None);
+
+        Assert.True(result);
+        Assert.Single(kafka.SessionEvents);
+        Assert.Empty(kafka.SessionEvents[0].Data);
     }
 }

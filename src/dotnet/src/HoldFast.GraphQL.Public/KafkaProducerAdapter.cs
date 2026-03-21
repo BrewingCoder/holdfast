@@ -21,6 +21,27 @@ public class KafkaProducerAdapter : IKafkaProducer
         return _producer.ProduceAsync(KafkaTopics.SessionEvents, sessionSecureId, message, ct);
     }
 
+    public Task ProducePushPayloadAsync(string sessionSecureId, long payloadId, string events,
+        string messages, string resources, string? webSocketEvents,
+        List<ErrorObjectInput> errors, bool? isBeacon, bool? hasSessionUnloaded,
+        string? highlightLogs, CancellationToken ct)
+    {
+        var message = new
+        {
+            SessionSecureId = sessionSecureId,
+            PayloadId = payloadId,
+            Events = events,
+            Messages = messages,
+            Resources = resources,
+            WebSocketEvents = webSocketEvents,
+            Errors = errors,
+            IsBeacon = isBeacon,
+            HasSessionUnloaded = hasSessionUnloaded,
+            HighlightLogs = highlightLogs,
+        };
+        return _producer.ProduceAsync(KafkaTopics.SessionEvents, sessionSecureId, message, ct);
+    }
+
     public Task ProduceBackendErrorAsync(string? projectId, BackendErrorObjectInput error, CancellationToken ct)
     {
         return _producer.ProduceAsync(KafkaTopics.BackendErrors, projectId ?? "unknown", error, ct);
