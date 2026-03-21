@@ -13,6 +13,7 @@ public class Alert : BaseEntity
     public string? Query { get; set; }
     public string? FunctionColumn { get; set; }
     public string? GroupByKey { get; set; }
+    public double? ThresholdValue { get; set; }
     public double? BelowThreshold { get; set; }
     public double? AboveThreshold { get; set; }
     public int? ThresholdWindow { get; set; }
@@ -99,6 +100,7 @@ public class LogAlert : BaseEntity
     public string? Name { get; set; }
     public int? CountThreshold { get; set; }
     public int? ThresholdWindow { get; set; }
+    public int? Frequency { get; set; }
     public string? ChannelsToNotify { get; set; }
     public string? EmailsToNotify { get; set; }
     public string? WebhookDestinations { get; set; }

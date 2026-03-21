@@ -350,5 +350,20 @@ public class ConsumerProcessAsyncTests : IDisposable
         public Task<List<string>> GetErrorsKeyValuesAsync(int p, string k, DateTime s, DateTime e, string? q, int? c, CancellationToken ct) => Task.FromResult(new List<string>());
         public Task<List<QueryKey>> GetEventsKeysAsync(int p, DateTime s, DateTime e, string? q, string? en, CancellationToken ct) => Task.FromResult(new List<QueryKey>());
         public Task<List<string>> GetEventsKeyValuesAsync(int p, string k, DateTime s, DateTime e, string? q, int? c, string? en, CancellationToken ct) => Task.FromResult(new List<string>());
+
+        public Task<long> CountLogsAsync(int projectId, string? query, DateTime startDate, DateTime endDate, CancellationToken ct = default)
+            => Task.FromResult(0L);
+
+        public Task<List<AlertStateChangeRow>> GetLastAlertStateChangesAsync(int projectId, int alertId, DateTime startDate, DateTime endDate, CancellationToken ct = default)
+            => Task.FromResult(new List<AlertStateChangeRow>());
+
+        public Task<List<AlertStateChangeRow>> GetAlertingAlertStateChangesAsync(int projectId, int alertId, DateTime startDate, DateTime endDate, CancellationToken ct = default)
+            => Task.FromResult(new List<AlertStateChangeRow>());
+
+        public Task<List<AlertStateChangeRow>> GetLastAlertingStatesAsync(int projectId, int alertId, DateTime startDate, DateTime endDate, CancellationToken ct = default)
+            => Task.FromResult(new List<AlertStateChangeRow>());
+
+        public Task WriteAlertStateChangesAsync(int projectId, IEnumerable<AlertStateChangeRow> rows, CancellationToken ct = default)
+            => Task.CompletedTask;
     }
 }

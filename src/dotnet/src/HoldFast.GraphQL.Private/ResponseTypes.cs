@@ -226,3 +226,18 @@ public record IssuesSearchResult(
     string Id,
     string Title,
     string IssueUrl);
+
+/// <summary>
+/// Input for mapping a Vercel project to a HoldFast project.
+/// </summary>
+public record VercelProjectMappingInput(
+    string VercelProjectId,
+    string? VercelProjectName,
+    int? ProjectId);
+
+/// <summary>
+/// Input for mapping a ClickUp space/list to a HoldFast project.
+/// </summary>
+public record ClickUpProjectMappingInput(
+    int ProjectId,
+    string ClickUpSpaceId);

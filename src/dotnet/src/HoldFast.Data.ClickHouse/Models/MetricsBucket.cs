@@ -9,6 +9,7 @@ public class MetricsBucket
     public DateTime BucketEnd { get; set; }
     public string? Group { get; set; }
     public double Value { get; set; }
+    public double? MetricValue { get; set; }
     public long Count { get; set; }
 }
 

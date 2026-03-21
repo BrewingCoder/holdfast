@@ -43,6 +43,11 @@ builder.Services.AddDbContextPool<HoldFastDbContext>(options =>
 // ── HttpContext accessor (needed for ClaimsPrincipal in GraphQL resolvers)
 builder.Services.AddHttpContextAccessor();
 
+// ── Dev seed ──────────────────────────────────────────────────────────
+builder.Services.Configure<HoldFast.Api.DevSeed.DevSeedOptions>(
+    builder.Configuration.GetSection("DevSeed"));
+builder.Services.AddHostedService<HoldFast.Api.DevSeed.DevSeedService>();
+
 // ── Auth ──────────────────────────────────────────────────────────────
 builder.Services.Configure<AuthOptions>(
     builder.Configuration.GetSection("Auth"));

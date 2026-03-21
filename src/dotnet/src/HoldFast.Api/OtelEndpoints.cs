@@ -9,13 +9,11 @@ namespace HoldFast.Api;
 /// OTeL-compatible HTTP endpoints for log, trace, and metric ingestion.
 /// Supports:
 /// - Content-Type: application/json (OTeL JSON format + simple array format)
+/// - Content-Type: application/x-protobuf (OTeL protobuf binary format)
 /// - Content-Encoding: gzip, identity
 ///
 /// The OTeL collector sends ExportLogsServiceRequest/ExportTracesServiceRequest/
-/// ExportMetricsServiceRequest JSON payloads. These are parsed and forwarded to Kafka.
-///
-/// Protobuf support (Content-Type: application/x-protobuf) is planned for a future phase
-/// once the OpenTelemetry .NET proto package stabilizes.
+/// ExportMetricsServiceRequest payloads in JSON or protobuf. Parsed and forwarded to Kafka.
 /// </summary>
 public static class OtelEndpoints
 {
@@ -34,12 +32,21 @@ public static class OtelEndpoints
         group.MapPost("/metrics", HandleMetrics);
     }
 
+    internal static bool IsProtobufContentType(HttpRequest request) =>
+        request.ContentType?.Contains("x-protobuf", StringComparison.OrdinalIgnoreCase) == true;
+
     private static async Task<IResult> HandleLogs(HttpContext ctx, IKafkaProducer kafka, CancellationToken ct)
     {
         var body = await ReadBodyAsync(ctx.Request);
 
-        // Try OTeL ExportLogsServiceRequest format first
-        var logs = ParseOtelLogs(body);
+        // Try protobuf first if content-type indicates it
+        List<LogInput>? logs = IsProtobufContentType(ctx.Request)
+            ? ProtobufOtelParser.ParseLogs(body)
+            : null;
+
+        // Try OTeL ExportLogsServiceRequest JSON format
+        if (logs == null || logs.Count == 0)
+            logs = ParseOtelLogs(body);
 
         // Fall back to simple array format
         if (logs == null || logs.Count == 0)
@@ -62,7 +69,12 @@ public static class OtelEndpoints
     {
         var body = await ReadBodyAsync(ctx.Request);
 
-        var traces = ParseOtelTraces(body);
+        List<TraceInput>? traces = IsProtobufContentType(ctx.Request)
+            ? ProtobufOtelParser.ParseTraces(body)
+            : null;
+
+        if (traces == null || traces.Count == 0)
+            traces = ParseOtelTraces(body);
 
         if (traces == null || traces.Count == 0)
         {
@@ -84,7 +96,12 @@ public static class OtelEndpoints
     {
         var body = await ReadBodyAsync(ctx.Request);
 
-        var metrics = ParseOtelMetrics(body);
+        List<MetricInput>? metrics = IsProtobufContentType(ctx.Request)
+            ? ProtobufOtelParser.ParseMetrics(body)
+            : null;
+
+        if (metrics == null || metrics.Count == 0)
+            metrics = ParseOtelMetrics(body);
 
         if (metrics == null || metrics.Count == 0)
         {

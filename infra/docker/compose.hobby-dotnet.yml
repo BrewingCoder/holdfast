@@ -26,6 +26,9 @@ services:
             - Frontend__Uri=${REACT_APP_FRONTEND_URI:-http://localhost:3000}
             - Auth__Mode=${REACT_APP_AUTH_MODE:-Password}
             - Auth__AdminPassword=${ADMIN_PASSWORD:-}
+            - DevSeed__Enabled=${DEV_SEED_ENABLED:-false}
+            - DevSeed__AdminEmail=${DEV_SEED_ADMIN_EMAIL:-dev@holdfast.local}
+            - DevSeed__AdminName=${DEV_SEED_ADMIN_NAME:-Dev Admin}
         env_file: .env
         healthcheck:
             test: ['CMD', 'curl', '-f', 'http://localhost:8082/health']

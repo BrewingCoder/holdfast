@@ -2724,4 +2724,101 @@ public class PrivateMutation
 
         return comment;
     }
+
+    /// <summary>
+    /// Delete a workspace invite link by ID.
+    /// </summary>
+    public async Task<bool> DeleteInviteLinkFromWorkspace(
+        int workspaceId,
+        int inviteLinkId,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireWorkspaceAccess(claimsPrincipal, workspaceId, authz, ct);
+
+        var invite = await db.WorkspaceInviteLinks.FindAsync(new object[] { inviteLinkId }, ct)
+            ?? throw new GraphQLException("Invite link not found");
+
+        if (invite.WorkspaceId != workspaceId)
+            throw new GraphQLException("Invite link does not belong to this workspace");
+
+        db.WorkspaceInviteLinks.Remove(invite);
+        await db.SaveChangesAsync(ct);
+        return true;
+    }
+
+    /// <summary>
+    /// Replace all Vercel project mappings for a project's workspace with the provided list.
+    /// </summary>
+    public async Task<bool> UpdateVercelProjectMappings(
+        int projectId,
+        List<VercelProjectMappingInput> mappings,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+
+        var project = await db.Projects.FindAsync(new object[] { projectId }, ct)
+            ?? throw new GraphQLException("Project not found");
+
+        var existing = await db.VercelIntegrationConfigs
+            .Where(v => v.WorkspaceId == project.WorkspaceId)
+            .ToListAsync(ct);
+        db.VercelIntegrationConfigs.RemoveRange(existing);
+
+        foreach (var m in mappings.Where(m => m.ProjectId.HasValue))
+        {
+            db.VercelIntegrationConfigs.Add(new VercelIntegrationConfig
+            {
+                WorkspaceId = project.WorkspaceId,
+                ProjectId = m.ProjectId!.Value,
+                VercelProjectId = m.VercelProjectId,
+            });
+        }
+
+        await db.SaveChangesAsync(ct);
+        return true;
+    }
+
+    /// <summary>
+    /// Replace all ClickUp project mappings for a workspace with the provided list.
+    /// </summary>
+    public async Task<bool> UpdateClickUpProjectMappings(
+        int workspaceId,
+        List<ClickUpProjectMappingInput> mappings,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireWorkspaceAccess(claimsPrincipal, workspaceId, authz, ct);
+
+        // Delete all ClickUp mappings for projects belonging to this workspace
+        var workspaceProjectIds = await db.Projects
+            .Where(p => p.WorkspaceId == workspaceId)
+            .Select(p => p.Id)
+            .ToListAsync(ct);
+
+        var existing = await db.IntegrationProjectMappings
+            .Where(m => m.IntegrationType == "ClickUp" && workspaceProjectIds.Contains(m.ProjectId))
+            .ToListAsync(ct);
+        db.IntegrationProjectMappings.RemoveRange(existing);
+
+        foreach (var m in mappings)
+        {
+            db.IntegrationProjectMappings.Add(new IntegrationProjectMapping
+            {
+                IntegrationType = "ClickUp",
+                ProjectId = m.ProjectId,
+                ExternalId = m.ClickUpSpaceId,
+            });
+        }
+
+        await db.SaveChangesAsync(ct);
+        return true;
+    }
 }

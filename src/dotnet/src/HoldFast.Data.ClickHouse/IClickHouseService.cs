@@ -150,6 +150,41 @@ public interface IClickHouseService
         string? eventName,
         CancellationToken ct = default);
 
+    // ── Alert State ───────────────────────────────────────────────
+
+    Task<long> CountLogsAsync(
+        int projectId,
+        string? query,
+        DateTime startDate,
+        DateTime endDate,
+        CancellationToken ct = default);
+
+    Task<List<AlertStateChangeRow>> GetLastAlertStateChangesAsync(
+        int projectId,
+        int alertId,
+        DateTime startDate,
+        DateTime endDate,
+        CancellationToken ct = default);
+
+    Task<List<AlertStateChangeRow>> GetAlertingAlertStateChangesAsync(
+        int projectId,
+        int alertId,
+        DateTime startDate,
+        DateTime endDate,
+        CancellationToken ct = default);
+
+    Task<List<AlertStateChangeRow>> GetLastAlertingStatesAsync(
+        int projectId,
+        int alertId,
+        DateTime startDate,
+        DateTime endDate,
+        CancellationToken ct = default);
+
+    Task WriteAlertStateChangesAsync(
+        int projectId,
+        IEnumerable<AlertStateChangeRow> rows,
+        CancellationToken ct = default);
+
     // ── Write Methods (Worker ingestion) ──────────────────────────
 
     /// <summary>

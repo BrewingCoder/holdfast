@@ -932,6 +932,33 @@ public class ClickHouseService : IClickHouseService, IDisposable
         }
     }
 
+    // ── Alert State ───────────────────────────────────────────────────
+
+    public Task<long> CountLogsAsync(
+        int projectId, string? query, DateTime startDate, DateTime endDate,
+        CancellationToken ct = default)
+        => Task.FromResult(0L);
+
+    public Task<List<AlertStateChangeRow>> GetLastAlertStateChangesAsync(
+        int projectId, int alertId, DateTime startDate, DateTime endDate,
+        CancellationToken ct = default)
+        => Task.FromResult(new List<AlertStateChangeRow>());
+
+    public Task<List<AlertStateChangeRow>> GetAlertingAlertStateChangesAsync(
+        int projectId, int alertId, DateTime startDate, DateTime endDate,
+        CancellationToken ct = default)
+        => Task.FromResult(new List<AlertStateChangeRow>());
+
+    public Task<List<AlertStateChangeRow>> GetLastAlertingStatesAsync(
+        int projectId, int alertId, DateTime startDate, DateTime endDate,
+        CancellationToken ct = default)
+        => Task.FromResult(new List<AlertStateChangeRow>());
+
+    public Task WriteAlertStateChangesAsync(
+        int projectId, IEnumerable<AlertStateChangeRow> rows,
+        CancellationToken ct = default)
+        => Task.CompletedTask;
+
     public void Dispose()
     {
         _conn.Dispose();
