@@ -18,6 +18,15 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// ── Go-compatible environment variable fallbacks ─────────────────────
+// The Go backend reads PSQL_HOST, KAFKA_SERVERS, etc. Map them to .NET config.
+var pgConnStr = GoEnvCompat.BuildPostgresConnectionString(Environment.GetEnvironmentVariable);
+if (pgConnStr != null)
+    builder.Configuration["ConnectionStrings:PostgreSQL"] = pgConnStr;
+
+foreach (var (key, value) in GoEnvCompat.GetConfigOverrides(Environment.GetEnvironmentVariable))
+    builder.Configuration[key] = value;
+
 // ── Runtime Mode ─────────────────────────────────────────────────────
 // Matches Go backend: --runtime=all|graph|public-graph|private-graph|worker
 // Also readable from HOLDFAST_RUNTIME env var or appsettings "Runtime" key.
