@@ -9,8 +9,9 @@ COPY .yarnrc.yml package.json yarn.lock turbo.json tsconfig.json graphql.config.
 COPY .yarn/patches ./.yarn/patches
 COPY .yarn/releases ./.yarn/releases
 
-# Copy package.json files for all workspace members that exist
-COPY tests/e2e/package.json ./tests/e2e/package.json
+# Copy package.json files for all workspace members that exist.
+# tests/e2e/* is a workspace glob — copy the whole dir to satisfy it.
+COPY tests/e2e ./tests/e2e
 COPY src/frontend/package.json ./src/frontend/package.json
 COPY packages/render/package.json ./packages/render/package.json
 COPY packages/sourcemap-uploader/package.json ./packages/sourcemap-uploader/package.json
@@ -30,11 +31,10 @@ COPY sdk/pino/package.json ./sdk/pino/package.json
 
 RUN yarn install --immutable
 
-# Copy source files
+# Copy source files (tests/e2e already copied above for yarn install)
 COPY src/backend/localhostssl ./src/backend/localhostssl
 COPY src/backend/private-graph ./src/backend/private-graph
 COPY src/backend/public-graph ./src/backend/public-graph
-COPY tests/e2e ./tests/e2e
 COPY src/frontend ./src/frontend
 COPY packages ./packages
 COPY rrweb ./rrweb
