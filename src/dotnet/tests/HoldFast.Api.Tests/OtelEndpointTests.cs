@@ -1602,27 +1602,25 @@ public class OtelEndpointTests
     // ════════════════════════════════════════════════════════════════════
 
     [Fact]
-    public void ParseOtelLogs_ArrayRoot_ThrowsInvalidOperation()
+    public void ParseOtelLogs_ArrayRoot_ReturnsNull()
     {
-        // An array root is not a valid ExportLogsServiceRequest.
-        // TryGetProperty on an Array element throws InvalidOperationException,
-        // which is NOT caught by the JsonException handler -- a real bug to fix.
+        // An array root is not a valid ExportLogsServiceRequest — should return null, not throw
         var body = Json("""[{"body": "test"}]""");
-        Assert.Throws<InvalidOperationException>(() => OtelEndpoints.ParseOtelLogs(body));
+        Assert.Null(OtelEndpoints.ParseOtelLogs(body));
     }
 
     [Fact]
-    public void ParseOtelTraces_ArrayRoot_ThrowsInvalidOperation()
+    public void ParseOtelTraces_ArrayRoot_ReturnsNull()
     {
         var body = Json("""[{"name": "span1"}]""");
-        Assert.Throws<InvalidOperationException>(() => OtelEndpoints.ParseOtelTraces(body));
+        Assert.Null(OtelEndpoints.ParseOtelTraces(body));
     }
 
     [Fact]
-    public void ParseOtelMetrics_ArrayRoot_ThrowsInvalidOperation()
+    public void ParseOtelMetrics_ArrayRoot_ReturnsNull()
     {
         var body = Json("""[{"name": "m1", "value": 1}]""");
-        Assert.Throws<InvalidOperationException>(() => OtelEndpoints.ParseOtelMetrics(body));
+        Assert.Null(OtelEndpoints.ParseOtelMetrics(body));
     }
 
     [Fact]

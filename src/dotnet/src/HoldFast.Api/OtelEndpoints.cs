@@ -146,6 +146,9 @@ public static class OtelEndpoints
             using var doc = JsonDocument.Parse(body);
             var root = doc.RootElement;
 
+            if (root.ValueKind != JsonValueKind.Object)
+                return null;
+
             if (!root.TryGetProperty("resourceLogs", out var resourceLogs))
                 return null;
 
@@ -207,6 +210,9 @@ public static class OtelEndpoints
         {
             using var doc = JsonDocument.Parse(body);
             var root = doc.RootElement;
+
+            if (root.ValueKind != JsonValueKind.Object)
+                return null;
 
             if (!root.TryGetProperty("resourceSpans", out var resourceSpans))
                 return null;
@@ -287,6 +293,9 @@ public static class OtelEndpoints
         {
             using var doc = JsonDocument.Parse(body);
             var root = doc.RootElement;
+
+            if (root.ValueKind != JsonValueKind.Object)
+                return null;
 
             if (!root.TryGetProperty("resourceMetrics", out var resourceMetrics))
                 return null;
