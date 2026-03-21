@@ -40,12 +40,18 @@ public class LogConnection
     public PageInfo PageInfo { get; set; } = new();
 }
 
+/// <summary>
+/// A single log entry in a paginated result, paired with its cursor.
+/// </summary>
 public class LogEdge
 {
     public LogRow Node { get; set; } = null!;
     public string Cursor { get; set; } = string.Empty;
 }
 
+/// <summary>
+/// Relay-style pagination metadata for cursor-based queries.
+/// </summary>
 public class PageInfo
 {
     public bool HasNextPage { get; set; }

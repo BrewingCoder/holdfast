@@ -32,6 +32,9 @@ public class TraceRow
     public string Cursor => CursorHelper.Encode(Timestamp, UUID);
 }
 
+/// <summary>
+/// An event (annotation) within a trace span, carrying a timestamp, name, and attributes.
+/// </summary>
 public class TraceEvent
 {
     public DateTime Timestamp { get; set; }
@@ -39,6 +42,9 @@ public class TraceEvent
     public Dictionary<string, string> Attributes { get; set; } = new();
 }
 
+/// <summary>
+/// A link between spans (e.g., a causal relationship or batch association).
+/// </summary>
 public class TraceLink
 {
     public string TraceId { get; set; } = string.Empty;
@@ -56,6 +62,9 @@ public class TraceConnection
     public PageInfo PageInfo { get; set; } = new();
 }
 
+/// <summary>
+/// A single trace span in a paginated result, paired with its cursor.
+/// </summary>
 public class TraceEdge
 {
     public TraceRow Node { get; set; } = null!;
