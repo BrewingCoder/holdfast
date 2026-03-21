@@ -43,6 +43,8 @@ services:
         ports:
             - '0.0.0.0:3000:3000'
             - '0.0.0.0:8080:8080'
+        volumes:
+            - ./frontend-entrypoint.py:/frontend-entrypoint.py
         environment:
             - SSL=false
             - REACT_APP_AUTH_MODE=${REACT_APP_AUTH_MODE:-Password}
