@@ -9,6 +9,7 @@ using HoldFast.Shared.Auth;
 using HoldFast.Shared.Notifications;
 using HoldFast.Shared.ErrorGrouping;
 using HoldFast.Shared.Kafka;
+using HoldFast.Shared.Runtime;
 using HoldFast.Shared.SessionProcessing;
 using HoldFast.Shared.Redis;
 using HoldFast.Storage;
@@ -16,6 +17,15 @@ using HoldFast.Worker;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// ── Runtime Mode ─────────────────────────────────────────────────────
+// Matches Go backend: --runtime=all|graph|public-graph|private-graph|worker
+// Also readable from HOLDFAST_RUNTIME env var or appsettings "Runtime" key.
+var runtimeValue = builder.Configuration["Runtime"]
+                   ?? Environment.GetEnvironmentVariable("HOLDFAST_RUNTIME");
+var runtime = RuntimeModeExtensions.Parse(runtimeValue);
+
+Console.WriteLine($"HoldFast starting in '{runtime}' mode");
 
 // ── Database ──────────────────────────────────────────────────────────
 builder.Services.AddDbContextPool<HoldFastDbContext>(options =>
@@ -78,53 +88,67 @@ builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IAlertEvaluationService, AlertEvaluationService>();
 builder.Services.AddHttpClient("AlertWebhooks");
 
-// ── Workers (Kafka consumers as BackgroundServices) ───────────────────
-builder.Services.AddSingleton<SessionEventsConsumer>();
-builder.Services.AddHostedService<SessionEventsWorker>();
-builder.Services.AddSingleton<ErrorGroupingConsumer>();
-builder.Services.AddHostedService<ErrorGroupingWorker>();
-builder.Services.AddSingleton<MetricsConsumer>();
-builder.Services.AddHostedService<MetricsWorker>();
-builder.Services.AddSingleton<LogIngestionConsumer>();
-builder.Services.AddHostedService<LogIngestionWorker>();
-builder.Services.AddSingleton<TraceIngestionConsumer>();
-builder.Services.AddHostedService<TraceIngestionWorker>();
-builder.Services.AddHostedService<AutoResolveWorker>();
-builder.Services.AddHostedService<DataRetentionWorker>();
-builder.Services.AddHostedService<DataSyncWorker>();
+// ── Workers (only in all or worker mode) ──────────────────────────────
+if (runtime.IsWorker())
+{
+    builder.Services.AddSingleton<SessionEventsConsumer>();
+    builder.Services.AddHostedService<SessionEventsWorker>();
+    builder.Services.AddSingleton<ErrorGroupingConsumer>();
+    builder.Services.AddHostedService<ErrorGroupingWorker>();
+    builder.Services.AddSingleton<MetricsConsumer>();
+    builder.Services.AddHostedService<MetricsWorker>();
+    builder.Services.AddSingleton<LogIngestionConsumer>();
+    builder.Services.AddHostedService<LogIngestionWorker>();
+    builder.Services.AddSingleton<TraceIngestionConsumer>();
+    builder.Services.AddHostedService<TraceIngestionWorker>();
+    builder.Services.AddHostedService<AutoResolveWorker>();
+    builder.Services.AddHostedService<DataRetentionWorker>();
+    builder.Services.AddHostedService<DataSyncWorker>();
+}
 
 // ── CORS ──────────────────────────────────────────────────────────────
 var frontendUri = builder.Configuration["Frontend:Uri"] ?? "http://localhost:3000";
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("Private", policy =>
-        policy.WithOrigins(frontendUri)
-              .AllowAnyHeader()
-              .AllowAnyMethod()
-              .AllowCredentials());
+    if (runtime.IsPrivateGraph())
+    {
+        options.AddPolicy("Private", policy =>
+            policy.WithOrigins(frontendUri)
+                  .AllowAnyHeader()
+                  .AllowAnyMethod()
+                  .AllowCredentials());
+    }
 
-    options.AddPolicy("Public", policy =>
-        policy.AllowAnyOrigin()
-              .AllowAnyHeader()
-              .AllowAnyMethod());
+    if (runtime.IsPublicGraph())
+    {
+        options.AddPolicy("Public", policy =>
+            policy.AllowAnyOrigin()
+                  .AllowAnyHeader()
+                  .AllowAnyMethod());
+    }
 });
 
-// ── GraphQL (Hot Chocolate) — Private endpoint (dashboard API) ───────
-builder.Services
-    .AddGraphQLServer("private")
-    .AddQueryType<PrivateQuery>()
-    .AddMutationType<PrivateMutation>()
-    .AddProjections()
-    .AddFiltering()
-    .AddSorting()
-    .RegisterDbContextFactory<HoldFastDbContext>();
+// ── GraphQL (Hot Chocolate) — conditionally register endpoints ────────
+if (runtime.IsPrivateGraph())
+{
+    builder.Services
+        .AddGraphQLServer("private")
+        .AddQueryType<PrivateQuery>()
+        .AddMutationType<PrivateMutation>()
+        .AddProjections()
+        .AddFiltering()
+        .AddSorting()
+        .RegisterDbContextFactory<HoldFastDbContext>();
+}
 
-// ── GraphQL (Hot Chocolate) — Public endpoint (SDK data ingestion) ───
-builder.Services
-    .AddGraphQLServer("public")
-    .AddQueryType<PublicQuery>()
-    .AddMutationType<PublicMutation>()
-    .RegisterDbContextFactory<HoldFastDbContext>();
+if (runtime.IsPublicGraph())
+{
+    builder.Services
+        .AddGraphQLServer("public")
+        .AddQueryType<PublicQuery>()
+        .AddMutationType<PublicMutation>()
+        .RegisterDbContextFactory<HoldFastDbContext>();
+}
 
 // ── Health checks ─────────────────────────────────────────────────────
 builder.Services.AddHealthChecks()
@@ -134,20 +158,32 @@ builder.Services.AddHealthChecks()
 var app = builder.Build();
 
 // ── Middleware ─────────────────────────────────────────────────────────
-app.UseMiddleware<AuthMiddleware>();
-
 app.MapHealthChecks("/health");
-app.MapAuthEndpoints();
+
+// Only register auth middleware and endpoints for graph modes
+if (runtime.IsPrivateGraph() || runtime.IsPublicGraph())
+{
+    app.UseMiddleware<AuthMiddleware>();
+    app.MapAuthEndpoints();
+}
 
 // Private GraphQL endpoint (dashboard API) — CORS: frontend only
-app.MapGraphQL("/private", "private")
-    .RequireCors("Private");
+if (runtime.IsPrivateGraph())
+{
+    var privateEndpoint = runtime == RuntimeMode.PrivateGraph ? "/" : "/private";
+    app.MapGraphQL(privateEndpoint, "private")
+        .RequireCors("Private");
+}
 
 // Public GraphQL endpoint (data ingestion) — CORS: any origin (SDKs)
-app.MapGraphQL("/public", "public")
-    .RequireCors("Public");
+if (runtime.IsPublicGraph())
+{
+    var publicEndpoint = runtime == RuntimeMode.PublicGraph ? "/" : "/public";
+    app.MapGraphQL(publicEndpoint, "public")
+        .RequireCors("Public");
 
-// OTeL-compatible HTTP endpoints for non-GraphQL ingestion
-app.MapOtelEndpoints();
+    // OTeL-compatible HTTP endpoints for non-GraphQL ingestion
+    app.MapOtelEndpoints();
+}
 
 app.Run();
