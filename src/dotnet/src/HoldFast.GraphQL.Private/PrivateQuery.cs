@@ -2833,6 +2833,57 @@ public class PrivateQuery
         return await query.ToListAsync(ct);
     }
 
+    // ── Graph Templates ───────────────────────────────────────────────
+
+    /// <summary>
+    /// Get default graph templates (graphs with visualization_id = -1).
+    /// </summary>
+    public async Task<List<Graph>> GetGraphTemplates(
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        return await db.Graphs
+            .Where(g => g.VisualizationId == -1)
+            .ToListAsync(ct);
+    }
+
+    // ── Logs Related Resources ───────────────────────────────────────
+
+    /// <summary>
+    /// Get resources related to a log entry (traces from same trace ID).
+    /// </summary>
+    public async Task<TraceConnection> GetLogsRelatedResources(
+        int projectId,
+        string? traceId,
+        string? spanId,
+        DateTime date,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] IClickHouseService clickHouse,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+
+        if (string.IsNullOrEmpty(traceId))
+            return new TraceConnection();
+
+        var queryStr = $"trace_id={traceId}";
+        if (!string.IsNullOrEmpty(spanId))
+            queryStr += $" span_id={spanId}";
+
+        return await clickHouse.ReadTracesAsync(
+            projectId,
+            new QueryInput
+            {
+                Query = queryStr,
+                DateRangeStart = date.AddDays(-1),
+                DateRangeEnd = date.AddDays(1),
+            },
+            new ClickHousePagination { Limit = 100 },
+            omitBody: false,
+            ct: ct);
+    }
+
     // ── System ────────────────────────────────────────────────────────
 
     /// <summary>
