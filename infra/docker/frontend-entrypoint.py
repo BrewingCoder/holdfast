@@ -8,11 +8,11 @@ NGINX_CONFIG_FILE = "/etc/nginx/conf.d/default.conf"
 
 def main():
     envs = {
-        "REACT_APP_PRIVATE_GRAPH_URI": 'http://localhost:8082/private',
-        "REACT_APP_PUBLIC_GRAPH_URI": 'http://localhost:8082/public',
-        "REACT_APP_FRONTEND_URI": 'http://localhost:3000',
-        "REACT_APP_AUTH_MODE": 'password',
-        "REACT_APP_OTLP_ENDPOINT": 'http://localhost:4318',
+        "REACT_APP_PRIVATE_GRAPH_URI": 'https://pri.highlight.io',
+        "REACT_APP_PUBLIC_GRAPH_URI": 'https://pub.highlight.run',
+        "REACT_APP_FRONTEND_URI": 'https://app.highlight.io',
+        "REACT_APP_AUTH_MODE": 'firebase',
+        "REACT_APP_OTLP_ENDPOINT": 'https://otel.highlight.io:4318',
         "REACT_APP_DISABLE_ANALYTICS": 'false',
     }
     use_ssl = os.environ.get("SSL") != "false"
