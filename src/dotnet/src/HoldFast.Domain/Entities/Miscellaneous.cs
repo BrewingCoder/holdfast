@@ -1,5 +1,9 @@
 namespace HoldFast.Domain.Entities;
 
+/// <summary>
+/// Feature flags and AI settings for a workspace. All flags default to true for self-hosted
+/// deployments (no billing tiers). One-to-one with Workspace via unique index on WorkspaceId.
+/// </summary>
 public class AllWorkspaceSettings : BaseEntity
 {
     public int WorkspaceId { get; set; }
@@ -37,6 +41,10 @@ public class AllWorkspaceSettings : BaseEntity
     public Workspace Workspace { get; set; } = null!;
 }
 
+/// <summary>
+/// A key-value metadata field attached to sessions within a project (e.g., user email,
+/// plan tier). Used for search filtering and saved segments.
+/// </summary>
 public class Field : BaseEntity
 {
     public int ProjectId { get; set; }
@@ -45,6 +53,10 @@ public class Field : BaseEntity
     public string Value { get; set; } = string.Empty;
 }
 
+/// <summary>
+/// Enriched user/company data looked up by email. PersonJson and CompanyJson store
+/// the full enrichment payloads. Unique index on Email.
+/// </summary>
 public class EnhancedUserDetails : BaseEntity
 {
     public string? Email { get; set; }
@@ -52,6 +64,9 @@ public class EnhancedUserDetails : BaseEntity
     public string? CompanyJson { get; set; }
 }
 
+/// <summary>
+/// Onboarding survey data collected when a workspace is created (team size, role, use case).
+/// </summary>
 public class RegistrationData : BaseEntity
 {
     public int WorkspaceId { get; set; }
@@ -62,6 +77,10 @@ public class RegistrationData : BaseEntity
     public string? Pun { get; set; }
 }
 
+/// <summary>
+/// A named, saved search filter (segment) for sessions or errors. Params stores the
+/// serialized filter configuration. EntityType distinguishes session vs error segments.
+/// </summary>
 public class SavedSegment : BaseEntity
 {
     public int ProjectId { get; set; }
@@ -70,6 +89,10 @@ public class SavedSegment : BaseEntity
     public string? EntityType { get; set; }
 }
 
+/// <summary>
+/// A cached copy of an external asset (CSS, image) used during session replay. OriginalUrl
+/// is the source; SavedUrl points to the local copy. HashVal deduplicates downloads.
+/// </summary>
 public class SavedAsset : BaseEntity
 {
     public int ProjectId { get; set; }
@@ -78,6 +101,10 @@ public class SavedAsset : BaseEntity
     public string? HashVal { get; set; }
 }
 
+/// <summary>
+/// URL rewrite rule for session replay assets. Transforms asset URLs from From pattern
+/// to To pattern (e.g., replacing CDN domains with local proxies).
+/// </summary>
 public class ProjectAssetTransform : BaseEntity
 {
     public int ProjectId { get; set; }
@@ -86,6 +113,9 @@ public class ProjectAssetTransform : BaseEntity
     public string? To { get; set; }
 }
 
+/// <summary>
+/// Pre-aggregated daily session count per project, used for dashboard sparklines.
+/// </summary>
 public class DailySessionCount : BaseEntity
 {
     public int ProjectId { get; set; }
@@ -93,6 +123,9 @@ public class DailySessionCount : BaseEntity
     public int Count { get; set; }
 }
 
+/// <summary>
+/// Pre-aggregated daily error count per project, used for dashboard sparklines.
+/// </summary>
 public class DailyErrorCount : BaseEntity
 {
     public int ProjectId { get; set; }
@@ -100,12 +133,19 @@ public class DailyErrorCount : BaseEntity
     public int Count { get; set; }
 }
 
+/// <summary>
+/// An email collected from the marketing signup form. AdsenseAction tracks the referral source.
+/// </summary>
 public class EmailSignup : BaseEntity
 {
     public string Email { get; set; } = string.Empty;
     public string? AdsenseAction { get; set; }
 }
 
+/// <summary>
+/// Records that an admin has opted out of a specific email notification category
+/// (e.g., "Digests", "Billing"). Prevents sending that category to the admin.
+/// </summary>
 public class EmailOptOut : BaseEntity
 {
     public int AdminId { get; set; }
@@ -114,6 +154,10 @@ public class EmailOptOut : BaseEntity
     public Admin Admin { get; set; } = null!;
 }
 
+/// <summary>
+/// A backend service within a project (e.g., "api-gateway", "auth-service"). Tracks
+/// deployment status, GitHub repo linkage, and error JSON path configuration.
+/// </summary>
 public class Service : BaseEntity
 {
     public int ProjectId { get; set; }
@@ -125,6 +169,10 @@ public class Service : BaseEntity
     public string? ErrorJsonPaths { get; set; }
 }
 
+/// <summary>
+/// Background task record for bulk session deletion (data retention). Tracks the
+/// number of sessions to delete and the scheduled date.
+/// </summary>
 public class DeleteSessionsTask : BaseEntity
 {
     public int ProjectId { get; set; }
@@ -132,6 +180,10 @@ public class DeleteSessionsTask : BaseEntity
     public DateTime? TaskDate { get; set; }
 }
 
+/// <summary>
+/// One step in a user's navigation journey within a session. StepIndex orders
+/// the pages visited; Url is the page URL at that step.
+/// </summary>
 public class UserJourneyStep : BaseEntity
 {
     public int ProjectId { get; set; }
@@ -140,6 +192,10 @@ public class UserJourneyStep : BaseEntity
     public string? Url { get; set; }
 }
 
+/// <summary>
+/// Global system tuning parameters (worker counts, flush sizes/timeouts). Only the
+/// row with Active=true is used. Allows runtime tuning without restarts.
+/// </summary>
 public class SystemConfiguration : BaseEntity
 {
     public bool Active { get; set; }
@@ -153,6 +209,9 @@ public class SystemConfiguration : BaseEntity
     public string? FilterSessionsWithoutError { get; set; }
 }
 
+/// <summary>
+/// Tracks which admins have viewed a specific log entry (for "new" badges in the UI).
+/// </summary>
 public class LogAdminsView : BaseEntity
 {
     public int LogId { get; set; }

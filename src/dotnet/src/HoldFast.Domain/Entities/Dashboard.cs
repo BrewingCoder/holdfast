@@ -1,5 +1,8 @@
 namespace HoldFast.Domain.Entities;
 
+/// <summary>
+/// A named dashboard within a project, containing metrics and a layout configuration.
+/// </summary>
 public class Dashboard : BaseEntity
 {
     public int ProjectId { get; set; }
@@ -11,6 +14,10 @@ public class Dashboard : BaseEntity
     public ICollection<DashboardMetric> Metrics { get; set; } = [];
 }
 
+/// <summary>
+/// A metric tile on a dashboard (e.g., P50 latency, error rate). Configures aggregation,
+/// thresholds, and display parameters.
+/// </summary>
 public class DashboardMetric : BaseEntity
 {
     public int DashboardId { get; set; }
@@ -34,6 +41,9 @@ public class DashboardMetric : BaseEntity
     public ICollection<DashboardMetricFilter> Filters { get; set; } = [];
 }
 
+/// <summary>
+/// Filter applied to a dashboard metric (e.g., tag="environment", op="equals", value="production").
+/// </summary>
 public class DashboardMetricFilter : BaseEntity
 {
     public int MetricId { get; set; }
@@ -43,6 +53,10 @@ public class DashboardMetricFilter : BaseEntity
     public string Value { get; set; } = string.Empty;
 }
 
+/// <summary>
+/// A graph within a visualization. Configures what data to query (ProductType, Query),
+/// how to aggregate (GroupByKey, BucketByKey, BucketCount), and how to display (Display).
+/// </summary>
 public class Graph : BaseEntity
 {
     public int ProjectId { get; set; }
@@ -64,6 +78,10 @@ public class Graph : BaseEntity
     public Project Project { get; set; } = null!;
 }
 
+/// <summary>
+/// A named visualization container that holds one or more graphs. Used for the custom
+/// dashboard builder.
+/// </summary>
 public class Visualization : BaseEntity
 {
     public int ProjectId { get; set; }

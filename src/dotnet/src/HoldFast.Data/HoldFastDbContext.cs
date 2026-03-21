@@ -5,6 +5,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace HoldFast.Data;
 
+/// <summary>
+/// EF Core DbContext for HoldFast. Maps all domain entities to PostgreSQL using snake_case
+/// naming conventions (matching the Go/GORM schema). Supports SQLite for unit testing via
+/// JSON-based list converters and conditional array column configuration.
+/// </summary>
 public class HoldFastDbContext : DbContext
 {
     public HoldFastDbContext(DbContextOptions<HoldFastDbContext> options) : base(options) { }

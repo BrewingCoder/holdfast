@@ -1,5 +1,10 @@
 namespace HoldFast.Domain.Entities;
 
+/// <summary>
+/// A user session recording. Core entity for session replay — stores device info,
+/// geo-location, processing state, and replay metadata. SecureId is the public-facing ID
+/// used by SDKs; the integer Id is internal only.
+/// </summary>
 public class Session : BaseEntity
 {
     public string SecureId { get; set; } = string.Empty;
@@ -54,6 +59,10 @@ public class Session : BaseEntity
     public Project Project { get; set; } = null!;
 }
 
+/// <summary>
+/// A time interval within a session, used for timeline visualization.
+/// StartTime/EndTime/Duration are in milliseconds (epoch-relative).
+/// </summary>
 public class SessionInterval : BaseEntity
 {
     public int SessionId { get; set; }
@@ -65,6 +74,9 @@ public class SessionInterval : BaseEntity
     public Session Session { get; set; } = null!;
 }
 
+/// <summary>
+/// A session export request (e.g., mp4 video). Created by the user, processed by a background worker.
+/// </summary>
 public class SessionExport : BaseEntity
 {
     public int SessionId { get; set; }
@@ -75,6 +87,9 @@ public class SessionExport : BaseEntity
     public Session Session { get; set; } = null!;
 }
 
+/// <summary>
+/// AI-generated insight for a session (e.g., "user encountered errors on checkout page").
+/// </summary>
 public class SessionInsight : BaseEntity
 {
     public int SessionId { get; set; }
@@ -83,6 +98,9 @@ public class SessionInsight : BaseEntity
     public Session Session { get; set; } = null!;
 }
 
+/// <summary>
+/// Tracks which admins have viewed a session (for "viewed" badges in the UI).
+/// </summary>
 public class SessionAdminsView : BaseEntity
 {
     public int SessionId { get; set; }
@@ -92,6 +110,11 @@ public class SessionAdminsView : BaseEntity
     public Admin Admin { get; set; } = null!;
 }
 
+/// <summary>
+/// A chunk of session replay events stored in object storage. Sessions are split into
+/// chunks for streaming playback. ChunkIndex determines ordering; Timestamp is the
+/// epoch time of the chunk's first event.
+/// </summary>
 public class EventChunk : BaseEntity
 {
     public int SessionId { get; set; }
@@ -101,6 +124,10 @@ public class EventChunk : BaseEntity
     public Session Session { get; set; } = null!;
 }
 
+/// <summary>
+/// Detected rage click event — multiple rapid clicks on the same element.
+/// Used for UX frustration analysis.
+/// </summary>
 public class RageClickEvent : BaseEntity
 {
     public int ProjectId { get; set; }

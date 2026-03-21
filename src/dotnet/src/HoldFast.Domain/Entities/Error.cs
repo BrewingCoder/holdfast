@@ -2,6 +2,11 @@ using HoldFast.Domain.Enums;
 
 namespace HoldFast.Domain.Entities;
 
+/// <summary>
+/// Groups related error instances by fingerprint. Represents one distinct error
+/// (e.g., "TypeError: Cannot read property 'x' of undefined"). State tracks the
+/// lifecycle: Open → Resolved/Ignored.
+/// </summary>
 public class ErrorGroup : BaseEntity
 {
     public int ProjectId { get; set; }
@@ -23,6 +28,10 @@ public class ErrorGroup : BaseEntity
     public ICollection<ErrorFingerprint> Fingerprints { get; set; } = [];
 }
 
+/// <summary>
+/// A single error occurrence with full stack trace and metadata. Many ErrorObjects
+/// belong to one ErrorGroup. Contains source mapping info for deobfuscated stack traces.
+/// </summary>
 public class ErrorObject : BaseEntity
 {
     public int ProjectId { get; set; }
@@ -53,6 +62,10 @@ public class ErrorObject : BaseEntity
     public Session? Session { get; set; }
 }
 
+/// <summary>
+/// Fingerprint used to group error instances. Type indicates the fingerprinting
+/// strategy (e.g., "json_result", "stack_frame"). Index orders multiple fingerprints.
+/// </summary>
 public class ErrorFingerprint : BaseEntity
 {
     public int ProjectId { get; set; }
@@ -64,6 +77,10 @@ public class ErrorFingerprint : BaseEntity
     public ErrorGroup ErrorGroup { get; set; } = null!;
 }
 
+/// <summary>
+/// Vector embedding of an error group for similarity-based grouping (pgvector).
+/// Future feature: embedding-based error deduplication.
+/// </summary>
 public class ErrorGroupEmbeddings : BaseEntity
 {
     public int ErrorGroupId { get; set; }
@@ -73,6 +90,9 @@ public class ErrorGroupEmbeddings : BaseEntity
     public ErrorGroup ErrorGroup { get; set; } = null!;
 }
 
+/// <summary>
+/// User-assigned tag on an error group for categorization and filtering.
+/// </summary>
 public class ErrorTag : BaseEntity
 {
     public int ErrorGroupId { get; set; }
@@ -82,6 +102,9 @@ public class ErrorTag : BaseEntity
     public ErrorGroup ErrorGroup { get; set; } = null!;
 }
 
+/// <summary>
+/// Comment on an error group thread. Supports discussion between admins about an error.
+/// </summary>
 public class ErrorComment : BaseEntity
 {
     public int ErrorGroupId { get; set; }
@@ -92,6 +115,9 @@ public class ErrorComment : BaseEntity
     public Admin Admin { get; set; } = null!;
 }
 
+/// <summary>
+/// Audit log entry for error group state changes (e.g., "Resolved" by admin).
+/// </summary>
 public class ErrorGroupActivityLog : BaseEntity
 {
     public int ErrorGroupId { get; set; }
@@ -101,6 +127,9 @@ public class ErrorGroupActivityLog : BaseEntity
     public ErrorGroup ErrorGroup { get; set; } = null!;
 }
 
+/// <summary>
+/// Tracks which admins have viewed an error group (for "new" badges in the UI).
+/// </summary>
 public class ErrorGroupAdminsView : BaseEntity
 {
     public int ErrorGroupId { get; set; }
@@ -110,6 +139,9 @@ public class ErrorGroupAdminsView : BaseEntity
     public Admin Admin { get; set; } = null!;
 }
 
+/// <summary>
+/// Links an error group or session comment to an external issue tracker (e.g., Linear, Jira).
+/// </summary>
 public class ExternalAttachment : BaseEntity
 {
     public int? ErrorGroupId { get; set; }

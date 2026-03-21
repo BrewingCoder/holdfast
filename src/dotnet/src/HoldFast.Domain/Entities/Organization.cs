@@ -2,6 +2,10 @@ using HoldFast.Domain.Enums;
 
 namespace HoldFast.Domain.Entities;
 
+/// <summary>
+/// Legacy organizational container from Highlight.io. In HoldFast, Workspace is the
+/// primary unit. Organizations exist for schema compatibility with the upstream migration.
+/// </summary>
 public class Organization : BaseEntity
 {
     public string? Name { get; set; }

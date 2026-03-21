@@ -2,6 +2,11 @@ using HashidsNet;
 
 namespace HoldFast.Domain.Entities;
 
+/// <summary>
+/// A monitored application within a workspace. Each project has its own data pipeline,
+/// error filters, and SDK configuration. VerboseId is the HashID-encoded public identifier
+/// used by SDKs (e.g., "jxo4pe6o").
+/// </summary>
 public class Project : BaseEntity
 {
     /// <summary>
@@ -57,6 +62,10 @@ public class Project : BaseEntity
     public ICollection<SetupEvent> SetupEvents { get; set; } = [];
 }
 
+/// <summary>
+/// Records that a setup milestone was completed for a project (e.g., "client", "server",
+/// "alerts"). Used to drive the onboarding checklist UI. Unique on (ProjectId, Type).
+/// </summary>
 public class SetupEvent
 {
     public int Id { get; set; }
@@ -67,6 +76,10 @@ public class SetupEvent
     public Project Project { get; set; } = null!;
 }
 
+/// <summary>
+/// Server-side ingestion settings for a project: sampling rates (0.0–1.0), per-minute rate
+/// limits, exclusion queries, and auto-resolve intervals. Controls what data is stored.
+/// </summary>
 public class ProjectFilterSettings : BaseEntity
 {
     public int ProjectId { get; set; }
@@ -91,6 +104,10 @@ public class ProjectFilterSettings : BaseEntity
     public Project Project { get; set; } = null!;
 }
 
+/// <summary>
+/// Client-side sampling configuration pushed to SDKs. SpanSamplingConfigs and
+/// LogSamplingConfigs are JSON blobs that tell the SDK what to sample before sending.
+/// </summary>
 public class ProjectClientSamplingSettings : BaseEntity
 {
     public int ProjectId { get; set; }

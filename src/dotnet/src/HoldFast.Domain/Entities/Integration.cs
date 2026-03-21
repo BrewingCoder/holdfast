@@ -1,5 +1,9 @@
 namespace HoldFast.Domain.Entities;
 
+/// <summary>
+/// Links a third-party integration (e.g., Slack, Linear) to a specific project.
+/// ExternalId is the integration's identifier for this project (e.g., Slack channel ID).
+/// </summary>
 public class IntegrationProjectMapping : BaseEntity
 {
     public string IntegrationType { get; set; } = string.Empty;
@@ -9,6 +13,10 @@ public class IntegrationProjectMapping : BaseEntity
     public Project Project { get; set; } = null!;
 }
 
+/// <summary>
+/// Links a third-party integration to a workspace with OAuth credentials. AccessToken/RefreshToken
+/// are used for API calls; Expiry tracks token lifetime for automatic refresh.
+/// </summary>
 public class IntegrationWorkspaceMapping : BaseEntity
 {
     public string IntegrationType { get; set; } = string.Empty;
@@ -20,6 +28,10 @@ public class IntegrationWorkspaceMapping : BaseEntity
     public Workspace Workspace { get; set; } = null!;
 }
 
+/// <summary>
+/// Maps a Vercel project to a HoldFast project for automatic source map uploads
+/// and deployment tracking.
+/// </summary>
 public class VercelIntegrationConfig : BaseEntity
 {
     public int ProjectId { get; set; }
@@ -29,6 +41,10 @@ public class VercelIntegrationConfig : BaseEntity
     public Project Project { get; set; } = null!;
 }
 
+/// <summary>
+/// A webhook subscription (REST hook pattern). Sends POST requests to TargetUrl
+/// when events of type Event occur in the project.
+/// </summary>
 public class ResthookSubscription : BaseEntity
 {
     public int ProjectId { get; set; }
@@ -36,6 +52,10 @@ public class ResthookSubscription : BaseEntity
     public string? TargetUrl { get; set; }
 }
 
+/// <summary>
+/// Registered OAuth client application. ClientId/Secret are the credentials; Domains
+/// restricts redirect URIs. CreatorAdminId tracks who registered the client.
+/// </summary>
 public class OAuthClientStore : BaseEntity
 {
     public string ClientId { get; set; } = string.Empty;
@@ -49,6 +69,10 @@ public class OAuthClientStore : BaseEntity
     public Admin? Admin { get; set; }
 }
 
+/// <summary>
+/// Defines which GraphQL operations an OAuth client is authorized to call,
+/// with an optional per-minute rate limit.
+/// </summary>
 public class OAuthOperation : BaseEntity
 {
     public int ClientId { get; set; }
@@ -56,6 +80,10 @@ public class OAuthOperation : BaseEntity
     public int? MinuteRateLimit { get; set; }
 }
 
+/// <summary>
+/// SAML/OIDC SSO configuration for a workspace. Domain determines which email addresses
+/// auto-route to this SSO provider. ProviderUrl is the IdP's metadata/discovery URL.
+/// </summary>
 public class SSOClient : BaseEntity
 {
     public int WorkspaceId { get; set; }

@@ -1,5 +1,9 @@
 namespace HoldFast.GraphQL.Public.InputTypes;
 
+/// <summary>
+/// A single frame in an error stack trace. Maps to one line in a JS/TS stack trace.
+/// IsEval/IsNative indicate the execution context.
+/// </summary>
 public record StackFrameInput(
     string? FunctionName,
     string? FileName,
@@ -9,6 +13,10 @@ public record StackFrameInput(
     bool? IsNative,
     string? Source);
 
+/// <summary>
+/// Frontend error object submitted by the browser SDK. Contains the error event message,
+/// type, source URL, line/column numbers, full stack trace, and optional JSON payload.
+/// </summary>
 public record ErrorObjectInput(
     string Event,
     string Type,
@@ -20,10 +28,17 @@ public record ErrorObjectInput(
     DateTime Timestamp,
     string? Payload);
 
+/// <summary>
+/// Identifies the backend service that reported an error (name + version).
+/// </summary>
 public record ServiceInput(
     string Name,
     string Version);
 
+/// <summary>
+/// Backend error submitted by a server-side SDK. Includes distributed tracing context
+/// (TraceId, SpanId), service identity, and the error's environment.
+/// </summary>
 public record BackendErrorObjectInput(
     string? SessionSecureId,
     string? RequestId,
