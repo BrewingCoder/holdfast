@@ -1,237 +1,265 @@
-using System.Text.Json;
-using HoldFast.Data;
-using HoldFast.Domain.Entities;
 using HoldFast.GraphQL.Public;
 using HoldFast.GraphQL.Public.InputTypes;
-using Microsoft.Data.Sqlite;
-using Microsoft.EntityFrameworkCore;
 using Xunit;
 
 namespace HoldFast.GraphQL.Tests;
 
 /// <summary>
-/// Tests for PublicMutation Kafka-producing mutations using a stub producer.
-/// Verifies data flows correctly to Kafka topics.
+/// Tests for Kafka-dependent public mutations: PushSessionEvents,
+/// PushBackendPayload, PushMetrics. Uses a recording fake producer.
 /// </summary>
-public class PublicMutationKafkaTests : IDisposable
+public class PublicMutationKafkaTests
 {
-    private readonly SqliteConnection _connection;
-    private readonly HoldFastDbContext _db;
-    private readonly PublicMutation _mutation;
-    private readonly StubKafkaProducer _kafka;
-    private readonly Project _project;
+    private readonly PublicMutation _mutation = new();
 
-    public PublicMutationKafkaTests()
+    // ── Fake Producer ────────────────────────────────────────────────
+
+    private class FakeKafkaProducer : IKafkaProducer
     {
-        _connection = new SqliteConnection("DataSource=:memory:");
-        _connection.Open();
-        var options = new DbContextOptionsBuilder<HoldFastDbContext>()
-            .UseSqlite(_connection).Options;
-        _db = new HoldFastDbContext(options);
-        _db.Database.EnsureCreated();
-
-        var workspace = new Workspace { Name = "WS", PlanTier = "Enterprise" };
-        _db.Workspaces.Add(workspace);
-        _db.SaveChanges();
-
-        _project = new Project { Name = "Proj", WorkspaceId = workspace.Id };
-        _db.Projects.Add(_project);
-        _db.SaveChanges();
-
-        _db.Sessions.Add(new Session { ProjectId = _project.Id, SecureId = "kafka-session-1" });
-        _db.SaveChanges();
-
-        _mutation = new PublicMutation();
-        _kafka = new StubKafkaProducer();
-    }
-
-    public void Dispose()
-    {
-        _db.Dispose();
-        _connection.Close();
-        _connection.Dispose();
-    }
-
-    // ── PushSessionEvents ──────────────────────────────────────────────
-
-    [Fact]
-    public async Task PushSessionEvents_ProducesToKafka()
-    {
-        await _mutation.PushSessionEvents("kafka-session-1", 1, "compressed-data", _kafka, CancellationToken.None);
-
-        Assert.Equal(1, _kafka.SessionEventsCount);
-        Assert.Equal("kafka-session-1", _kafka.LastSessionSecureId);
-        Assert.Equal("compressed-data", _kafka.LastSessionData);
-    }
-
-    [Fact]
-    public async Task PushSessionEvents_LargePayloadId()
-    {
-        await _mutation.PushSessionEvents("kafka-session-1", long.MaxValue, "data", _kafka, CancellationToken.None);
-        Assert.Equal(long.MaxValue, _kafka.LastPayloadId);
-    }
-
-    // ── PushBackendPayload ─────────────────────────────────────────────
-
-    [Fact]
-    public async Task PushBackendPayload_ProducesForEachError()
-    {
-        var svc = new ServiceInput("test-svc", "1.0");
-        var errors = new List<BackendErrorObjectInput>
-        {
-            new("sess-1", null, null, null, null, "Error 1", "BACKEND", "http://test.com", "api.go", "[]", DateTime.UtcNow, null, svc, "prod"),
-            new("sess-1", null, null, null, null, "Error 2", "BACKEND", "http://test.com", "api.go", "[]", DateTime.UtcNow, null, svc, "prod"),
-        };
-
-        await _mutation.PushBackendPayload(_project.Id.ToString(), errors, _kafka, CancellationToken.None);
-
-        Assert.Equal(2, _kafka.BackendErrorCount);
-    }
-
-    [Fact]
-    public async Task PushBackendPayload_EmptyList_NoKafkaMessages()
-    {
-        await _mutation.PushBackendPayload(_project.Id.ToString(), [], _kafka, CancellationToken.None);
-        Assert.Equal(0, _kafka.BackendErrorCount);
-    }
-
-    // ── PushMetrics ────────────────────────────────────────────────────
-
-    [Fact]
-    public async Task PushMetrics_ProducesForEachMetric()
-    {
-        var metrics = new List<MetricInput>
-        {
-            new("kafka-session-1", null, null, null, null, "cpu", 85.5, null, DateTime.UtcNow, null),
-            new("kafka-session-1", null, null, null, null, "memory", 72.0, null, DateTime.UtcNow, null),
-            new("kafka-session-1", null, null, null, null, "disk", 45.0, null, DateTime.UtcNow, null),
-        };
-
-        await _mutation.PushMetrics(metrics, _kafka, CancellationToken.None);
-        Assert.Equal(3, _kafka.MetricCount);
-    }
-
-    [Fact]
-    public async Task PushMetrics_EmptyList_NoKafkaMessages()
-    {
-        await _mutation.PushMetrics([], _kafka, CancellationToken.None);
-        Assert.Equal(0, _kafka.MetricCount);
-    }
-
-    // ── KafkaProducerAdapter Tests ─────────────────────────────────────
-
-    [Fact]
-    public void KafkaProducerAdapter_LogInput_Serializable()
-    {
-        var log = new LogInput(
-            ProjectId: 1,
-            Timestamp: DateTime.UtcNow,
-            TraceId: "trace-1",
-            SpanId: "span-1",
-            SecureSessionId: "sess-1",
-            SeverityText: "ERROR",
-            SeverityNumber: 17,
-            Source: "otel",
-            ServiceName: "svc",
-            ServiceVersion: "1.0",
-            Body: "test log",
-            LogAttributes: new Dictionary<string, string> { ["key"] = "val" },
-            Environment: "prod");
-
-        var json = JsonSerializer.Serialize(log);
-        var deserialized = JsonSerializer.Deserialize<LogInput>(json);
-        Assert.NotNull(deserialized);
-        Assert.Equal("ERROR", deserialized!.SeverityText);
-    }
-
-    [Fact]
-    public void KafkaProducerAdapter_TraceInput_Serializable()
-    {
-        var trace = new TraceInput(
-            ProjectId: 1,
-            Timestamp: DateTime.UtcNow,
-            TraceId: "trace-1",
-            SpanId: "span-1",
-            ParentSpanId: "parent-1",
-            SecureSessionId: "sess-1",
-            ServiceName: "svc",
-            ServiceVersion: "1.0",
-            Environment: "prod",
-            SpanName: "GET /api",
-            SpanKind: "SERVER",
-            Duration: 100_000,
-            StatusCode: "OK",
-            StatusMessage: "",
-            TraceAttributes: new Dictionary<string, string> { ["http.method"] = "GET" },
-            HasErrors: false);
-
-        var json = JsonSerializer.Serialize(trace);
-        var deserialized = JsonSerializer.Deserialize<TraceInput>(json);
-        Assert.NotNull(deserialized);
-        Assert.Equal("GET /api", deserialized!.SpanName);
-        Assert.False(deserialized.HasErrors);
-    }
-
-    [Fact]
-    public async Task ProduceLog_TracksMessage()
-    {
-        var log = new LogInput(1, DateTime.UtcNow, "t", "s", "", "INFO", 9, "", "svc", "1.0", "body", null, "");
-        await _kafka.ProduceLogAsync(log, CancellationToken.None);
-        Assert.Equal(1, _kafka.LogCount);
-    }
-
-    [Fact]
-    public async Task ProduceTrace_TracksMessage()
-    {
-        var trace = new TraceInput(1, DateTime.UtcNow, "t", "s", "", "", "svc", "1.0", "", "span", "SERVER", 0, "OK", "", null, false);
-        await _kafka.ProduceTraceAsync(trace, CancellationToken.None);
-        Assert.Equal(1, _kafka.TraceCount);
-    }
-
-    // ── Stub Kafka Producer ────────────────────────────────────────────
-
-    private class StubKafkaProducer : IKafkaProducer
-    {
-        public int SessionEventsCount { get; private set; }
-        public int BackendErrorCount { get; private set; }
-        public int MetricCount { get; private set; }
-        public int LogCount { get; private set; }
-        public int TraceCount { get; private set; }
-        public string? LastSessionSecureId { get; private set; }
-        public string? LastSessionData { get; private set; }
-        public long LastPayloadId { get; private set; }
+        public List<(string SessionSecureId, long PayloadId, string Data)> SessionEvents { get; } = [];
+        public List<(string? ProjectId, BackendErrorObjectInput Error)> BackendErrors { get; } = [];
+        public List<MetricInput> Metrics { get; } = [];
+        public List<LogInput> Logs { get; } = [];
+        public List<TraceInput> Traces { get; } = [];
 
         public Task ProduceSessionEventsAsync(string sessionSecureId, long payloadId, string data, CancellationToken ct)
         {
-            SessionEventsCount++;
-            LastSessionSecureId = sessionSecureId;
-            LastPayloadId = payloadId;
-            LastSessionData = data;
+            SessionEvents.Add((sessionSecureId, payloadId, data));
             return Task.CompletedTask;
         }
 
         public Task ProduceBackendErrorAsync(string? projectId, BackendErrorObjectInput error, CancellationToken ct)
         {
-            BackendErrorCount++;
+            BackendErrors.Add((projectId, error));
             return Task.CompletedTask;
         }
 
         public Task ProduceMetricAsync(MetricInput metric, CancellationToken ct)
         {
-            MetricCount++;
+            Metrics.Add(metric);
             return Task.CompletedTask;
         }
 
         public Task ProduceLogAsync(LogInput log, CancellationToken ct)
         {
-            LogCount++;
+            Logs.Add(log);
             return Task.CompletedTask;
         }
 
         public Task ProduceTraceAsync(TraceInput trace, CancellationToken ct)
         {
-            TraceCount++;
+            Traces.Add(trace);
             return Task.CompletedTask;
         }
+    }
+
+    // ── PushSessionEvents ────────────────────────────────────────────
+
+    [Fact]
+    public async Task PushSessionEvents_ProducesToKafka()
+    {
+        var kafka = new FakeKafkaProducer();
+
+        var result = await _mutation.PushSessionEvents(
+            "sess-abc", 42, "compressed-data",
+            kafka, CancellationToken.None);
+
+        Assert.True(result);
+        Assert.Single(kafka.SessionEvents);
+        Assert.Equal("sess-abc", kafka.SessionEvents[0].SessionSecureId);
+        Assert.Equal(42, kafka.SessionEvents[0].PayloadId);
+        Assert.Equal("compressed-data", kafka.SessionEvents[0].Data);
+    }
+
+    [Fact]
+    public async Task PushSessionEvents_EmptyData()
+    {
+        var kafka = new FakeKafkaProducer();
+
+        var result = await _mutation.PushSessionEvents(
+            "sess-1", 0, "",
+            kafka, CancellationToken.None);
+
+        Assert.True(result);
+        Assert.Single(kafka.SessionEvents);
+        Assert.Empty(kafka.SessionEvents[0].Data);
+    }
+
+    [Fact]
+    public async Task PushSessionEvents_LargePayloadId()
+    {
+        var kafka = new FakeKafkaProducer();
+
+        await _mutation.PushSessionEvents(
+            "sess-1", long.MaxValue, "data",
+            kafka, CancellationToken.None);
+
+        Assert.Equal(long.MaxValue, kafka.SessionEvents[0].PayloadId);
+    }
+
+    // ── PushBackendPayload ───────────────────────────────────────────
+
+    [Fact]
+    public async Task PushBackendPayload_ProducesAllErrors()
+    {
+        var kafka = new FakeKafkaProducer();
+        var svc = new ServiceInput("api-server", "1.0");
+
+        var errors = new List<BackendErrorObjectInput>
+        {
+            new(null, null, null, null, null, "NullRef", "System.NullReferenceException",
+                "/api", "backend", "at MyApp.Service()", DateTime.UtcNow, null, svc, "prod"),
+            new(null, null, null, null, null, "DivZero", "System.DivideByZeroException",
+                "/calc", "backend", "at MyApp.Calculator()", DateTime.UtcNow, null, svc, "prod"),
+        };
+
+        var result = await _mutation.PushBackendPayload(
+            "123", errors,
+            kafka, CancellationToken.None);
+
+        Assert.True(result);
+        Assert.Equal(2, kafka.BackendErrors.Count);
+        Assert.Equal("123", kafka.BackendErrors[0].ProjectId);
+        Assert.Equal("NullRef", kafka.BackendErrors[0].Error.Event);
+        Assert.Equal("DivZero", kafka.BackendErrors[1].Error.Event);
+    }
+
+    [Fact]
+    public async Task PushBackendPayload_EmptyErrors_ReturnsTrue()
+    {
+        var kafka = new FakeKafkaProducer();
+
+        var result = await _mutation.PushBackendPayload(
+            "123", [],
+            kafka, CancellationToken.None);
+
+        Assert.True(result);
+        Assert.Empty(kafka.BackendErrors);
+    }
+
+    [Fact]
+    public async Task PushBackendPayload_NullProjectId()
+    {
+        var kafka = new FakeKafkaProducer();
+        var svc = new ServiceInput("svc", "1.0");
+
+        var errors = new List<BackendErrorObjectInput>
+        {
+            new(null, null, null, null, null, "Error", "Error",
+                "", "", "", DateTime.UtcNow, null, svc, "dev"),
+        };
+
+        var result = await _mutation.PushBackendPayload(
+            null, errors,
+            kafka, CancellationToken.None);
+
+        Assert.True(result);
+        Assert.Null(kafka.BackendErrors[0].ProjectId);
+    }
+
+    [Fact]
+    public async Task PushBackendPayload_PreservesTraceContext()
+    {
+        var kafka = new FakeKafkaProducer();
+        var svc = new ServiceInput("svc", "1.0");
+
+        var errors = new List<BackendErrorObjectInput>
+        {
+            new("sess-1", "req-1", "trace-abc", "span-xyz", "cursor-1",
+                "Error", "AppError", "/api", "backend", "stack",
+                DateTime.UtcNow, "{\"key\":\"val\"}", svc, "prod"),
+        };
+
+        await _mutation.PushBackendPayload("42", errors, kafka, CancellationToken.None);
+
+        var produced = kafka.BackendErrors[0].Error;
+        Assert.Equal("sess-1", produced.SessionSecureId);
+        Assert.Equal("req-1", produced.RequestId);
+        Assert.Equal("trace-abc", produced.TraceId);
+        Assert.Equal("span-xyz", produced.SpanId);
+        Assert.Equal("cursor-1", produced.LogCursor);
+        Assert.Equal("{\"key\":\"val\"}", produced.Payload);
+    }
+
+    // ── PushMetrics ──────────────────────────────────────────────────
+
+    [Fact]
+    public async Task PushMetrics_ProducesAllMetrics()
+    {
+        var kafka = new FakeKafkaProducer();
+
+        var metrics = new List<MetricInput>
+        {
+            new("sess-1", null, null, null, null, "LCP", 2.5, "web-vital", DateTime.UtcNow, null),
+            new("sess-1", null, null, null, null, "FID", 100.0, "web-vital", DateTime.UtcNow, null),
+            new("sess-1", null, null, null, null, "CLS", 0.1, "web-vital", DateTime.UtcNow, null),
+        };
+
+        var count = await _mutation.PushMetrics(
+            metrics, kafka, CancellationToken.None);
+
+        Assert.Equal(3, count);
+        Assert.Equal(3, kafka.Metrics.Count);
+        Assert.Equal("LCP", kafka.Metrics[0].Name);
+        Assert.Equal("FID", kafka.Metrics[1].Name);
+        Assert.Equal("CLS", kafka.Metrics[2].Name);
+    }
+
+    [Fact]
+    public async Task PushMetrics_EmptyList_ReturnsZero()
+    {
+        var kafka = new FakeKafkaProducer();
+
+        var count = await _mutation.PushMetrics(
+            [], kafka, CancellationToken.None);
+
+        Assert.Equal(0, count);
+        Assert.Empty(kafka.Metrics);
+    }
+
+    [Fact]
+    public async Task PushMetrics_WithTags()
+    {
+        var kafka = new FakeKafkaProducer();
+
+        var tags = new List<MetricTag>
+        {
+            new("page", "/home"),
+            new("env", "prod"),
+        };
+
+        var metrics = new List<MetricInput>
+        {
+            new("sess-1", "span-1", "parent-1", "trace-1", "grp", "custom_metric", 42.0, "custom", DateTime.UtcNow, tags),
+        };
+
+        var count = await _mutation.PushMetrics(
+            metrics, kafka, CancellationToken.None);
+
+        Assert.Equal(1, count);
+        Assert.NotNull(kafka.Metrics[0].Tags);
+        Assert.Equal(2, kafka.Metrics[0].Tags!.Count);
+    }
+
+    [Fact]
+    public async Task PushMetrics_PreservesSpanAndTraceContext()
+    {
+        var kafka = new FakeKafkaProducer();
+        var ts = new DateTime(2026, 3, 20, 12, 0, 0, DateTimeKind.Utc);
+
+        var metrics = new List<MetricInput>
+        {
+            new("sess-1", "span-abc", "parent-xyz", "trace-123", "mygroup",
+                "metric", 1.0, "cat", ts, null),
+        };
+
+        await _mutation.PushMetrics(metrics, kafka, CancellationToken.None);
+
+        var produced = kafka.Metrics[0];
+        Assert.Equal("span-abc", produced.SpanId);
+        Assert.Equal("parent-xyz", produced.ParentSpanId);
+        Assert.Equal("trace-123", produced.TraceId);
+        Assert.Equal("mygroup", produced.Group);
+        Assert.Equal(ts, produced.Timestamp);
     }
 }
