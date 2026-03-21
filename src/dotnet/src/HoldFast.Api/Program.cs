@@ -136,4 +136,7 @@ app.MapGraphQL("/private", "private")
 app.MapGraphQL("/public", "public")
     .RequireCors("Public");
 
+// OTeL-compatible HTTP endpoints for non-GraphQL ingestion
+app.MapOtelEndpoints();
+
 app.Run();

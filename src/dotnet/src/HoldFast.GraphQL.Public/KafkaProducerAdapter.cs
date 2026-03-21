@@ -30,4 +30,14 @@ public class KafkaProducerAdapter : IKafkaProducer
     {
         return _producer.ProduceAsync(KafkaTopics.Metrics, metric.SessionSecureId, metric, ct);
     }
+
+    public Task ProduceLogAsync(LogInput log, CancellationToken ct)
+    {
+        return _producer.ProduceAsync(KafkaTopics.Logs, log.TraceId, log, ct);
+    }
+
+    public Task ProduceTraceAsync(TraceInput trace, CancellationToken ct)
+    {
+        return _producer.ProduceAsync(KafkaTopics.Traces, trace.TraceId, trace, ct);
+    }
 }
