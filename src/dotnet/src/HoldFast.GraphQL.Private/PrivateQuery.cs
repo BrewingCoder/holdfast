@@ -915,6 +915,445 @@ public class PrivateQuery
         return new SessionSearchResult { SessionIds = ids, TotalCount = total };
     }
 
+    // ── Admin Role ──────────────────────────────────────────────────
+
+    /// <summary>
+    /// Get the admin's role within a workspace. Returns null if not a member.
+    /// </summary>
+    public async Task<string?> GetAdminRole(
+        int workspaceId,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        CancellationToken ct)
+    {
+        var admin = await AuthHelper.GetRequiredAdmin(claimsPrincipal, authz, ct);
+        var result = await authz.GetAdminRoleAsync(admin.Id, workspaceId, ct);
+        return result?.Role;
+    }
+
+    /// <summary>
+    /// Get the admin's role for a workspace via project ID.
+    /// </summary>
+    public async Task<string?> GetAdminRoleByProject(
+        int projectId,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        var admin = await AuthHelper.GetRequiredAdmin(claimsPrincipal, authz, ct);
+        var project = await db.Projects.FindAsync([projectId], ct);
+        if (project == null) return null;
+        var result = await authz.GetAdminRoleAsync(admin.Id, project.WorkspaceId, ct);
+        return result?.Role;
+    }
+
+    // ── Workspace Pending Invites ───────────────────────────────────
+
+    /// <summary>
+    /// Get pending (non-expired) invites for the current admin.
+    /// </summary>
+    public async Task<List<WorkspaceInviteLink>> GetWorkspacePendingInvites(
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        var admin = await AuthHelper.GetRequiredAdmin(claimsPrincipal, authz, ct);
+        var now = DateTime.UtcNow;
+
+        return await db.WorkspaceInviteLinks
+            .Where(l => l.InviteeEmail == admin.Email
+                        && (l.ExpirationDate == null || l.ExpirationDate > now))
+            .Include(l => l.Workspace)
+            .ToListAsync(ct);
+    }
+
+    /// <summary>
+    /// Get workspaces the user can join (has pending invites).
+    /// </summary>
+    public async Task<List<Workspace>> GetJoinableWorkspaces(
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        var admin = await AuthHelper.GetRequiredAdmin(claimsPrincipal, authz, ct);
+        var now = DateTime.UtcNow;
+
+        return await db.WorkspaceInviteLinks
+            .Where(l => l.InviteeEmail == admin.Email
+                        && (l.ExpirationDate == null || l.ExpirationDate > now))
+            .Select(l => l.Workspace)
+            .Distinct()
+            .ToListAsync(ct);
+    }
+
+    // ── Session Detail ──────────────────────────────────────────────
+
+    /// <summary>
+    /// Get session events (raw recording data) from storage.
+    /// </summary>
+    public async Task<List<EventChunk>> GetEvents(
+        int sessionId,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        var session = await db.Sessions.FindAsync([sessionId], ct);
+        if (session != null)
+            await AuthHelper.RequireProjectAccess(claimsPrincipal, session.ProjectId, authz, ct);
+
+        return await db.EventChunks
+            .Where(c => c.SessionId == sessionId)
+            .OrderBy(c => c.ChunkIndex)
+            .ToListAsync(ct);
+    }
+
+    /// <summary>
+    /// Check if a session is still being processed.
+    /// </summary>
+    public async Task<bool> IsSessionPending(
+        int sessionId,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        var session = await db.Sessions.FindAsync([sessionId], ct);
+        if (session == null) return false;
+
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, session.ProjectId, authz, ct);
+
+        return session.Processed != true;
+    }
+
+    // ── Error Detail ────────────────────────────────────────────────
+
+    /// <summary>
+    /// Get a single error instance with full stack trace and metadata.
+    /// </summary>
+    public async Task<ErrorObject?> GetErrorInstance(
+        int errorGroupId,
+        int? errorObjectId,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        var eg = await db.ErrorGroups.FindAsync([errorGroupId], ct);
+        if (eg != null)
+            await AuthHelper.RequireProjectAccess(claimsPrincipal, eg.ProjectId, authz, ct);
+
+        if (errorObjectId.HasValue)
+        {
+            return await db.ErrorObjects
+                .Include(e => e.ErrorGroup)
+                .FirstOrDefaultAsync(e => e.Id == errorObjectId.Value, ct);
+        }
+
+        // Default: return latest error object
+        return await db.ErrorObjects
+            .Include(e => e.ErrorGroup)
+            .Where(e => e.ErrorGroupId == errorGroupId)
+            .OrderByDescending(e => e.CreatedAt)
+            .FirstOrDefaultAsync(ct);
+    }
+
+    /// <summary>
+    /// Get the error object linked to a log entry.
+    /// </summary>
+    public async Task<ErrorObject?> GetErrorObjectForLog(
+        int logCursor,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        var eo = await db.ErrorObjects
+            .Include(e => e.ErrorGroup)
+            .FirstOrDefaultAsync(e => e.Id == logCursor, ct);
+
+        if (eo != null)
+            await AuthHelper.RequireProjectAccess(claimsPrincipal, eo.ErrorGroup.ProjectId, authz, ct);
+
+        return eo;
+    }
+
+    // ── Error Comments ──────────────────────────────────────────────
+
+    /// <summary>
+    /// List all error comments visible to the current admin.
+    /// </summary>
+    public async Task<List<ErrorComment>> GetErrorCommentsForAdmin(
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        var admin = await AuthHelper.GetRequiredAdmin(claimsPrincipal, authz, ct);
+
+        return await db.ErrorComments
+            .Where(c => c.AdminId == admin.Id)
+            .OrderByDescending(c => c.CreatedAt)
+            .ToListAsync(ct);
+    }
+
+    /// <summary>
+    /// List all error comments for a project.
+    /// </summary>
+    public async Task<List<ErrorComment>> GetErrorCommentsForProject(
+        int projectId,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+
+        // Error comments are on error groups which belong to projects
+        return await db.ErrorComments
+            .Include(c => c.ErrorGroup)
+            .Where(c => c.ErrorGroup.ProjectId == projectId)
+            .OrderByDescending(c => c.CreatedAt)
+            .ToListAsync(ct);
+    }
+
+    // ── Session Comments (Admin-scoped) ─────────────────────────────
+
+    /// <summary>
+    /// List all session comments created by the current admin.
+    /// </summary>
+    public async Task<List<SessionComment>> GetSessionCommentsForAdmin(
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        var admin = await AuthHelper.GetRequiredAdmin(claimsPrincipal, authz, ct);
+
+        return await db.SessionComments
+            .Include(c => c.Tags)
+            .Where(c => c.AdminId == admin.Id)
+            .OrderByDescending(c => c.CreatedAt)
+            .ToListAsync(ct);
+    }
+
+    // ── Session Comment Tags ────────────────────────────────────────
+
+    /// <summary>
+    /// Get all distinct comment tags for a project.
+    /// </summary>
+    public async Task<List<SessionCommentTag>> GetSessionCommentTagsForProject(
+        int projectId,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+
+        return await db.SessionCommentTags
+            .Where(t => t.SessionComment.ProjectId == projectId)
+            .GroupBy(t => t.Name)
+            .Select(g => g.First())
+            .ToListAsync(ct);
+    }
+
+    // ── Rage Clicks (Project) ───────────────────────────────────────
+
+    /// <summary>
+    /// Get rage click events for an entire project.
+    /// </summary>
+    [UseProjection]
+    [UseFiltering]
+    [UseSorting]
+    public async Task<IQueryable<RageClickEvent>> GetRageClicksForProject(
+        int projectId,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+
+        return db.RageClickEvents
+            .Include(r => r.Session)
+            .Where(r => r.Session.ProjectId == projectId);
+    }
+
+    // ── Integration Status ──────────────────────────────────────────
+
+    /// <summary>
+    /// Check if a project has any sessions (client integration working).
+    /// </summary>
+    public async Task<bool> GetClientIntegration(
+        int projectId,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+        return await db.Sessions.AnyAsync(s => s.ProjectId == projectId, ct);
+    }
+
+    /// <summary>
+    /// Check if a project has any error groups (server integration working).
+    /// </summary>
+    public async Task<bool> GetServerIntegration(
+        int projectId,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+        return await db.ErrorGroups.AnyAsync(eg => eg.ProjectId == projectId, ct);
+    }
+
+    /// <summary>
+    /// Check if a project has received any logs.
+    /// </summary>
+    public async Task<bool> GetLogsIntegration(
+        int projectId,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] IClickHouseService clickHouse,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+
+        var result = await clickHouse.ReadLogsAsync(projectId,
+            new QueryInput
+            {
+                DateRangeStart = DateTime.UtcNow.AddDays(-30),
+                DateRangeEnd = DateTime.UtcNow,
+            },
+            new ClickHousePagination { Limit = 1 }, ct);
+        return result.Edges.Count > 0;
+    }
+
+    /// <summary>
+    /// Check if a project has received any traces.
+    /// </summary>
+    public async Task<bool> GetTracesIntegration(
+        int projectId,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] IClickHouseService clickHouse,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+
+        var result = await clickHouse.ReadTracesAsync(projectId,
+            new QueryInput
+            {
+                DateRangeStart = DateTime.UtcNow.AddDays(-30),
+                DateRangeEnd = DateTime.UtcNow,
+            },
+            new ClickHousePagination { Limit = 1 }, ct: ct);
+        return result.Edges.Count > 0;
+    }
+
+    // ── Alert Detail ────────────────────────────────────────────────
+
+    /// <summary>
+    /// Get a single alert by ID.
+    /// </summary>
+    public async Task<Alert?> GetAlert(
+        int id,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        var alert = await db.Alerts
+            .Include(a => a.Destinations)
+            .FirstOrDefaultAsync(a => a.Id == id, ct);
+
+        if (alert != null)
+            await AuthHelper.RequireProjectAccess(claimsPrincipal, alert.ProjectId, authz, ct);
+
+        return alert;
+    }
+
+    // ── Metric Monitors ─────────────────────────────────────────────
+
+    /// <summary>
+    /// Get metric monitors for a project.
+    /// </summary>
+    public async Task<List<MetricMonitor>> GetMetricMonitors(
+        int projectId,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+
+        return await db.MetricMonitors
+            .Where(m => m.ProjectId == projectId)
+            .ToListAsync(ct);
+    }
+
+    // ── Event Chunk URL ─────────────────────────────────────────────
+
+    /// <summary>
+    /// Get a pre-signed download URL for a specific event chunk.
+    /// </summary>
+    public async Task<string?> GetEventChunkUrl(
+        int sessionId,
+        int chunkIndex,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        [Service] Storage.IStorageService storage,
+        CancellationToken ct)
+    {
+        var session = await db.Sessions.FindAsync([sessionId], ct);
+        if (session == null) return null;
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, session.ProjectId, authz, ct);
+
+        var chunk = await db.EventChunks
+            .FirstOrDefaultAsync(c => c.SessionId == sessionId && c.ChunkIndex == chunkIndex, ct);
+        if (chunk == null) return null;
+
+        return await storage.GetDownloadUrlAsync(
+            "sessions", $"{session.ProjectId}/{sessionId}/{chunkIndex}",
+            TimeSpan.FromMinutes(5), ct);
+    }
+
+    // ── Admin Check Flags ───────────────────────────────────────────
+
+    /// <summary>
+    /// Check if the current admin has created any session comments.
+    /// </summary>
+    public async Task<bool> GetAdminHasCreatedComment(
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        var admin = await AuthHelper.GetRequiredAdmin(claimsPrincipal, authz, ct);
+        return await db.SessionComments.AnyAsync(c => c.AdminId == admin.Id, ct);
+    }
+
+    /// <summary>
+    /// Check if any sessions have been viewed in a project.
+    /// </summary>
+    public async Task<bool> GetProjectHasViewedASession(
+        int projectId,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+        return await db.Sessions.AnyAsync(s => s.ProjectId == projectId && s.ViewedByAdmins != null && s.ViewedByAdmins > 0, ct);
+    }
+
     // ── System ────────────────────────────────────────────────────────
 
     /// <summary>
