@@ -981,12 +981,13 @@ public class PrivateQuery
         var admin = await AuthHelper.GetRequiredAdmin(claimsPrincipal, authz, ct);
         var now = DateTime.UtcNow;
 
-        return await db.WorkspaceInviteLinks
+        return (await db.WorkspaceInviteLinks
             .Where(l => l.InviteeEmail == admin.Email
                         && (l.ExpirationDate == null || l.ExpirationDate > now))
             .Select(l => l.Workspace)
             .Distinct()
-            .ToListAsync(ct);
+            .ToListAsync(ct))
+            .Where(w => w != null).Select(w => w!).ToList();
     }
 
     // ── Session Detail ──────────────────────────────────────────────
@@ -1512,7 +1513,7 @@ public class PrivateQuery
                 && s.Processed != true
                 && s.Excluded != true
                 && s.CreatedAt > cutoff)
-            .Select(s => string.IsNullOrEmpty(s.Identifier) ? s.Fingerprint.ToString() : s.Identifier)
+            .Select(s => string.IsNullOrEmpty(s.Identifier) ? (s.Fingerprint ?? "") : s.Identifier)
             .Distinct()
             .LongCountAsync(ct);
     }
