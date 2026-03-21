@@ -39,21 +39,21 @@ services:
 
     frontend:
         container_name: frontend
-        image: ${FRONTEND_IMAGE_NAME:-ghcr.io/highlight/highlight-frontend:latest}
+        build:
+            context: ../..
+            dockerfile: infra/docker/frontend.Dockerfile
+        image: ${FRONTEND_IMAGE_NAME:-holdfast-frontend:latest}
         restart: on-failure
         ports:
             - '0.0.0.0:3000:3000'
             - '0.0.0.0:8080:8080'
-        volumes:
-            - ./frontend-entrypoint.py:/frontend-entrypoint.py
         environment:
             - SSL=false
             - REACT_APP_AUTH_MODE=${REACT_APP_AUTH_MODE:-Password}
             - REACT_APP_FRONTEND_URI=${REACT_APP_FRONTEND_URI:-http://localhost:3000}
             - REACT_APP_PRIVATE_GRAPH_URI=${REACT_APP_PRIVATE_GRAPH_URI:-http://localhost:8082/private}
             - REACT_APP_PUBLIC_GRAPH_URI=${REACT_APP_PUBLIC_GRAPH_URI:-http://localhost:8082/public}
-            - REACT_APP_DISABLE_ANALYTICS=true
-            - REACT_APP_OTLP_ENDPOINT=${REACT_APP_OTLP_ENDPOINT:-}
+            - REACT_APP_OTLP_ENDPOINT=${REACT_APP_OTLP_ENDPOINT:-http://localhost:4318}
 
 volumes:
     highlight-data:
