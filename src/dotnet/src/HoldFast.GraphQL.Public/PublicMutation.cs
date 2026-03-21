@@ -1,7 +1,9 @@
 using HoldFast.Data;
 using HoldFast.Domain.Entities;
 using HoldFast.GraphQL.Public.InputTypes;
+using HoldFast.Shared.SessionProcessing;
 using HotChocolate;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 
 namespace HoldFast.GraphQL.Public;
@@ -14,58 +16,62 @@ public class PublicMutation
 {
     /// <summary>
     /// Initialize a new session. Called by SDKs at page load / app start.
-    /// Creates the session record and returns the secure ID + project ID.
+    /// Creates the session record with device/geo metadata and returns the secure ID + project ID.
     /// </summary>
     public async Task<InitializeSessionResponse> InitializeSession(
         InitializeSessionInput input,
+        [Service] ISessionInitializationService initService,
+        [Service] IHttpContextAccessor httpContextAccessor,
         [Service] HoldFastDbContext db,
         CancellationToken ct)
     {
-        // organization_verbose_id is the base36-encoded project ID
         var projectId = Project.FromVerboseId(input.OrganizationVerboseId);
         var project = await db.Projects.FindAsync([projectId], ct)
             ?? throw new GraphQLException("Project not found");
 
-        var session = new Session
-        {
-            SecureId = input.SessionSecureId,
-            ProjectId = project.Id,
-            Fingerprint = input.Fingerprint,
-            ClientID = input.ClientId,
-            ClientVersion = input.ClientVersion,
-            FirstloadVersion = input.FirstloadVersion,
-            ClientConfig = input.ClientConfig,
-            Environment = input.Environment,
-            AppVersion = input.AppVersion,
-            ServiceName = input.ServiceName,
-            EnableStrictPrivacy = input.EnableStrictPrivacy,
-            EnableRecordingNetworkContents = input.EnableRecordingNetworkContents,
-            PrivacySetting = input.PrivacySetting,
-            WithinBillingQuota = true, // Self-hosted: always within quota
-            Processed = false,
-            Excluded = false,
-        };
+        // Extract HTTP headers for device detection
+        var httpContext = httpContextAccessor.HttpContext;
+        var userAgent = httpContext?.Request.Headers.UserAgent.FirstOrDefault();
+        var acceptLanguage = httpContext?.Request.Headers.AcceptLanguage.FirstOrDefault();
+        var ipAddress = httpContext?.Connection.RemoteIpAddress?.ToString();
 
-        db.Sessions.Add(session);
-        await db.SaveChangesAsync(ct);
+        var result = await initService.InitializeSessionAsync(
+            input.SessionSecureId,
+            input.SessionKey,
+            project.Id,
+            input.Fingerprint,
+            input.ClientId,
+            input.ClientVersion,
+            input.FirstloadVersion,
+            input.ClientConfig,
+            input.Environment,
+            input.AppVersion,
+            input.ServiceName,
+            input.EnableStrictPrivacy,
+            input.EnableRecordingNetworkContents,
+            input.PrivacySetting,
+            userAgent,
+            acceptLanguage,
+            ipAddress,
+            ct);
 
-        return new InitializeSessionResponse(session.SecureId, project.Id);
+        return new InitializeSessionResponse(result.Session.SecureId, project.Id);
     }
 
     /// <summary>
     /// Identify a session with a user identifier and optional user properties.
+    /// Detects first-time users and backfills unidentified sessions.
     /// </summary>
     public async Task<string> IdentifySession(
         IdentifySessionInput input,
-        [Service] HoldFastDbContext db,
+        [Service] ISessionInitializationService initService,
         CancellationToken ct)
     {
-        var session = await db.Sessions
-            .FirstOrDefaultAsync(s => s.SecureId == input.SessionSecureId, ct)
-            ?? throw new GraphQLException("Session not found");
-
-        session.Identifier = input.UserIdentifier;
-        await db.SaveChangesAsync(ct);
+        var session = await initService.IdentifySessionAsync(
+            input.SessionSecureId,
+            input.UserIdentifier,
+            input.UserObject,
+            ct);
 
         return session.SecureId;
     }

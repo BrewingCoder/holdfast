@@ -72,6 +72,7 @@ else
 builder.Services.AddScoped<IErrorGroupingService, ErrorGroupingService>();
 builder.Services.AddScoped<ISessionEventsProcessor, SessionEventsProcessor>();
 builder.Services.AddScoped<ISessionProcessingService, SessionProcessingService>();
+builder.Services.AddScoped<ISessionInitializationService, SessionInitializationService>();
 builder.Services.AddScoped<IAlertEvaluationService, AlertEvaluationService>();
 builder.Services.AddHttpClient("AlertWebhooks");
 
@@ -86,6 +87,8 @@ builder.Services.AddSingleton<LogIngestionConsumer>();
 builder.Services.AddHostedService<LogIngestionWorker>();
 builder.Services.AddSingleton<TraceIngestionConsumer>();
 builder.Services.AddHostedService<TraceIngestionWorker>();
+builder.Services.AddHostedService<AutoResolveWorker>();
+builder.Services.AddHostedService<DataRetentionWorker>();
 
 // ── CORS ──────────────────────────────────────────────────────────────
 var frontendUri = builder.Configuration["Frontend:Uri"] ?? "http://localhost:3000";
