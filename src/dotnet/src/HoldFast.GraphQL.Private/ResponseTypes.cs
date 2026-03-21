@@ -1,3 +1,5 @@
+using HoldFast.Domain.Entities;
+
 namespace HoldFast.GraphQL.Private;
 
 /// <summary>
@@ -52,6 +54,23 @@ public record MatchedErrorTag(
 public record IntegrationProjectMappingInput(
     int ProjectId,
     string? ExternalId);
+
+/// <summary>
+/// Session replay payload: events, errors, rage clicks, and comments.
+/// </summary>
+public record SessionPayload(
+    string Events,
+    List<ErrorObject> Errors,
+    List<RageClickEvent> RageClicks,
+    List<SessionComment> SessionComments,
+    string LastUserInteractionTime);
+
+/// <summary>
+/// Paginated error group instances result.
+/// </summary>
+public record ErrorGroupInstances(
+    List<ErrorObject> ErrorObjects,
+    long TotalCount);
 
 /// <summary>
 /// Referrer host with visit count and percentage.
@@ -128,3 +147,11 @@ public record MicrosoftTeamsChannelInfo(
 public record SSOLogin(
     string Domain,
     string ClientId);
+
+/// <summary>
+/// Input for alert destination configuration.
+/// </summary>
+public record AlertDestinationInput(
+    string DestinationType,
+    string? TypeId,
+    string? TypeName);

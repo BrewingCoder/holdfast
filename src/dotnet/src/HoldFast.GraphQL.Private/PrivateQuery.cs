@@ -2269,6 +2269,220 @@ public class PrivateQuery
         return project?.Id;
     }
 
+    // ── Session Payload (Replay) ─────────────────────────────────────
+
+    /// <summary>
+    /// Get session payload for replay: events from storage, errors, rage clicks, and comments.
+    /// </summary>
+    public async Task<SessionPayload> GetSessionPayload(
+        string sessionSecureId,
+        bool skipEvents,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        [Service] IStorageService storage,
+        CancellationToken ct)
+    {
+        var session = await db.Sessions.FirstOrDefaultAsync(s => s.SecureId == sessionSecureId, ct)
+            ?? throw new ArgumentException($"Session not found: {sessionSecureId}");
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, session.ProjectId, authz, ct);
+
+        string? eventsJson = null;
+        if (!skipEvents)
+        {
+            var key = $"{session.ProjectId}/{session.Id}/events";
+            var stream = await storage.DownloadAsync("sessions", key, ct);
+            if (stream != null)
+            {
+                using var reader = new StreamReader(stream);
+                eventsJson = await reader.ReadToEndAsync(ct);
+            }
+        }
+
+        var errors = await db.ErrorObjects
+            .Where(e => e.SessionId == session.Id)
+            .OrderBy(e => e.CreatedAt)
+            .ToListAsync(ct);
+
+        var rageClicks = await db.RageClickEvents
+            .Where(r => r.SessionId == session.Id)
+            .ToListAsync(ct);
+
+        var comments = await db.SessionComments
+            .Where(c => c.SessionId == session.Id)
+            .OrderBy(c => c.CreatedAt)
+            .ToListAsync(ct);
+
+        return new SessionPayload(
+            Events: eventsJson ?? "[]",
+            Errors: errors,
+            RageClicks: rageClicks,
+            SessionComments: comments,
+            LastUserInteractionTime: session.LastUserInteractionTime ?? session.CreatedAt.ToString("O"));
+    }
+
+    /// <summary>
+    /// Get error group instances (paginated error objects for an error group).
+    /// </summary>
+    public async Task<ErrorGroupInstances> GetErrorGroupInstances(
+        string errorGroupSecureId,
+        int count,
+        int page,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        var errorGroup = await db.ErrorGroups
+            .FirstOrDefaultAsync(e => e.SecureId == errorGroupSecureId, ct)
+            ?? throw new ArgumentException($"Error group not found: {errorGroupSecureId}");
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, errorGroup.ProjectId, authz, ct);
+
+        var total = await db.ErrorObjects
+            .Where(e => e.ErrorGroupId == errorGroup.Id)
+            .LongCountAsync(ct);
+
+        var objects = await db.ErrorObjects
+            .Where(e => e.ErrorGroupId == errorGroup.Id)
+            .OrderByDescending(e => e.CreatedAt)
+            .Skip(page * count)
+            .Take(count)
+            .ToListAsync(ct);
+
+        return new ErrorGroupInstances(objects, total);
+    }
+
+    /// <summary>
+    /// Get network histogram data for a project (aggregates by URL host or status).
+    /// </summary>
+    public async Task<List<HistogramBucket>> GetNetworkHistogram(
+        int projectId,
+        double lookbackDays,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] IClickHouseService clickHouse,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+
+        var query = new QueryInput
+        {
+            DateRangeStart = DateTime.UtcNow.AddDays(-lookbackDays),
+            DateRangeEnd = DateTime.UtcNow,
+        };
+
+        return await clickHouse.ReadSessionsHistogramAsync(projectId, query, ct);
+    }
+
+    /// <summary>
+    /// Get session users report (aggregated sessions by user from ClickHouse).
+    /// Stub: returns report from PostgreSQL until ClickHouse view is available.
+    /// </summary>
+    public async Task<List<SessionsReportRow>> GetSessionUsersReports(
+        int projectId,
+        QueryInput query,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+
+        var sessions = await db.Sessions
+            .Where(s => s.ProjectId == projectId
+                && s.Excluded != true
+                && !string.IsNullOrEmpty(s.Identifier)
+                && s.CreatedAt >= (query.DateRangeStart == default ? DateTime.UtcNow.AddDays(-30) : query.DateRangeStart)
+                && s.CreatedAt <= (query.DateRangeEnd == default ? DateTime.UtcNow : query.DateRangeEnd))
+            .Select(s => new { s.Identifier, s.ActiveLength, s.Length, s.CreatedAt, s.City, s.Country })
+            .ToListAsync(ct);
+
+        return sessions.GroupBy(s => s.Identifier!)
+            .Select(g =>
+            {
+                var activeLengths = g.Select(s => (s.ActiveLength ?? 0) / 60000.0).ToList();
+                var lengths = g.Select(s => (s.Length ?? 0) / 60000.0).ToList();
+                var dates = g.Select(s => s.CreatedAt).ToList();
+                var location = g.First().City != null
+                    ? $"{g.First().City}, {g.First().Country}"
+                    : (g.First().Country ?? "");
+
+                return new SessionsReportRow(
+                    Key: g.Key,
+                    Email: g.Key,
+                    NumSessions: g.Count(),
+                    FirstSession: dates.Min(),
+                    LastSession: dates.Max(),
+                    NumDaysVisited: dates.Select(d => d.Date).Distinct().Count(),
+                    NumMonthsVisited: dates.Select(d => new { d.Year, d.Month }).Distinct().Count(),
+                    AvgActiveLengthMins: activeLengths.Count > 0 ? activeLengths.Average() : 0,
+                    MaxActiveLengthMins: activeLengths.Count > 0 ? activeLengths.Max() : 0,
+                    TotalActiveLengthMins: activeLengths.Sum(),
+                    AvgLengthMins: lengths.Count > 0 ? lengths.Average() : 0,
+                    MaxLengthMins: lengths.Count > 0 ? lengths.Max() : 0,
+                    TotalLengthMins: lengths.Sum(),
+                    Location: location);
+            })
+            .OrderByDescending(r => r.NumSessions)
+            .ToList();
+    }
+
+    /// <summary>
+    /// Get comment mention suggestions (workspace admins for @-mentions).
+    /// </summary>
+    public async Task<List<Admin>> GetCommentMentionSuggestions(
+        int projectId,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+
+        var project = await db.Projects.FindAsync(new object[] { projectId }, ct)
+            ?? throw new ArgumentException($"Project not found: {projectId}");
+
+        return await db.WorkspaceAdmins
+            .Where(wa => wa.WorkspaceId == project.WorkspaceId)
+            .Select(wa => wa.Admin)
+            .ToListAsync(ct);
+    }
+
+    /// <summary>
+    /// Get AI query suggestion (stub — returns empty suggestion).
+    /// </summary>
+    public Task<string> GetAIQuerySuggestion(
+        int projectId,
+        string productType,
+        string query,
+        string timeZone,
+        ClaimsPrincipal claimsPrincipal)
+    {
+        return Task.FromResult("");
+    }
+
+    /// <summary>
+    /// Get error resolution suggestion (stub — AI feature).
+    /// </summary>
+    public Task<string> GetErrorResolutionSuggestion(
+        string errorGroupSecureId,
+        ClaimsPrincipal claimsPrincipal)
+    {
+        return Task.FromResult("");
+    }
+
+    /// <summary>
+    /// Get OAuth client metadata.
+    /// </summary>
+    public async Task<OAuthClientStore?> GetOAuthClientMetadata(
+        string clientId,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        return await db.OAuthClientStores
+            .FirstOrDefaultAsync(c => c.ClientId == clientId, ct);
+    }
+
     // ── Analytics (PostgreSQL) ────────────────────────────────────────
 
     /// <summary>

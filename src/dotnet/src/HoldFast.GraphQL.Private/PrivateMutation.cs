@@ -749,6 +749,130 @@ public class PrivateMutation
     }
 
     /// <summary>
+    /// Create a new alert (frontend uses this name).
+    /// </summary>
+    public async Task<Alert> CreateAlert(
+        int projectId,
+        string name,
+        string productType,
+        string? functionType,
+        string? functionColumn,
+        string? query,
+        string? groupByKey,
+        bool? defaultAlert,
+        double? thresholdValue,
+        int? thresholdWindow,
+        int? thresholdCooldown,
+        List<AlertDestinationInput>? destinations,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+        var admin = await AuthHelper.GetRequiredAdmin(claimsPrincipal, authz, ct);
+
+        var alert = new Alert
+        {
+            ProjectId = projectId,
+            Name = name,
+            ProductType = productType,
+            FunctionType = functionType,
+            FunctionColumn = functionColumn,
+            Query = query,
+            GroupByKey = groupByKey,
+            Default = defaultAlert ?? false,
+            AboveThreshold = thresholdValue,
+            ThresholdWindow = thresholdWindow,
+            ThresholdCooldown = thresholdCooldown,
+            LastAdminToEditId = admin.Id,
+        };
+
+        db.Alerts.Add(alert);
+        await db.SaveChangesAsync(ct);
+
+        if (destinations != null)
+        {
+            foreach (var dest in destinations)
+            {
+                db.AlertDestinations.Add(new AlertDestination
+                {
+                    AlertId = alert.Id,
+                    DestinationType = dest.DestinationType,
+                    TypeId = dest.TypeId,
+                    TypeName = dest.TypeName,
+                });
+            }
+            await db.SaveChangesAsync(ct);
+        }
+
+        return alert;
+    }
+
+    /// <summary>
+    /// Update an existing alert.
+    /// </summary>
+    public async Task<Alert> UpdateAlert(
+        int projectId,
+        int alertId,
+        string? name,
+        string? productType,
+        string? functionType,
+        string? functionColumn,
+        string? query,
+        string? groupByKey,
+        double? thresholdValue,
+        int? thresholdWindow,
+        int? thresholdCooldown,
+        List<AlertDestinationInput>? destinations,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+        var admin = await AuthHelper.GetRequiredAdmin(claimsPrincipal, authz, ct);
+
+        var alert = await db.Alerts.FindAsync(new object[] { alertId }, ct)
+            ?? throw new GraphQLException("Alert not found");
+
+        if (alert.ProjectId != projectId)
+            throw new GraphQLException("Alert does not belong to this project");
+
+        alert.Name = name ?? alert.Name;
+        alert.ProductType = productType ?? alert.ProductType;
+        alert.FunctionType = functionType ?? alert.FunctionType;
+        alert.FunctionColumn = functionColumn ?? alert.FunctionColumn;
+        alert.Query = query ?? alert.Query;
+        alert.GroupByKey = groupByKey ?? alert.GroupByKey;
+        alert.AboveThreshold = thresholdValue ?? alert.AboveThreshold;
+        alert.ThresholdWindow = thresholdWindow ?? alert.ThresholdWindow;
+        alert.ThresholdCooldown = thresholdCooldown ?? alert.ThresholdCooldown;
+        alert.LastAdminToEditId = admin.Id;
+
+        if (destinations != null)
+        {
+            var existing = await db.AlertDestinations
+                .Where(d => d.AlertId == alertId).ToListAsync(ct);
+            db.AlertDestinations.RemoveRange(existing);
+
+            foreach (var dest in destinations)
+            {
+                db.AlertDestinations.Add(new AlertDestination
+                {
+                    AlertId = alertId,
+                    DestinationType = dest.DestinationType,
+                    TypeId = dest.TypeId,
+                    TypeName = dest.TypeName,
+                });
+            }
+        }
+
+        await db.SaveChangesAsync(ct);
+        return alert;
+    }
+
+    /// <summary>
     /// Update alert disabled state. Requires project access.
     /// </summary>
     public async Task<bool> UpdateAlertDisabled(
@@ -2439,5 +2563,165 @@ public class PrivateMutation
         }
 
         return true;
+    }
+
+    // ── Slack Integration ────────────────────────────────────────────
+
+    /// <summary>
+    /// Sync Slack integration — stores access token on workspace.
+    /// </summary>
+    public async Task<bool> SyncSlackIntegration(
+        int projectId,
+        string? code,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+
+        var project = await db.Projects.Include(p => p.Workspace)
+            .FirstOrDefaultAsync(p => p.Id == projectId, ct)
+            ?? throw new GraphQLException("Project not found");
+
+        if (!string.IsNullOrEmpty(code))
+        {
+            project.Workspace.SlackAccessToken = code;
+            await db.SaveChangesAsync(ct);
+        }
+
+        return true;
+    }
+
+    // ── Issue Creation (Stubs) ───────────────────────────────────────
+
+    /// <summary>
+    /// Create an external issue for a session comment (stub — requires external API integration).
+    /// Returns the session comment.
+    /// </summary>
+    public async Task<SessionComment> CreateIssueForSessionComment(
+        int projectId,
+        string sessionSecureId,
+        int sessionCommentId,
+        IntegrationType integrationType,
+        string? issueTitle,
+        string? issueDescription,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+
+        var comment = await db.SessionComments.FindAsync(new object[] { sessionCommentId }, ct)
+            ?? throw new GraphQLException("Session comment not found");
+
+        // Stub: create a placeholder ExternalAttachment
+        db.ExternalAttachments.Add(new ExternalAttachment
+        {
+            SessionCommentId = comment.Id,
+            IntegrationType = integrationType.ToString(),
+            Title = issueTitle ?? "Issue",
+        });
+        await db.SaveChangesAsync(ct);
+
+        return comment;
+    }
+
+    /// <summary>
+    /// Link an existing external issue to a session comment.
+    /// </summary>
+    public async Task<SessionComment> LinkIssueForSessionComment(
+        int projectId,
+        int sessionCommentId,
+        IntegrationType integrationType,
+        string externalIssueUrl,
+        string? issueTitle,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+
+        var comment = await db.SessionComments.FindAsync(new object[] { sessionCommentId }, ct)
+            ?? throw new GraphQLException("Session comment not found");
+
+        db.ExternalAttachments.Add(new ExternalAttachment
+        {
+            SessionCommentId = comment.Id,
+            IntegrationType = integrationType.ToString(),
+            ExternalId = externalIssueUrl,
+            Title = issueTitle,
+        });
+        await db.SaveChangesAsync(ct);
+
+        return comment;
+    }
+
+    /// <summary>
+    /// Create an external issue for an error comment (stub — requires external API integration).
+    /// </summary>
+    public async Task<ErrorComment> CreateIssueForErrorComment(
+        int projectId,
+        string errorGroupSecureId,
+        int errorCommentId,
+        IntegrationType integrationType,
+        string? issueTitle,
+        string? issueDescription,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+
+        var comment = await db.ErrorComments.FindAsync(new object[] { errorCommentId }, ct)
+            ?? throw new GraphQLException("Error comment not found");
+
+        var errorGroup = await db.ErrorGroups
+            .FirstOrDefaultAsync(e => e.SecureId == errorGroupSecureId, ct)
+            ?? throw new GraphQLException("Error group not found");
+
+        db.ExternalAttachments.Add(new ExternalAttachment
+        {
+            ErrorGroupId = errorGroup.Id,
+            IntegrationType = integrationType.ToString(),
+            Title = issueTitle ?? "Issue",
+        });
+        await db.SaveChangesAsync(ct);
+
+        return comment;
+    }
+
+    /// <summary>
+    /// Link an existing external issue to an error comment.
+    /// </summary>
+    public async Task<ErrorComment> LinkIssueForErrorComment(
+        int projectId,
+        int errorCommentId,
+        IntegrationType integrationType,
+        string externalIssueUrl,
+        string? issueTitle,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+
+        var comment = await db.ErrorComments.FindAsync(new object[] { errorCommentId }, ct)
+            ?? throw new GraphQLException("Error comment not found");
+
+        db.ExternalAttachments.Add(new ExternalAttachment
+        {
+            ErrorGroupId = comment.ErrorGroupId,
+            IntegrationType = integrationType.ToString(),
+            ExternalId = externalIssueUrl,
+            Title = issueTitle,
+        });
+        await db.SaveChangesAsync(ct);
+
+        return comment;
     }
 }
