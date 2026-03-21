@@ -11,6 +11,9 @@ namespace HoldFast.Api;
 /// </summary>
 public static class AuthEndpoints
 {
+    /// <summary>
+    /// Register /auth/login, /auth/logout, and /auth/whoami endpoints.
+    /// </summary>
     public static void MapAuthEndpoints(this WebApplication app)
     {
         var auth = app.MapGroup("/auth");
