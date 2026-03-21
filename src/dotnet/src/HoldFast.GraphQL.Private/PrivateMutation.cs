@@ -1889,4 +1889,555 @@ public class PrivateMutation
         await db.SaveChangesAsync(ct);
         return true;
     }
+
+    // ── Admin Registration ───────────────────────────────────────────
+
+    /// <summary>
+    /// Create a new admin and workspace in one call (onboarding flow).
+    /// </summary>
+    public async Task<Workspace> UpdateAdminAndCreateWorkspace(
+        string adminName,
+        string workspaceName,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        var admin = await AuthHelper.GetRequiredAdmin(claimsPrincipal, authz, ct);
+
+        admin.Name = adminName;
+
+        var workspace = new Workspace
+        {
+            Name = workspaceName,
+            PlanTier = "Enterprise",
+            UnlimitedMembers = true,
+        };
+        db.Workspaces.Add(workspace);
+        await db.SaveChangesAsync(ct);
+
+        db.WorkspaceAdmins.Add(new WorkspaceAdmin
+        {
+            AdminId = admin.Id,
+            WorkspaceId = workspace.Id,
+            Role = WorkspaceRoles.Admin,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow,
+        });
+        await db.SaveChangesAsync(ct);
+
+        return workspace;
+    }
+
+    /// <summary>
+    /// Create admin from authenticated identity (first login).
+    /// </summary>
+    public async Task<Admin> CreateAdmin(
+        ClaimsPrincipal claimsPrincipal,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        var uid = claimsPrincipal.FindFirst(ClaimTypes.NameIdentifier)?.Value
+            ?? throw new GraphQLException("No UID in claims");
+        var email = claimsPrincipal.FindFirst(ClaimTypes.Email)?.Value;
+
+        var existing = await db.Admins.FirstOrDefaultAsync(a => a.Uid == uid, ct);
+        if (existing != null) return existing;
+
+        var admin = new Admin
+        {
+            Uid = uid,
+            Email = email,
+            EmailVerified = email != null,
+        };
+        db.Admins.Add(admin);
+        await db.SaveChangesAsync(ct);
+        return admin;
+    }
+
+    /// <summary>
+    /// Submit email signup.
+    /// </summary>
+    public async Task<string> EmailSignup(
+        string email,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        var existing = await db.EmailSignups.FirstOrDefaultAsync(e => e.Email == email, ct);
+        if (existing != null) return email;
+
+        db.EmailSignups.Add(new EmailSignup { Email = email });
+        await db.SaveChangesAsync(ct);
+        return email;
+    }
+
+    /// <summary>
+    /// Submit registration survey data for a workspace.
+    /// </summary>
+    public async Task<bool> SubmitRegistrationForm(
+        int workspaceId,
+        string? teamSize,
+        string? role,
+        string? useCase,
+        string? heardAbout,
+        string? pun,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireWorkspaceAccess(claimsPrincipal, workspaceId, authz, ct);
+
+        var existing = await db.RegistrationData
+            .FirstOrDefaultAsync(r => r.WorkspaceId == workspaceId, ct);
+
+        if (existing != null)
+        {
+            existing.TeamSize = teamSize ?? existing.TeamSize;
+            existing.Role = role ?? existing.Role;
+            existing.UseCase = useCase ?? existing.UseCase;
+            existing.HeardAbout = heardAbout ?? existing.HeardAbout;
+            existing.Pun = pun ?? existing.Pun;
+        }
+        else
+        {
+            db.RegistrationData.Add(new RegistrationData
+            {
+                WorkspaceId = workspaceId,
+                TeamSize = teamSize,
+                Role = role,
+                UseCase = useCase,
+                HeardAbout = heardAbout,
+                Pun = pun,
+            });
+        }
+
+        await db.SaveChangesAsync(ct);
+        return true;
+    }
+
+    /// <summary>
+    /// Request access to a workspace.
+    /// </summary>
+    public async Task<bool> RequestAccess(
+        int workspaceId,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        var admin = await AuthHelper.GetRequiredAdmin(claimsPrincipal, authz, ct);
+
+        var existing = await db.WorkspaceAccessRequests
+            .FirstOrDefaultAsync(r => r.AdminId == admin.Id, ct);
+
+        if (existing != null)
+        {
+            existing.LastRequestedWorkspace = workspaceId;
+        }
+        else
+        {
+            db.WorkspaceAccessRequests.Add(new WorkspaceAccessRequest
+            {
+                AdminId = admin.Id,
+                LastRequestedWorkspace = workspaceId,
+            });
+        }
+
+        await db.SaveChangesAsync(ct);
+        return true;
+    }
+
+    // ── Integration Management ───────────────────────────────────────
+
+    /// <summary>
+    /// Add an integration mapping to a project.
+    /// </summary>
+    public async Task<bool> AddIntegrationToProject(
+        IntegrationType integrationType,
+        int projectId,
+        string? code,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+
+        var existing = await db.IntegrationProjectMappings
+            .FirstOrDefaultAsync(m => m.ProjectId == projectId
+                && m.IntegrationType == integrationType.ToString(), ct);
+
+        if (existing != null)
+        {
+            existing.ExternalId = code;
+        }
+        else
+        {
+            db.IntegrationProjectMappings.Add(new IntegrationProjectMapping
+            {
+                IntegrationType = integrationType.ToString(),
+                ProjectId = projectId,
+                ExternalId = code,
+            });
+        }
+
+        await db.SaveChangesAsync(ct);
+        return true;
+    }
+
+    /// <summary>
+    /// Remove an integration mapping from a project.
+    /// </summary>
+    public async Task<bool> RemoveIntegrationFromProject(
+        IntegrationType integrationType,
+        int projectId,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+
+        var mapping = await db.IntegrationProjectMappings
+            .FirstOrDefaultAsync(m => m.ProjectId == projectId
+                && m.IntegrationType == integrationType.ToString(), ct);
+
+        if (mapping != null)
+        {
+            db.IntegrationProjectMappings.Remove(mapping);
+            await db.SaveChangesAsync(ct);
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// Add an integration mapping to a workspace.
+    /// </summary>
+    public async Task<bool> AddIntegrationToWorkspace(
+        IntegrationType integrationType,
+        int workspaceId,
+        string? code,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireWorkspaceAccess(claimsPrincipal, workspaceId, authz, ct);
+
+        var existing = await db.IntegrationWorkspaceMappings
+            .FirstOrDefaultAsync(m => m.WorkspaceId == workspaceId
+                && m.IntegrationType == integrationType.ToString(), ct);
+
+        if (existing != null)
+        {
+            existing.AccessToken = code;
+        }
+        else
+        {
+            db.IntegrationWorkspaceMappings.Add(new IntegrationWorkspaceMapping
+            {
+                IntegrationType = integrationType.ToString(),
+                WorkspaceId = workspaceId,
+                AccessToken = code,
+            });
+        }
+
+        await db.SaveChangesAsync(ct);
+        return true;
+    }
+
+    /// <summary>
+    /// Remove an integration mapping from a workspace.
+    /// </summary>
+    public async Task<bool> RemoveIntegrationFromWorkspace(
+        IntegrationType integrationType,
+        int workspaceId,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireWorkspaceAccess(claimsPrincipal, workspaceId, authz, ct);
+
+        var mapping = await db.IntegrationWorkspaceMappings
+            .FirstOrDefaultAsync(m => m.WorkspaceId == workspaceId
+                && m.IntegrationType == integrationType.ToString(), ct);
+
+        if (mapping != null)
+        {
+            db.IntegrationWorkspaceMappings.Remove(mapping);
+            await db.SaveChangesAsync(ct);
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// Update integration project mappings for a workspace.
+    /// </summary>
+    public async Task<bool> UpdateIntegrationProjectMappings(
+        int workspaceId,
+        IntegrationType integrationType,
+        List<IntegrationProjectMappingInput> projectMappings,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireWorkspaceAccess(claimsPrincipal, workspaceId, authz, ct);
+
+        // Remove existing mappings for this integration type in this workspace
+        var existing = await db.IntegrationProjectMappings
+            .Include(m => m.Project)
+            .Where(m => m.Project.WorkspaceId == workspaceId
+                && m.IntegrationType == integrationType.ToString())
+            .ToListAsync(ct);
+        db.IntegrationProjectMappings.RemoveRange(existing);
+
+        // Add new mappings
+        foreach (var mapping in projectMappings)
+        {
+            db.IntegrationProjectMappings.Add(new IntegrationProjectMapping
+            {
+                IntegrationType = integrationType.ToString(),
+                ProjectId = mapping.ProjectId,
+                ExternalId = mapping.ExternalId,
+            });
+        }
+
+        await db.SaveChangesAsync(ct);
+        return true;
+    }
+
+    // ── Issue Linking ────────────────────────────────────────────────
+
+    /// <summary>
+    /// Create a session comment with an existing external issue.
+    /// </summary>
+    public async Task<SessionComment> CreateSessionCommentWithExistingIssue(
+        int projectId,
+        string sessionSecureId,
+        int sessionTimestamp,
+        string text,
+        string? taggedAdmins,
+        string? taggedSlackUsers,
+        IntegrationType integrationType,
+        string externalIssueUrl,
+        string? issueTitle,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+        var admin = await AuthHelper.GetRequiredAdmin(claimsPrincipal, authz, ct);
+
+        var session = await db.Sessions.FirstOrDefaultAsync(s => s.SecureId == sessionSecureId, ct)
+            ?? throw new GraphQLException($"Session not found: {sessionSecureId}");
+
+        var comment = new SessionComment
+        {
+            ProjectId = projectId,
+            AdminId = admin.Id,
+            SessionId = session.Id,
+            SessionSecureId = session.Id,
+            Timestamp = sessionTimestamp,
+            Text = text,
+            Type = SessionCommentType.Admin.ToString(),
+        };
+        db.SessionComments.Add(comment);
+        await db.SaveChangesAsync(ct);
+
+        // Create external attachment
+        db.ExternalAttachments.Add(new ExternalAttachment
+        {
+            SessionCommentId = comment.Id,
+            IntegrationType = integrationType.ToString(),
+            ExternalId = externalIssueUrl,
+            Title = issueTitle,
+        });
+        await db.SaveChangesAsync(ct);
+
+        return comment;
+    }
+
+    /// <summary>
+    /// Create an error comment with an existing external issue.
+    /// </summary>
+    public async Task<ErrorComment> CreateErrorCommentForExistingIssue(
+        int projectId,
+        string errorGroupSecureId,
+        string text,
+        string? taggedAdmins,
+        IntegrationType integrationType,
+        string externalIssueUrl,
+        string? issueTitle,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+        var admin = await AuthHelper.GetRequiredAdmin(claimsPrincipal, authz, ct);
+
+        var errorGroup = await db.ErrorGroups
+            .FirstOrDefaultAsync(e => e.SecureId == errorGroupSecureId, ct)
+            ?? throw new GraphQLException($"Error group not found: {errorGroupSecureId}");
+
+        var comment = new ErrorComment
+        {
+            ErrorGroupId = errorGroup.Id,
+            AdminId = admin.Id,
+            Text = text,
+        };
+        db.ErrorComments.Add(comment);
+        await db.SaveChangesAsync(ct);
+
+        // Create external attachment
+        db.ExternalAttachments.Add(new ExternalAttachment
+        {
+            ErrorGroupId = errorGroup.Id,
+            IntegrationType = integrationType.ToString(),
+            ExternalId = externalIssueUrl,
+            Title = issueTitle,
+        });
+        await db.SaveChangesAsync(ct);
+
+        return comment;
+    }
+
+    /// <summary>
+    /// Remove an external issue link from an error group.
+    /// </summary>
+    public async Task<bool> RemoveErrorIssue(
+        string errorGroupSecureId,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        var errorGroup = await db.ErrorGroups
+            .FirstOrDefaultAsync(e => e.SecureId == errorGroupSecureId, ct)
+            ?? throw new GraphQLException($"Error group not found: {errorGroupSecureId}");
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, errorGroup.ProjectId, authz, ct);
+
+        var attachments = await db.ExternalAttachments
+            .Where(a => a.ErrorGroupId == errorGroup.Id)
+            .ToListAsync(ct);
+
+        db.ExternalAttachments.RemoveRange(attachments);
+        await db.SaveChangesAsync(ct);
+        return true;
+    }
+
+    // ── Service GitHub Settings ──────────────────────────────────────
+
+    /// <summary>
+    /// Edit GitHub settings for a service (source map enrichment).
+    /// </summary>
+    public async Task<Service> EditServiceGithubSettings(
+        int serviceId,
+        string? githubRepoPath,
+        string? buildPrefix,
+        string? githubPrefix,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        var service = await db.Services.FindAsync(new object[] { serviceId }, ct)
+            ?? throw new GraphQLException($"Service not found: {serviceId}");
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, service.ProjectId, authz, ct);
+
+        service.GithubRepoPath = githubRepoPath ?? service.GithubRepoPath;
+        service.BuildPrefix = buildPrefix ?? service.BuildPrefix;
+        service.GithubPrefix = githubPrefix ?? service.GithubPrefix;
+
+        await db.SaveChangesAsync(ct);
+        return service;
+    }
+
+    // ── Cloudflare Proxy ─────────────────────────────────────────────
+
+    /// <summary>
+    /// Set up a Cloudflare proxy for a workspace.
+    /// </summary>
+    public async Task<bool> CreateCloudflareProxy(
+        int workspaceId,
+        string proxySubdomain,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireWorkspaceAccess(claimsPrincipal, workspaceId, authz, ct);
+
+        var workspace = await db.Workspaces.FindAsync(new object[] { workspaceId }, ct)
+            ?? throw new GraphQLException("Workspace not found");
+
+        workspace.CloudflareProxy = proxySubdomain;
+        await db.SaveChangesAsync(ct);
+        return true;
+    }
+
+    // ── Notification Channels ────────────────────────────────────────
+
+    /// <summary>
+    /// Create or update a Slack channel configuration for a workspace.
+    /// </summary>
+    public async Task<bool> UpsertSlackChannel(
+        int workspaceId,
+        string name,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireWorkspaceAccess(claimsPrincipal, workspaceId, authz, ct);
+
+        // Store Slack channels as a JSON array in workspace.SlackChannels
+        var workspace = await db.Workspaces.FindAsync(new object[] { workspaceId }, ct)
+            ?? throw new GraphQLException("Workspace not found");
+
+        var channels = string.IsNullOrEmpty(workspace.SlackChannels)
+            ? new List<string>()
+            : System.Text.Json.JsonSerializer.Deserialize<List<string>>(workspace.SlackChannels) ?? [];
+
+        if (!channels.Contains(name))
+        {
+            channels.Add(name);
+            workspace.SlackChannels = System.Text.Json.JsonSerializer.Serialize(channels);
+            await db.SaveChangesAsync(ct);
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// Create or update a Discord channel configuration for a workspace.
+    /// </summary>
+    public async Task<bool> UpsertDiscordChannel(
+        int workspaceId,
+        string name,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireWorkspaceAccess(claimsPrincipal, workspaceId, authz, ct);
+
+        // DiscordGuildId used as channel tracking — set it if not set
+        var workspace = await db.Workspaces.FindAsync(new object[] { workspaceId }, ct)
+            ?? throw new GraphQLException("Workspace not found");
+
+        if (string.IsNullOrEmpty(workspace.DiscordGuildId))
+        {
+            workspace.DiscordGuildId = name;
+            await db.SaveChangesAsync(ct);
+        }
+
+        return true;
+    }
 }

@@ -3,6 +3,7 @@ using HoldFast.Data;
 using HoldFast.Data.ClickHouse;
 using HoldFast.Data.ClickHouse.Models;
 using HoldFast.Domain.Entities;
+using HoldFast.Domain.Enums;
 using HoldFast.Shared.Auth;
 using HotChocolate;
 using HotChocolate.Data;
@@ -1884,6 +1885,738 @@ public class PrivateQuery
             new ClickHousePagination { Limit = 1000 },
             omitBody: false,
             ct: ct);
+    }
+
+    // ── Session Detail ───────────────────────────────────────────────
+
+    /// <summary>
+    /// Get all errors for a specific session.
+    /// </summary>
+    public async Task<List<ErrorObject>> GetErrors(
+        string sessionSecureId,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        var session = await db.Sessions.FirstOrDefaultAsync(s => s.SecureId == sessionSecureId, ct)
+            ?? throw new ArgumentException($"Session not found: {sessionSecureId}");
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, session.ProjectId, authz, ct);
+
+        return await db.Set<ErrorObject>()
+            .Where(e => e.SessionId == session.Id)
+            .OrderBy(e => e.CreatedAt)
+            .ToListAsync(ct);
+    }
+
+    /// <summary>
+    /// Get network resources (waterfall) for a session from storage.
+    /// </summary>
+    public async Task<string?> GetResources(
+        string sessionSecureId,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        [Service] IStorageService storage,
+        CancellationToken ct)
+    {
+        var session = await db.Sessions.FirstOrDefaultAsync(s => s.SecureId == sessionSecureId, ct)
+            ?? throw new ArgumentException($"Session not found: {sessionSecureId}");
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, session.ProjectId, authz, ct);
+
+        var key = $"{session.ProjectId}/{session.Id}/resources";
+        var stream = await storage.DownloadAsync("sessions", key, ct);
+        if (stream == null) return null;
+        using var reader = new StreamReader(stream);
+        return await reader.ReadToEndAsync(ct);
+    }
+
+    /// <summary>
+    /// Get timeline indicator events for a session from storage.
+    /// </summary>
+    public async Task<string?> GetTimelineIndicatorEvents(
+        string sessionSecureId,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        [Service] IStorageService storage,
+        CancellationToken ct)
+    {
+        var session = await db.Sessions.FirstOrDefaultAsync(s => s.SecureId == sessionSecureId, ct)
+            ?? throw new ArgumentException($"Session not found: {sessionSecureId}");
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, session.ProjectId, authz, ct);
+
+        var key = $"{session.ProjectId}/{session.Id}/timeline-indicator-events";
+        var stream = await storage.DownloadAsync("sessions", key, ct);
+        if (stream == null) return null;
+        using var reader = new StreamReader(stream);
+        return await reader.ReadToEndAsync(ct);
+    }
+
+    /// <summary>
+    /// Get websocket events for a session from storage.
+    /// </summary>
+    public async Task<string?> GetWebsocketEvents(
+        string sessionSecureId,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        [Service] IStorageService storage,
+        CancellationToken ct)
+    {
+        var session = await db.Sessions.FirstOrDefaultAsync(s => s.SecureId == sessionSecureId, ct)
+            ?? throw new ArgumentException($"Session not found: {sessionSecureId}");
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, session.ProjectId, authz, ct);
+
+        var key = $"{session.ProjectId}/{session.Id}/websocket-events";
+        var stream = await storage.DownloadAsync("sessions", key, ct);
+        if (stream == null) return null;
+        using var reader = new StreamReader(stream);
+        return await reader.ReadToEndAsync(ct);
+    }
+
+    /// <summary>
+    /// Get Web Vitals (CLS, FCP, FID, LCP, TTFB, INP) for a session.
+    /// </summary>
+    public async Task<MetricsBuckets> GetWebVitals(
+        string sessionSecureId,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        [Service] IClickHouseService clickHouse,
+        CancellationToken ct)
+    {
+        var session = await db.Sessions.FirstOrDefaultAsync(s => s.SecureId == sessionSecureId, ct)
+            ?? throw new ArgumentException($"Session not found: {sessionSecureId}");
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, session.ProjectId, authz, ct);
+
+        // Query ClickHouse for Web Vital metrics filtered to this session
+        var query = new QueryInput
+        {
+            Query = $"secure_session_id={sessionSecureId} metric_name=CLS OR metric_name=FCP OR metric_name=FID OR metric_name=LCP OR metric_name=TTFB OR metric_name=INP",
+            DateRangeStart = session.CreatedAt.AddHours(-1),
+            DateRangeEnd = session.CreatedAt.AddDays(1),
+        };
+        return await clickHouse.ReadMetricsAsync(
+            session.ProjectId, query, bucketBy: "None", groupBy: new List<string> { "metric_name" },
+            aggregator: "AVG", column: "metric_value", ct);
+    }
+
+    /// <summary>
+    /// Get AI-generated insight for a session (stub — returns existing insight if any).
+    /// </summary>
+    public async Task<SessionInsight?> GetSessionInsight(
+        int sessionId,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        var session = await db.Sessions.FindAsync(new object[] { sessionId }, ct)
+            ?? throw new ArgumentException($"Session not found: {sessionId}");
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, session.ProjectId, authz, ct);
+
+        return await db.Set<SessionInsight>().FirstOrDefaultAsync(i => i.SessionId == sessionId, ct);
+    }
+
+    // ── Error Detail ─────────────────────────────────────────────────
+
+    /// <summary>
+    /// Get external issue attachments linked to an error group.
+    /// </summary>
+    public async Task<List<ExternalAttachment>> GetErrorIssue(
+        string errorGroupSecureId,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        var errorGroup = await db.Set<ErrorGroup>()
+            .FirstOrDefaultAsync(e => e.SecureId == errorGroupSecureId, ct)
+            ?? throw new ArgumentException($"Error group not found: {errorGroupSecureId}");
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, errorGroup.ProjectId, authz, ct);
+
+        return await db.Set<ExternalAttachment>()
+            .Where(a => a.ErrorGroupId == errorGroup.Id)
+            .OrderByDescending(a => a.CreatedAt)
+            .ToListAsync(ct);
+    }
+
+    /// <summary>
+    /// Get all error tags in the system.
+    /// </summary>
+    public async Task<List<ErrorTag>> GetErrorTags(
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        await AuthHelper.GetRequiredAdmin(claimsPrincipal, authz, ct);
+        return await db.Set<ErrorTag>().ToListAsync(ct);
+    }
+
+    /// <summary>
+    /// Match error text against the error tag library with relevance scoring.
+    /// Stub: returns tags whose title contains the query string.
+    /// </summary>
+    public async Task<List<MatchedErrorTag>> MatchErrorTag(
+        string query,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        await AuthHelper.GetRequiredAdmin(claimsPrincipal, authz, ct);
+        var lowerQuery = query.ToLowerInvariant();
+
+        var tags = await db.Set<ErrorTag>()
+            .Where(t => t.Title.ToLower().Contains(lowerQuery)
+                     || (t.Description != null && t.Description.ToLower().Contains(lowerQuery)))
+            .Take(10)
+            .ToListAsync(ct);
+
+        return tags.Select(t => new MatchedErrorTag(
+            Id: t.Id,
+            Title: t.Title,
+            Description: t.Description ?? "",
+            Score: t.Title.Equals(query, StringComparison.OrdinalIgnoreCase) ? 1.0 : 0.5
+        )).ToList();
+    }
+
+    // ── Suggestion / Search ──────────────────────────────────────────
+
+    /// <summary>
+    /// Search projects by name (ILIKE pattern match).
+    /// </summary>
+    public async Task<List<Project>> GetProjectSuggestion(
+        string query,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        await AuthHelper.GetRequiredAdmin(claimsPrincipal, authz, ct);
+        var lowerQuery = query.ToLowerInvariant();
+
+        return await db.Set<Project>()
+            .Where(p => p.Name != null && p.Name.ToLower().Contains(lowerQuery))
+            .Take(20)
+            .ToListAsync(ct);
+    }
+
+    /// <summary>
+    /// Get environment field values for a project (last 30 days).
+    /// </summary>
+    public async Task<List<Field>> GetEnvironmentSuggestion(
+        int projectId,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] IClickHouseService clickHouse,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+
+        var values = await clickHouse.GetSessionsKeyValuesAsync(
+            projectId, "environment",
+            DateTime.UtcNow.AddDays(-30), DateTime.UtcNow,
+            query: null, count: 50, ct);
+
+        return values.Select(v => new Field
+        {
+            ProjectId = projectId,
+            Type = "session",
+            Name = "environment",
+            Value = v,
+        }).ToList();
+    }
+
+    /// <summary>
+    /// Search user identifiers for a project (last 30 days).
+    /// </summary>
+    public async Task<List<string>> GetIdentifierSuggestion(
+        int projectId,
+        string? query,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] IClickHouseService clickHouse,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+
+        return await clickHouse.GetSessionsKeyValuesAsync(
+            projectId, "identifier",
+            DateTime.UtcNow.AddDays(-30), DateTime.UtcNow,
+            query: query, count: 50, ct);
+    }
+
+    // ── Integration Status ───────────────────────────────────────────
+
+    /// <summary>
+    /// Check if a project is integrated with a specific third-party service.
+    /// </summary>
+    public async Task<bool> IsIntegratedWith(
+        IntegrationType integrationType,
+        int projectId,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+
+        var project = await db.Set<Project>()
+            .Include(p => p.Workspace)
+            .FirstOrDefaultAsync(p => p.Id == projectId, ct);
+        if (project == null) return false;
+
+        return integrationType switch
+        {
+            IntegrationType.Linear => !string.IsNullOrEmpty(project.Workspace.LinearAccessToken),
+            IntegrationType.Slack => !string.IsNullOrEmpty(project.Workspace.SlackAccessToken),
+            IntegrationType.Zapier => !string.IsNullOrEmpty(project.ZapierAccessToken),
+            IntegrationType.MicrosoftTeams => !string.IsNullOrEmpty(project.Workspace.MicrosoftTeamsTenantId),
+            IntegrationType.Discord => !string.IsNullOrEmpty(project.Workspace.DiscordGuildId),
+            IntegrationType.Vercel => !string.IsNullOrEmpty(project.Workspace.VercelAccessToken),
+            IntegrationType.ClickUp => !string.IsNullOrEmpty(project.Workspace.ClickupAccessToken),
+            // For others, check IntegrationProjectMapping table
+            _ => await db.Set<IntegrationProjectMapping>()
+                .AnyAsync(m => m.ProjectId == projectId
+                    && m.IntegrationType == integrationType.ToString(), ct),
+        };
+    }
+
+    /// <summary>
+    /// Check if a workspace is integrated with a specific third-party service.
+    /// </summary>
+    public async Task<bool> IsWorkspaceIntegratedWith(
+        IntegrationType integrationType,
+        int workspaceId,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireWorkspaceAccess(claimsPrincipal, workspaceId, authz, ct);
+
+        var workspace = await db.Workspaces.FindAsync(new object[] { workspaceId }, ct);
+        if (workspace == null) return false;
+
+        return integrationType switch
+        {
+            IntegrationType.ClickUp => !string.IsNullOrEmpty(workspace.ClickupAccessToken),
+            IntegrationType.MicrosoftTeams => !string.IsNullOrEmpty(workspace.MicrosoftTeamsTenantId),
+            IntegrationType.Slack => !string.IsNullOrEmpty(workspace.SlackAccessToken),
+            IntegrationType.Linear => !string.IsNullOrEmpty(workspace.LinearAccessToken),
+            IntegrationType.Discord => !string.IsNullOrEmpty(workspace.DiscordGuildId),
+            IntegrationType.Vercel => !string.IsNullOrEmpty(workspace.VercelAccessToken),
+            _ => await db.Set<IntegrationWorkspaceMapping>()
+                .AnyAsync(m => m.WorkspaceId == workspaceId
+                    && m.IntegrationType == integrationType.ToString(), ct),
+        };
+    }
+
+    /// <summary>
+    /// Check if a project has a specific integration mapping.
+    /// </summary>
+    public async Task<bool> IsProjectIntegratedWith(
+        IntegrationType integrationType,
+        int projectId,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+
+        return await db.Set<IntegrationProjectMapping>()
+            .AnyAsync(m => m.ProjectId == projectId
+                && m.IntegrationType == integrationType.ToString(), ct);
+    }
+
+    /// <summary>
+    /// Check if metrics have been set up for a project.
+    /// </summary>
+    public async Task<IntegrationStatus> GetMetricsIntegration(
+        int projectId,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+
+        var setup = await db.Set<SetupEvent>()
+            .FirstOrDefaultAsync(e => e.ProjectId == projectId && e.Type == "Metrics", ct);
+
+        return new IntegrationStatus(
+            Integrated: setup != null,
+            ResourceType: "Metric",
+            CreatedAt: setup?.CreatedAt);
+    }
+
+    // ── API Key Lookup ───────────────────────────────────────────────
+
+    /// <summary>
+    /// Resolve a project ID from its API key (secret).
+    /// </summary>
+    public async Task<int?> ApiKeyToOrgId(
+        string apiKey,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        var project = await db.Set<Project>()
+            .FirstOrDefaultAsync(p => p.Secret == apiKey, ct);
+        return project?.Id;
+    }
+
+    // ── Analytics (PostgreSQL) ────────────────────────────────────────
+
+    /// <summary>
+    /// Get daily error frequency for an error group (last N days).
+    /// Returns an array of counts, one per day.
+    /// </summary>
+    public async Task<List<long>> GetDailyErrorFrequency(
+        int projectId,
+        string errorGroupSecureId,
+        int dateOffset,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+
+        var errorGroup = await db.ErrorGroups
+            .FirstOrDefaultAsync(e => e.SecureId == errorGroupSecureId && e.ProjectId == projectId, ct)
+            ?? throw new ArgumentException($"Error group not found: {errorGroupSecureId}");
+
+        var startDate = DateTime.UtcNow.Date.AddDays(-dateOffset);
+        var errors = await db.ErrorObjects
+            .Where(e => e.ErrorGroupId == errorGroup.Id && e.CreatedAt >= startDate)
+            .Select(e => e.CreatedAt.Date)
+            .ToListAsync(ct);
+
+        var counts = new List<long>();
+        for (int i = 0; i <= dateOffset; i++)
+        {
+            var day = startDate.AddDays(i);
+            counts.Add(errors.Count(d => d == day));
+        }
+        return counts;
+    }
+
+    /// <summary>
+    /// Get error group tag aggregations (browser, OS, environment, etc.).
+    /// </summary>
+    public async Task<List<ErrorGroupTagAggregation>> GetErrorGroupTags(
+        string errorGroupSecureId,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        await AuthHelper.GetRequiredAdmin(claimsPrincipal, authz, ct);
+
+        var errorGroup = await db.ErrorGroups
+            .FirstOrDefaultAsync(e => e.SecureId == errorGroupSecureId, ct)
+            ?? throw new ArgumentException($"Error group not found: {errorGroupSecureId}");
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, errorGroup.ProjectId, authz, ct);
+
+        var errors = await db.ErrorObjects
+            .Where(e => e.ErrorGroupId == errorGroup.Id)
+            .Select(e => new { e.Browser, e.OS, e.Environment })
+            .ToListAsync(ct);
+
+        var total = (double)errors.Count;
+        var results = new List<ErrorGroupTagAggregation>();
+
+        // Browser aggregation
+        var browsers = errors.Where(e => !string.IsNullOrEmpty(e.Browser))
+            .GroupBy(e => e.Browser!)
+            .Select(g => new ErrorGroupTagAggregationBucket(g.Key, g.Count(), total > 0 ? g.Count() / total * 100 : 0))
+            .OrderByDescending(b => b.DocCount).ToList();
+        if (browsers.Count > 0)
+            results.Add(new ErrorGroupTagAggregation("browser", browsers));
+
+        // OS aggregation
+        var oses = errors.Where(e => !string.IsNullOrEmpty(e.OS))
+            .GroupBy(e => e.OS!)
+            .Select(g => new ErrorGroupTagAggregationBucket(g.Key, g.Count(), total > 0 ? g.Count() / total * 100 : 0))
+            .OrderByDescending(b => b.DocCount).ToList();
+        if (oses.Count > 0)
+            results.Add(new ErrorGroupTagAggregation("os", oses));
+
+        // Environment aggregation
+        var envs = errors.Where(e => !string.IsNullOrEmpty(e.Environment))
+            .GroupBy(e => e.Environment!)
+            .Select(g => new ErrorGroupTagAggregationBucket(g.Key, g.Count(), total > 0 ? g.Count() / total * 100 : 0))
+            .OrderByDescending(b => b.DocCount).ToList();
+        if (envs.Count > 0)
+            results.Add(new ErrorGroupTagAggregation("environment", envs));
+
+        return results;
+    }
+
+    /// <summary>
+    /// Get top referrer hosts for a project.
+    /// </summary>
+    public async Task<List<ReferrerTablePayload>> GetReferrers(
+        int projectId,
+        double lookbackDays,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+
+        var cutoff = DateTime.UtcNow.AddDays(-lookbackDays);
+        var fields = await db.Fields
+            .Where(f => f.ProjectId == projectId && f.Name == "referrer" && f.CreatedAt >= cutoff)
+            .Select(f => f.Value)
+            .ToListAsync(ct);
+
+        var total = (double)fields.Count;
+        return fields.GroupBy(v => v)
+            .Select(g => new ReferrerTablePayload(g.Key, g.Count(), total > 0 ? g.Count() / total * 100 : 0))
+            .OrderByDescending(r => r.Count)
+            .Take(50)
+            .ToList();
+    }
+
+    /// <summary>
+    /// Get top users by active time for a project.
+    /// </summary>
+    public async Task<List<TopUsersPayload>> GetTopUsers(
+        int projectId,
+        double lookbackDays,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+
+        var cutoff = DateTime.UtcNow.AddDays(-lookbackDays);
+        var sessions = await db.Sessions
+            .Where(s => s.ProjectId == projectId
+                && s.CreatedAt >= cutoff
+                && s.Excluded != true
+                && !string.IsNullOrEmpty(s.Identifier))
+            .Select(s => new { s.Id, s.Identifier, s.ActiveLength })
+            .ToListAsync(ct);
+
+        var totalActive = sessions.Sum(s => s.ActiveLength ?? 0);
+
+        return sessions.GroupBy(s => s.Identifier!)
+            .Select(g => new TopUsersPayload(
+                Id: g.First().Id,
+                Identifier: g.Key,
+                TotalActiveTime: g.Sum(s => s.ActiveLength ?? 0),
+                ActiveTimePercentage: totalActive > 0 ? (double)g.Sum(s => s.ActiveLength ?? 0) / totalActive * 100 : 0,
+                UserProperties: "{}"))
+            .OrderByDescending(u => u.TotalActiveTime)
+            .Take(50)
+            .ToList();
+    }
+
+    /// <summary>
+    /// Get average session length for a project.
+    /// </summary>
+    public async Task<AverageSessionLength> GetAverageSessionLength(
+        int projectId,
+        double lookbackDays,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+
+        var cutoff = DateTime.UtcNow.AddDays(-lookbackDays);
+        var avgLength = await db.Sessions
+            .Where(s => s.ProjectId == projectId
+                && s.CreatedAt >= cutoff
+                && s.Excluded != true
+                && s.Length != null && s.Length > 0)
+            .AverageAsync(s => (double?)s.Length, ct);
+
+        return new AverageSessionLength(avgLength ?? 0);
+    }
+
+    /// <summary>
+    /// Count new users (first_time=1) for a project.
+    /// </summary>
+    public async Task<NewUsersCount> GetNewUsersCount(
+        int projectId,
+        double lookbackDays,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+
+        var cutoff = DateTime.UtcNow.AddDays(-lookbackDays);
+        var count = await db.Sessions
+            .Where(s => s.ProjectId == projectId
+                && s.CreatedAt >= cutoff
+                && s.FirstTime == 1
+                && s.Excluded != true)
+            .LongCountAsync(ct);
+
+        return new NewUsersCount(count);
+    }
+
+    /// <summary>
+    /// Count unique fingerprints for a project.
+    /// </summary>
+    public async Task<UserFingerprintCount> GetUserFingerprintCount(
+        int projectId,
+        double lookbackDays,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+
+        var cutoff = DateTime.UtcNow.AddDays(-lookbackDays);
+        var count = await db.Sessions
+            .Where(s => s.ProjectId == projectId
+                && s.CreatedAt >= cutoff
+                && s.Fingerprint != null
+                && s.Excluded != true)
+            .Select(s => s.Fingerprint)
+            .Distinct()
+            .LongCountAsync(ct);
+
+        return new UserFingerprintCount(count);
+    }
+
+    // ── Notification Channel Suggestions ─────────────────────────────
+
+    /// <summary>
+    /// Get Slack channel suggestions for alert configuration.
+    /// </summary>
+    public async Task<List<SanitizedSlackChannel>> GetSlackChannelSuggestion(
+        int projectId,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+
+        var project = await db.Projects.Include(p => p.Workspace).FirstOrDefaultAsync(p => p.Id == projectId, ct)
+            ?? throw new ArgumentException($"Project not found: {projectId}");
+
+        if (string.IsNullOrEmpty(project.Workspace.SlackChannels))
+            return [];
+
+        var channels = System.Text.Json.JsonSerializer.Deserialize<List<string>>(project.Workspace.SlackChannels) ?? [];
+        return channels.Select(c => new SanitizedSlackChannel(c, null)).ToList();
+    }
+
+    /// <summary>
+    /// Get Discord channel suggestions for alert configuration.
+    /// </summary>
+    public async Task<List<DiscordChannelInfo>> GetDiscordChannelSuggestions(
+        int projectId,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+
+        var project = await db.Projects.Include(p => p.Workspace).FirstOrDefaultAsync(p => p.Id == projectId, ct)
+            ?? throw new ArgumentException($"Project not found: {projectId}");
+
+        if (string.IsNullOrEmpty(project.Workspace.DiscordGuildId))
+            return [];
+
+        return [new DiscordChannelInfo(project.Workspace.DiscordGuildId, "default")];
+    }
+
+    /// <summary>
+    /// Get Microsoft Teams channel suggestions for alert configuration.
+    /// </summary>
+    public async Task<List<MicrosoftTeamsChannelInfo>> GetMicrosoftTeamsChannelSuggestions(
+        int projectId,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+
+        var project = await db.Projects.Include(p => p.Workspace).FirstOrDefaultAsync(p => p.Id == projectId, ct)
+            ?? throw new ArgumentException($"Project not found: {projectId}");
+
+        if (string.IsNullOrEmpty(project.Workspace.MicrosoftTeamsTenantId))
+            return [];
+
+        return [new MicrosoftTeamsChannelInfo(project.Workspace.MicrosoftTeamsTenantId, "default")];
+    }
+
+    // ── SSO Login ────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Look up SSO configuration by domain.
+    /// </summary>
+    public async Task<SSOLogin?> GetSSOLogin(
+        string domain,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        var sso = await db.SSOClients
+            .FirstOrDefaultAsync(s => s.Domain == domain, ct);
+        if (sso == null) return null;
+        return new SSOLogin(sso.Domain!, sso.ClientId ?? "");
+    }
+
+    // ── Workspace Access Requests ────────────────────────────────────
+
+    /// <summary>
+    /// Get workspace access requests.
+    /// </summary>
+    public async Task<List<WorkspaceAccessRequest>> GetWorkspaceAccessRequests(
+        int workspaceId,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireWorkspaceAccess(claimsPrincipal, workspaceId, authz, ct);
+
+        return await db.WorkspaceAccessRequests
+            .Where(r => r.LastRequestedWorkspace == workspaceId)
+            .OrderByDescending(r => r.CreatedAt)
+            .ToListAsync(ct);
+    }
+
+    /// <summary>
+    /// Get integration project mappings for a workspace.
+    /// </summary>
+    public async Task<List<IntegrationProjectMapping>> GetIntegrationProjectMappings(
+        int workspaceId,
+        IntegrationType? integrationType,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireWorkspaceAccess(claimsPrincipal, workspaceId, authz, ct);
+
+        var query = db.IntegrationProjectMappings
+            .Include(m => m.Project)
+            .Where(m => m.Project.WorkspaceId == workspaceId);
+
+        if (integrationType != null)
+            query = query.Where(m => m.IntegrationType == integrationType.ToString());
+
+        return await query.ToListAsync(ct);
     }
 
     // ── System ────────────────────────────────────────────────────────

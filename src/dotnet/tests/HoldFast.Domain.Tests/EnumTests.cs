@@ -392,7 +392,8 @@ public class LogLevelDetailTests
     {
         Assert.True(LogLevel.Trace < LogLevel.Fatal);
         Assert.True(LogLevel.Error > LogLevel.Warn);
-        Assert.True(LogLevel.Info >= LogLevel.Info);
+        var info = LogLevel.Info;
+        Assert.True(info >= LogLevel.Info);
     }
 
     [Theory]
