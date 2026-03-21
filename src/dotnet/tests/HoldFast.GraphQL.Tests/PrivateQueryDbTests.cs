@@ -749,4 +749,263 @@ public class PrivateQueryDbTests : IDisposable
         var result = await _query.GetAlert(99999, _principal, _authz, _db, CancellationToken.None);
         Assert.Null(result);
     }
+
+    // ── Admin Role Queries ──────────────────────────────────────────
+
+    [Fact]
+    public async Task GetAdminRole_ReturnsRole()
+    {
+        var role = await _query.GetAdminRole(_workspace.Id, _principal, _authz, CancellationToken.None);
+        Assert.Equal("ADMIN", role);
+    }
+
+    [Fact]
+    public async Task GetAdminRole_NonMember_ReturnsNull()
+    {
+        var ws2 = new Workspace { Name = "Other" };
+        _db.Workspaces.Add(ws2);
+        await _db.SaveChangesAsync();
+
+        var role = await _query.GetAdminRole(ws2.Id, _principal, _authz, CancellationToken.None);
+        Assert.Null(role);
+    }
+
+    [Fact]
+    public async Task GetAdminRoleByProject_ReturnsRole()
+    {
+        var role = await _query.GetAdminRoleByProject(_project.Id, _principal, _authz, _db, CancellationToken.None);
+        Assert.Equal("ADMIN", role);
+    }
+
+    [Fact]
+    public async Task GetAdminRoleByProject_NonexistentProject_ReturnsNull()
+    {
+        var role = await _query.GetAdminRoleByProject(99999, _principal, _authz, _db, CancellationToken.None);
+        Assert.Null(role);
+    }
+
+    // ── Workspace Pending Invites ───────────────────────────────────
+
+    [Fact]
+    public async Task GetWorkspacePendingInvites_ReturnsActive()
+    {
+        _db.WorkspaceInviteLinks.Add(new WorkspaceInviteLink
+        {
+            WorkspaceId = _workspace.Id, InviteeEmail = "admin@test.com",
+            Secret = "active1", ExpirationDate = DateTime.UtcNow.AddDays(7),
+        });
+        // Expired invite (should not be returned)
+        _db.WorkspaceInviteLinks.Add(new WorkspaceInviteLink
+        {
+            WorkspaceId = _workspace.Id, InviteeEmail = "admin@test.com",
+            Secret = "expired1", ExpirationDate = DateTime.UtcNow.AddDays(-1),
+        });
+        await _db.SaveChangesAsync();
+
+        var invites = await _query.GetWorkspacePendingInvites(_principal, _authz, _db, CancellationToken.None);
+        Assert.Single(invites);
+        Assert.Equal("active1", invites[0].Secret);
+    }
+
+    [Fact]
+    public async Task GetWorkspacePendingInvites_NullExpiration_IsActive()
+    {
+        _db.WorkspaceInviteLinks.Add(new WorkspaceInviteLink
+        {
+            WorkspaceId = _workspace.Id, InviteeEmail = "admin@test.com",
+            Secret = "no-expiry", ExpirationDate = null,
+        });
+        await _db.SaveChangesAsync();
+
+        var invites = await _query.GetWorkspacePendingInvites(_principal, _authz, _db, CancellationToken.None);
+        Assert.Single(invites);
+    }
+
+    [Fact]
+    public async Task GetWorkspacePendingInvites_Empty()
+    {
+        var invites = await _query.GetWorkspacePendingInvites(_principal, _authz, _db, CancellationToken.None);
+        Assert.Empty(invites);
+    }
+
+    // ── Joinable Workspaces ─────────────────────────────────────────
+
+    [Fact]
+    public async Task GetJoinableWorkspaces_ReturnsDistinct()
+    {
+        var ws2 = new Workspace { Name = "Joinable" };
+        _db.Workspaces.Add(ws2);
+        await _db.SaveChangesAsync();
+
+        // Two invites to same workspace — should return one workspace
+        _db.WorkspaceInviteLinks.Add(new WorkspaceInviteLink
+        {
+            WorkspaceId = ws2.Id, InviteeEmail = "admin@test.com",
+            Secret = "j1", ExpirationDate = DateTime.UtcNow.AddDays(7),
+        });
+        _db.WorkspaceInviteLinks.Add(new WorkspaceInviteLink
+        {
+            WorkspaceId = ws2.Id, InviteeEmail = "admin@test.com",
+            Secret = "j2", ExpirationDate = DateTime.UtcNow.AddDays(3),
+        });
+        await _db.SaveChangesAsync();
+
+        var workspaces = await _query.GetJoinableWorkspaces(_principal, _authz, _db, CancellationToken.None);
+        Assert.Single(workspaces);
+        Assert.Equal("Joinable", workspaces[0].Name);
+    }
+
+    [Fact]
+    public async Task GetJoinableWorkspaces_ExcludesExpired()
+    {
+        var ws2 = new Workspace { Name = "Expired" };
+        _db.Workspaces.Add(ws2);
+        await _db.SaveChangesAsync();
+
+        _db.WorkspaceInviteLinks.Add(new WorkspaceInviteLink
+        {
+            WorkspaceId = ws2.Id, InviteeEmail = "admin@test.com",
+            Secret = "exp", ExpirationDate = DateTime.UtcNow.AddDays(-1),
+        });
+        await _db.SaveChangesAsync();
+
+        var workspaces = await _query.GetJoinableWorkspaces(_principal, _authz, _db, CancellationToken.None);
+        Assert.Empty(workspaces);
+    }
+
+    // ── IsSessionPending ────────────────────────────────────────────
+
+    [Fact]
+    public async Task IsSessionPending_Unprocessed_ReturnsTrue()
+    {
+        var session = new Session
+        {
+            ProjectId = _project.Id, SecureId = "s-pending",
+            Fingerprint = "fp", City = "", State = "", Country = "",
+            Processed = false,
+        };
+        _db.Sessions.Add(session);
+        await _db.SaveChangesAsync();
+
+        var pending = await _query.IsSessionPending(session.Id, _principal, _authz, _db, CancellationToken.None);
+        Assert.True(pending);
+    }
+
+    [Fact]
+    public async Task IsSessionPending_Processed_ReturnsFalse()
+    {
+        var session = new Session
+        {
+            ProjectId = _project.Id, SecureId = "s-done",
+            Fingerprint = "fp", City = "", State = "", Country = "",
+            Processed = true,
+        };
+        _db.Sessions.Add(session);
+        await _db.SaveChangesAsync();
+
+        var pending = await _query.IsSessionPending(session.Id, _principal, _authz, _db, CancellationToken.None);
+        Assert.False(pending);
+    }
+
+    [Fact]
+    public async Task IsSessionPending_Nonexistent_ReturnsFalse()
+    {
+        var pending = await _query.IsSessionPending(99999, _principal, _authz, _db, CancellationToken.None);
+        Assert.False(pending);
+    }
+
+    // ── GetErrorInstance ─────────────────────────────────────────────
+
+    [Fact]
+    public async Task GetErrorInstance_SpecificObject()
+    {
+        var eg = new ErrorGroup { ProjectId = _project.Id, Event = "err", Type = "Error" };
+        _db.ErrorGroups.Add(eg);
+        await _db.SaveChangesAsync();
+
+        var eo = new ErrorObject { ErrorGroupId = eg.Id, Event = "err" };
+        _db.ErrorObjects.Add(eo);
+        await _db.SaveChangesAsync();
+
+        var result = await _query.GetErrorInstance(eg.Id, eo.Id, _principal, _authz, _db, CancellationToken.None);
+        Assert.NotNull(result);
+        Assert.Equal(eo.Id, result!.Id);
+    }
+
+    [Fact]
+    public async Task GetErrorInstance_NullObjectId_ReturnsLatest()
+    {
+        var eg = new ErrorGroup { ProjectId = _project.Id, Event = "err", Type = "Error" };
+        _db.ErrorGroups.Add(eg);
+        await _db.SaveChangesAsync();
+
+        var eo1 = new ErrorObject { ErrorGroupId = eg.Id, Event = "old", CreatedAt = DateTime.UtcNow.AddHours(-1) };
+        var eo2 = new ErrorObject { ErrorGroupId = eg.Id, Event = "new", CreatedAt = DateTime.UtcNow };
+        _db.ErrorObjects.AddRange(eo1, eo2);
+        await _db.SaveChangesAsync();
+
+        var result = await _query.GetErrorInstance(eg.Id, null, _principal, _authz, _db, CancellationToken.None);
+        Assert.NotNull(result);
+        Assert.Equal("new", result!.Event);
+    }
+
+    [Fact]
+    public async Task GetErrorInstance_NoObjects_ReturnsNull()
+    {
+        var eg = new ErrorGroup { ProjectId = _project.Id, Event = "err", Type = "Error" };
+        _db.ErrorGroups.Add(eg);
+        await _db.SaveChangesAsync();
+
+        var result = await _query.GetErrorInstance(eg.Id, null, _principal, _authz, _db, CancellationToken.None);
+        Assert.Null(result);
+    }
+
+    // ── GetErrorObjectForLog ─────────────────────────────────────────
+
+    [Fact]
+    public async Task GetErrorObjectForLog_ReturnsObject()
+    {
+        var eg = new ErrorGroup { ProjectId = _project.Id, Event = "err", Type = "Error" };
+        _db.ErrorGroups.Add(eg);
+        await _db.SaveChangesAsync();
+
+        var eo = new ErrorObject { ErrorGroupId = eg.Id, Event = "err" };
+        _db.ErrorObjects.Add(eo);
+        await _db.SaveChangesAsync();
+
+        var result = await _query.GetErrorObjectForLog(eo.Id, _principal, _authz, _db, CancellationToken.None);
+        Assert.NotNull(result);
+        Assert.Equal(eo.Id, result!.Id);
+    }
+
+    [Fact]
+    public async Task GetErrorObjectForLog_Nonexistent_ReturnsNull()
+    {
+        var result = await _query.GetErrorObjectForLog(99999, _principal, _authz, _db, CancellationToken.None);
+        Assert.Null(result);
+    }
+
+    // ── GetWorkspacesCount ──────────────────────────────────────────
+
+    [Fact]
+    public async Task GetWorkspacesCount_ReturnsCount()
+    {
+        var count = await _query.GetWorkspacesCount(_principal, _authz, _db, CancellationToken.None);
+        Assert.Equal(1, count);
+    }
+
+    [Fact]
+    public async Task GetWorkspacesCount_MultipleWorkspaces()
+    {
+        var ws2 = new Workspace { Name = "WS2" };
+        _db.Workspaces.Add(ws2);
+        await _db.SaveChangesAsync();
+
+        _db.WorkspaceAdmins.Add(new WorkspaceAdmin
+            { AdminId = _admin.Id, WorkspaceId = ws2.Id, Role = "MEMBER" });
+        await _db.SaveChangesAsync();
+
+        var count = await _query.GetWorkspacesCount(_principal, _authz, _db, CancellationToken.None);
+        Assert.Equal(2, count);
+    }
 }
