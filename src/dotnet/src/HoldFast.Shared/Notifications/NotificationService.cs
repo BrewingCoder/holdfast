@@ -20,6 +20,11 @@ public class NotificationService : INotificationService
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly ILogger<NotificationService> _logger;
 
+    /// <summary>
+    /// Initializes a new instance of <see cref="NotificationService"/>.
+    /// </summary>
+    /// <param name="httpClientFactory">Factory for creating named HTTP clients.</param>
+    /// <param name="logger">Logger instance for diagnostic output.</param>
     public NotificationService(
         IHttpClientFactory httpClientFactory,
         ILogger<NotificationService> logger)
@@ -107,8 +112,12 @@ public class NotificationService : INotificationService
 
     /// <summary>
     /// Execute an async action with one retry on transient failures.
-    /// Catches HttpRequestException and TaskCanceledException (timeout).
+    /// Catches <see cref="HttpRequestException"/> and <see cref="TaskCanceledException"/> (timeout).
+    /// User-initiated cancellation (via <paramref name="ct"/>) exits immediately without logging an error.
     /// </summary>
+    /// <param name="action">The async HTTP action to execute.</param>
+    /// <param name="destination">Human-readable destination name for log messages (e.g., "Slack", "Discord").</param>
+    /// <param name="ct">Cancellation token. When triggered by the caller, the method exits silently.</param>
     internal async Task ExecuteWithRetryAsync(Func<Task> action, string destination, CancellationToken ct)
     {
         for (int attempt = 0; attempt < 2; attempt++)

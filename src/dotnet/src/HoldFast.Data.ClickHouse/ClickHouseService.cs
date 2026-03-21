@@ -428,18 +428,6 @@ public class ClickHouseService : IClickHouseService, IDisposable
         sb.AddParam("cursorUuid", uuid);
     }
 
-    /// <summary>
-    /// Build a Connection (with PageInfo) from a list of rows, using Go's getConnection logic.
-    /// </summary>
-    internal static TConnection BuildConnection<TRow, TEdge, TConnection>(
-        List<TRow> rows, int limit, ClickHousePagination pagination, Func<TRow, TEdge> toEdge)
-        where TEdge : class
-        where TConnection : class, new()
-    {
-        // This is a simplified overload — the actual generic logic is below
-        throw new NotImplementedException("Use the typed overload");
-    }
-
     private LogConnection BuildConnection(
         List<LogRow> rows, int limit, ClickHousePagination pagination, Func<LogRow, LogEdge> toEdge)
     {

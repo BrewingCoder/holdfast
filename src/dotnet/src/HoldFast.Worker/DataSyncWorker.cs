@@ -32,6 +32,11 @@ public class DataSyncWorker : BackgroundService
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<DataSyncWorker> _logger;
 
+    /// <summary>
+    /// Initializes a new instance of <see cref="DataSyncWorker"/>.
+    /// </summary>
+    /// <param name="scopeFactory">Factory for creating DI scopes per sync iteration.</param>
+    /// <param name="logger">Logger instance for diagnostic output.</param>
     public DataSyncWorker(
         IServiceScopeFactory scopeFactory,
         ILogger<DataSyncWorker> logger)
@@ -40,6 +45,9 @@ public class DataSyncWorker : BackgroundService
         _logger = logger;
     }
 
+    /// <summary>
+    /// Main loop: waits 30 seconds for startup, then runs sync every <see cref="Interval"/>.
+    /// </summary>
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         _logger.LogInformation("DataSyncWorker started, interval={Interval}", Interval);
@@ -62,6 +70,11 @@ public class DataSyncWorker : BackgroundService
         }
     }
 
+    /// <summary>
+    /// Execute a single sync iteration: sessions, error groups, and error objects
+    /// modified within the <see cref="SyncWindow"/> are written to ClickHouse.
+    /// </summary>
+    /// <param name="ct">Cancellation token.</param>
     internal async Task RunSyncAsync(CancellationToken ct)
     {
         using var scope = _scopeFactory.CreateScope();
@@ -82,6 +95,14 @@ public class DataSyncWorker : BackgroundService
         }
     }
 
+    /// <summary>
+    /// Sync processed sessions updated after <paramref name="cutoff"/> to ClickHouse.
+    /// </summary>
+    /// <param name="db">PostgreSQL database context.</param>
+    /// <param name="clickHouse">ClickHouse write service.</param>
+    /// <param name="cutoff">Only sync sessions updated on or after this time.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>Number of sessions synced.</returns>
     internal static async Task<int> SyncSessionsAsync(
         HoldFastDbContext db, IClickHouseService clickHouse, DateTime cutoff, CancellationToken ct)
     {
@@ -124,6 +145,14 @@ public class DataSyncWorker : BackgroundService
         return sessions.Count;
     }
 
+    /// <summary>
+    /// Sync error groups updated after <paramref name="cutoff"/> to ClickHouse.
+    /// </summary>
+    /// <param name="db">PostgreSQL database context.</param>
+    /// <param name="clickHouse">ClickHouse write service.</param>
+    /// <param name="cutoff">Only sync error groups updated on or after this time.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>Number of error groups synced.</returns>
     internal static async Task<int> SyncErrorGroupsAsync(
         HoldFastDbContext db, IClickHouseService clickHouse, DateTime cutoff, CancellationToken ct)
     {
@@ -154,6 +183,14 @@ public class DataSyncWorker : BackgroundService
         return groups.Count;
     }
 
+    /// <summary>
+    /// Sync error objects created after <paramref name="cutoff"/> to ClickHouse.
+    /// </summary>
+    /// <param name="db">PostgreSQL database context.</param>
+    /// <param name="clickHouse">ClickHouse write service.</param>
+    /// <param name="cutoff">Only sync error objects created on or after this time.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>Number of error objects synced.</returns>
     internal static async Task<int> SyncErrorObjectsAsync(
         HoldFastDbContext db, IClickHouseService clickHouse, DateTime cutoff, CancellationToken ct)
     {

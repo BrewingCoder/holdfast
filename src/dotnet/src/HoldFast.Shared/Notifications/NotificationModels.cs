@@ -4,6 +4,10 @@ namespace HoldFast.Shared.Notifications;
 
 // ── Slack ────────────────────────────────────────────────────────────────
 
+/// <summary>
+/// Slack chat.postMessage payload. Maps to the Slack Web API JSON structure.
+/// See https://api.slack.com/methods/chat.postMessage.
+/// </summary>
 public class SlackMessage
 {
     [JsonPropertyName("channel")]
@@ -19,6 +23,10 @@ public class SlackMessage
     public List<SlackAttachment>? Attachments { get; set; }
 }
 
+/// <summary>
+/// A single block element in Slack's Block Kit layout.
+/// Typically a "section" block with a <see cref="SlackTextObject"/> child.
+/// </summary>
 public class SlackBlock
 {
     [JsonPropertyName("type")]
@@ -28,6 +36,9 @@ public class SlackBlock
     public SlackTextObject? Text { get; set; }
 }
 
+/// <summary>
+/// Slack text composition object. Supports "mrkdwn" or "plain_text" types.
+/// </summary>
 public class SlackTextObject
 {
     [JsonPropertyName("type")]
@@ -37,6 +48,9 @@ public class SlackTextObject
     public string Text_ { get; set; } = string.Empty;
 }
 
+/// <summary>
+/// Slack message attachment. Used to add a colored sidebar and additional blocks.
+/// </summary>
 public class SlackAttachment
 {
     [JsonPropertyName("color")]
@@ -51,6 +65,9 @@ public class SlackAttachment
 
 // ── Discord ──────────────────────────────────────────────────────────────
 
+/// <summary>
+/// Discord webhook message payload. See https://discord.com/developers/docs/resources/webhook.
+/// </summary>
 public class DiscordMessage
 {
     [JsonPropertyName("content")]
@@ -60,6 +77,9 @@ public class DiscordMessage
     public List<DiscordEmbed>? Embeds { get; set; }
 }
 
+/// <summary>
+/// Discord rich embed object displayed beneath the message content.
+/// </summary>
 public class DiscordEmbed
 {
     [JsonPropertyName("title")]
@@ -81,6 +101,9 @@ public class DiscordEmbed
     public string? Timestamp { get; set; }
 }
 
+/// <summary>
+/// A single name/value field within a <see cref="DiscordEmbed"/>.
+/// </summary>
 public class DiscordEmbedField
 {
     [JsonPropertyName("name")]
@@ -95,6 +118,9 @@ public class DiscordEmbedField
 
 // ── Microsoft Teams (Adaptive Card) ──────────────────────────────────────
 
+/// <summary>
+/// Microsoft Teams incoming webhook message payload wrapping an Adaptive Card.
+/// </summary>
 public class TeamsMessage
 {
     [JsonPropertyName("type")]
@@ -104,6 +130,9 @@ public class TeamsMessage
     public List<TeamsAttachment>? Attachments { get; set; }
 }
 
+/// <summary>
+/// Teams message attachment containing an <see cref="AdaptiveCard"/>.
+/// </summary>
 public class TeamsAttachment
 {
     [JsonPropertyName("contentType")]
@@ -113,6 +142,10 @@ public class TeamsAttachment
     public AdaptiveCard? Content { get; set; }
 }
 
+/// <summary>
+/// Microsoft Adaptive Card v1.4 payload. Used within Teams webhook messages.
+/// See https://adaptivecards.io/explorer/.
+/// </summary>
 public class AdaptiveCard
 {
     [JsonPropertyName("type")]
@@ -159,6 +192,9 @@ public class AdaptiveCardElement
     public List<AdaptiveFact>? Facts { get; set; }
 }
 
+/// <summary>
+/// A title/value pair displayed within an Adaptive Card FactSet element.
+/// </summary>
 public class AdaptiveFact
 {
     [JsonPropertyName("title")]
@@ -181,9 +217,16 @@ public class AlertNotification
     /// </summary>
     public string AlertType { get; set; } = string.Empty;
 
+    /// <summary>Short, human-readable alert title shown as the message heading.</summary>
     public string? Title { get; set; }
+
+    /// <summary>Longer description with context about what triggered the alert.</summary>
     public string? Description { get; set; }
+
+    /// <summary>Name of the HoldFast project that generated this alert.</summary>
     public string? ProjectName { get; set; }
+
+    /// <summary>Deep link into the HoldFast dashboard for the relevant resource.</summary>
     public string? Url { get; set; }
 
     /// <summary>
@@ -191,7 +234,10 @@ public class AlertNotification
     /// </summary>
     public string? Severity { get; set; }
 
+    /// <summary>Number of occurrences that triggered this alert (e.g., error count in the window).</summary>
     public int? Count { get; set; }
+
+    /// <summary>When the alert was generated. Defaults to <see cref="DateTime.UtcNow"/>.</summary>
     public DateTime Timestamp { get; set; } = DateTime.UtcNow;
 
     /// <summary>

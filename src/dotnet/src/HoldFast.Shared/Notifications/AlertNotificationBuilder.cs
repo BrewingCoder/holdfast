@@ -46,17 +46,39 @@ public static class AlertNotificationBuilder
         ["event"]   = "Accent",
     };
 
+    /// <summary>
+    /// Returns the Slack sidebar hex color for the given alert type, or gray if unknown.
+    /// </summary>
+    /// <param name="alertType">Alert type key (e.g., "error", "session").</param>
+    /// <returns>Hex color string including the leading '#'.</returns>
     public static string GetSlackColor(string? alertType) =>
         alertType != null && SlackColors.TryGetValue(alertType, out var c) ? c : "#808080";
 
+    /// <summary>
+    /// Returns the Discord embed color (decimal int) for the given alert type, or gray if unknown.
+    /// </summary>
+    /// <param name="alertType">Alert type key (e.g., "error", "session").</param>
+    /// <returns>Integer color value suitable for <see cref="DiscordEmbed.Color"/>.</returns>
     public static int GetDiscordColor(string? alertType) =>
         alertType != null && DiscordColors.TryGetValue(alertType, out var c) ? c : 0x808080;
 
+    /// <summary>
+    /// Returns the Teams Adaptive Card color keyword for the given alert type, or "Default" if unknown.
+    /// </summary>
+    /// <param name="alertType">Alert type key (e.g., "error", "session").</param>
+    /// <returns>Adaptive Card color keyword (e.g., "Attention", "Good", "Warning").</returns>
     public static string GetTeamsColor(string? alertType) =>
         alertType != null && TeamsColors.TryGetValue(alertType, out var c) ? c : "Default";
 
     // ── Slack ────────────────────────────────────────────────────────────
 
+    /// <summary>
+    /// Build a Slack Block Kit message from a platform-agnostic <see cref="AlertNotification"/>.
+    /// Produces a header section block plus an attachment with color sidebar containing
+    /// description, facts (project/severity/count), and metadata blocks.
+    /// </summary>
+    /// <param name="notification">The alert to convert.</param>
+    /// <returns>A ready-to-post <see cref="SlackMessage"/>.</returns>
     public static SlackMessage BuildSlackMessage(AlertNotification notification)
     {
         var title = notification.Title ?? "HoldFast Alert";
@@ -126,6 +148,13 @@ public static class AlertNotificationBuilder
 
     // ── Discord ──────────────────────────────────────────────────────────
 
+    /// <summary>
+    /// Build a Discord webhook message with a rich embed from a platform-agnostic
+    /// <see cref="AlertNotification"/>. Includes color, inline fields for project/severity/count,
+    /// metadata fields, and an ISO-8601 timestamp.
+    /// </summary>
+    /// <param name="notification">The alert to convert.</param>
+    /// <returns>A ready-to-post <see cref="DiscordMessage"/>.</returns>
     public static DiscordMessage BuildDiscordMessage(AlertNotification notification)
     {
         var title = notification.Title ?? "HoldFast Alert";
@@ -168,6 +197,13 @@ public static class AlertNotificationBuilder
 
     // ── Teams ────────────────────────────────────────────────────────────
 
+    /// <summary>
+    /// Build a Microsoft Teams Adaptive Card message from a platform-agnostic
+    /// <see cref="AlertNotification"/>. Produces a title TextBlock, optional description,
+    /// and a FactSet with alert type, project, severity, count, and metadata.
+    /// </summary>
+    /// <param name="notification">The alert to convert.</param>
+    /// <returns>A ready-to-post <see cref="TeamsMessage"/>.</returns>
     public static TeamsMessage BuildTeamsMessage(AlertNotification notification)
     {
         var title = notification.Title ?? "HoldFast Alert";
@@ -236,6 +272,10 @@ public static class AlertNotificationBuilder
         };
     }
 
+    /// <summary>
+    /// Truncate a string to <paramref name="maxLength"/> characters, appending "..." if truncated.
+    /// Returns <see cref="string.Empty"/> for null or empty input.
+    /// </summary>
     private static string Truncate(string? text, int maxLength) =>
         string.IsNullOrEmpty(text)
             ? string.Empty
