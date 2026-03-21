@@ -155,3 +155,33 @@ public record AlertDestinationInput(
     string DestinationType,
     string? TypeId,
     string? TypeName);
+
+/// <summary>
+/// Combined projects and workspaces result.
+/// </summary>
+public record ProjectsAndWorkspacesResult(
+    List<Project> Projects,
+    List<Workspace> Workspaces);
+
+/// <summary>
+/// Result for project-or-workspace lookup.
+/// </summary>
+public record ProjectOrWorkspaceResult(
+    Project? Project,
+    Workspace? Workspace);
+
+/// <summary>
+/// All alert types for a project (alerts page).
+/// </summary>
+public record AlertsPagePayload(
+    List<Alert> Alerts,
+    List<ErrorAlert> ErrorAlerts,
+    List<SessionAlert> SessionAlerts,
+    List<LogAlert> LogAlerts,
+    List<MetricMonitor> MetricMonitors);
+
+/// <summary>
+/// Log alerts for a project.
+/// </summary>
+public record LogAlertsPagePayload(
+    List<LogAlert> LogAlerts);

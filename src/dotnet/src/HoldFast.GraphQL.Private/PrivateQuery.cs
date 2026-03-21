@@ -2833,6 +2833,141 @@ public class PrivateQuery
         return await query.ToListAsync(ct);
     }
 
+    // ── Compound Queries ───────────────────────────────────────────────
+
+    /// <summary>
+    /// Get all projects and workspaces for the current admin.
+    /// </summary>
+    public async Task<ProjectsAndWorkspacesResult> GetProjectsAndWorkspaces(
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        var admin = await AuthHelper.GetRequiredAdmin(claimsPrincipal, authz, ct);
+
+        var workspaceIds = await db.WorkspaceAdmins
+            .Where(wa => wa.AdminId == admin.Id)
+            .Select(wa => wa.WorkspaceId)
+            .ToListAsync(ct);
+
+        var workspaces = await db.Workspaces
+            .Where(w => workspaceIds.Contains(w.Id))
+            .Include(w => w.Projects)
+            .ToListAsync(ct);
+
+        var projects = workspaces.SelectMany(w => w.Projects).ToList();
+
+        return new ProjectsAndWorkspacesResult(projects, workspaces);
+    }
+
+    /// <summary>
+    /// Get a project or workspace by ID.
+    /// </summary>
+    public async Task<ProjectOrWorkspaceResult> GetProjectOrWorkspace(
+        int id,
+        bool isWorkspace,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        if (isWorkspace)
+        {
+            await AuthHelper.RequireWorkspaceAccess(claimsPrincipal, id, authz, ct);
+            var workspace = await db.Workspaces
+                .Include(w => w.Projects)
+                .FirstOrDefaultAsync(w => w.Id == id, ct);
+            return new ProjectOrWorkspaceResult(null, workspace);
+        }
+        else
+        {
+            await AuthHelper.RequireProjectAccess(claimsPrincipal, id, authz, ct);
+            var project = await db.Projects
+                .Include(p => p.Workspace)
+                .FirstOrDefaultAsync(p => p.Id == id, ct);
+            return new ProjectOrWorkspaceResult(project, project?.Workspace);
+        }
+    }
+
+    /// <summary>
+    /// Get admin's about-you details.
+    /// </summary>
+    public async Task<Admin> GetAdminAboutYou(
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        CancellationToken ct)
+    {
+        return await AuthHelper.GetRequiredAdmin(claimsPrincipal, authz, ct);
+    }
+
+    /// <summary>
+    /// Get referrer count for a project.
+    /// </summary>
+    public async Task<int> GetReferrersCount(
+        int projectId,
+        double lookbackDays,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+
+        var cutoff = DateTime.UtcNow.AddDays(-lookbackDays);
+        return await db.Fields
+            .Where(f => f.ProjectId == projectId && f.Name == "referrer" && f.CreatedAt >= cutoff)
+            .Select(f => f.Value)
+            .Distinct()
+            .CountAsync(ct);
+    }
+
+    /// <summary>
+    /// Get alerts page payload — all alert types for a project.
+    /// </summary>
+    public async Task<AlertsPagePayload> GetAlertsPagePayload(
+        int projectId,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+
+        var alerts = await db.Alerts
+            .Where(a => a.ProjectId == projectId)
+            .Include(a => a.Destinations)
+            .ToListAsync(ct);
+        var errorAlerts = await db.ErrorAlerts
+            .Where(a => a.ProjectId == projectId).ToListAsync(ct);
+        var sessionAlerts = await db.SessionAlerts
+            .Where(a => a.ProjectId == projectId).ToListAsync(ct);
+        var logAlerts = await db.LogAlerts
+            .Where(a => a.ProjectId == projectId).ToListAsync(ct);
+        var metricMonitors = await db.MetricMonitors
+            .Where(m => m.ProjectId == projectId).ToListAsync(ct);
+
+        return new AlertsPagePayload(alerts, errorAlerts, sessionAlerts, logAlerts, metricMonitors);
+    }
+
+    /// <summary>
+    /// Get log alerts page payload for a project.
+    /// </summary>
+    public async Task<LogAlertsPagePayload> GetLogAlertsPagePayload(
+        int projectId,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+
+        var logAlerts = await db.LogAlerts
+            .Where(a => a.ProjectId == projectId).ToListAsync(ct);
+
+        return new LogAlertsPagePayload(logAlerts);
+    }
+
     // ── Graph Templates ───────────────────────────────────────────────
 
     /// <summary>
