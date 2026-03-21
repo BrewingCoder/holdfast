@@ -3424,7 +3424,9 @@ public class PrivateQuery
             {
                 var decoded = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(cursor));
                 var parts = decoded.Split(',');
-                if (parts.Length > 0 && DateTime.TryParse(parts[0], out var ts))
+                if (parts.Length > 0 && DateTime.TryParse(parts[0],
+                    System.Globalization.CultureInfo.InvariantCulture,
+                    System.Globalization.DateTimeStyles.RoundtripKind, out var ts))
                     timestamps.Add(ts);
             }
             catch { /* skip invalid cursors */ }
