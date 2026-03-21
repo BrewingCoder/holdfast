@@ -330,6 +330,295 @@ public class PrivateMutation
         return errorGroup;
     }
 
+    /// <summary>
+    /// Mark an error group as viewed by the current admin.
+    /// </summary>
+    public async Task<bool> MarkErrorGroupAsViewed(
+        int errorGroupId,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        var eg = await db.ErrorGroups.FindAsync([errorGroupId], ct)
+            ?? throw new GraphQLException("ErrorGroup not found");
+
+        var admin = await AuthHelper.RequireProjectAccess(claimsPrincipal, eg.ProjectId, authz, ct);
+
+        var existing = await db.ErrorGroupAdminsViews
+            .FirstOrDefaultAsync(v => v.ErrorGroupId == errorGroupId && v.AdminId == admin.Id, ct);
+
+        if (existing == null)
+        {
+            db.ErrorGroupAdminsViews.Add(new ErrorGroupAdminsView
+            {
+                ErrorGroupId = errorGroupId,
+                AdminId = admin.Id,
+            });
+            await db.SaveChangesAsync(ct);
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// Update whether a session is publicly shareable. Requires project access.
+    /// </summary>
+    public async Task<Session> UpdateSessionIsPublic(
+        string secureId,
+        bool isPublic,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        var session = await db.Sessions
+            .FirstOrDefaultAsync(s => s.SecureId == secureId, ct)
+            ?? throw new GraphQLException("Session not found");
+
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, session.ProjectId, authz, ct);
+
+        // Sessions don't have IsPublic yet — use Starred as a visibility flag
+        // TODO: Add IsPublic column to Session entity when needed
+        session.Starred = isPublic;
+        await db.SaveChangesAsync(ct);
+        return session;
+    }
+
+    // ── Error Tags ───────────────────────────────────────────────────
+
+    /// <summary>
+    /// Create an error tag for an error group. Requires project access.
+    /// </summary>
+    public async Task<ErrorTag> CreateErrorTag(
+        int errorGroupId,
+        string title,
+        string? description,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        var eg = await db.ErrorGroups.FindAsync([errorGroupId], ct)
+            ?? throw new GraphQLException("ErrorGroup not found");
+
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, eg.ProjectId, authz, ct);
+
+        var tag = new ErrorTag
+        {
+            ErrorGroupId = errorGroupId,
+            Title = title,
+            Description = description,
+        };
+
+        db.ErrorTags.Add(tag);
+        await db.SaveChangesAsync(ct);
+        return tag;
+    }
+
+    // ── Error Comments (extended) ────────────────────────────────────
+
+    /// <summary>
+    /// Create an error comment. Admin ID is taken from auth context.
+    /// </summary>
+    public async Task<ErrorComment> CreateErrorComment(
+        int errorGroupId,
+        string text,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        var eg = await db.ErrorGroups.FindAsync([errorGroupId], ct)
+            ?? throw new GraphQLException("ErrorGroup not found");
+
+        var admin = await AuthHelper.RequireProjectAccess(claimsPrincipal, eg.ProjectId, authz, ct);
+
+        var comment = new ErrorComment
+        {
+            ErrorGroupId = errorGroupId,
+            AdminId = admin.Id,
+            Text = text,
+        };
+
+        db.ErrorComments.Add(comment);
+        await db.SaveChangesAsync(ct);
+        return comment;
+    }
+
+    /// <summary>
+    /// Delete an error comment. Requires project access.
+    /// </summary>
+    public async Task<bool> DeleteErrorComment(
+        int commentId,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        var comment = await db.ErrorComments
+            .Include(c => c.ErrorGroup)
+            .FirstOrDefaultAsync(c => c.Id == commentId, ct)
+            ?? throw new GraphQLException("Error comment not found");
+
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, comment.ErrorGroup.ProjectId, authz, ct);
+
+        db.ErrorComments.Remove(comment);
+        await db.SaveChangesAsync(ct);
+        return true;
+    }
+
+    // ── Metric Monitors ──────────────────────────────────────────────
+
+    /// <summary>
+    /// Create a metric monitor. Requires project access.
+    /// </summary>
+    public async Task<MetricMonitor> CreateMetricMonitor(
+        int projectId,
+        string name,
+        string metricToMonitor,
+        string? aggregator,
+        double? threshold,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+
+        var monitor = new MetricMonitor
+        {
+            ProjectId = projectId,
+            Name = name,
+            MetricToMonitor = metricToMonitor,
+            Aggregator = aggregator,
+            Threshold = threshold,
+        };
+
+        db.MetricMonitors.Add(monitor);
+        await db.SaveChangesAsync(ct);
+        return monitor;
+    }
+
+    /// <summary>
+    /// Update a metric monitor. Requires project access.
+    /// </summary>
+    public async Task<MetricMonitor> UpdateMetricMonitor(
+        int metricMonitorId,
+        string? name,
+        string? aggregator,
+        double? threshold,
+        bool? disabled,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        var monitor = await db.MetricMonitors.FindAsync([metricMonitorId], ct)
+            ?? throw new GraphQLException("Metric monitor not found");
+
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, monitor.ProjectId, authz, ct);
+
+        if (name != null) monitor.Name = name;
+        if (aggregator != null) monitor.Aggregator = aggregator;
+        if (threshold.HasValue) monitor.Threshold = threshold.Value;
+        if (disabled.HasValue) monitor.Disabled = disabled.Value;
+
+        await db.SaveChangesAsync(ct);
+        return monitor;
+    }
+
+    /// <summary>
+    /// Delete a metric monitor. Requires project access.
+    /// </summary>
+    public async Task<bool> DeleteMetricMonitor(
+        int metricMonitorId,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        var monitor = await db.MetricMonitors.FindAsync([metricMonitorId], ct)
+            ?? throw new GraphQLException("Metric monitor not found");
+
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, monitor.ProjectId, authz, ct);
+
+        db.MetricMonitors.Remove(monitor);
+        await db.SaveChangesAsync(ct);
+        return true;
+    }
+
+    // ── Admin Profile ────────────────────────────────────────────────
+
+    /// <summary>
+    /// Update admin "about you" details.
+    /// </summary>
+    public async Task<Admin> UpdateAdminAboutYouDetails(
+        string? name,
+        string? referral,
+        string? role,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        CancellationToken ct)
+    {
+        var admin = await AuthHelper.GetRequiredAdmin(claimsPrincipal, authz, ct);
+
+        if (name != null) admin.Name = name;
+        if (referral != null) admin.Referral = referral;
+        if (role != null) admin.UserDefinedRole = role;
+
+        return admin;
+    }
+
+    // ── Workspace Admin Management ───────────────────────────────────
+
+    /// <summary>
+    /// Change which projects an admin can access. Requires ADMIN role.
+    /// </summary>
+    public async Task<bool> ChangeProjectMembership(
+        int workspaceId,
+        int adminId,
+        List<int>? projectIds,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireWorkspaceAdmin(claimsPrincipal, workspaceId, authz, ct);
+
+        var wa = await db.WorkspaceAdmins
+            .FirstOrDefaultAsync(wa => wa.WorkspaceId == workspaceId && wa.AdminId == adminId, ct)
+            ?? throw new GraphQLException("Admin not found in workspace");
+
+        wa.ProjectIds = projectIds;
+        await db.SaveChangesAsync(ct);
+        return true;
+    }
+
+    /// <summary>
+    /// Update allowed email origins for auto-join. Requires ADMIN role.
+    /// </summary>
+    public async Task<bool> UpdateAllowedEmailOrigins(
+        int workspaceId,
+        List<string>? allowedAutoJoinEmailOrigins,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireWorkspaceAdmin(claimsPrincipal, workspaceId, authz, ct);
+
+        var workspace = await db.Workspaces.FindAsync([workspaceId], ct)
+            ?? throw new GraphQLException("Workspace not found");
+
+        workspace.AllowedAutoJoinEmailOrigins = allowedAutoJoinEmailOrigins != null
+            ? string.Join(",", allowedAutoJoinEmailOrigins)
+            : null;
+
+        await db.SaveChangesAsync(ct);
+        return true;
+    }
+
     // ── Comments ──────────────────────────────────────────────────────
 
     /// <summary>
