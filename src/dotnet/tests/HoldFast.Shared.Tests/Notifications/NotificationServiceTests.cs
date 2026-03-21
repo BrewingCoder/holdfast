@@ -845,6 +845,53 @@ public class NotificationServiceTests
         Assert.True(_logger.ErrorCount > 0);
     }
 
+    [Fact]
+    public async Task ExecuteWithRetry_UserCancellation_ExitsWithoutError()
+    {
+        // When the CancellationToken is already cancelled, TaskCanceledException
+        // is treated as user-requested cancellation — no retry, no error logged.
+        var cts = new CancellationTokenSource();
+        cts.Cancel();
+
+        int callCount = 0;
+        await _service.ExecuteWithRetryAsync(() =>
+        {
+            callCount++;
+            throw new TaskCanceledException("user cancelled");
+        }, "Test", cts.Token);
+
+        Assert.Equal(1, callCount);
+        Assert.Equal(0, _logger.ErrorCount); // No error should be logged
+    }
+
+    [Fact]
+    public async Task ExecuteWithRetry_SuccessAfterOneFailure()
+    {
+        int callCount = 0;
+        await _service.ExecuteWithRetryAsync(() =>
+        {
+            callCount++;
+            if (callCount == 1) throw new HttpRequestException("transient");
+            return Task.CompletedTask;
+        }, "Test", CancellationToken.None);
+
+        Assert.Equal(2, callCount); // First attempt fails, retry succeeds
+    }
+
+    [Fact]
+    public async Task ExecuteWithRetry_HttpRequestException_BothAttemptsFail()
+    {
+        int callCount = 0;
+        await _service.ExecuteWithRetryAsync(() =>
+        {
+            callCount++;
+            throw new HttpRequestException("persistent");
+        }, "Test", CancellationToken.None);
+
+        Assert.Equal(2, callCount); // Original + 1 retry
+        Assert.True(_logger.ErrorCount > 0);
+    }
+
     // ═════════════════════════════════════════════════════════════════════
     // Test infrastructure: fakes and helpers
     // ═════════════════════════════════════════════════════════════════════

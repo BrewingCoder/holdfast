@@ -346,6 +346,191 @@ public class ClickHouseQueryResolverTests : IDisposable
                 MakePrincipal("outsider4"), _authz, _clickHouse, CancellationToken.None));
     }
 
+    // ── GetLogsIntegration ─────────────────────────────────────────
+
+    [Fact]
+    public async Task GetLogsIntegration_NoLogs_ReturnsFalse()
+    {
+        var (_, _, project) = await SeedFullStack();
+
+        var result = await _query.GetLogsIntegration(
+            project.Id, MakePrincipal("admin-uid"), _authz, _clickHouse, CancellationToken.None);
+
+        Assert.False(result);
+        Assert.Equal("ReadLogsAsync", _clickHouse.LastCalledMethod);
+        Assert.Equal(project.Id, _clickHouse.LastProjectId);
+    }
+
+    [Fact]
+    public async Task GetLogsIntegration_NoAccess_ThrowsGraphQLException()
+    {
+        var (_, _, project) = await SeedFullStack();
+        var outsider = new Admin { Uid = "outsider-logs", Email = "outsider-logs@test.com" };
+        _db.Admins.Add(outsider);
+        await _db.SaveChangesAsync();
+
+        await Assert.ThrowsAsync<GraphQLException>(() =>
+            _query.GetLogsIntegration(project.Id,
+                MakePrincipal("outsider-logs"), _authz, _clickHouse, CancellationToken.None));
+    }
+
+    // ── GetTracesIntegration ────────────────────────────────────────
+
+    [Fact]
+    public async Task GetTracesIntegration_NoTraces_ReturnsFalse()
+    {
+        var (_, _, project) = await SeedFullStack();
+
+        var result = await _query.GetTracesIntegration(
+            project.Id, MakePrincipal("admin-uid"), _authz, _clickHouse, CancellationToken.None);
+
+        Assert.False(result);
+        Assert.Equal("ReadTracesAsync", _clickHouse.LastCalledMethod);
+        Assert.Equal(project.Id, _clickHouse.LastProjectId);
+    }
+
+    [Fact]
+    public async Task GetTracesIntegration_NoAccess_ThrowsGraphQLException()
+    {
+        var (_, _, project) = await SeedFullStack();
+        var outsider = new Admin { Uid = "outsider-traces", Email = "outsider-traces@test.com" };
+        _db.Admins.Add(outsider);
+        await _db.SaveChangesAsync();
+
+        await Assert.ThrowsAsync<GraphQLException>(() =>
+            _query.GetTracesIntegration(project.Id,
+                MakePrincipal("outsider-traces"), _authz, _clickHouse, CancellationToken.None));
+    }
+
+    // ── GetSessionsHistogram ────────────────────────────────────────
+
+    [Fact]
+    public async Task GetSessionsHistogram_WithAccess_DelegatesToClickHouse()
+    {
+        var (_, _, project) = await SeedFullStack();
+
+        var result = await _query.GetSessionsHistogram(
+            project.Id, "", DateTime.UtcNow.AddDays(-7), DateTime.UtcNow,
+            MakePrincipal("admin-uid"), _authz, _clickHouse, CancellationToken.None);
+
+        Assert.NotNull(result);
+        Assert.Equal("ReadSessionsHistogramAsync", _clickHouse.LastCalledMethod);
+        Assert.Equal(project.Id, _clickHouse.LastProjectId);
+    }
+
+    [Fact]
+    public async Task GetSessionsHistogram_NoAccess_ThrowsGraphQLException()
+    {
+        var (_, _, project) = await SeedFullStack();
+        var outsider = new Admin { Uid = "outsider-sh", Email = "outsider-sh@test.com" };
+        _db.Admins.Add(outsider);
+        await _db.SaveChangesAsync();
+
+        await Assert.ThrowsAsync<GraphQLException>(() =>
+            _query.GetSessionsHistogram(project.Id, "", DateTime.UtcNow.AddDays(-7), DateTime.UtcNow,
+                MakePrincipal("outsider-sh"), _authz, _clickHouse, CancellationToken.None));
+    }
+
+    // ── GetErrorsHistogram ──────────────────────────────────────────
+
+    [Fact]
+    public async Task GetErrorsHistogram_WithAccess_DelegatesToClickHouse()
+    {
+        var (_, _, project) = await SeedFullStack();
+
+        var result = await _query.GetErrorsHistogram(
+            project.Id, "", DateTime.UtcNow.AddDays(-7), DateTime.UtcNow,
+            MakePrincipal("admin-uid"), _authz, _clickHouse, CancellationToken.None);
+
+        Assert.NotNull(result);
+        Assert.Equal("ReadErrorObjectsHistogramAsync", _clickHouse.LastCalledMethod);
+        Assert.Equal(project.Id, _clickHouse.LastProjectId);
+    }
+
+    [Fact]
+    public async Task GetErrorsHistogram_NoAccess_ThrowsGraphQLException()
+    {
+        var (_, _, project) = await SeedFullStack();
+        var outsider = new Admin { Uid = "outsider-eh", Email = "outsider-eh@test.com" };
+        _db.Admins.Add(outsider);
+        await _db.SaveChangesAsync();
+
+        await Assert.ThrowsAsync<GraphQLException>(() =>
+            _query.GetErrorsHistogram(project.Id, "", DateTime.UtcNow.AddDays(-7), DateTime.UtcNow,
+                MakePrincipal("outsider-eh"), _authz, _clickHouse, CancellationToken.None));
+    }
+
+    // ── GetMetricTags ───────────────────────────────────────────────
+
+    [Fact]
+    public async Task GetMetricTags_WithAccess_DelegatesToClickHouse()
+    {
+        var (_, _, project) = await SeedFullStack();
+
+        var result = await _query.GetMetricTags(
+            project.Id, "cpu.usage", null,
+            MakePrincipal("admin-uid"), _authz, _clickHouse, CancellationToken.None);
+
+        Assert.NotNull(result);
+        Assert.Equal("GetTraceKeysAsync", _clickHouse.LastCalledMethod);
+        Assert.Equal(project.Id, _clickHouse.LastProjectId);
+    }
+
+    [Fact]
+    public async Task GetMetricTags_WithQuery_DelegatesToClickHouse()
+    {
+        var (_, _, project) = await SeedFullStack();
+
+        var result = await _query.GetMetricTags(
+            project.Id, "latency", "host:*",
+            MakePrincipal("admin-uid"), _authz, _clickHouse, CancellationToken.None);
+
+        Assert.NotNull(result);
+        Assert.Equal("GetTraceKeysAsync", _clickHouse.LastCalledMethod);
+    }
+
+    [Fact]
+    public async Task GetMetricTags_NoAccess_ThrowsGraphQLException()
+    {
+        var (_, _, project) = await SeedFullStack();
+        var outsider = new Admin { Uid = "outsider-mt", Email = "outsider-mt@test.com" };
+        _db.Admins.Add(outsider);
+        await _db.SaveChangesAsync();
+
+        await Assert.ThrowsAsync<GraphQLException>(() =>
+            _query.GetMetricTags(project.Id, "cpu", null,
+                MakePrincipal("outsider-mt"), _authz, _clickHouse, CancellationToken.None));
+    }
+
+    // ── GetMetricTagValues ──────────────────────────────────────────
+
+    [Fact]
+    public async Task GetMetricTagValues_WithAccess_DelegatesToClickHouse()
+    {
+        var (_, _, project) = await SeedFullStack();
+
+        var result = await _query.GetMetricTagValues(
+            project.Id, "cpu.usage", "host",
+            MakePrincipal("admin-uid"), _authz, _clickHouse, CancellationToken.None);
+
+        Assert.NotNull(result);
+        Assert.Equal("GetTraceKeyValuesAsync", _clickHouse.LastCalledMethod);
+        Assert.Equal(project.Id, _clickHouse.LastProjectId);
+    }
+
+    [Fact]
+    public async Task GetMetricTagValues_NoAccess_ThrowsGraphQLException()
+    {
+        var (_, _, project) = await SeedFullStack();
+        var outsider = new Admin { Uid = "outsider-mtv", Email = "outsider-mtv@test.com" };
+        _db.Admins.Add(outsider);
+        await _db.SaveChangesAsync();
+
+        await Assert.ThrowsAsync<GraphQLException>(() =>
+            _query.GetMetricTagValues(project.Id, "cpu", "host",
+                MakePrincipal("outsider-mtv"), _authz, _clickHouse, CancellationToken.None));
+    }
+
     // ── Stub IClickHouseService ────────────────────────────────────
 
     private class StubClickHouseService : IClickHouseService
