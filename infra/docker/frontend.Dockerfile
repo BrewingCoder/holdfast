@@ -1,32 +1,43 @@
+FROM --platform=$BUILDPLATFORM node:lts-alpine AS pruner
+
+RUN apk add --no-cache libc6-compat && npm install -g turbo@^2
+
+WORKDIR /app
+COPY . .
+RUN turbo prune @holdfast-io/frontend --docker
+
+# ── Dependency installation layer ────────────────────────────────────────────
+# Uses the pruned package manifest (12 packages vs 87 in the full monorepo)
+# to drastically reduce yarn install time.
 FROM --platform=$BUILDPLATFORM node:lts-alpine AS frontend-build
 
 RUN apk update && apk add --no-cache build-base python3
 
-WORKDIR /highlight
+WORKDIR /app
 
-# ── Dependency installation layer ────────────────────────────────────────────
-# Copy workspace manifests and full workspace dirs so `yarn install --immutable`
-# resolves all workspace members. Full dirs are needed because the workspace
-# globs (packages/*, tests/e2e/*, rrweb/packages/*) reference many subdirs.
-COPY .yarnrc.yml package.json yarn.lock turbo.json tsconfig.json graphql.config.js ./
+COPY .yarnrc.yml .
 COPY .yarn/patches ./.yarn/patches
 COPY .yarn/releases ./.yarn/releases
-COPY packages ./packages
-COPY sdk ./sdk
-COPY rrweb ./rrweb
-COPY tests/e2e ./tests/e2e
-COPY tools/scripts/package.json ./tools/scripts/package.json
-COPY src/frontend/package.json ./src/frontend/package.json
+
+# Install only pruned workspace deps
+COPY --from=pruner /app/out/json/ .
+COPY --from=pruner /app/out/yarn.lock ./yarn.lock
 
 RUN --mount=type=cache,target=/root/.yarn/berry/cache,sharing=locked \
     yarn install --immutable
 
-# ── Source copy ──────────────────────────────────────────────────────────
+# ── Source copy ───────────────────────────────────────────────────────────────
+COPY --from=pruner /app/out/full/ .
+
+# turbo prune omits the rrweb root tsconfigs that each rrweb/packages/*/tsconfig.json
+# extends with "../../tsconfig.base.json". Copy them explicitly from the build context.
+COPY rrweb/tsconfig.base.json ./rrweb/tsconfig.base.json
+COPY rrweb/tsconfig.json ./rrweb/tsconfig.json
+
+# GraphQL schemas are outside the frontend workspace; copy them for codegen/typegen
 COPY src/backend/localhostssl ./src/backend/localhostssl
 COPY src/backend/private-graph ./src/backend/private-graph
 COPY src/backend/public-graph ./src/backend/public-graph
-COPY src/frontend ./src/frontend
-COPY tools/scripts ./tools/scripts
 
 # ── Build ────────────────────────────────────────────────────────────────────
 # Bake in the same placeholder URLs the entrypoint knows to replace at runtime.
@@ -67,7 +78,7 @@ COPY src/backend/localhostssl/server.pem /etc/ssl/certs/ssl-cert.pem
 COPY infra/docker/frontend-entrypoint.py /frontend-entrypoint.py
 
 WORKDIR /build
-COPY --from=frontend-build /highlight/src/frontend/build ./frontend/build
+COPY --from=frontend-build /app/src/frontend/build ./frontend/build
 
 # Runtime env vars — replaced in constants.js by entrypoint.py at startup
 ENV REACT_APP_AUTH_MODE=firebase
