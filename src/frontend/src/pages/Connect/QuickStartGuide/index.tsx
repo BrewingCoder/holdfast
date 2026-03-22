@@ -18,7 +18,7 @@ import { isOnPrem } from '@util/onPrem/onPremUtils'
 import { PUBLIC_GRAPH_URI } from '@/constants'
 import { useApplicationContext } from '@/routers/AppRouter/context/ApplicationContext'
 
-import { PRODUCT_AREAS } from '../constants'
+import { PRODUCT_AREAS, ProductArea } from '../constants'
 import * as styles from './style.css'
 
 type Props = {
@@ -42,7 +42,7 @@ export const QuickStartGuide: React.FC<Props> = ({
 			{!!guide.products?.length && (
 				<Box pt="8" display="flex" flexDirection="row" gap="4">
 					{guide.products.map((product) => {
-						const { title, icon } = PRODUCT_AREAS[product]
+						const { title, icon } = PRODUCT_AREAS[product as ProductArea]
 						return (
 							<Badge
 								key={title}

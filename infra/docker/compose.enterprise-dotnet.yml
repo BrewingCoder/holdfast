@@ -1,0 +1,72 @@
+# HoldFast .NET backend — enterprise deployment with separate graph + worker containers.
+# Usage: docker compose -f compose.yml -f compose.enterprise-dotnet.yml up
+services:
+    backend:
+        build:
+            context: ../..
+            dockerfile: infra/docker/backend-dotnet.Dockerfile
+        image: ${BACKEND_DOTNET_IMAGE_NAME-holdfast-backend-dotnet:latest}
+        restart: on-failure
+        volumes: &volumes
+            - highlight-data:/highlight-data
+        environment: &backend-env
+            - HOLDFAST_RUNTIME=graph
+            - ConnectionStrings__PostgreSQL=Host=${PSQL_DOCKER_HOST:-postgres};Port=${PSQL_PORT:-5432};Database=${PSQL_DB:-postgres};Username=${PSQL_USER:-postgres};Password=${PSQL_PASSWORD:-}
+            - ClickHouse__Address=${CLICKHOUSE_ADDRESS:-clickhouse:8123}
+            - ClickHouse__Database=${CLICKHOUSE_DATABASE:-default}
+            - ClickHouse__Username=${CLICKHOUSE_USERNAME:-default}
+            - ClickHouse__Password=${CLICKHOUSE_PASSWORD:-}
+            - Redis__Configuration=${REDIS_ADDRESS:-redis:6379}
+            - Kafka__BootstrapServers=${KAFKA_SERVERS:-kafka:9092}
+            - Storage__Type=filesystem
+            - Storage__FilesystemRoot=/highlight-data
+            - Frontend__Uri=${REACT_APP_FRONTEND_URI:-http://localhost:3000}
+            - Auth__Mode=${REACT_APP_AUTH_MODE:-Password}
+            - Auth__AdminPassword=${ADMIN_PASSWORD:-}
+        env_file: .env
+        ports:
+            - '0.0.0.0:8082:8082'
+        container_name: backend
+        healthcheck:
+            test: ['CMD', 'curl', '-f', 'http://localhost:8082/health']
+            interval: 5s
+            timeout: 5s
+            retries: 30
+
+    backend-worker:
+        image: ${BACKEND_DOTNET_IMAGE_NAME-holdfast-backend-dotnet:latest}
+        restart: on-failure
+        depends_on:
+            backend:
+                condition: service_healthy
+        volumes: *volumes
+        environment:
+            - HOLDFAST_RUNTIME=worker
+            - ConnectionStrings__PostgreSQL=Host=${PSQL_DOCKER_HOST:-postgres};Port=${PSQL_PORT:-5432};Database=${PSQL_DB:-postgres};Username=${PSQL_USER:-postgres};Password=${PSQL_PASSWORD:-}
+            - ClickHouse__Address=${CLICKHOUSE_ADDRESS:-clickhouse:8123}
+            - ClickHouse__Database=${CLICKHOUSE_DATABASE:-default}
+            - ClickHouse__Username=${CLICKHOUSE_USERNAME:-default}
+            - ClickHouse__Password=${CLICKHOUSE_PASSWORD:-}
+            - Redis__Configuration=${REDIS_ADDRESS:-redis:6379}
+            - Kafka__BootstrapServers=${KAFKA_SERVERS:-kafka:9092}
+            - Storage__Type=filesystem
+            - Storage__FilesystemRoot=/highlight-data
+            - Auth__Mode=${REACT_APP_AUTH_MODE:-Password}
+        env_file: .env
+        container_name: backend-worker
+
+    frontend:
+        container_name: frontend
+        image: ${FRONTEND_IMAGE_NAME-ghcr.io/highlight/highlight-frontend:latest}
+        restart: on-failure
+        volumes:
+            - ../../src/backend/localhostssl/server.key:/etc/ssl/private/ssl-cert.key
+            - ../../src/backend/localhostssl/server.pem:/etc/ssl/certs/ssl-cert.pem
+        ports:
+            - '0.0.0.0:3000:3000'
+            - '0.0.0.0:6006:6006'
+            - '0.0.0.0:8080:8080'
+        env_file: .env
+
+volumes:
+    highlight-data:

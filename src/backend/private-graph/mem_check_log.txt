@@ -1,0 +1,2 @@
+2026-03-20 15:35:43 - Completed: gqlgen generate for private-graph (success)
+2026-03-20 15:35:50 - Running: go vet private-graph (post-gen verification)

@@ -80,7 +80,16 @@ export default defineConfig(({ mode }) => {
 				clientPort: port,
 			},
 			watch: {
-				ignored: ['**/node_modules/**', '**/src/__generated/**'],
+				ignored: [
+					'**/node_modules/**',
+					'**/src/__generated/**',
+					'**/rrweb/**',
+					'**/sdk/**',
+					'**/packages/**',
+					'**/tests/**',
+					'**/tools/**',
+					'**/infra/**',
+				],
 			},
 		},
 		build: {
