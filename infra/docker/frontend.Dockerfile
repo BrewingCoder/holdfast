@@ -31,7 +31,7 @@ COPY rrweb/package.json ./rrweb/package.json
 COPY yarn.lock ./yarn.lock
 
 RUN --mount=type=cache,target=/root/.yarn/berry/cache,sharing=locked \
-    yarn install --immutable
+    yarn install
 
 # ── Source copy ───────────────────────────────────────────────────────────────
 COPY --from=pruner /app/out/full/ .
