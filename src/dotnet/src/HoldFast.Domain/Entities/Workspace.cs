@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations.Schema;
 using HoldFast.Domain.Enums;
 
 namespace HoldFast.Domain.Entities;
@@ -48,6 +49,14 @@ public class Workspace : BaseEntity
 
     public bool ClearbitEnabled { get; set; }
     public string? AllowedAutoJoinEmailOrigins { get; set; }
+
+    // Billing ceiling stubs — HoldFast has no billing caps; always return 0.
+    // Fields exist in the Go schema for Highlight's metered billing; self-hosted has no limits.
+    [NotMapped] public long SessionsMaxCents => 0;
+    [NotMapped] public long ErrorsMaxCents => 0;
+    [NotMapped] public long LogsMaxCents => 0;
+    [NotMapped] public long TracesMaxCents => 0;
+    [NotMapped] public long MetricsMaxCents => 0;
 
     // Navigation
     public ICollection<Admin> Admins { get; set; } = [];

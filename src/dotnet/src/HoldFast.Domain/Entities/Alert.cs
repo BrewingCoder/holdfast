@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations.Schema;
+
 namespace HoldFast.Domain.Entities;
 
 /// <summary>
@@ -21,6 +23,9 @@ public class Alert : BaseEntity
     public int? LastAdminToEditId { get; set; }
     public bool Disabled { get; set; }
     public bool Default { get; set; }
+
+    // Stub fields for Go schema compatibility
+    [NotMapped] public string? Sql { get; set; }
 
     // Navigation
     public Project Project { get; set; } = null!;

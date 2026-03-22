@@ -170,15 +170,17 @@ public record SanitizedSlackChannel(
     string? WebhookChannelId);
 
 /// <summary>
-/// Discord channel info.
+/// Discord channel info. GraphQL name matches Go schema DiscordChannel type.
 /// </summary>
+[GraphQLName("DiscordChannel")]
 public record DiscordChannelInfo(
     string Id,
     string Name);
 
 /// <summary>
-/// Microsoft Teams channel info.
+/// Microsoft Teams channel info. GraphQL name matches Go schema MicrosoftTeamsChannel type.
 /// </summary>
+[GraphQLName("MicrosoftTeamsChannel")]
 public record MicrosoftTeamsChannelInfo(
     string Id,
     string Name);

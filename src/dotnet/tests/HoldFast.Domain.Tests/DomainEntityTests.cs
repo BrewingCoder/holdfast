@@ -25,8 +25,6 @@ public class WorkspaceTests
         var type = typeof(Workspace);
         Assert.Null(type.GetProperty("MonthlySessionLimit"));
         Assert.Null(type.GetProperty("MonthlyErrorsLimit"));
-        Assert.Null(type.GetProperty("SessionsMaxCents"));
-        Assert.Null(type.GetProperty("ErrorsMaxCents"));
         Assert.Null(type.GetProperty("StripeCustomerID"));
         Assert.Null(type.GetProperty("PromoCode"));
         Assert.Null(type.GetProperty("AllowMeterOverage"));
@@ -54,14 +52,16 @@ public class WorkspaceTests
     }
 
     [Fact]
-    public void Workspace_HasNoMaxCentsFields()
+    public void Workspace_MaxCentsStubsReturnZero()
     {
-        var type = typeof(Workspace);
-        Assert.Null(type.GetProperty("SessionsMaxCents"));
-        Assert.Null(type.GetProperty("ErrorsMaxCents"));
-        Assert.Null(type.GetProperty("LogsMaxCents"));
-        Assert.Null(type.GetProperty("TracesMaxCents"));
-        Assert.Null(type.GetProperty("MetricsMaxCents"));
+        // *MaxCents fields exist as [NotMapped] stubs for Go schema compatibility.
+        // HoldFast has no billing caps — all stubs must return 0.
+        var workspace = new Workspace();
+        Assert.Equal(0L, workspace.SessionsMaxCents);
+        Assert.Equal(0L, workspace.ErrorsMaxCents);
+        Assert.Equal(0L, workspace.LogsMaxCents);
+        Assert.Equal(0L, workspace.TracesMaxCents);
+        Assert.Equal(0L, workspace.MetricsMaxCents);
     }
 
     [Fact]

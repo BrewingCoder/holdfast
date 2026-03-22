@@ -202,6 +202,8 @@ if (runtime.IsPrivateGraph())
 {
     builder.Services
         .AddGraphQLServer("private")
+        .AddType<TimestampType>()
+        .BindRuntimeType<DateTime, TimestampType>()
         .AddQueryType<PrivateQuery>()
         .AddMutationType<PrivateMutation>()
         .AddTypeExtension<HoldFast.GraphQL.Private.Types.ErrorGroupTypeExtension>()
