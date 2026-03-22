@@ -119,13 +119,10 @@ export const AdminForm: React.FC = () => {
 			promoCode: '',
 			teamSize: '',
 			heardAbout: '',
-			phoneHomeContactAllowed: true,
 		},
 	})
 
 	const submitSucceeded = formStore.useState('submitSucceed')
-	const phoneHomeContactAllowed = formStore.useValue(
-		formStore.names.phoneHomeContactAllowed,
 	)
 	const disableForm = submitSucceeded > 0
 
@@ -161,8 +158,6 @@ export const AdminForm: React.FC = () => {
 						user_defined_persona: '',
 						user_defined_team_size: formState.values.teamSize,
 						heard_about: formState.values.heardAbout,
-						phone_home_contact_allowed:
-							formState.values.phoneHomeContactAllowed,
 						referral: attributionData.referral,
 					},
 				},
@@ -296,13 +291,10 @@ export const AdminForm: React.FC = () => {
 													/>
 												}
 												checked={
-													phoneHomeContactAllowed
 												}
 												onChange={() => {
 													formStore.setValue(
 														formStore.names
-															.phoneHomeContactAllowed,
-														!phoneHomeContactAllowed,
 													)
 												}}
 											/>

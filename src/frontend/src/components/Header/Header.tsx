@@ -1027,7 +1027,7 @@ const Navbar: React.FC = () => {
 				if (p.key === 'connect') {
 					return {
 						...p,
-						key: newConnectName,
+						key: typeof newConnectName === 'string' ? newConnectName : p.key,
 					}
 				}
 				return p

@@ -29,7 +29,7 @@ const NoActiveSessionCard = () => {
 		<Box margin="auto" style={{ maxWidth: 300 }}>
 			<Callout title="Ready to see your app?">
 				<Box mb="6">
-					<Text color={cardStyleVariants[cardStyle]}>
+					<Text color={cardStyleVariants[String(cardStyle) ?? '']}>
 						<FeatureFlag
 							flag="enable-session-card-text"
 							enabled={<>You are receiving the new cart text!</>}
