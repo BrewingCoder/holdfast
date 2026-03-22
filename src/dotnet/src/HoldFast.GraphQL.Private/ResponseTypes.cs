@@ -437,6 +437,12 @@ public record BillingDetails(
     [property: GraphQLName("metricsDailyAverage")] double MetricsDailyAverage = 0);
 
 /// <summary>
+/// Sort direction for paginated queries. Matches Go schema SortDirection enum.
+/// HC GetEnumValueName returns value.ToString(), so ASC/DESC stay uppercase to match the frontend.
+/// </summary>
+public enum SortDirection { ASC, DESC }
+
+/// <summary>
 /// A single log-level count within a histogram time bucket.
 /// </summary>
 public record LogsBucketCount(long Count, string Level);

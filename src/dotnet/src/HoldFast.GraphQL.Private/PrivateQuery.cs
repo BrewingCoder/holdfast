@@ -812,7 +812,7 @@ public class PrivateQuery
         string? after,
         string? before,
         string? at,
-        string direction,
+        SortDirection direction,
         int? limit,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
@@ -823,7 +823,7 @@ public class PrivateQuery
 
         return await clickHouse.ReadLogsAsync(projectId,
             queryParams,
-            new ClickHousePagination { After = after, Before = before, At = at, Direction = direction, Limit = limit ?? 50 },
+            new ClickHousePagination { After = after, Before = before, At = at, Direction = direction.ToString(), Limit = limit ?? 50 },
             ct);
     }
 
@@ -918,7 +918,7 @@ public class PrivateQuery
         string? after,
         string? before,
         string? at,
-        string direction,
+        SortDirection direction,
         int? limit,
         [GraphQLName("omitBody")] bool omitBody,
         ClaimsPrincipal claimsPrincipal,
@@ -930,7 +930,7 @@ public class PrivateQuery
 
         return await clickHouse.ReadTracesAsync(projectId,
             queryParams,
-            new ClickHousePagination { After = after, Before = before, At = at, Direction = direction, Limit = limit ?? 50 },
+            new ClickHousePagination { After = after, Before = before, At = at, Direction = direction.ToString(), Limit = limit ?? 50 },
             omitBody: omitBody,
             ct: ct);
     }
