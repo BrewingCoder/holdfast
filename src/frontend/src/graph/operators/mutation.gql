@@ -215,8 +215,8 @@ mutation CreateAdmin {
 	}
 }
 
-mutation CreateWorkspace($name: String!, $promo_code: String) {
-	createWorkspace(name: $name, promo_code: $promo_code) {
+mutation CreateWorkspace($name: String!) {
+	createWorkspace(name: $name) {
 		id
 		name
 	}
@@ -1187,19 +1187,6 @@ mutation UpdateErrorGroupIsPublic(
 	) {
 		secure_id
 		is_public
-	}
-}
-
-mutation UpdateAllowMeterOverage(
-	$workspace_id: ID!
-	$allow_meter_overage: Boolean!
-) {
-	updateAllowMeterOverage(
-		workspace_id: $workspace_id
-		allow_meter_overage: $allow_meter_overage
-	) {
-		id
-		allow_meter_overage
 	}
 }
 
