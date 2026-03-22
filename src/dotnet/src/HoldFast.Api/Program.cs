@@ -90,6 +90,9 @@ builder.Services.Configure<HoldFast.Api.DevSeed.DevSeedOptions>(
     builder.Configuration.GetSection("DevSeed"));
 builder.Services.AddHostedService<HoldFast.Api.DevSeed.DevSeedService>();
 
+// ── HTTP context accessor (required for HC to inject ClaimsPrincipal from middleware) ────
+builder.Services.AddHttpContextAccessor();
+
 // ── Auth ──────────────────────────────────────────────────────────────
 builder.Services.Configure<AuthOptions>(
     builder.Configuration.GetSection("Auth"));
