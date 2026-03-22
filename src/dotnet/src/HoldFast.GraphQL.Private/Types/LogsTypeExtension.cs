@@ -1,3 +1,4 @@
+using System.Text.Json;
 using HoldFast.Data.ClickHouse.Models;
 using HotChocolate;
 using HotChocolate.Types;
@@ -21,8 +22,11 @@ public class LogRowTypeExtension
     [GraphQLName("message")]
     public string Message([Parent] LogRow row) => row.Body;
 
+    /// <summary>
+    /// Serialize as a JSON string to match Go schema's Map scalar (TypeScript: any).
+    /// </summary>
     [GraphQLName("logAttributes")]
-    public Dictionary<string, string> LogAttributes([Parent] LogRow row) => row.LogAttributes;
+    public string LogAttributes([Parent] LogRow row) => JsonSerializer.Serialize(row.LogAttributes);
 
     [GraphQLName("traceID")]
     public string TraceID([Parent] LogRow row) => row.TraceId;
@@ -87,8 +91,11 @@ public class TraceRowTypeExtension
     [GraphQLName("hasErrors")]
     public bool HasErrors([Parent] TraceRow row) => row.HasErrors;
 
+    /// <summary>
+    /// Serialize as a JSON string to match Go schema's Map scalar (TypeScript: any).
+    /// </summary>
     [GraphQLName("traceAttributes")]
-    public Dictionary<string, string> TraceAttributes([Parent] TraceRow row) => row.TraceAttributes;
+    public string TraceAttributes([Parent] TraceRow row) => JsonSerializer.Serialize(row.TraceAttributes);
 
     [GraphQLName("statusCode")]
     public string StatusCode([Parent] TraceRow row) => row.StatusCode;
@@ -113,6 +120,18 @@ public class TraceConnectionTypeExtension
     /// </summary>
     [GraphQLName("pageInfo")]
     public PageInfo PageInfoCamel([Parent] TraceConnection conn) => conn.PageInfo;
+}
+
+// ── TraceEvent ───────────────────────────────────────────────────────────
+
+[ExtendObjectType(typeof(TraceEvent))]
+public class TraceEventTypeExtension
+{
+    /// <summary>
+    /// Serialize event attributes as JSON string to match Go schema's Map scalar.
+    /// </summary>
+    [GraphQLName("attributes")]
+    public string Attributes([Parent] TraceEvent ev) => JsonSerializer.Serialize(ev.Attributes);
 }
 
 // ── PageInfo ─────────────────────────────────────────────────────────────
