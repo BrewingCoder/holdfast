@@ -17,11 +17,13 @@ public record WorkspaceAdminRole(
 
 /// <summary>
 /// Status of a specific integration setup for a project.
+/// Go schema uses camelCase for these fields (resourceType, createdAt),
+/// so override the snake_case convention with explicit [GraphQLName].
 /// </summary>
 public record IntegrationStatus(
     bool Integrated,
-    string ResourceType,
-    DateTime? CreatedAt = null);
+    [property: GraphQLName("resourceType")] string ResourceType,
+    [property: GraphQLName("createdAt")] DateTime? CreatedAt = null);
 
 /// <summary>
 /// A timeline indicator event within a session replay.
