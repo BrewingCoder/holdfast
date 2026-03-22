@@ -26,7 +26,9 @@ COPY .yarn/releases ./.yarn/releases
 # imported by rrweb/vite.config.default.ts which every rrweb package uses.
 COPY --from=pruner /app/out/json/ .
 COPY rrweb/package.json ./rrweb/package.json
-COPY --from=pruner /app/out/yarn.lock ./yarn.lock
+# Use the full yarn.lock (not the pruned subset) so --immutable works when
+# rrweb/package.json brings in deps not covered by the pruned lockfile.
+COPY yarn.lock ./yarn.lock
 
 RUN --mount=type=cache,target=/root/.yarn/berry/cache,sharing=locked \
     yarn install --immutable
