@@ -36,6 +36,16 @@
 				"esm/**/*.d.ts"
 			]
 		},
+		"prepublish": {
+			"dependsOn": ["^prepublish"],
+			"outputs": [
+				"lib/**",
+				"es/**",
+				"dist/**",
+				"typings/**",
+				"types/**"
+			]
+		},
 		"reflame": {
 			"dependsOn": [],
 			"cache": false
