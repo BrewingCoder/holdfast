@@ -77,10 +77,11 @@ public class PrivateQueryExtendedTests : IDisposable
     {
         var (_, workspace, _) = await SeedFullStack();
 
-        var role = await _query.GetAdminRole(
+        var result = await _query.GetAdminRole(
             workspace.Id, MakePrincipal("admin-uid"), _authz, CancellationToken.None);
 
-        Assert.Equal("ADMIN", role);
+        Assert.NotNull(result);
+        Assert.Equal("ADMIN", result.Role);
     }
 
     [Fact]
@@ -91,10 +92,10 @@ public class PrivateQueryExtendedTests : IDisposable
         _db.Admins.Add(outsider);
         await _db.SaveChangesAsync();
 
-        var role = await _query.GetAdminRole(
+        var result = await _query.GetAdminRole(
             workspace.Id, MakePrincipal("outsider"), _authz, CancellationToken.None);
 
-        Assert.Null(role);
+        Assert.Null(result);
     }
 
     [Fact]
@@ -110,10 +111,11 @@ public class PrivateQueryExtendedTests : IDisposable
         });
         await _db.SaveChangesAsync();
 
-        var role = await _query.GetAdminRole(
+        var result = await _query.GetAdminRole(
             workspace.Id, MakePrincipal("member"), _authz, CancellationToken.None);
 
-        Assert.Equal("MEMBER", role);
+        Assert.NotNull(result);
+        Assert.Equal("MEMBER", result.Role);
     }
 
     // ── GetAdminRoleByProject ──────────────────────────────────────

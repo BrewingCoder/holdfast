@@ -569,8 +569,11 @@ public class PrivateMutation
             ? firstName
             : $"{firstName} {lastName}";
         admin.UserDefinedRole = adminDetails.UserDefinedRole;
+        admin.UserDefinedPersona = adminDetails.UserDefinedPersona;
+        admin.UserDefinedTeamSize = adminDetails.UserDefinedTeamSize;
+        admin.HeardAbout = adminDetails.HeardAbout;
         admin.Referral = adminDetails.Referral;
-        admin.AboutYouDetailsFilled = "true";
+        admin.AboutYouDetailsFilled = true;
 
         await db.SaveChangesAsync(ct);
         return true;

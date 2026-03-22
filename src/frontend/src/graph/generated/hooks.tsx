@@ -8856,9 +8856,6 @@ export const GetBillingDetailsForProjectDocument = gql`
 			workspace {
 				id
 				trial_end_date
-				billing_period_end
-				next_invoice_date
-				allow_meter_overage
 				eligible_for_trial_extension
 				trial_extension_enabled
 			}
@@ -9055,9 +9052,6 @@ export const GetBillingDetailsDocument = gql`
 		workspace(id: $workspace_id) {
 			id
 			trial_end_date
-			billing_period_end
-			next_invoice_date
-			allow_meter_overage
 			eligible_for_trial_extension
 			retention_period
 			errors_retention_period

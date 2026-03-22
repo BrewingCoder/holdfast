@@ -161,10 +161,13 @@ public class PrivateQueryDbTests : IDisposable
     }
 
     [Fact]
-    public async Task GetProjectSettings_ReturnsNull_WhenNone()
+    public async Task GetProjectSettings_ReturnsDefaults_WhenNone()
     {
+        // Resolver always returns AllProjectSettings (with defaults) if the project exists.
         var settings = await _query.GetProjectSettings(_project.Id, _principal, _authz, _db, CancellationToken.None);
-        Assert.Null(settings);
+        Assert.NotNull(settings);
+        Assert.Equal(_project.Id, settings!.Id);
+        Assert.False(settings.FilterSessionsWithoutError);
     }
 
     [Fact]
@@ -755,8 +758,9 @@ public class PrivateQueryDbTests : IDisposable
     [Fact]
     public async Task GetAdminRole_ReturnsRole()
     {
-        var role = await _query.GetAdminRole(_workspace.Id, _principal, _authz, CancellationToken.None);
-        Assert.Equal("ADMIN", role);
+        var result = await _query.GetAdminRole(_workspace.Id, _principal, _authz, CancellationToken.None);
+        Assert.NotNull(result);
+        Assert.Equal("ADMIN", result.Role);
     }
 
     [Fact]
@@ -766,8 +770,8 @@ public class PrivateQueryDbTests : IDisposable
         _db.Workspaces.Add(ws2);
         await _db.SaveChangesAsync();
 
-        var role = await _query.GetAdminRole(ws2.Id, _principal, _authz, CancellationToken.None);
-        Assert.Null(role);
+        var result = await _query.GetAdminRole(ws2.Id, _principal, _authz, CancellationToken.None);
+        Assert.Null(result);
     }
 
     [Fact]

@@ -390,12 +390,16 @@ public class PrivateQueryAnalyticsTests : IDisposable
     }
 
     [Fact]
-    public async Task GetProjectSettings_NoSettings_ReturnsNull()
+    public async Task GetProjectSettings_NoSettings_ReturnsDefaults()
     {
+        // When no ProjectFilterSettings exist, resolver returns AllProjectSettings with default values.
         var result = await _query.GetProjectSettings(
             _project.Id, _principal, _authz, _db, CancellationToken.None);
 
-        Assert.Null(result);
+        Assert.NotNull(result);
+        Assert.Equal(_project.Id, result!.Id);
+        Assert.Equal(0, result.AutoResolveStaleErrorsDayInterval);
+        Assert.False(result.FilterSessionsWithoutError);
     }
 
     // ── GetErrorObject / GetErrorGroup ───────────────────────────────
@@ -682,10 +686,11 @@ public class PrivateQueryAnalyticsTests : IDisposable
     [Fact]
     public async Task GetAdminRole_ReturnsAdminRole()
     {
-        var role = await _query.GetAdminRole(
+        var result = await _query.GetAdminRole(
             _workspace.Id, _principal, _authz, CancellationToken.None);
 
-        Assert.Equal("ADMIN", role);
+        Assert.NotNull(result);
+        Assert.Equal("ADMIN", result.Role);
     }
 
     [Fact]
@@ -695,10 +700,10 @@ public class PrivateQueryAnalyticsTests : IDisposable
         _db.Workspaces.Add(otherWs);
         await _db.SaveChangesAsync();
 
-        var role = await _query.GetAdminRole(
+        var result = await _query.GetAdminRole(
             otherWs.Id, _principal, _authz, CancellationToken.None);
 
-        Assert.Null(role);
+        Assert.Null(result);
     }
 
     // ── GetWorkspacePendingInvites ───────────────────────────────────

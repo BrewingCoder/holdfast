@@ -167,9 +167,11 @@ public class PrivateQuery
     }
 
     /// <summary>
-    /// Get project settings (filter/sampling configuration).
+    /// Get project settings (combined Project + sampling/filter configuration).
+    /// Returns AllProjectSettings matching the Go schema type.
     /// </summary>
-    public async Task<ProjectFilterSettings?> GetProjectSettings(
+    [GraphQLName("projectSettings")]
+    public async Task<AllProjectSettings?> GetProjectSettings(
         [GraphQLName("projectId")] [ID] int projectId,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
@@ -178,8 +180,44 @@ public class PrivateQuery
     {
         await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
 
-        return await db.ProjectFilterSettings
-            .FirstOrDefaultAsync(s => s.ProjectId == projectId, ct);
+        var project = await db.Projects.FindAsync([projectId], ct);
+        if (project == null) return null;
+
+        var fs = await db.ProjectFilterSettings
+            .FirstOrDefaultAsync(s => s.ProjectId == projectId, ct)
+            ?? new ProjectFilterSettings { ProjectId = projectId };
+
+        return new AllProjectSettings(
+            Id: project.Id,
+            Name: project.Name ?? string.Empty,
+            VerboseId: project.VerboseId,
+            BillingEmail: project.BillingEmail,
+            WorkspaceId: project.WorkspaceId.ToString(),
+            ExcludedUsers: project.ExcludedUsers,
+            ErrorFilters: project.ErrorFilters,
+            ErrorJsonPaths: project.ErrorJsonPaths,
+            RageClickWindowSeconds: project.RageClickWindowSeconds,
+            RageClickRadiusPixels: project.RageClickRadiusPixels,
+            RageClickCount: project.RageClickCount,
+            FilterChromeExtension: project.FilterChromeExtension,
+            FilterSessionsWithoutError: fs.FilterSessionsWithoutError,
+            AutoResolveStaleErrorsDayInterval: fs.AutoResolveStaleErrorsDayInterval,
+            Sampling: new SamplingResult(
+                SessionSamplingRate: fs.SessionSamplingRate,
+                ErrorSamplingRate: fs.ErrorSamplingRate,
+                LogSamplingRate: fs.LogSamplingRate,
+                TraceSamplingRate: fs.TraceSamplingRate,
+                MetricSamplingRate: fs.MetricSamplingRate,
+                SessionMinuteRateLimit: fs.SessionMinuteRateLimit,
+                ErrorMinuteRateLimit: fs.ErrorMinuteRateLimit,
+                LogMinuteRateLimit: fs.LogMinuteRateLimit,
+                TraceMinuteRateLimit: fs.TraceMinuteRateLimit,
+                MetricMinuteRateLimit: fs.MetricMinuteRateLimit,
+                SessionExclusionQuery: fs.SessionExclusionQuery,
+                ErrorExclusionQuery: fs.ErrorExclusionQuery,
+                LogExclusionQuery: fs.LogExclusionQuery,
+                TraceExclusionQuery: fs.TraceExclusionQuery,
+                MetricExclusionQuery: fs.MetricExclusionQuery));
     }
 
     // ── Error Groups ──────────────────────────────────────────────────
@@ -1105,8 +1143,10 @@ public class PrivateQuery
 
     /// <summary>
     /// Get the admin's role within a workspace. Returns null if not a member.
+    /// Returns the full WorkspaceAdminRole object (not just the role string) to match Go schema.
     /// </summary>
-    public async Task<string?> GetAdminRole(
+    [GraphQLName("admin_role")]
+    public async Task<WorkspaceAdminRole?> GetAdminRole(
         [ID] int workspaceId,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
@@ -1114,7 +1154,12 @@ public class PrivateQuery
     {
         var admin = await AuthHelper.GetRequiredAdmin(claimsPrincipal, authz, ct);
         var result = await authz.GetAdminRoleAsync(admin.Id, workspaceId, ct);
-        return result?.Role;
+        if (result == null) return null;
+        return new WorkspaceAdminRole(
+            WorkspaceId: workspaceId.ToString(),
+            Admin: admin,
+            Role: result.Value.Role,
+            ProjectIds: result.Value.ProjectIds?.Select(id => id.ToString()).ToList() ?? []);
     }
 
     /// <summary>

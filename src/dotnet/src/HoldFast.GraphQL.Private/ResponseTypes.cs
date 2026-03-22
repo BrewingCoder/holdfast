@@ -439,6 +439,48 @@ public record BillingDetails(
     [property: GraphQLName("metricsDailyAverage")] double MetricsDailyAverage = 0);
 
 /// <summary>
+/// Sampling rates and limits for a project. Matches Go schema Sampling type.
+/// </summary>
+public record SamplingResult(
+    [property: GraphQLName("session_sampling_rate")] double SessionSamplingRate,
+    [property: GraphQLName("error_sampling_rate")] double ErrorSamplingRate,
+    [property: GraphQLName("log_sampling_rate")] double LogSamplingRate,
+    [property: GraphQLName("trace_sampling_rate")] double TraceSamplingRate,
+    [property: GraphQLName("metric_sampling_rate")] double MetricSamplingRate,
+    [property: GraphQLName("session_minute_rate_limit")] long? SessionMinuteRateLimit,
+    [property: GraphQLName("error_minute_rate_limit")] long? ErrorMinuteRateLimit,
+    [property: GraphQLName("log_minute_rate_limit")] long? LogMinuteRateLimit,
+    [property: GraphQLName("trace_minute_rate_limit")] long? TraceMinuteRateLimit,
+    [property: GraphQLName("metric_minute_rate_limit")] long? MetricMinuteRateLimit,
+    [property: GraphQLName("session_exclusion_query")] string? SessionExclusionQuery,
+    [property: GraphQLName("error_exclusion_query")] string? ErrorExclusionQuery,
+    [property: GraphQLName("log_exclusion_query")] string? LogExclusionQuery,
+    [property: GraphQLName("trace_exclusion_query")] string? TraceExclusionQuery,
+    [property: GraphQLName("metric_exclusion_query")] string? MetricExclusionQuery);
+
+/// <summary>
+/// Combined project settings response — matches Go schema AllProjectSettings type.
+/// Merges Project entity fields with ProjectFilterSettings sampling/filter config.
+/// </summary>
+[GraphQLName("AllProjectSettings")]
+public record AllProjectSettings(
+    int Id,
+    string Name,
+    [property: GraphQLName("verbose_id")] string VerboseId,
+    [property: GraphQLName("billing_email")] string? BillingEmail,
+    [property: GraphQLName("workspace_id")] string WorkspaceId,
+    [property: GraphQLName("excluded_users")] List<string> ExcludedUsers,
+    [property: GraphQLName("error_filters")] List<string> ErrorFilters,
+    [property: GraphQLName("error_json_paths")] List<string> ErrorJsonPaths,
+    [property: GraphQLName("rage_click_window_seconds")] int RageClickWindowSeconds,
+    [property: GraphQLName("rage_click_radius_pixels")] int RageClickRadiusPixels,
+    [property: GraphQLName("rage_click_count")] int RageClickCount,
+    [property: GraphQLName("filter_chrome_extension")] bool? FilterChromeExtension,
+    [property: GraphQLName("filterSessionsWithoutError")] bool FilterSessionsWithoutError,
+    [property: GraphQLName("autoResolveStaleErrorsDayInterval")] int AutoResolveStaleErrorsDayInterval,
+    SamplingResult Sampling);
+
+/// <summary>
 /// Sort direction for paginated queries. Matches Go schema SortDirection enum.
 /// HC GetEnumValueName returns value.ToString(), so ASC/DESC stay uppercase to match the frontend.
 /// </summary>
