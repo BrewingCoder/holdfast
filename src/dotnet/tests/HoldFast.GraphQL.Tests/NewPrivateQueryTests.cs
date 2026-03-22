@@ -312,7 +312,7 @@ public class NewPrivateQueryTests : IDisposable
 
         Assert.NotNull(result);
         Assert.Single(result.Buckets);
-        Assert.Equal("CLS", result.Buckets[0].Group);
+        Assert.Equal("CLS", result.Buckets[0].Group.FirstOrDefault());
     }
 
     [Fact]
@@ -324,7 +324,7 @@ public class NewPrivateQueryTests : IDisposable
             _session.SecureId, _principal, _authz, _db, _clickHouse, CancellationToken.None);
 
         Assert.Empty(result.Buckets);
-        Assert.Equal(0, result.TotalCount);
+        Assert.Equal(0UL, result.BucketCount);
     }
 
     // ══════════════════════════════════════════════════════════════════

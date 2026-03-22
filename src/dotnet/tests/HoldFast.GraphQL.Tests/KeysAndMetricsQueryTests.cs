@@ -179,10 +179,10 @@ public class KeysAndMetricsQueryTests : IDisposable
     [InlineData("EVENTS")]
     public async Task GetKeyValues_AllProductTypes_ReturnsResults(string productType)
     {
+        var dr = new DateRangeRequiredInput { StartDate = DateTime.UtcNow.AddDays(-7), EndDate = DateTime.UtcNow };
         var result = await _query.GetKeyValues(
             productType, _project.Id, "test_key",
-            DateTime.UtcNow.AddDays(-7), DateTime.UtcNow,
-            null, null, null, _principal, _authz, _clickHouse, CancellationToken.None);
+            dr, null, null, null, _principal, _authz, _clickHouse, CancellationToken.None);
 
         Assert.NotNull(result);
     }
@@ -190,10 +190,10 @@ public class KeysAndMetricsQueryTests : IDisposable
     [Fact]
     public async Task GetKeyValues_NullProductType_DefaultsToSessions()
     {
+        var dr = new DateRangeRequiredInput { StartDate = DateTime.UtcNow.AddDays(-7), EndDate = DateTime.UtcNow };
         var result = await _query.GetKeyValues(
             null, _project.Id, "identifier",
-            DateTime.UtcNow.AddDays(-7), DateTime.UtcNow,
-            null, null, null, _principal, _authz, _clickHouse, CancellationToken.None);
+            dr, null, null, null, _principal, _authz, _clickHouse, CancellationToken.None);
 
         Assert.NotNull(result);
     }
@@ -202,11 +202,11 @@ public class KeysAndMetricsQueryTests : IDisposable
     public async Task GetKeyValues_LogsProductType_DelegatesToClickHouse()
     {
         _clickHouse.LogKeyValuesResult = ["value1", "value2"];
+        var dr = new DateRangeRequiredInput { StartDate = DateTime.UtcNow.AddDays(-7), EndDate = DateTime.UtcNow };
 
         var result = await _query.GetKeyValues(
             "LOGS", _project.Id, "severity",
-            DateTime.UtcNow.AddDays(-7), DateTime.UtcNow,
-            null, null, null, _principal, _authz, _clickHouse, CancellationToken.None);
+            dr, null, null, null, _principal, _authz, _clickHouse, CancellationToken.None);
 
         Assert.Equal(2, result.Count);
         Assert.Contains("value1", result);
@@ -220,10 +220,10 @@ public class KeysAndMetricsQueryTests : IDisposable
     public async Task GetKeyValuesSuggestions_ReturnsOneEntryPerKey()
     {
         _clickHouse.SessionKeyValuesResult = ["val1", "val2"];
+        var dr = new DateRangeRequiredInput { StartDate = DateTime.UtcNow.AddDays(-7), EndDate = DateTime.UtcNow };
 
         var result = await _query.GetKeyValuesSuggestions(
-            "SESSIONS", _project.Id,
-            DateTime.UtcNow.AddDays(-7), DateTime.UtcNow,
+            "SESSIONS", _project.Id, dr,
             ["key1", "key2"], _principal, _authz, _clickHouse, CancellationToken.None);
 
         Assert.Equal(2, result.Count);
@@ -234,9 +234,9 @@ public class KeysAndMetricsQueryTests : IDisposable
     [Fact]
     public async Task GetKeyValuesSuggestions_EmptyKeys_ReturnsEmpty()
     {
+        var dr = new DateRangeRequiredInput { StartDate = DateTime.UtcNow.AddDays(-7), EndDate = DateTime.UtcNow };
         var result = await _query.GetKeyValuesSuggestions(
-            "LOGS", _project.Id,
-            DateTime.UtcNow.AddDays(-7), DateTime.UtcNow,
+            "LOGS", _project.Id, dr,
             [], _principal, _authz, _clickHouse, CancellationToken.None);
 
         Assert.Empty(result);
@@ -246,10 +246,10 @@ public class KeysAndMetricsQueryTests : IDisposable
     public async Task GetKeyValuesSuggestions_ValuesHaveSequentialRank()
     {
         _clickHouse.SessionKeyValuesResult = ["a", "b", "c"];
+        var dr = new DateRangeRequiredInput { StartDate = DateTime.UtcNow.AddDays(-7), EndDate = DateTime.UtcNow };
 
         var result = await _query.GetKeyValuesSuggestions(
-            "SESSIONS", _project.Id,
-            DateTime.UtcNow.AddDays(-7), DateTime.UtcNow,
+            "SESSIONS", _project.Id, dr,
             ["mykey"], _principal, _authz, _clickHouse, CancellationToken.None);
 
         Assert.Single(result);
@@ -511,9 +511,9 @@ public class KeysAndMetricsQueryTests : IDisposable
     [Fact]
     public async Task GetExistingLogsTraces_EmptyTraceIds_ReturnsEmpty()
     {
+        var dr = new DateRangeRequiredInput { StartDate = DateTime.UtcNow.AddDays(-7), EndDate = DateTime.UtcNow };
         var result = await _query.GetExistingLogsTraces(
-            _project.Id, [],
-            DateTime.UtcNow.AddDays(-7), DateTime.UtcNow,
+            _project.Id, [], dr,
             _principal, _authz, _clickHouse, CancellationToken.None);
 
         Assert.Empty(result);
@@ -523,9 +523,9 @@ public class KeysAndMetricsQueryTests : IDisposable
     public async Task GetExistingLogsTraces_NoMatchingLogs_ReturnsEmpty()
     {
         // Default fake returns empty LogConnection
+        var dr = new DateRangeRequiredInput { StartDate = DateTime.UtcNow.AddDays(-7), EndDate = DateTime.UtcNow };
         var result = await _query.GetExistingLogsTraces(
-            _project.Id, ["trace-abc", "trace-def"],
-            DateTime.UtcNow.AddDays(-7), DateTime.UtcNow,
+            _project.Id, ["trace-abc", "trace-def"], dr,
             _principal, _authz, _clickHouse, CancellationToken.None);
 
         Assert.Empty(result);
@@ -539,9 +539,9 @@ public class KeysAndMetricsQueryTests : IDisposable
             Edges = [new LogEdge { Node = new LogRow { Body = "test" }, Cursor = "c1" }],
         };
 
+        var dr = new DateRangeRequiredInput { StartDate = DateTime.UtcNow.AddDays(-7), EndDate = DateTime.UtcNow };
         var result = await _query.GetExistingLogsTraces(
-            _project.Id, ["trace-found", "trace-missing"],
-            DateTime.UtcNow.AddDays(-7), DateTime.UtcNow,
+            _project.Id, ["trace-found", "trace-missing"], dr,
             _principal, _authz, _clickHouse, CancellationToken.None);
 
         Assert.Single(result);

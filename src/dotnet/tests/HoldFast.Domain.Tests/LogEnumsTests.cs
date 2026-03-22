@@ -77,9 +77,9 @@ public class LogEnumsTests
     // ── MetricAggregator ────────────────────────────────────────────
 
     [Fact]
-    public void MetricAggregator_HasTenValues()
+    public void MetricAggregator_HasTwelveValues()
     {
-        Assert.Equal(10, Enum.GetValues<MetricAggregator>().Length);
+        Assert.Equal(12, Enum.GetValues<MetricAggregator>().Length);
     }
 
     [Theory]

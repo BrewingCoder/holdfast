@@ -41,10 +41,12 @@ public enum MetricAggregator
 {
     Count,
     CountDistinct,
+    CountDistinctKey,
     Sum,
     Avg,
     Min,
     Max,
+    None,
     P50,
     P90,
     P95,

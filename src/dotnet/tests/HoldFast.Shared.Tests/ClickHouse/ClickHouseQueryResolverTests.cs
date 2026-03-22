@@ -3,7 +3,8 @@ using HoldFast.Data;
 using HoldFast.Data.ClickHouse;
 using HoldFast.Data.ClickHouse.Models;
 using HoldFast.Domain.Entities;
-using HoldFast.GraphQL.Private;
+using HoldFast.Domain.Enums;
+using HoldFast.GraphQL.Private;   // SortDirection, MetricExpressionInput, DateHistogramOptions
 using HoldFast.Shared.Auth;
 using HotChocolate;
 using Microsoft.Data.Sqlite;
@@ -76,10 +77,10 @@ public class ClickHouseQueryResolverTests : IDisposable
     public async Task GetLogs_WithAccess_DelegatesToClickHouse()
     {
         var (_, _, project) = await SeedFullStack();
+        var qp = new QueryInput { Query = "error", DateRange = new DateRangeRequiredInput { StartDate = DateTime.UtcNow.AddDays(-1), EndDate = DateTime.UtcNow } };
 
         var result = await _query.GetLogs(
-            project.Id, "error", DateTime.UtcNow.AddDays(-1), DateTime.UtcNow,
-            null, null, null, "DESC", 50,
+            project.Id, qp, null, null, null, SortDirection.DESC, 50,
             MakePrincipal("admin-uid"), _authz, _clickHouse, CancellationToken.None);
 
         Assert.NotNull(result);
@@ -97,9 +98,9 @@ public class ClickHouseQueryResolverTests : IDisposable
         _db.Admins.Add(outsider);
         await _db.SaveChangesAsync();
 
+        var qp = new QueryInput { DateRange = new DateRangeRequiredInput { StartDate = DateTime.UtcNow.AddDays(-1), EndDate = DateTime.UtcNow } };
         await Assert.ThrowsAsync<GraphQLException>(() =>
-            _query.GetLogs(project.Id, "", DateTime.UtcNow.AddDays(-1), DateTime.UtcNow,
-                null, null, null, "DESC", 50,
+            _query.GetLogs(project.Id, qp, null, null, null, SortDirection.DESC, 50,
                 MakePrincipal("outsider"), _authz, _clickHouse, CancellationToken.None));
 
         Assert.Null(_clickHouse.LastCalledMethod); // ClickHouse should NOT have been called
@@ -109,10 +110,10 @@ public class ClickHouseQueryResolverTests : IDisposable
     public async Task GetLogs_Unauthenticated_ThrowsGraphQLException()
     {
         var anonymous = new ClaimsPrincipal(new ClaimsIdentity());
+        var qp = new QueryInput { DateRange = new DateRangeRequiredInput { StartDate = DateTime.UtcNow.AddDays(-1), EndDate = DateTime.UtcNow } };
 
         await Assert.ThrowsAsync<GraphQLException>(() =>
-            _query.GetLogs(1, "", DateTime.UtcNow.AddDays(-1), DateTime.UtcNow,
-                null, null, null, "DESC", 50,
+            _query.GetLogs(1, qp, null, null, null, SortDirection.DESC, 50,
                 anonymous, _authz, _clickHouse, CancellationToken.None));
     }
 
@@ -122,9 +123,10 @@ public class ClickHouseQueryResolverTests : IDisposable
     public async Task GetLogsHistogram_WithAccess_ReturnsHistogram()
     {
         var (_, _, project) = await SeedFullStack();
+        var qp = new QueryInput { DateRange = new DateRangeRequiredInput { StartDate = DateTime.UtcNow.AddDays(-1), EndDate = DateTime.UtcNow } };
 
         var result = await _query.GetLogsHistogram(
-            project.Id, "", DateTime.UtcNow.AddDays(-1), DateTime.UtcNow,
+            project.Id, qp,
             MakePrincipal("admin-uid"), _authz, _clickHouse, CancellationToken.None);
 
         Assert.NotNull(result);
@@ -167,10 +169,10 @@ public class ClickHouseQueryResolverTests : IDisposable
     public async Task GetTraces_WithAccess_DelegatesToClickHouse()
     {
         var (_, _, project) = await SeedFullStack();
+        var qp = new QueryInput { DateRange = new DateRangeRequiredInput { StartDate = DateTime.UtcNow.AddDays(-1), EndDate = DateTime.UtcNow } };
 
         var result = await _query.GetTraces(
-            project.Id, "", DateTime.UtcNow.AddDays(-1), DateTime.UtcNow,
-            null, null, null, "DESC", 50,
+            project.Id, qp, null, null, null, SortDirection.DESC, 50, false,
             MakePrincipal("admin-uid"), _authz, _clickHouse, CancellationToken.None);
 
         Assert.NotNull(result);
@@ -185,9 +187,9 @@ public class ClickHouseQueryResolverTests : IDisposable
         _db.Admins.Add(outsider);
         await _db.SaveChangesAsync();
 
+        var qp = new QueryInput { DateRange = new DateRangeRequiredInput { StartDate = DateTime.UtcNow.AddDays(-1), EndDate = DateTime.UtcNow } };
         await Assert.ThrowsAsync<GraphQLException>(() =>
-            _query.GetTraces(project.Id, "", DateTime.UtcNow.AddDays(-1), DateTime.UtcNow,
-                null, null, null, "DESC", 50,
+            _query.GetTraces(project.Id, qp, null, null, null, SortDirection.DESC, 50, false,
                 MakePrincipal("outsider2"), _authz, _clickHouse, CancellationToken.None));
     }
 
@@ -197,9 +199,10 @@ public class ClickHouseQueryResolverTests : IDisposable
     public async Task GetTracesHistogram_WithAccess_ReturnsHistogram()
     {
         var (_, _, project) = await SeedFullStack();
+        var qp = new QueryInput { DateRange = new DateRangeRequiredInput { StartDate = DateTime.UtcNow.AddDays(-1), EndDate = DateTime.UtcNow } };
 
         var result = await _query.GetTracesHistogram(
-            project.Id, "", DateTime.UtcNow.AddDays(-1), DateTime.UtcNow,
+            project.Id, qp,
             MakePrincipal("admin-uid"), _authz, _clickHouse, CancellationToken.None);
 
         Assert.NotNull(result);
@@ -240,8 +243,11 @@ public class ClickHouseQueryResolverTests : IDisposable
         var (_, _, project) = await SeedFullStack();
 
         var result = await _query.GetMetrics(
-            project.Id, "", DateTime.UtcNow.AddDays(-1), DateTime.UtcNow,
-            "timestamp", null, "COUNT", null,
+            HoldFast.Domain.Enums.ProductType.Logs,
+            project.Id,
+            new QueryInput { DateRange = new DateRangeRequiredInput { StartDate = DateTime.UtcNow.AddDays(-1), EndDate = DateTime.UtcNow } },
+            null, [], "Timestamp", null, null, null, null, null, null,
+            [new HoldFast.GraphQL.Private.MetricExpressionInput { Aggregator = HoldFast.Domain.Enums.MetricAggregator.Count, Column = "value" }],
             MakePrincipal("admin-uid"), _authz, _clickHouse, CancellationToken.None);
 
         Assert.NotNull(result);
@@ -254,8 +260,11 @@ public class ClickHouseQueryResolverTests : IDisposable
         var (_, _, project) = await SeedFullStack();
 
         await _query.GetMetrics(
-            project.Id, "", DateTime.UtcNow.AddDays(-1), DateTime.UtcNow,
-            "timestamp", ["service_name"], "P95", "Duration",
+            HoldFast.Domain.Enums.ProductType.Traces,
+            project.Id,
+            new QueryInput { DateRange = new DateRangeRequiredInput { StartDate = DateTime.UtcNow.AddDays(-1), EndDate = DateTime.UtcNow } },
+            null, ["service_name"], "Timestamp", null, null, null, null, null, null,
+            [new HoldFast.GraphQL.Private.MetricExpressionInput { Aggregator = HoldFast.Domain.Enums.MetricAggregator.P95, Column = "Duration" }],
             MakePrincipal("admin-uid"), _authz, _clickHouse, CancellationToken.None);
 
         Assert.Equal("ReadMetricsAsync", _clickHouse.LastCalledMethod);
@@ -446,9 +455,11 @@ public class ClickHouseQueryResolverTests : IDisposable
     public async Task GetErrorsHistogram_WithAccess_DelegatesToClickHouse()
     {
         var (_, _, project) = await SeedFullStack();
+        var qp = new QueryInput { DateRange = new DateRangeRequiredInput { StartDate = DateTime.UtcNow.AddDays(-7), EndDate = DateTime.UtcNow } };
+        var opts = new HoldFast.GraphQL.Private.DateHistogramOptions();
 
         var result = await _query.GetErrorsHistogram(
-            project.Id, "", DateTime.UtcNow.AddDays(-7), DateTime.UtcNow,
+            project.Id, qp, opts,
             MakePrincipal("admin-uid"), _authz, _clickHouse, CancellationToken.None);
 
         Assert.NotNull(result);
@@ -464,8 +475,10 @@ public class ClickHouseQueryResolverTests : IDisposable
         _db.Admins.Add(outsider);
         await _db.SaveChangesAsync();
 
+        var qp = new QueryInput { DateRange = new DateRangeRequiredInput { StartDate = DateTime.UtcNow.AddDays(-7), EndDate = DateTime.UtcNow } };
+        var opts = new HoldFast.GraphQL.Private.DateHistogramOptions();
         await Assert.ThrowsAsync<GraphQLException>(() =>
-            _query.GetErrorsHistogram(project.Id, "", DateTime.UtcNow.AddDays(-7), DateTime.UtcNow,
+            _query.GetErrorsHistogram(project.Id, qp, opts,
                 MakePrincipal("outsider-eh"), _authz, _clickHouse, CancellationToken.None));
     }
 

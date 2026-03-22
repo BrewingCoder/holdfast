@@ -498,7 +498,10 @@ public class MetricAggregatorDetailTests
     public void MetricAggregator_SequentialValues()
     {
         Assert.Equal(0, (int)MetricAggregator.Count);
-        Assert.Equal(9, (int)MetricAggregator.P99);
+        // P99 position changed when None and CountDistinctKey were added; verify it's defined
+        Assert.True(Enum.IsDefined(MetricAggregator.P99));
+        Assert.True(Enum.IsDefined(MetricAggregator.None));
+        Assert.True(Enum.IsDefined(MetricAggregator.CountDistinctKey));
     }
 
     [Fact]

@@ -1,4 +1,6 @@
+using HoldFast.Data.ClickHouse.Models;
 using HoldFast.Domain.Entities;
+using HoldFast.Domain.Enums;
 using HotChocolate;
 
 namespace HoldFast.GraphQL.Private;
@@ -462,6 +464,104 @@ public record LogsHistogramResult(
     List<LogsBucketGroup> Buckets,
     [property: GraphQLName("objectCount")] long ObjectCount,
     [property: GraphQLName("sampleFactor")] double SampleFactor);
+
+// ── Metrics response types ────────────────────────────────────────────
+
+/// <summary>
+/// Input for individual metric expressions (aggregator + column).
+/// Matches Go schema MetricExpressionInput.
+/// </summary>
+public class MetricExpressionInput
+{
+    public MetricAggregator Aggregator { get; set; }
+    public string Column { get; set; } = string.Empty;
+}
+
+/// <summary>
+/// Prediction / anomaly-detection settings for metrics queries.
+/// Matches Go schema PredictionSettings.
+/// HC snake_case: changepointPriorScale → changepointpriorscale — override with [GraphQLName].
+/// </summary>
+public class PredictionSettings
+{
+    [GraphQLName("changepointPriorScale")]
+    public double ChangepointPriorScale { get; set; }
+    [GraphQLName("intervalSeconds")]
+    public int IntervalSeconds { get; set; }
+    [GraphQLName("intervalWidth")]
+    public double IntervalWidth { get; set; }
+    [GraphQLName("thresholdCondition")]
+    public string ThresholdCondition { get; set; } = string.Empty;
+}
+
+/// <summary>
+/// Single time-bucket in a metrics result.
+/// Matches Go schema MetricBucket type (fields are camelCase-ish in Go, override HC snake_case).
+/// </summary>
+[GraphQLName("MetricBucket")]
+public class MetricBucketResult
+{
+    [GraphQLName("bucket_id")]
+    public ulong BucketId { get; init; }
+    [GraphQLName("bucket_min")]
+    public double? BucketMin { get; init; }
+    [GraphQLName("bucket_max")]
+    public double? BucketMax { get; init; }
+    [GraphQLName("bucket_value")]
+    public double? BucketValue { get; init; }
+    public string Column { get; init; } = string.Empty;
+    public List<string> Group { get; init; } = [];
+    [GraphQLName("metric_type")]
+    public MetricAggregator MetricType { get; init; }
+    [GraphQLName("metric_value")]
+    public double? MetricValue { get; init; }
+    [GraphQLName("yhat_lower")]
+    public double? YhatLower { get; init; }
+    [GraphQLName("yhat_upper")]
+    public double? YhatUpper { get; init; }
+}
+
+/// <summary>
+/// Metrics query result — list of time buckets plus totals.
+/// Matches Go schema MetricsBuckets type.
+/// </summary>
+[GraphQLName("MetricsBuckets")]
+public class MetricsBucketsResult
+{
+    [GraphQLName("bucket_count")]
+    public ulong BucketCount { get; init; }
+    [GraphQLName("sample_factor")]
+    public double SampleFactor { get; init; } = 1.0;
+    public List<MetricBucketResult> Buckets { get; init; } = [];
+
+    /// <summary>Build from the ClickHouse internal model.</summary>
+    public static MetricsBucketsResult FromClickHouse(MetricsBuckets src) =>
+        new()
+        {
+            BucketCount = (ulong)src.TotalCount,
+            SampleFactor = src.SampleFactor ?? 1.0,
+            Buckets = src.Buckets.Select((b, i) => new MetricBucketResult
+            {
+                BucketId = (ulong)i,
+                BucketValue = b.Value,
+                Column = "value",
+                Group = b.Group != null ? [b.Group] : [],
+                MetricType = MetricAggregator.Count,
+                MetricValue = b.MetricValue,
+            }).ToList(),
+        };
+}
+
+/// <summary>
+/// Errors histogram result. Matches Go schema ErrorsHistogram type.
+/// </summary>
+public class ErrorsHistogram
+{
+    [GraphQLName("bucket_times")]
+    public List<DateTime> BucketTimes { get; init; } = [];
+    [GraphQLName("error_objects")]
+    public List<long> ErrorObjects { get; init; } = [];
+}
 
 /// <summary>
 /// A tag/op/value filter applied to metric monitor queries.

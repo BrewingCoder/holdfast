@@ -996,16 +996,22 @@ public class PrivateQuery
 
     /// <summary>
     /// Query metrics from ClickHouse with time bucketing and aggregation.
+    /// Matches Go schema: metrics(product_type, project_id, params, group_by, bucket_by, expressions, ...).
     /// </summary>
-    public async Task<MetricsBuckets> GetMetrics(
+    public async Task<MetricsBucketsResult> GetMetrics(
+        [GraphQLName("product_type")] ProductType productType,
         [ID] int projectId,
-        string query,
-        DateTime dateRangeStart,
-        DateTime dateRangeEnd,
-        string bucketBy,
-        List<string>? groupBy,
-        string aggregator,
-        string? column,
+        [GraphQLName("params")] QueryInput queryParams,
+        string? sql,
+        [GraphQLName("group_by")] List<string> groupBy,
+        [GraphQLName("bucket_by")] string bucketBy,
+        [GraphQLName("bucket_count")] int? bucketCount,
+        [GraphQLName("bucket_window")] int? bucketWindow,
+        int? limit,
+        [GraphQLName("limit_aggregator")] MetricAggregator? limitAggregator,
+        [GraphQLName("limit_column")] string? limitColumn,
+        [GraphQLName("prediction_settings")] PredictionSettings? predictionSettings,
+        [GraphQLName("expressions")] List<MetricExpressionInput> expressions,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
         [Service] IClickHouseService clickHouse,
@@ -1013,9 +1019,11 @@ public class PrivateQuery
     {
         await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
 
-        return await clickHouse.ReadMetricsAsync(projectId,
-            new QueryInput { Query = query, DateRange = new DateRangeRequiredInput { StartDate = dateRangeStart, EndDate = dateRangeEnd } },
+        var aggregator = expressions.Count > 0 ? expressions[0].Aggregator.ToString() : "Count";
+        var column = expressions.Count > 0 ? expressions[0].Column : null;
+        var raw = await clickHouse.ReadMetricsAsync(projectId, queryParams,
             bucketBy, groupBy, aggregator, column, ct);
+        return MetricsBucketsResult.FromClickHouse(raw);
     }
 
     // ── Error Group Search (ClickHouse) ─────────────────────────────
@@ -2093,23 +2101,25 @@ public class PrivateQuery
     }
 
     /// <summary>
-    /// Get errors histogram (delegates to ClickHouse).
+    /// Get errors histogram (bucket_times + error_objects arrays for the chart).
+    /// Matches Go schema: errors_histogram(project_id, params, histogram_options) → ErrorsHistogram.
     /// </summary>
-    public async Task<List<HistogramBucket>> GetErrorsHistogram(
+    public async Task<ErrorsHistogram> GetErrorsHistogram(
         [ID] int projectId,
-        string query,
-        DateTime startDate,
-        DateTime endDate,
+        [GraphQLName("params")] QueryInput queryParams,
+        [GraphQLName("histogram_options")] DateHistogramOptions histogramOptions,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
         [Service] IClickHouseService clickHouse,
         CancellationToken ct)
     {
         await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
-        return await clickHouse.ReadErrorObjectsHistogramAsync(
-            projectId,
-            new QueryInput { Query = query, DateRange = new DateRangeRequiredInput { StartDate = startDate, EndDate = endDate } },
-            ct);
+        var buckets = await clickHouse.ReadErrorObjectsHistogramAsync(projectId, queryParams, ct);
+        return new ErrorsHistogram
+        {
+            BucketTimes = buckets.Select(b => b.BucketStart).ToList(),
+            ErrorObjects = buckets.Select(b => b.Count).ToList(),
+        };
     }
 
     // ── Error Issue & Enhanced Details ────────────────────────────────
@@ -2241,7 +2251,7 @@ public class PrivateQuery
     /// <summary>
     /// Get Web Vitals (CLS, FCP, FID, LCP, TTFB, INP) for a session.
     /// </summary>
-    public async Task<MetricsBuckets> GetWebVitals(
+    public async Task<MetricsBucketsResult> GetWebVitals(
         string sessionSecureId,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
@@ -2259,9 +2269,10 @@ public class PrivateQuery
             Query = $"secure_session_id={sessionSecureId} metric_name=CLS OR metric_name=FCP OR metric_name=FID OR metric_name=LCP OR metric_name=TTFB OR metric_name=INP",
             DateRange = new DateRangeRequiredInput { StartDate = session.CreatedAt.AddHours(-1), EndDate = session.CreatedAt.AddDays(1) }
         };
-        return await clickHouse.ReadMetricsAsync(
+        var raw = await clickHouse.ReadMetricsAsync(
             session.ProjectId, query, bucketBy: "None", groupBy: new List<string> { "metric_name" },
             aggregator: "AVG", column: "metric_value", ct);
+        return MetricsBucketsResult.FromClickHouse(raw);
     }
 
     /// <summary>
@@ -3481,7 +3492,7 @@ public class PrivateQuery
     /// <summary>
     /// Get logs metrics (deprecated — use GetMetrics with productType instead).
     /// </summary>
-    public async Task<MetricsBuckets> GetLogsMetrics(
+    public async Task<MetricsBucketsResult> GetLogsMetrics(
         [ID] int projectId,
         QueryInput queryParams,
         List<string> groupBy,
@@ -3494,14 +3505,15 @@ public class PrivateQuery
     {
         await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
 
-        return await clickHouse.ReadMetricsAsync(projectId, queryParams,
+        var raw = await clickHouse.ReadMetricsAsync(projectId, queryParams,
             bucketBy, groupBy, "Count", column, ct);
+        return MetricsBucketsResult.FromClickHouse(raw);
     }
 
     /// <summary>
     /// Get traces metrics (deprecated — use GetMetrics with productType instead).
     /// </summary>
-    public async Task<MetricsBuckets> GetTracesMetrics(
+    public async Task<MetricsBucketsResult> GetTracesMetrics(
         [ID] int projectId,
         QueryInput queryParams,
         List<string> groupBy,
@@ -3514,14 +3526,15 @@ public class PrivateQuery
     {
         await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
 
-        return await clickHouse.ReadMetricsAsync(projectId, queryParams,
+        var raw = await clickHouse.ReadMetricsAsync(projectId, queryParams,
             bucketBy ?? "Timestamp", groupBy, "Count", column, ct);
+        return MetricsBucketsResult.FromClickHouse(raw);
     }
 
     /// <summary>
     /// Get errors metrics (deprecated — use GetMetrics with productType instead).
     /// </summary>
-    public async Task<MetricsBuckets> GetErrorsMetrics(
+    public async Task<MetricsBucketsResult> GetErrorsMetrics(
         [ID] int projectId,
         QueryInput queryParams,
         List<string> groupBy,
@@ -3534,14 +3547,15 @@ public class PrivateQuery
     {
         await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
 
-        return await clickHouse.ReadMetricsAsync(projectId, queryParams,
+        var raw = await clickHouse.ReadMetricsAsync(projectId, queryParams,
             bucketBy, groupBy, "Count", column, ct);
+        return MetricsBucketsResult.FromClickHouse(raw);
     }
 
     /// <summary>
     /// Get sessions metrics (deprecated — use GetMetrics with productType instead).
     /// </summary>
-    public async Task<MetricsBuckets> GetSessionsMetrics(
+    public async Task<MetricsBucketsResult> GetSessionsMetrics(
         [ID] int projectId,
         QueryInput queryParams,
         List<string> groupBy,
@@ -3554,14 +3568,15 @@ public class PrivateQuery
     {
         await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
 
-        return await clickHouse.ReadMetricsAsync(projectId, queryParams,
+        var raw = await clickHouse.ReadMetricsAsync(projectId, queryParams,
             bucketBy, groupBy, "Count", column, ct);
+        return MetricsBucketsResult.FromClickHouse(raw);
     }
 
     /// <summary>
     /// Get events metrics (deprecated — use GetMetrics with productType instead).
     /// </summary>
-    public async Task<MetricsBuckets> GetEventsMetrics(
+    public async Task<MetricsBucketsResult> GetEventsMetrics(
         [ID] int projectId,
         QueryInput queryParams,
         List<string> groupBy,
@@ -3574,8 +3589,9 @@ public class PrivateQuery
     {
         await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
 
-        return await clickHouse.ReadMetricsAsync(projectId, queryParams,
+        var raw = await clickHouse.ReadMetricsAsync(projectId, queryParams,
             bucketBy, groupBy, "Count", column, ct);
+        return MetricsBucketsResult.FromClickHouse(raw);
     }
 
     // ── Event Sessions ───────────────────────────────────────────────

@@ -210,10 +210,10 @@ public class EdgeCaseQueryTests : IDisposable
     [Fact]
     public async Task GetKeyValues_UnknownProductType_DefaultsToSessions()
     {
+        var dr = new DateRangeRequiredInput { StartDate = DateTime.UtcNow.AddDays(-7), EndDate = DateTime.UtcNow };
         var result = await _query.GetKeyValues(
             "INVALID", _project.Id, "identifier",
-            DateTime.UtcNow.AddDays(-7), DateTime.UtcNow,
-            null, null, null, _principal, _authz, _clickHouse, CancellationToken.None);
+            dr, null, null, null, _principal, _authz, _clickHouse, CancellationToken.None);
 
         Assert.NotNull(result);
     }
@@ -226,10 +226,10 @@ public class EdgeCaseQueryTests : IDisposable
     public async Task GetKeyValuesSuggestions_ManyKeys()
     {
         var keys = Enumerable.Range(1, 20).Select(i => $"key_{i}").ToList();
+        var dr = new DateRangeRequiredInput { StartDate = DateTime.UtcNow.AddDays(-7), EndDate = DateTime.UtcNow };
 
         var result = await _query.GetKeyValuesSuggestions(
-            "SESSIONS", _project.Id,
-            DateTime.UtcNow.AddDays(-7), DateTime.UtcNow,
+            "SESSIONS", _project.Id, dr,
             keys, _principal, _authz, _clickHouse, CancellationToken.None);
 
         Assert.Equal(20, result.Count);
