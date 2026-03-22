@@ -196,7 +196,8 @@ if (runtime.IsPrivateGraph())
         .AddProjections()
         .AddFiltering()
         .AddSorting()
-        .RegisterDbContextFactory<HoldFastDbContext>();
+        .RegisterDbContextFactory<HoldFastDbContext>()
+        .AddConvention<HotChocolate.Types.Descriptors.INamingConventions>(_ => new SnakeCaseNamingConventions());
 }
 
 if (runtime.IsPublicGraph())
@@ -205,7 +206,8 @@ if (runtime.IsPublicGraph())
         .AddGraphQLServer("public")
         .AddQueryType<PublicQuery>()
         .AddMutationType<PublicMutation>()
-        .RegisterDbContextFactory<HoldFastDbContext>();
+        .RegisterDbContextFactory<HoldFastDbContext>()
+        .AddConvention<HotChocolate.Types.Descriptors.INamingConventions>(_ => new SnakeCaseNamingConventions());
 }
 
 // ── Health checks ─────────────────────────────────────────────────────
