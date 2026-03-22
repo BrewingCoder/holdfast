@@ -2,6 +2,7 @@ using System.Security.Claims;
 using HoldFast.Data;
 using HoldFast.Data.ClickHouse;
 using HoldFast.Data.ClickHouse.Models;
+using HoldFast.Domain;
 using HoldFast.Domain.Entities;
 using HoldFast.Domain.Enums;
 using HoldFast.Shared.Auth;
@@ -111,9 +112,10 @@ public class PrivateQuery
     }
 
     /// <summary>
-    /// List workspace admins with their roles.
+    /// List workspace admins with their roles. Returns WorkspaceAdminRole (not WorkspaceAdmin)
+    /// to match the Go schema type which includes workspaceId, admin, role, projectIds.
     /// </summary>
-    public async Task<List<WorkspaceAdmin>> GetWorkspaceAdmins(
+    public async Task<List<WorkspaceAdminRole>> GetWorkspaceAdmins(
         [ID] int workspaceId,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
@@ -122,11 +124,17 @@ public class PrivateQuery
     {
         await AuthHelper.RequireWorkspaceAccess(claimsPrincipal, workspaceId, authz, ct);
 
-        return await db.WorkspaceAdmins
+        var rows = await db.WorkspaceAdmins
             .Include(wa => wa.Admin)
             .Where(wa => wa.WorkspaceId == workspaceId)
             .OrderBy(wa => wa.Admin.CreatedAt)
             .ToListAsync(ct);
+
+        return rows.Select(wa => new WorkspaceAdminRole(
+            WorkspaceId: workspaceId.ToString(),
+            Admin: wa.Admin,
+            Role: wa.Role ?? WorkspaceRoles.Admin,
+            ProjectIds: wa.ProjectIds?.Select(id => id.ToString()).ToList() ?? [])).ToList();
     }
 
     // ── Project ───────────────────────────────────────────────────────

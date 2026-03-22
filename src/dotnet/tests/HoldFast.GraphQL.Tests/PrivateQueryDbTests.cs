@@ -147,7 +147,8 @@ public class PrivateQueryDbTests : IDisposable
     {
         var admins = await _query.GetWorkspaceAdmins(_workspace.Id, _principal, _authz, _db, CancellationToken.None);
         Assert.Single(admins);
-        Assert.Equal(_admin.Id, admins[0].AdminId);
+        Assert.Equal(_workspace.Id.ToString(), admins[0].WorkspaceId);
+        Assert.Equal("ADMIN", admins[0].Role);
     }
 
     // ── Project Queries ─────────────────────────────────────────────
