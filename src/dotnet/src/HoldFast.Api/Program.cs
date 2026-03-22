@@ -90,8 +90,16 @@ builder.Services.Configure<HoldFast.Api.DevSeed.DevSeedOptions>(
     builder.Configuration.GetSection("DevSeed"));
 builder.Services.AddHostedService<HoldFast.Api.DevSeed.DevSeedService>();
 
-// ── HTTP context accessor (required for HC to inject ClaimsPrincipal from middleware) ────
+// ── HTTP context accessor + ClaimsPrincipal DI binding ───────────────
+// HC resolves ClaimsPrincipal resolver parameters from DI. Register it as a
+// scoped service backed by IHttpContextAccessor so resolvers receive the user
+// that AuthMiddleware populated, rather than an empty unauthenticated principal.
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<System.Security.Claims.ClaimsPrincipal>(sp =>
+{
+    var accessor = sp.GetRequiredService<Microsoft.AspNetCore.Http.IHttpContextAccessor>();
+    return accessor.HttpContext?.User ?? new System.Security.Claims.ClaimsPrincipal();
+});
 
 // ── Auth ──────────────────────────────────────────────────────────────
 builder.Services.Configure<AuthOptions>(
