@@ -47,6 +47,10 @@ COPY rrweb/tsconfig.json ./rrweb/tsconfig.json
 COPY rrweb/vite.config.default.ts ./rrweb/vite.config.default.ts
 COPY rrweb/turbo.json ./rrweb/turbo.json
 
+# Root config files not included in turbo prune full/ output
+COPY tsconfig.json ./tsconfig.json
+COPY graphql.config.js ./graphql.config.js
+
 # GraphQL schemas are outside the frontend workspace; copy them for codegen/typegen
 COPY src/backend/localhostssl ./src/backend/localhostssl
 COPY src/backend/private-graph ./src/backend/private-graph
