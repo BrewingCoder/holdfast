@@ -347,11 +347,12 @@ public record BillingPlan(
 
 /// <summary>
 /// Stub subscription details — HoldFast has no SaaS billing.
+/// Fields use camelCase per Go schema.
 /// </summary>
 public record SubscriptionDetails(
-    long BaseAmount,
+    [property: GraphQLName("baseAmount")] long BaseAmount,
     object? Discount,
-    object? LastInvoice,
+    [property: GraphQLName("lastInvoice")] object? LastInvoice,
     [property: GraphQLName("billingIssue")] bool BillingIssue,
     [property: GraphQLName("billingIngestBlocked")] bool BillingIngestBlocked);
 

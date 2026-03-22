@@ -685,7 +685,7 @@ public class PrivateQuery
     /// </summary>
     public async Task<List<SavedSegmentGql>> GetSavedSegments(
         [ID] int projectId,
-        string? entityType,
+        SavedSegmentEntityType? entityType,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
@@ -695,7 +695,7 @@ public class PrivateQuery
 
         var q = db.SavedSegments.Where(s => s.ProjectId == projectId);
         if (entityType != null)
-            q = q.Where(s => s.EntityType == entityType);
+            q = q.Where(s => s.EntityType == entityType.ToString());
 
         var segments = await q.ToListAsync(ct);
         return segments.Select(s =>
@@ -3231,7 +3231,7 @@ public class PrivateQuery
     /// Dispatches to the product-specific ClickHouse method.
     /// </summary>
     public async Task<List<QueryKey>> GetKeys(
-        string? productType,
+        ProductType? productType,
         [ID] int projectId,
         [GraphQLName("date_range")] DateRangeRequiredInput dateRange,
         string? query,
@@ -3245,15 +3245,15 @@ public class PrivateQuery
         await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
 
         var qi = new QueryInput { Query = query, DateRange = dateRange };
-        return (productType?.ToUpperInvariant()) switch
+        return productType switch
         {
-            "LOGS" => (await clickHouse.GetLogKeysAsync(projectId, qi, ct))
+            ProductType.Logs => (await clickHouse.GetLogKeysAsync(projectId, qi, ct))
                 .Select(k => new QueryKey { Name = k, Type = type ?? "String" }).ToList(),
-            "TRACES" => (await clickHouse.GetTraceKeysAsync(projectId, qi, ct))
+            ProductType.Traces => (await clickHouse.GetTraceKeysAsync(projectId, qi, ct))
                 .Select(k => new QueryKey { Name = k, Type = type ?? "String" }).ToList(),
-            "ERRORS" => await clickHouse.GetErrorsKeysAsync(projectId, dateRange.StartDate, dateRange.EndDate, query, ct),
-            "SESSIONS" => await clickHouse.GetSessionsKeysAsync(projectId, dateRange.StartDate, dateRange.EndDate, query, ct),
-            "EVENTS" => await clickHouse.GetEventsKeysAsync(projectId, dateRange.StartDate, dateRange.EndDate, query, eventName, ct),
+            ProductType.Errors => await clickHouse.GetErrorsKeysAsync(projectId, dateRange.StartDate, dateRange.EndDate, query, ct),
+            ProductType.Sessions => await clickHouse.GetSessionsKeysAsync(projectId, dateRange.StartDate, dateRange.EndDate, query, ct),
+            ProductType.Events => await clickHouse.GetEventsKeysAsync(projectId, dateRange.StartDate, dateRange.EndDate, query, eventName, ct),
             _ => await clickHouse.GetSessionsKeysAsync(projectId, dateRange.StartDate, dateRange.EndDate, query, ct),
         };
     }

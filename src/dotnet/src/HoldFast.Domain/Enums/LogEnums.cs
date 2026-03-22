@@ -63,3 +63,15 @@ public enum ProductType
     Metrics,
     Events,
 }
+
+/// <summary>
+/// Entity type for saved search segments.
+/// Matches Go schema SavedSegmentEntityType enum.
+/// </summary>
+public enum SavedSegmentEntityType
+{
+    Session,
+    Error,
+    Log,
+    Trace,
+}
