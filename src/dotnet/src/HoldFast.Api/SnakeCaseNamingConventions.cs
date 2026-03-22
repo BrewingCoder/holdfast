@@ -25,6 +25,13 @@ public sealed class SnakeCaseNamingConventions : DefaultNamingConventions
 
     public override string GetMemberName(MemberInfo member, MemberKind kind)
     {
+        // Honour explicit [GraphQLName] — don't apply the naming convention on top of it.
+        // (The base DefaultNamingConventions returns the [GraphQLName] value, then we would
+        // wrongly snake_case it. Check the attribute ourselves and short-circuit instead.)
+        var nameAttr = member.GetCustomAttribute<GraphQLNameAttribute>();
+        if (nameAttr != null)
+            return nameAttr.Name;
+
         var baseName = base.GetMemberName(member, kind);
         if (member.MemberType == MemberTypes.Method)
         {
