@@ -710,7 +710,7 @@ public class ClickHouseService : IClickHouseService, IDisposable
         CancellationToken ct)
     {
         var sql =
-            "INSERT INTO metric_sum_rows (ProjectId, MetricName, MetricValue, " +
+            "INSERT INTO metrics_sum (ProjectId, MetricName, MetricValue, " +
             "Category, Timestamp, Tags.Name, Tags.Value, SecureSessionId) " +
             "VALUES ({projectId:Int32}, {metricName:String}, {metricValue:Float64}, " +
             "{category:String}, {timestamp:DateTime64(9)}, {tagNames:Array(String)}, " +
@@ -744,7 +744,7 @@ public class ClickHouseService : IClickHouseService, IDisposable
         foreach (var l in logList)
         {
             var sql =
-                "INSERT INTO log_rows (ProjectId, Timestamp, TraceId, SpanId, " +
+                "INSERT INTO logs (ProjectId, Timestamp, TraceId, SpanId, " +
                 "SecureSessionId, SeverityText, SeverityNumber, Source, " +
                 "ServiceName, ServiceVersion, Body, Environment) " +
                 "VALUES ({projectId:Int32}, {ts:DateTime64(9)}, {traceId:String}, {spanId:String}, " +
@@ -780,7 +780,7 @@ public class ClickHouseService : IClickHouseService, IDisposable
         foreach (var t in traceList)
         {
             var sql =
-                "INSERT INTO trace_rows (ProjectId, Timestamp, TraceId, SpanId, ParentSpanId, " +
+                "INSERT INTO traces (ProjectId, Timestamp, TraceId, SpanId, ParentSpanId, " +
                 "SecureSessionId, ServiceName, ServiceVersion, Environment, " +
                 "SpanName, SpanKind, Duration, StatusCode, StatusMessage, HasErrors) " +
                 "VALUES ({projectId:Int32}, {ts:DateTime64(9)}, {traceId:String}, {spanId:String}, " +
