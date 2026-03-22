@@ -326,6 +326,7 @@ public class PrivateQuery
     /// Billing details stub — HoldFast is self-hosted with no billing tiers.
     /// Returns zero meters and unlimited limits to satisfy the frontend contract.
     /// </summary>
+    [GraphQLName("billingDetailsForProject")]
     public Task<BillingDetails> GetBillingDetailsForProject(
         [ID] int projectId,
         ClaimsPrincipal claimsPrincipal,

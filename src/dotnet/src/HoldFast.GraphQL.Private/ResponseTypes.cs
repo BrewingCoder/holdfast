@@ -201,12 +201,13 @@ public record LogAlertsPagePayload(
 
 /// <summary>
 /// Session search results with totals.
+/// Go schema uses camelCase for these fields (totalCount not total_count).
 /// </summary>
 public record SessionResults(
     List<Session> Sessions,
-    long TotalCount,
-    long TotalLength,
-    long TotalActiveLength);
+    [property: GraphQLName("totalCount")] long TotalCount,
+    [property: GraphQLName("totalLength")] long TotalLength,
+    [property: GraphQLName("totalActiveLength")] long TotalActiveLength);
 
 /// <summary>
 /// A single value suggestion with count and rank.
@@ -288,21 +289,22 @@ public class DateHistogramOptions
 
 /// <summary>
 /// Stub billing plan — returns unlimited defaults for self-hosted deployments.
+/// Go schema uses camelCase for limit/rate fields.
 /// </summary>
 public record BillingPlan(
     string Type,
     string Interval,
-    int MembersLimit,
-    long SessionsLimit,
-    long ErrorsLimit,
-    long LogsLimit,
-    long TracesLimit,
-    long MetricsLimit,
-    long SessionsRate,
-    long ErrorsRate,
-    long LogsRate,
-    long TracesRate,
-    long MetricsRate,
+    [property: GraphQLName("membersLimit")] int MembersLimit,
+    [property: GraphQLName("sessionsLimit")] long SessionsLimit,
+    [property: GraphQLName("errorsLimit")] long ErrorsLimit,
+    [property: GraphQLName("logsLimit")] long LogsLimit,
+    [property: GraphQLName("tracesLimit")] long TracesLimit,
+    [property: GraphQLName("metricsLimit")] long MetricsLimit,
+    [property: GraphQLName("sessionsRate")] long SessionsRate,
+    [property: GraphQLName("errorsRate")] long ErrorsRate,
+    [property: GraphQLName("logsRate")] long LogsRate,
+    [property: GraphQLName("tracesRate")] long TracesRate,
+    [property: GraphQLName("metricsRate")] long MetricsRate,
     [property: GraphQLName("aws_mp_subscription")] object? AwsMpSubscription);
 
 /// <summary>
