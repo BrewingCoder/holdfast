@@ -437,6 +437,27 @@ public record BillingDetails(
     [property: GraphQLName("metricsDailyAverage")] double MetricsDailyAverage = 0);
 
 /// <summary>
+/// A single log-level count within a histogram time bucket.
+/// </summary>
+public record LogsBucketCount(long Count, string Level);
+
+/// <summary>
+/// A time bucket in the logs histogram, identified by index and containing per-level counts.
+/// </summary>
+public record LogsBucketGroup(
+    [property: GraphQLName("bucketId")] long BucketId,
+    List<LogsBucketCount> Counts);
+
+/// <summary>
+/// Logs histogram result — matches Go schema LogsHistogram type.
+/// </summary>
+public record LogsHistogramResult(
+    [property: GraphQLName("totalCount")] long TotalCount,
+    List<LogsBucketGroup> Buckets,
+    [property: GraphQLName("objectCount")] long ObjectCount,
+    [property: GraphQLName("sampleFactor")] double SampleFactor);
+
+/// <summary>
 /// A tag/op/value filter applied to metric monitor queries.
 /// </summary>
 public record MetricMonitorFilter(string Tag, string Op, string Value);

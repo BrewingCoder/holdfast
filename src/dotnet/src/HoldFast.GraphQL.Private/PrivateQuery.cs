@@ -804,17 +804,16 @@ public class PrivateQuery
 
     /// <summary>
     /// Query logs from ClickHouse with cursor-based pagination.
+    /// Matches Go schema: logs(project_id, params, after, before, at, direction, limit)
     /// </summary>
     public async Task<LogConnection> GetLogs(
         [ID] int projectId,
-        string query,
-        DateTime dateRangeStart,
-        DateTime dateRangeEnd,
+        [GraphQLName("params")] QueryInput queryParams,
         string? after,
         string? before,
         string? at,
         string direction,
-        int limit,
+        int? limit,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
         [Service] IClickHouseService clickHouse,
@@ -823,19 +822,18 @@ public class PrivateQuery
         await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
 
         return await clickHouse.ReadLogsAsync(projectId,
-            new QueryInput { Query = query, DateRange = new DateRangeRequiredInput { StartDate = dateRangeStart, EndDate = dateRangeEnd } },
-            new ClickHousePagination { After = after, Before = before, At = at, Direction = direction, Limit = limit },
+            queryParams,
+            new ClickHousePagination { After = after, Before = before, At = at, Direction = direction, Limit = limit ?? 50 },
             ct);
     }
 
     /// <summary>
-    /// Get log histogram buckets for chart display.
+    /// Get log histogram for chart display.
+    /// Matches Go schema: logs_histogram(project_id, params) → LogsHistogram
     /// </summary>
-    public async Task<List<HistogramBucket>> GetLogsHistogram(
+    public async Task<LogsHistogramResult> GetLogsHistogram(
         [ID] int projectId,
-        string query,
-        DateTime dateRangeStart,
-        DateTime dateRangeEnd,
+        [GraphQLName("params")] QueryInput queryParams,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
         [Service] IClickHouseService clickHouse,
@@ -843,9 +841,29 @@ public class PrivateQuery
     {
         await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
 
-        return await clickHouse.ReadLogsHistogramAsync(projectId,
-            new QueryInput { Query = query, DateRange = new DateRangeRequiredInput { StartDate = dateRangeStart, EndDate = dateRangeEnd } },
-            ct);
+        var buckets = await clickHouse.ReadLogsHistogramAsync(projectId, queryParams, ct);
+        return BuildLogsHistogram(buckets);
+    }
+
+    private static LogsHistogramResult BuildLogsHistogram(List<HistogramBucket> buckets)
+    {
+        var grouped = buckets
+            .GroupBy(b => b.BucketStart)
+            .OrderBy(g => g.Key)
+            .Select((g, i) => new LogsBucketGroup(
+                BucketId: i,
+                Counts: g.Select(b => new LogsBucketCount(
+                    Count: b.Count,
+                    Level: b.Group ?? ""))
+                .ToList()))
+            .ToList();
+
+        var totalCount = buckets.Sum(b => b.Count);
+        return new LogsHistogramResult(
+            TotalCount: totalCount,
+            Buckets: grouped,
+            ObjectCount: totalCount,
+            SampleFactor: 1.0);
     }
 
     /// <summary>
@@ -892,17 +910,17 @@ public class PrivateQuery
 
     /// <summary>
     /// Query traces from ClickHouse with cursor-based pagination.
+    /// Matches Go schema: traces(project_id, params, after, before, at, direction, limit, omitBody)
     /// </summary>
     public async Task<TraceConnection> GetTraces(
         [ID] int projectId,
-        string query,
-        DateTime dateRangeStart,
-        DateTime dateRangeEnd,
+        [GraphQLName("params")] QueryInput queryParams,
         string? after,
         string? before,
         string? at,
         string direction,
-        int limit,
+        int? limit,
+        [GraphQLName("omitBody")] bool omitBody,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
         [Service] IClickHouseService clickHouse,
@@ -911,19 +929,19 @@ public class PrivateQuery
         await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
 
         return await clickHouse.ReadTracesAsync(projectId,
-            new QueryInput { Query = query, DateRange = new DateRangeRequiredInput { StartDate = dateRangeStart, EndDate = dateRangeEnd } },
-            new ClickHousePagination { After = after, Before = before, At = at, Direction = direction, Limit = limit },
+            queryParams,
+            new ClickHousePagination { After = after, Before = before, At = at, Direction = direction, Limit = limit ?? 50 },
+            omitBody: omitBody,
             ct: ct);
     }
 
     /// <summary>
     /// Get trace histogram buckets for chart display.
+    /// Matches Go schema: traces_histogram(project_id, params)
     /// </summary>
     public async Task<List<HistogramBucket>> GetTracesHistogram(
         [ID] int projectId,
-        string query,
-        DateTime dateRangeStart,
-        DateTime dateRangeEnd,
+        [GraphQLName("params")] QueryInput queryParams,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
         [Service] IClickHouseService clickHouse,
@@ -931,9 +949,7 @@ public class PrivateQuery
     {
         await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
 
-        return await clickHouse.ReadTracesHistogramAsync(projectId,
-            new QueryInput { Query = query, DateRange = new DateRangeRequiredInput { StartDate = dateRangeStart, EndDate = dateRangeEnd } },
-            ct);
+        return await clickHouse.ReadTracesHistogramAsync(projectId, queryParams, ct);
     }
 
     /// <summary>

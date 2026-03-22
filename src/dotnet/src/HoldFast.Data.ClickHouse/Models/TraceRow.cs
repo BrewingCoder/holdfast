@@ -60,6 +60,8 @@ public class TraceConnection
 {
     public List<TraceEdge> Edges { get; set; } = [];
     public PageInfo PageInfo { get; set; } = new();
+    /// <summary>HoldFast does not sample traces; always false.</summary>
+    public bool Sampled { get; set; } = false;
 }
 
 /// <summary>
