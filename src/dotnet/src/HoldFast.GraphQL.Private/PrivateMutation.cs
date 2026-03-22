@@ -54,7 +54,7 @@ public class PrivateMutation
     /// Edit workspace name. Requires ADMIN role.
     /// </summary>
     public async Task<Workspace> EditWorkspace(
-        int workspaceId,
+        [ID] int workspaceId,
         string? name,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
@@ -77,7 +77,7 @@ public class PrivateMutation
     /// Edit workspace settings (feature flags). Requires ADMIN role.
     /// </summary>
     public async Task<AllWorkspaceSettings> EditWorkspaceSettings(
-        int workspaceId,
+        [ID] int workspaceId,
         bool? aiApplication,
         bool? aiInsights,
         bool? enableSSO,
@@ -112,7 +112,7 @@ public class PrivateMutation
     /// Create a new project within a workspace. Requires workspace membership.
     /// </summary>
     public async Task<Project> CreateProject(
-        int workspaceId,
+        [ID] int workspaceId,
         string name,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
@@ -147,7 +147,7 @@ public class PrivateMutation
     /// Edit project name and billing email. Requires project access.
     /// </summary>
     public async Task<Project> EditProject(
-        int projectId,
+        [ID] int projectId,
         string? name,
         string? billingEmail,
         ClaimsPrincipal claimsPrincipal,
@@ -172,7 +172,7 @@ public class PrivateMutation
     /// Requires project access.
     /// </summary>
     public async Task<ProjectFilterSettings> EditProjectSettings(
-        [GraphQLName("projectId")] int projectId,
+        [GraphQLName("projectId")] [ID] int projectId,
         List<string>? excludedUsers,
         List<string>? errorFilters,
         int? rageClickWindowSeconds,
@@ -230,7 +230,7 @@ public class PrivateMutation
     /// Delete a project. Requires ADMIN role in workspace.
     /// </summary>
     public async Task<bool> DeleteProject(
-        int projectId,
+        [ID] int projectId,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
@@ -252,7 +252,7 @@ public class PrivateMutation
     /// Save retention periods for a workspace. Requires ADMIN role.
     /// </summary>
     public async Task<bool> SaveBillingPlan(
-        int workspaceId,
+        [ID] int workspaceId,
         RetentionPeriod sessionsRetention,
         RetentionPeriod errorsRetention,
         RetentionPeriod logsRetention,
@@ -284,7 +284,7 @@ public class PrivateMutation
     /// Update error group state (open, resolved, ignored). Requires project access.
     /// </summary>
     public async Task<ErrorGroup> UpdateErrorGroupState(
-        int errorGroupId,
+        [ID] int errorGroupId,
         ErrorGroupState state,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
@@ -314,7 +314,7 @@ public class PrivateMutation
     /// Update whether an error group is publicly visible. Requires project access.
     /// </summary>
     public async Task<ErrorGroup> UpdateErrorGroupIsPublic(
-        int errorGroupId,
+        [ID] int errorGroupId,
         bool isPublic,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
@@ -335,7 +335,7 @@ public class PrivateMutation
     /// Mark an error group as viewed by the current admin.
     /// </summary>
     public async Task<bool> MarkErrorGroupAsViewed(
-        int errorGroupId,
+        [ID] int errorGroupId,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
@@ -392,7 +392,7 @@ public class PrivateMutation
     /// Create an error tag for an error group. Requires project access.
     /// </summary>
     public async Task<ErrorTag> CreateErrorTag(
-        int errorGroupId,
+        [ID] int errorGroupId,
         string title,
         string? description,
         ClaimsPrincipal claimsPrincipal,
@@ -423,7 +423,7 @@ public class PrivateMutation
     /// Create an error comment. Admin ID is taken from auth context.
     /// </summary>
     public async Task<ErrorComment> CreateErrorComment(
-        int errorGroupId,
+        [ID] int errorGroupId,
         string text,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
@@ -451,7 +451,7 @@ public class PrivateMutation
     /// Delete an error comment. Requires project access.
     /// </summary>
     public async Task<bool> DeleteErrorComment(
-        int commentId,
+        [ID] int commentId,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
@@ -475,7 +475,7 @@ public class PrivateMutation
     /// Create a metric monitor. Requires project access.
     /// </summary>
     public async Task<MetricMonitor> CreateMetricMonitor(
-        int projectId,
+        [ID] int projectId,
         string name,
         string metricToMonitor,
         string? aggregator,
@@ -505,7 +505,7 @@ public class PrivateMutation
     /// Update a metric monitor. Requires project access.
     /// </summary>
     public async Task<MetricMonitor> UpdateMetricMonitor(
-        int metricMonitorId,
+        [ID] int metricMonitorId,
         string? name,
         string? aggregator,
         double? threshold,
@@ -533,7 +533,7 @@ public class PrivateMutation
     /// Delete a metric monitor. Requires project access.
     /// </summary>
     public async Task<bool> DeleteMetricMonitor(
-        int metricMonitorId,
+        [ID] int metricMonitorId,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
@@ -582,8 +582,8 @@ public class PrivateMutation
     /// Change which projects an admin can access. Requires ADMIN role.
     /// </summary>
     public async Task<bool> ChangeProjectMembership(
-        int workspaceId,
-        int adminId,
+        [ID] int workspaceId,
+        [ID] int adminId,
         List<int>? projectIds,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
@@ -605,7 +605,7 @@ public class PrivateMutation
     /// Update allowed email origins for auto-join. Requires ADMIN role.
     /// </summary>
     public async Task<bool> UpdateAllowedEmailOrigins(
-        int workspaceId,
+        [ID] int workspaceId,
         List<string>? allowedAutoJoinEmailOrigins,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
@@ -631,7 +631,7 @@ public class PrivateMutation
     /// Create a session comment. Admin ID is taken from auth context.
     /// </summary>
     public async Task<SessionComment> CreateSessionComment(
-        int projectId,
+        [ID] int projectId,
         int sessionId,
         string text,
         int timestamp,
@@ -666,7 +666,7 @@ public class PrivateMutation
     /// Delete a session comment. Requires project access.
     /// </summary>
     public async Task<bool> DeleteSessionComment(
-        int commentId,
+        [ID] int commentId,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
@@ -716,7 +716,7 @@ public class PrivateMutation
     /// Create or update an alert. Requires project access.
     /// </summary>
     public async Task<Alert> SaveAlert(
-        int projectId,
+        [ID] int projectId,
         string name,
         string productType,
         string? functionType,
@@ -755,7 +755,7 @@ public class PrivateMutation
     /// Create a new alert (frontend uses this name).
     /// </summary>
     public async Task<Alert> CreateAlert(
-        int projectId,
+        [ID] int projectId,
         string name,
         string productType,
         string? functionType,
@@ -816,8 +816,8 @@ public class PrivateMutation
     /// Update an existing alert.
     /// </summary>
     public async Task<Alert> UpdateAlert(
-        int projectId,
-        int alertId,
+        [ID] int projectId,
+        [ID] int alertId,
         string? name,
         string? productType,
         string? functionType,
@@ -879,7 +879,7 @@ public class PrivateMutation
     /// Update alert disabled state. Requires project access.
     /// </summary>
     public async Task<bool> UpdateAlertDisabled(
-        int alertId,
+        [ID] int alertId,
         bool disabled,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
@@ -900,7 +900,7 @@ public class PrivateMutation
     /// Delete an alert. Requires project access.
     /// </summary>
     public async Task<bool> DeleteAlert(
-        int alertId,
+        [ID] int alertId,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
@@ -922,9 +922,9 @@ public class PrivateMutation
     /// Create or update a dashboard. Requires project access.
     /// </summary>
     public async Task<Dashboard> UpsertDashboard(
-        int projectId,
+        [ID] int projectId,
         string name,
-        int? dashboardId,
+        [ID] int? dashboardId,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
@@ -954,7 +954,7 @@ public class PrivateMutation
     /// Delete a dashboard. Requires project access.
     /// </summary>
     public async Task<bool> DeleteDashboard(
-        int dashboardId,
+        [ID] int dashboardId,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
@@ -976,7 +976,7 @@ public class PrivateMutation
     /// Create a saved segment. Requires project access.
     /// </summary>
     public async Task<SavedSegment> CreateSavedSegment(
-        int projectId,
+        [ID] int projectId,
         string name,
         string entityType,
         string? @params,
@@ -1004,7 +1004,7 @@ public class PrivateMutation
     /// Edit a saved segment. Requires project access.
     /// </summary>
     public async Task<SavedSegment> EditSavedSegment(
-        int segmentId,
+        [ID] int segmentId,
         string? name,
         string? @params,
         ClaimsPrincipal claimsPrincipal,
@@ -1028,7 +1028,7 @@ public class PrivateMutation
     /// Delete a saved segment. Requires project access.
     /// </summary>
     public async Task<bool> DeleteSavedSegment(
-        int segmentId,
+        [ID] int segmentId,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
@@ -1050,7 +1050,7 @@ public class PrivateMutation
     /// Create an invite link for a workspace. Requires ADMIN role.
     /// </summary>
     public async Task<WorkspaceInviteLink> CreateWorkspaceInviteLink(
-        int workspaceId,
+        [ID] int workspaceId,
         string inviteeEmail,
         string role,
         List<int>? projectIds,
@@ -1175,8 +1175,8 @@ public class PrivateMutation
     /// Add an admin to a workspace. Requires ADMIN role.
     /// </summary>
     public async Task<bool> AddAdminToWorkspace(
-        int workspaceId,
-        int adminId,
+        [ID] int workspaceId,
+        [ID] int adminId,
         string role,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
@@ -1199,8 +1199,8 @@ public class PrivateMutation
     /// Change an admin's role in a workspace. Requires ADMIN role.
     /// </summary>
     public async Task<bool> ChangeAdminRole(
-        int workspaceId,
-        int adminId,
+        [ID] int workspaceId,
+        [ID] int adminId,
         string newRole,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
@@ -1222,8 +1222,8 @@ public class PrivateMutation
     /// Remove an admin from a workspace. Requires ADMIN role.
     /// </summary>
     public async Task<bool> DeleteAdminFromWorkspace(
-        int workspaceId,
-        int adminId,
+        [ID] int workspaceId,
+        [ID] int adminId,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
@@ -1278,7 +1278,7 @@ public class PrivateMutation
     /// Delete sessions matching criteria (for data deletion). Requires ADMIN role.
     /// </summary>
     public async Task<bool> DeleteSessions(
-        int projectId,
+        [ID] int projectId,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
@@ -1303,8 +1303,8 @@ public class PrivateMutation
     /// Update an error alert.
     /// </summary>
     public async Task<ErrorAlert> UpdateErrorAlert(
-        int projectId,
-        int errorAlertId,
+        [ID] int projectId,
+        [ID] int errorAlertId,
         string? name,
         int? countThreshold,
         int? thresholdWindow,
@@ -1339,8 +1339,8 @@ public class PrivateMutation
     /// Delete an error alert.
     /// </summary>
     public async Task<ErrorAlert> DeleteErrorAlert(
-        int projectId,
-        int errorAlertId,
+        [ID] int projectId,
+        [ID] int errorAlertId,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
@@ -1361,8 +1361,8 @@ public class PrivateMutation
     /// Toggle error alert disabled state.
     /// </summary>
     public async Task<ErrorAlert> UpdateErrorAlertIsDisabled(
-        int id,
-        int projectId,
+        [ID] int id,
+        [ID] int projectId,
         bool disabled,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
@@ -1386,8 +1386,8 @@ public class PrivateMutation
     /// Update a session alert.
     /// </summary>
     public async Task<SessionAlert> UpdateSessionAlert(
-        int id,
-        int projectId,
+        [ID] int id,
+        [ID] int projectId,
         string? name,
         int? countThreshold,
         int? thresholdWindow,
@@ -1420,8 +1420,8 @@ public class PrivateMutation
     /// Delete a session alert.
     /// </summary>
     public async Task<SessionAlert> DeleteSessionAlert(
-        int projectId,
-        int sessionAlertId,
+        [ID] int projectId,
+        [ID] int sessionAlertId,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
@@ -1442,8 +1442,8 @@ public class PrivateMutation
     /// Toggle session alert disabled state.
     /// </summary>
     public async Task<SessionAlert> UpdateSessionAlertIsDisabled(
-        int id,
-        int projectId,
+        [ID] int id,
+        [ID] int projectId,
         bool disabled,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
@@ -1467,8 +1467,8 @@ public class PrivateMutation
     /// Update a log alert.
     /// </summary>
     public async Task<LogAlert> UpdateLogAlert(
-        int id,
-        int projectId,
+        [ID] int id,
+        [ID] int projectId,
         string? name,
         int? countThreshold,
         int? thresholdWindow,
@@ -1503,8 +1503,8 @@ public class PrivateMutation
     /// Delete a log alert.
     /// </summary>
     public async Task<LogAlert> DeleteLogAlert(
-        int projectId,
-        int id,
+        [ID] int projectId,
+        [ID] int id,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
@@ -1525,8 +1525,8 @@ public class PrivateMutation
     /// Toggle log alert disabled state.
     /// </summary>
     public async Task<LogAlert> UpdateLogAlertIsDisabled(
-        int id,
-        int projectId,
+        [ID] int id,
+        [ID] int projectId,
         bool disabled,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
@@ -1548,8 +1548,8 @@ public class PrivateMutation
     /// Toggle metric monitor disabled state.
     /// </summary>
     public async Task<MetricMonitor> UpdateMetricMonitorIsDisabled(
-        int id,
-        int projectId,
+        [ID] int id,
+        [ID] int projectId,
         bool disabled,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
@@ -1573,7 +1573,7 @@ public class PrivateMutation
     /// Reply to an error comment thread.
     /// </summary>
     public async Task<CommentReply> ReplyToErrorComment(
-        int commentId,
+        [ID] int commentId,
         string text,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
@@ -1602,7 +1602,7 @@ public class PrivateMutation
     /// Mute/unmute an error comment thread for the current admin.
     /// </summary>
     public async Task<bool> MuteErrorCommentThread(
-        int id,
+        [ID] int id,
         bool? hasMuted,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
@@ -1636,7 +1636,7 @@ public class PrivateMutation
     /// Mute/unmute a session comment thread for the current admin.
     /// </summary>
     public async Task<bool> MuteSessionCommentThread(
-        int id,
+        [ID] int id,
         bool? hasMuted,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
@@ -1688,9 +1688,9 @@ public class PrivateMutation
     /// Create or update a visualization. Returns the visualization ID.
     /// </summary>
     public async Task<int> UpsertVisualization(
-        int projectId,
+        [ID] int projectId,
         string? name,
-        int? id,
+        [ID] int? id,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
@@ -1727,7 +1727,7 @@ public class PrivateMutation
     /// Delete a visualization and its graphs.
     /// </summary>
     public async Task<bool> DeleteVisualization(
-        int id,
+        [ID] int id,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
@@ -1750,7 +1750,7 @@ public class PrivateMutation
     /// Create or update a graph within a visualization.
     /// </summary>
     public async Task<Graph> UpsertGraph(
-        int visualizationId,
+        [ID] int visualizationId,
         string title,
         string? productType,
         string? query,
@@ -1759,7 +1759,7 @@ public class PrivateMutation
         int? bucketCount,
         int? limit,
         string? display,
-        int? id,
+        [ID] int? id,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
@@ -1811,7 +1811,7 @@ public class PrivateMutation
     /// Delete a graph.
     /// </summary>
     public async Task<bool> DeleteGraph(
-        int id,
+        [ID] int id,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
@@ -1869,7 +1869,7 @@ public class PrivateMutation
     /// Creates an invite link record. Self-hosted: no email sending, just creates the link.
     /// </summary>
     public async Task<string> SendAdminWorkspaceInvite(
-        int workspaceId,
+        [ID] int workspaceId,
         string email,
         string role,
         List<int>? projectIds,
@@ -1922,7 +1922,7 @@ public class PrivateMutation
     /// Join a workspace (for workspaces with auto-join email origins).
     /// </summary>
     public async Task<int> JoinWorkspace(
-        int workspaceId,
+        [ID] int workspaceId,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
@@ -2000,7 +2000,7 @@ public class PrivateMutation
     /// Update the platforms configuration for a project.
     /// </summary>
     public async Task<bool> EditProjectPlatforms(
-        [GraphQLName("projectID")] int projectId,
+        [GraphQLName("projectID")] [ID] int projectId,
         string platforms,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
@@ -2102,7 +2102,7 @@ public class PrivateMutation
     /// Submit registration survey data for a workspace.
     /// </summary>
     public async Task<bool> SubmitRegistrationForm(
-        int workspaceId,
+        [ID] int workspaceId,
         string? teamSize,
         string? role,
         string? useCase,
@@ -2147,7 +2147,7 @@ public class PrivateMutation
     /// Request access to a workspace.
     /// </summary>
     public async Task<bool> RequestAccess(
-        int workspaceId,
+        [ID] int workspaceId,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
@@ -2182,7 +2182,7 @@ public class PrivateMutation
     /// </summary>
     public async Task<bool> AddIntegrationToProject(
         IntegrationType integrationType,
-        int projectId,
+        [ID] int projectId,
         string? code,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
@@ -2218,7 +2218,7 @@ public class PrivateMutation
     /// </summary>
     public async Task<bool> RemoveIntegrationFromProject(
         IntegrationType integrationType,
-        int projectId,
+        [ID] int projectId,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
@@ -2244,7 +2244,7 @@ public class PrivateMutation
     /// </summary>
     public async Task<bool> AddIntegrationToWorkspace(
         IntegrationType integrationType,
-        int workspaceId,
+        [ID] int workspaceId,
         string? code,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
@@ -2280,7 +2280,7 @@ public class PrivateMutation
     /// </summary>
     public async Task<bool> RemoveIntegrationFromWorkspace(
         IntegrationType integrationType,
-        int workspaceId,
+        [ID] int workspaceId,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
@@ -2305,7 +2305,7 @@ public class PrivateMutation
     /// Update integration project mappings for a workspace.
     /// </summary>
     public async Task<bool> UpdateIntegrationProjectMappings(
-        int workspaceId,
+        [ID] int workspaceId,
         IntegrationType integrationType,
         List<IntegrationProjectMappingInput> projectMappings,
         ClaimsPrincipal claimsPrincipal,
@@ -2344,7 +2344,7 @@ public class PrivateMutation
     /// Create a session comment with an existing external issue.
     /// </summary>
     public async Task<SessionComment> CreateSessionCommentWithExistingIssue(
-        int projectId,
+        [ID] int projectId,
         string sessionSecureId,
         int sessionTimestamp,
         string text,
@@ -2394,7 +2394,7 @@ public class PrivateMutation
     /// Create an error comment with an existing external issue.
     /// </summary>
     public async Task<ErrorComment> CreateErrorCommentForExistingIssue(
-        int projectId,
+        [ID] int projectId,
         string errorGroupSecureId,
         string text,
         string? taggedAdmins,
@@ -2492,7 +2492,7 @@ public class PrivateMutation
     /// Set up a Cloudflare proxy for a workspace.
     /// </summary>
     public async Task<bool> CreateCloudflareProxy(
-        int workspaceId,
+        [ID] int workspaceId,
         string proxySubdomain,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
@@ -2515,7 +2515,7 @@ public class PrivateMutation
     /// Create or update a Slack channel configuration for a workspace.
     /// </summary>
     public async Task<bool> UpsertSlackChannel(
-        int workspaceId,
+        [ID] int workspaceId,
         string name,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
@@ -2546,7 +2546,7 @@ public class PrivateMutation
     /// Create or update a Discord channel configuration for a workspace.
     /// </summary>
     public async Task<bool> UpsertDiscordChannel(
-        int workspaceId,
+        [ID] int workspaceId,
         string name,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
@@ -2574,7 +2574,7 @@ public class PrivateMutation
     /// Sync Slack integration — stores access token on workspace.
     /// </summary>
     public async Task<bool> SyncSlackIntegration(
-        int projectId,
+        [ID] int projectId,
         string? code,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
@@ -2603,7 +2603,7 @@ public class PrivateMutation
     /// Returns the session comment.
     /// </summary>
     public async Task<SessionComment> CreateIssueForSessionComment(
-        int projectId,
+        [ID] int projectId,
         string sessionSecureId,
         int sessionCommentId,
         IntegrationType integrationType,
@@ -2635,7 +2635,7 @@ public class PrivateMutation
     /// Link an existing external issue to a session comment.
     /// </summary>
     public async Task<SessionComment> LinkIssueForSessionComment(
-        int projectId,
+        [ID] int projectId,
         int sessionCommentId,
         IntegrationType integrationType,
         string externalIssueUrl,
@@ -2666,7 +2666,7 @@ public class PrivateMutation
     /// Create an external issue for an error comment (stub — requires external API integration).
     /// </summary>
     public async Task<ErrorComment> CreateIssueForErrorComment(
-        int projectId,
+        [ID] int projectId,
         string errorGroupSecureId,
         int errorCommentId,
         IntegrationType integrationType,
@@ -2701,7 +2701,7 @@ public class PrivateMutation
     /// Link an existing external issue to an error comment.
     /// </summary>
     public async Task<ErrorComment> LinkIssueForErrorComment(
-        int projectId,
+        [ID] int projectId,
         int errorCommentId,
         IntegrationType integrationType,
         string externalIssueUrl,
@@ -2732,7 +2732,7 @@ public class PrivateMutation
     /// Delete a workspace invite link by ID.
     /// </summary>
     public async Task<bool> DeleteInviteLinkFromWorkspace(
-        int workspaceId,
+        [ID] int workspaceId,
         int inviteLinkId,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
@@ -2756,7 +2756,7 @@ public class PrivateMutation
     /// Replace all Vercel project mappings for a project's workspace with the provided list.
     /// </summary>
     public async Task<bool> UpdateVercelProjectMappings(
-        int projectId,
+        [ID] int projectId,
         List<VercelProjectMappingInput> mappings,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
@@ -2791,7 +2791,7 @@ public class PrivateMutation
     /// Replace all ClickUp project mappings for a workspace with the provided list.
     /// </summary>
     public async Task<bool> UpdateClickUpProjectMappings(
-        int workspaceId,
+        [ID] int workspaceId,
         List<ClickUpProjectMappingInput> mappings,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,

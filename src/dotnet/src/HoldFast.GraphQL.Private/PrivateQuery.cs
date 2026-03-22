@@ -24,7 +24,7 @@ public class PrivateQuery
     [UseProjection]
     [UseFiltering]
     public async Task<Workspace?> GetWorkspace(
-        int id,
+        [ID] int id,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
@@ -41,7 +41,7 @@ public class PrivateQuery
     /// Get the workspace that contains a given project.
     /// </summary>
     public async Task<Workspace?> GetWorkspaceForProject(
-        int projectId,
+        [ID] int projectId,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
@@ -97,7 +97,7 @@ public class PrivateQuery
     /// Get workspace invite links.
     /// </summary>
     public async Task<List<WorkspaceInviteLink>> GetWorkspaceInviteLinks(
-        int workspaceId,
+        [ID] int workspaceId,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
@@ -114,7 +114,7 @@ public class PrivateQuery
     /// List workspace admins with their roles.
     /// </summary>
     public async Task<List<WorkspaceAdmin>> GetWorkspaceAdmins(
-        int workspaceId,
+        [ID] int workspaceId,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
@@ -133,7 +133,7 @@ public class PrivateQuery
 
     [UseProjection]
     public async Task<Project?> GetProject(
-        int id,
+        [ID] int id,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
@@ -168,7 +168,7 @@ public class PrivateQuery
     /// Get project settings (filter/sampling configuration).
     /// </summary>
     public async Task<ProjectFilterSettings?> GetProjectSettings(
-        [GraphQLName("projectId")] int projectId,
+        [GraphQLName("projectId")] [ID] int projectId,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
@@ -184,7 +184,7 @@ public class PrivateQuery
 
     [UseProjection]
     public async Task<ErrorGroup?> GetErrorGroup(
-        int id,
+        [ID] int id,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
@@ -203,7 +203,7 @@ public class PrivateQuery
     [UseFiltering]
     [UseSorting]
     public async Task<IQueryable<ErrorGroup>> GetErrorGroups(
-        int projectId,
+        [ID] int projectId,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
@@ -218,7 +218,7 @@ public class PrivateQuery
     /// Get a specific error object by ID.
     /// </summary>
     public async Task<ErrorObject?> GetErrorObject(
-        int id,
+        [ID] int id,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
@@ -241,7 +241,7 @@ public class PrivateQuery
     [UseFiltering]
     [UseSorting]
     public async Task<IQueryable<ErrorObject>> GetErrorObjects(
-        int errorGroupId,
+        [ID] int errorGroupId,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
@@ -258,7 +258,7 @@ public class PrivateQuery
     /// Get error group tags.
     /// </summary>
     public async Task<List<ErrorTag>> GetErrorGroupTags(
-        int errorGroupId,
+        [ID] int errorGroupId,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
@@ -401,7 +401,7 @@ public class PrivateQuery
     [UseFiltering]
     [UseSorting]
     public async Task<IQueryable<SessionComment>> GetSessionCommentsForProject(
-        int projectId,
+        [ID] int projectId,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
@@ -420,7 +420,7 @@ public class PrivateQuery
     [UseProjection]
     [UseSorting]
     public async Task<IQueryable<ErrorComment>> GetErrorComments(
-        int errorGroupId,
+        [ID] int errorGroupId,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
@@ -436,7 +436,7 @@ public class PrivateQuery
     // ── Workspace Settings ────────────────────────────────────────────
 
     public async Task<AllWorkspaceSettings?> GetWorkspaceSettings(
-        int workspaceId,
+        [ID] int workspaceId,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
@@ -454,7 +454,7 @@ public class PrivateQuery
     [UseFiltering]
     [UseSorting]
     public async Task<IQueryable<Alert>> GetAlerts(
-        int projectId,
+        [ID] int projectId,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
@@ -472,7 +472,7 @@ public class PrivateQuery
     [UseProjection]
     [UseFiltering]
     public async Task<IQueryable<Dashboard>> GetDashboards(
-        int projectId,
+        [ID] int projectId,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
@@ -507,7 +507,7 @@ public class PrivateQuery
     [UseFiltering]
     [UseSorting]
     public async Task<IQueryable<Domain.Entities.Service>> GetServices(
-        int projectId,
+        [ID] int projectId,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
@@ -524,7 +524,7 @@ public class PrivateQuery
     /// Get a service by name within a project.
     /// </summary>
     public async Task<Domain.Entities.Service?> GetServiceByName(
-        int projectId,
+        [ID] int projectId,
         string name,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
@@ -543,7 +543,7 @@ public class PrivateQuery
     /// List saved segments for a project, optionally filtered by entity type.
     /// </summary>
     public async Task<List<SavedSegment>> GetSavedSegments(
-        int projectId,
+        [ID] int projectId,
         string? entityType,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
@@ -564,7 +564,7 @@ public class PrivateQuery
     /// Get integration project mappings.
     /// </summary>
     public async Task<List<IntegrationProjectMapping>> GetIntegrationProjectMappings(
-        int projectId,
+        [ID] int projectId,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
@@ -581,7 +581,7 @@ public class PrivateQuery
     /// Get integration workspace mappings.
     /// </summary>
     public async Task<List<IntegrationWorkspaceMapping>> GetIntegrationWorkspaceMappings(
-        int workspaceId,
+        [ID] int workspaceId,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
@@ -600,7 +600,7 @@ public class PrivateQuery
     /// List source map files for a project version.
     /// </summary>
     public async Task<List<string>> GetSourcemapFiles(
-        int projectId,
+        [ID] int projectId,
         string? version,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
@@ -627,7 +627,7 @@ public class PrivateQuery
     /// List source map versions for a project.
     /// </summary>
     public async Task<List<string>> GetSourcemapVersions(
-        int projectId,
+        [ID] int projectId,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
@@ -649,7 +649,7 @@ public class PrivateQuery
     /// Query logs from ClickHouse with cursor-based pagination.
     /// </summary>
     public async Task<LogConnection> GetLogs(
-        int projectId,
+        [ID] int projectId,
         string query,
         DateTime dateRangeStart,
         DateTime dateRangeEnd,
@@ -675,7 +675,7 @@ public class PrivateQuery
     /// Get log histogram buckets for chart display.
     /// </summary>
     public async Task<List<HistogramBucket>> GetLogsHistogram(
-        int projectId,
+        [ID] int projectId,
         string query,
         DateTime dateRangeStart,
         DateTime dateRangeEnd,
@@ -695,7 +695,7 @@ public class PrivateQuery
     /// Get available log attribute keys for filter UI.
     /// </summary>
     public async Task<List<string>> GetLogKeys(
-        int projectId,
+        [ID] int projectId,
         DateTime dateRangeStart,
         DateTime dateRangeEnd,
         string? query,
@@ -715,7 +715,7 @@ public class PrivateQuery
     /// Get values for a specific log attribute key.
     /// </summary>
     public async Task<List<string>> GetLogKeyValues(
-        int projectId,
+        [ID] int projectId,
         string key,
         DateTime dateRangeStart,
         DateTime dateRangeEnd,
@@ -737,7 +737,7 @@ public class PrivateQuery
     /// Query traces from ClickHouse with cursor-based pagination.
     /// </summary>
     public async Task<TraceConnection> GetTraces(
-        int projectId,
+        [ID] int projectId,
         string query,
         DateTime dateRangeStart,
         DateTime dateRangeEnd,
@@ -763,7 +763,7 @@ public class PrivateQuery
     /// Get trace histogram buckets for chart display.
     /// </summary>
     public async Task<List<HistogramBucket>> GetTracesHistogram(
-        int projectId,
+        [ID] int projectId,
         string query,
         DateTime dateRangeStart,
         DateTime dateRangeEnd,
@@ -783,7 +783,7 @@ public class PrivateQuery
     /// Get available trace attribute keys for filter UI.
     /// </summary>
     public async Task<List<string>> GetTraceKeys(
-        int projectId,
+        [ID] int projectId,
         DateTime dateRangeStart,
         DateTime dateRangeEnd,
         string? query,
@@ -803,7 +803,7 @@ public class PrivateQuery
     /// Get values for a specific trace attribute key.
     /// </summary>
     public async Task<List<string>> GetTraceKeyValues(
-        int projectId,
+        [ID] int projectId,
         string key,
         DateTime dateRangeStart,
         DateTime dateRangeEnd,
@@ -825,7 +825,7 @@ public class PrivateQuery
     /// Query metrics from ClickHouse with time bucketing and aggregation.
     /// </summary>
     public async Task<MetricsBuckets> GetMetrics(
-        int projectId,
+        [ID] int projectId,
         string query,
         DateTime dateRangeStart,
         DateTime dateRangeEnd,
@@ -852,7 +852,7 @@ public class PrivateQuery
     /// Returns IDs and total count for pagination.
     /// </summary>
     public async Task<ErrorGroupSearchResult> SearchErrorGroups(
-        int projectId,
+        [ID] int projectId,
         string query,
         DateTime dateRangeStart,
         DateTime dateRangeEnd,
@@ -876,7 +876,7 @@ public class PrivateQuery
     /// Get error objects histogram for charts.
     /// </summary>
     public async Task<List<HistogramBucket>> GetErrorObjectsHistogram(
-        int projectId,
+        [ID] int projectId,
         string query,
         DateTime dateRangeStart,
         DateTime dateRangeEnd,
@@ -898,7 +898,7 @@ public class PrivateQuery
     /// Search session IDs via ClickHouse (for the sessions list page).
     /// </summary>
     public async Task<SessionSearchResult> SearchSessions(
-        int projectId,
+        [ID] int projectId,
         string query,
         DateTime dateRangeStart,
         DateTime dateRangeEnd,
@@ -926,7 +926,7 @@ public class PrivateQuery
     /// Get the admin's role within a workspace. Returns null if not a member.
     /// </summary>
     public async Task<string?> GetAdminRole(
-        int workspaceId,
+        [ID] int workspaceId,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
         CancellationToken ct)
@@ -1046,8 +1046,8 @@ public class PrivateQuery
     /// Get a single error instance with full stack trace and metadata.
     /// </summary>
     public async Task<ErrorObject?> GetErrorInstance(
-        int errorGroupId,
-        int? errorObjectId,
+        [ID] int errorGroupId,
+        [ID] int? errorObjectId,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
@@ -1115,7 +1115,7 @@ public class PrivateQuery
     /// List all error comments for a project.
     /// </summary>
     public async Task<List<ErrorComment>> GetErrorCommentsForProject(
-        int projectId,
+        [ID] int projectId,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
@@ -1157,7 +1157,7 @@ public class PrivateQuery
     /// Get all distinct comment tags for a project.
     /// </summary>
     public async Task<List<SessionCommentTag>> GetSessionCommentTagsForProject(
-        int projectId,
+        [ID] int projectId,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
@@ -1181,7 +1181,7 @@ public class PrivateQuery
     [UseFiltering]
     [UseSorting]
     public async Task<IQueryable<RageClickEvent>> GetRageClicksForProject(
-        int projectId,
+        [ID] int projectId,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
@@ -1200,7 +1200,7 @@ public class PrivateQuery
     /// Check if a project has any sessions (client integration working).
     /// </summary>
     public async Task<bool> GetClientIntegration(
-        int projectId,
+        [ID] int projectId,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
@@ -1214,7 +1214,7 @@ public class PrivateQuery
     /// Check if a project has any error groups (server integration working).
     /// </summary>
     public async Task<bool> GetServerIntegration(
-        int projectId,
+        [ID] int projectId,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
@@ -1228,7 +1228,7 @@ public class PrivateQuery
     /// Check if a project has received any logs.
     /// </summary>
     public async Task<bool> GetLogsIntegration(
-        int projectId,
+        [ID] int projectId,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
         [Service] IClickHouseService clickHouse,
@@ -1250,7 +1250,7 @@ public class PrivateQuery
     /// Check if a project has received any traces.
     /// </summary>
     public async Task<bool> GetTracesIntegration(
-        int projectId,
+        [ID] int projectId,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
         [Service] IClickHouseService clickHouse,
@@ -1274,7 +1274,7 @@ public class PrivateQuery
     /// Get a single alert by ID.
     /// </summary>
     public async Task<Alert?> GetAlert(
-        int id,
+        [ID] int id,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
@@ -1296,7 +1296,7 @@ public class PrivateQuery
     /// Get metric monitors for a project.
     /// </summary>
     public async Task<List<MetricMonitor>> GetMetricMonitors(
-        int projectId,
+        [ID] int projectId,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
@@ -1355,7 +1355,7 @@ public class PrivateQuery
     /// Check if any sessions have been viewed in a project.
     /// </summary>
     public async Task<bool> GetProjectHasViewedASession(
-        int projectId,
+        [ID] int projectId,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
@@ -1371,7 +1371,7 @@ public class PrivateQuery
     /// Get error alerts for a project.
     /// </summary>
     public async Task<List<ErrorAlert>> GetErrorAlerts(
-        int projectId,
+        [ID] int projectId,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
@@ -1385,7 +1385,7 @@ public class PrivateQuery
     /// Get session alerts for a project, optionally filtered by type.
     /// </summary>
     public async Task<List<SessionAlert>> GetSessionAlerts(
-        int projectId,
+        [ID] int projectId,
         string? type,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
@@ -1403,7 +1403,7 @@ public class PrivateQuery
     /// Get log alerts for a project.
     /// </summary>
     public async Task<List<LogAlert>> GetLogAlerts(
-        int projectId,
+        [ID] int projectId,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
@@ -1417,8 +1417,8 @@ public class PrivateQuery
     /// Get a single log alert by id.
     /// </summary>
     public async Task<LogAlert?> GetLogAlert(
-        int id,
-        int projectId,
+        [ID] int id,
+        [ID] int projectId,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
@@ -1434,7 +1434,7 @@ public class PrivateQuery
     /// Get all visualizations for a project.
     /// </summary>
     public async Task<List<Visualization>> GetVisualizations(
-        int projectId,
+        [ID] int projectId,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
@@ -1452,7 +1452,7 @@ public class PrivateQuery
     /// Get a single visualization by id.
     /// </summary>
     public async Task<Visualization?> GetVisualization(
-        int id,
+        [ID] int id,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
@@ -1471,7 +1471,7 @@ public class PrivateQuery
     /// Get a single graph by id.
     /// </summary>
     public async Task<Graph?> GetGraph(
-        int id,
+        [ID] int id,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
@@ -1490,7 +1490,7 @@ public class PrivateQuery
     /// Count unprocessed sessions (last 4h10m window, matching Go lookback).
     /// </summary>
     public async Task<long> GetUnprocessedSessionsCount(
-        int projectId,
+        [ID] int projectId,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
@@ -1510,7 +1510,7 @@ public class PrivateQuery
     /// Count distinct live users (unprocessed sessions in last 4h10m).
     /// </summary>
     public async Task<long> GetLiveUsersCount(
-        int projectId,
+        [ID] int projectId,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
@@ -1532,7 +1532,7 @@ public class PrivateQuery
     /// Daily session counts for a date range (from materialized view).
     /// </summary>
     public async Task<List<DailySessionCount>> GetDailySessionsCount(
-        int projectId,
+        [ID] int projectId,
         DateTime startDate,
         DateTime endDate,
         ClaimsPrincipal claimsPrincipal,
@@ -1553,7 +1553,7 @@ public class PrivateQuery
     /// Daily error counts for a date range (from materialized view).
     /// </summary>
     public async Task<List<DailyErrorCount>> GetDailyErrorsCount(
-        int projectId,
+        [ID] int projectId,
         DateTime startDate,
         DateTime endDate,
         ClaimsPrincipal claimsPrincipal,
@@ -1574,7 +1574,7 @@ public class PrivateQuery
     /// Workspace admins filtered by project-level access.
     /// </summary>
     public async Task<List<Admin>> GetWorkspaceAdminsByProjectId(
-        int projectId,
+        [ID] int projectId,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
@@ -1600,7 +1600,7 @@ public class PrivateQuery
     /// Get searchable keys for sessions.
     /// </summary>
     public async Task<List<QueryKey>> GetSessionsKeys(
-        int projectId,
+        [ID] int projectId,
         DateTime startDate,
         DateTime endDate,
         string? query,
@@ -1617,7 +1617,7 @@ public class PrivateQuery
     /// Get key values for sessions.
     /// </summary>
     public async Task<List<string>> GetSessionsKeyValues(
-        int projectId,
+        [ID] int projectId,
         string keyName,
         DateTime startDate,
         DateTime endDate,
@@ -1636,7 +1636,7 @@ public class PrivateQuery
     /// Get searchable keys for errors (reserved key set, matching Go).
     /// </summary>
     public Task<List<QueryKey>> GetErrorsKeys(
-        int projectId,
+        [ID] int projectId,
         string? query,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
@@ -1661,7 +1661,7 @@ public class PrivateQuery
     /// Get key values for errors (delegates to ClickHouse).
     /// </summary>
     public async Task<List<string>> GetErrorsKeyValues(
-        int projectId,
+        [ID] int projectId,
         string keyName,
         DateTime startDate,
         DateTime endDate,
@@ -1680,7 +1680,7 @@ public class PrivateQuery
     /// Get searchable keys for events (delegates to ClickHouse).
     /// </summary>
     public async Task<List<QueryKey>> GetEventsKeys(
-        int projectId,
+        [ID] int projectId,
         DateTime startDate,
         DateTime endDate,
         string? query,
@@ -1698,7 +1698,7 @@ public class PrivateQuery
     /// Get key values for events (delegates to ClickHouse).
     /// </summary>
     public async Task<List<string>> GetEventsKeyValues(
-        int projectId,
+        [ID] int projectId,
         string keyName,
         DateTime startDate,
         DateTime endDate,
@@ -1750,7 +1750,7 @@ public class PrivateQuery
     /// Get dashboard definitions with metrics and filters for a project.
     /// </summary>
     public async Task<List<Dashboard>> GetDashboardDefinitions(
-        int projectId,
+        [ID] int projectId,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
@@ -1770,7 +1770,7 @@ public class PrivateQuery
     /// Get metric tag keys (delegates to trace keys with 30-day lookback).
     /// </summary>
     public async Task<List<string>> GetMetricTags(
-        int projectId,
+        [ID] int projectId,
         string metricName,
         string? query,
         ClaimsPrincipal claimsPrincipal,
@@ -1795,7 +1795,7 @@ public class PrivateQuery
     /// Get metric tag values for a given tag key.
     /// </summary>
     public async Task<List<string>> GetMetricTagValues(
-        int projectId,
+        [ID] int projectId,
         string metricName,
         string tagName,
         ClaimsPrincipal claimsPrincipal,
@@ -1822,7 +1822,7 @@ public class PrivateQuery
     /// Get sessions histogram (delegates to ClickHouse).
     /// </summary>
     public async Task<List<HistogramBucket>> GetSessionsHistogram(
-        int projectId,
+        [ID] int projectId,
         string query,
         DateTime startDate,
         DateTime endDate,
@@ -1842,7 +1842,7 @@ public class PrivateQuery
     /// Get errors histogram (delegates to ClickHouse).
     /// </summary>
     public async Task<List<HistogramBucket>> GetErrorsHistogram(
-        int projectId,
+        [ID] int projectId,
         string query,
         DateTime startDate,
         DateTime endDate,
@@ -1879,7 +1879,7 @@ public class PrivateQuery
     /// Get a single trace by ID (for trace detail view).
     /// </summary>
     public async Task<TraceConnection> GetTrace(
-        int projectId,
+        [ID] int projectId,
         string traceId,
         string? sessionSecureId,
         ClaimsPrincipal claimsPrincipal,
@@ -2117,7 +2117,7 @@ public class PrivateQuery
     /// Get environment field values for a project (last 30 days).
     /// </summary>
     public async Task<List<Field>> GetEnvironmentSuggestion(
-        int projectId,
+        [ID] int projectId,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
         [Service] IClickHouseService clickHouse,
@@ -2143,7 +2143,7 @@ public class PrivateQuery
     /// Search user identifiers for a project (last 30 days).
     /// </summary>
     public async Task<List<string>> GetIdentifierSuggestion(
-        int projectId,
+        [ID] int projectId,
         string? query,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
@@ -2165,7 +2165,7 @@ public class PrivateQuery
     /// </summary>
     public async Task<bool> IsIntegratedWith(
         IntegrationType integrationType,
-        int projectId,
+        [ID] int projectId,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
@@ -2199,7 +2199,7 @@ public class PrivateQuery
     /// </summary>
     public async Task<bool> IsWorkspaceIntegratedWith(
         IntegrationType integrationType,
-        int workspaceId,
+        [ID] int workspaceId,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
@@ -2229,7 +2229,7 @@ public class PrivateQuery
     /// </summary>
     public async Task<bool> IsProjectIntegratedWith(
         IntegrationType integrationType,
-        int projectId,
+        [ID] int projectId,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
@@ -2246,7 +2246,7 @@ public class PrivateQuery
     /// Check if metrics have been set up for a project.
     /// </summary>
     public async Task<IntegrationStatus> GetMetricsIntegration(
-        int projectId,
+        [ID] int projectId,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
@@ -2365,7 +2365,7 @@ public class PrivateQuery
     /// Get network histogram data for a project (aggregates by URL host or status).
     /// </summary>
     public async Task<List<HistogramBucket>> GetNetworkHistogram(
-        int projectId,
+        [ID] int projectId,
         double lookbackDays,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
@@ -2388,7 +2388,7 @@ public class PrivateQuery
     /// Stub: returns report from PostgreSQL until ClickHouse view is available.
     /// </summary>
     public async Task<List<SessionsReportRow>> GetSessionUsersReports(
-        int projectId,
+        [ID] int projectId,
         QueryInput query,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
@@ -2440,7 +2440,7 @@ public class PrivateQuery
     /// Get comment mention suggestions (workspace admins for @-mentions).
     /// </summary>
     public async Task<List<Admin>> GetCommentMentionSuggestions(
-        int projectId,
+        [ID] int projectId,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
@@ -2461,7 +2461,7 @@ public class PrivateQuery
     /// Get AI query suggestion (stub — returns empty suggestion).
     /// </summary>
     public Task<string> GetAIQuerySuggestion(
-        int projectId,
+        [ID] int projectId,
         string productType,
         string query,
         string timeZone,
@@ -2499,7 +2499,7 @@ public class PrivateQuery
     /// Returns an array of counts, one per day.
     /// </summary>
     public async Task<List<long>> GetDailyErrorFrequency(
-        int projectId,
+        [ID] int projectId,
         string errorGroupSecureId,
         int dateOffset,
         ClaimsPrincipal claimsPrincipal,
@@ -2584,7 +2584,7 @@ public class PrivateQuery
     /// Get top referrer hosts for a project.
     /// </summary>
     public async Task<List<ReferrerTablePayload>> GetReferrers(
-        int projectId,
+        [ID] int projectId,
         double lookbackDays,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
@@ -2611,7 +2611,7 @@ public class PrivateQuery
     /// Get top users by active time for a project.
     /// </summary>
     public async Task<List<TopUsersPayload>> GetTopUsers(
-        int projectId,
+        [ID] int projectId,
         double lookbackDays,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
@@ -2647,7 +2647,7 @@ public class PrivateQuery
     /// Get average session length for a project.
     /// </summary>
     public async Task<AverageSessionLength> GetAverageSessionLength(
-        int projectId,
+        [ID] int projectId,
         double lookbackDays,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
@@ -2671,7 +2671,7 @@ public class PrivateQuery
     /// Count new users (first_time=1) for a project.
     /// </summary>
     public async Task<NewUsersCount> GetNewUsersCount(
-        int projectId,
+        [ID] int projectId,
         double lookbackDays,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
@@ -2695,7 +2695,7 @@ public class PrivateQuery
     /// Count unique fingerprints for a project.
     /// </summary>
     public async Task<UserFingerprintCount> GetUserFingerprintCount(
-        int projectId,
+        [ID] int projectId,
         double lookbackDays,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
@@ -2723,7 +2723,7 @@ public class PrivateQuery
     /// Get Slack channel suggestions for alert configuration.
     /// </summary>
     public async Task<List<SanitizedSlackChannel>> GetSlackChannelSuggestion(
-        int projectId,
+        [ID] int projectId,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
@@ -2745,7 +2745,7 @@ public class PrivateQuery
     /// Get Discord channel suggestions for alert configuration.
     /// </summary>
     public async Task<List<DiscordChannelInfo>> GetDiscordChannelSuggestions(
-        int projectId,
+        [ID] int projectId,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
@@ -2766,7 +2766,7 @@ public class PrivateQuery
     /// Get Microsoft Teams channel suggestions for alert configuration.
     /// </summary>
     public async Task<List<MicrosoftTeamsChannelInfo>> GetMicrosoftTeamsChannelSuggestions(
-        int projectId,
+        [ID] int projectId,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
@@ -2805,7 +2805,7 @@ public class PrivateQuery
     /// Get workspace access requests.
     /// </summary>
     public async Task<List<WorkspaceAccessRequest>> GetWorkspaceAccessRequests(
-        int workspaceId,
+        [ID] int workspaceId,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
@@ -2823,7 +2823,7 @@ public class PrivateQuery
     /// Get integration project mappings for a workspace.
     /// </summary>
     public async Task<List<IntegrationProjectMapping>> GetIntegrationProjectMappings(
-        int workspaceId,
+        [ID] int workspaceId,
         IntegrationType? integrationType,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
@@ -2874,7 +2874,7 @@ public class PrivateQuery
     /// Get a project or workspace by ID.
     /// </summary>
     public async Task<ProjectOrWorkspaceResult> GetProjectOrWorkspace(
-        int id,
+        [ID] int id,
         bool isWorkspace,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
@@ -2914,7 +2914,7 @@ public class PrivateQuery
     /// Get referrer count for a project.
     /// </summary>
     public async Task<int> GetReferrersCount(
-        int projectId,
+        [ID] int projectId,
         double lookbackDays,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
@@ -2935,7 +2935,7 @@ public class PrivateQuery
     /// Get alerts page payload — all alert types for a project.
     /// </summary>
     public async Task<AlertsPagePayload> GetAlertsPagePayload(
-        int projectId,
+        [ID] int projectId,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
@@ -2963,7 +2963,7 @@ public class PrivateQuery
     /// Get log alerts page payload for a project.
     /// </summary>
     public async Task<LogAlertsPagePayload> GetLogAlertsPagePayload(
-        int projectId,
+        [ID] int projectId,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
@@ -2997,7 +2997,7 @@ public class PrivateQuery
     /// Get resources related to a log entry (traces from same trace ID).
     /// </summary>
     public async Task<TraceConnection> GetLogsRelatedResources(
-        int projectId,
+        [ID] int projectId,
         string? traceId,
         string? spanId,
         DateTime date,
@@ -3036,7 +3036,7 @@ public class PrivateQuery
     /// </summary>
     public async Task<List<QueryKey>> GetKeys(
         string? productType,
-        int projectId,
+        [ID] int projectId,
         DateTime dateRangeStart,
         DateTime dateRangeEnd,
         string? query,
@@ -3069,7 +3069,7 @@ public class PrivateQuery
     /// </summary>
     public async Task<List<string>> GetKeyValues(
         string? productType,
-        int projectId,
+        [ID] int projectId,
         string keyName,
         DateTime dateRangeStart,
         DateTime dateRangeEnd,
@@ -3101,7 +3101,7 @@ public class PrivateQuery
     /// </summary>
     public async Task<List<KeyValueSuggestion>> GetKeyValuesSuggestions(
         string productType,
-        int projectId,
+        [ID] int projectId,
         DateTime dateRangeStart,
         DateTime dateRangeEnd,
         List<string> keys,
@@ -3132,7 +3132,7 @@ public class PrivateQuery
     /// Get log attribute keys (schema-aligned, returns QueryKey).
     /// </summary>
     public async Task<List<QueryKey>> GetLogsKeys(
-        int projectId,
+        [ID] int projectId,
         DateTime dateRangeStart,
         DateTime dateRangeEnd,
         string? query,
@@ -3152,7 +3152,7 @@ public class PrivateQuery
     /// Get log attribute key values.
     /// </summary>
     public async Task<List<string>> GetLogsKeyValues(
-        int projectId,
+        [ID] int projectId,
         string keyName,
         DateTime dateRangeStart,
         DateTime dateRangeEnd,
@@ -3173,7 +3173,7 @@ public class PrivateQuery
     /// Get trace attribute keys (schema-aligned, returns QueryKey).
     /// </summary>
     public async Task<List<QueryKey>> GetTracesKeys(
-        int projectId,
+        [ID] int projectId,
         DateTime dateRangeStart,
         DateTime dateRangeEnd,
         string? query,
@@ -3193,7 +3193,7 @@ public class PrivateQuery
     /// Get trace attribute key values.
     /// </summary>
     public async Task<List<string>> GetTracesKeyValues(
-        int projectId,
+        [ID] int projectId,
         string keyName,
         DateTime dateRangeStart,
         DateTime dateRangeEnd,
@@ -3214,7 +3214,7 @@ public class PrivateQuery
     /// Get error attribute keys.
     /// </summary>
     public async Task<List<QueryKey>> GetErrorsKeys(
-        int projectId,
+        [ID] int projectId,
         DateTime dateRangeStart,
         DateTime dateRangeEnd,
         string? query,
@@ -3234,7 +3234,7 @@ public class PrivateQuery
     /// Get logs metrics (deprecated — use GetMetrics with productType instead).
     /// </summary>
     public async Task<MetricsBuckets> GetLogsMetrics(
-        int projectId,
+        [ID] int projectId,
         QueryInput queryParams,
         List<string> groupBy,
         string bucketBy,
@@ -3254,7 +3254,7 @@ public class PrivateQuery
     /// Get traces metrics (deprecated — use GetMetrics with productType instead).
     /// </summary>
     public async Task<MetricsBuckets> GetTracesMetrics(
-        int projectId,
+        [ID] int projectId,
         QueryInput queryParams,
         List<string> groupBy,
         string? bucketBy,
@@ -3274,7 +3274,7 @@ public class PrivateQuery
     /// Get errors metrics (deprecated — use GetMetrics with productType instead).
     /// </summary>
     public async Task<MetricsBuckets> GetErrorsMetrics(
-        int projectId,
+        [ID] int projectId,
         QueryInput queryParams,
         List<string> groupBy,
         string bucketBy,
@@ -3294,7 +3294,7 @@ public class PrivateQuery
     /// Get sessions metrics (deprecated — use GetMetrics with productType instead).
     /// </summary>
     public async Task<MetricsBuckets> GetSessionsMetrics(
-        int projectId,
+        [ID] int projectId,
         QueryInput queryParams,
         List<string> groupBy,
         string bucketBy,
@@ -3314,7 +3314,7 @@ public class PrivateQuery
     /// Get events metrics (deprecated — use GetMetrics with productType instead).
     /// </summary>
     public async Task<MetricsBuckets> GetEventsMetrics(
-        int projectId,
+        [ID] int projectId,
         QueryInput queryParams,
         List<string> groupBy,
         string bucketBy,
@@ -3336,7 +3336,7 @@ public class PrivateQuery
     /// Get sessions matching event criteria (for events page session list).
     /// </summary>
     public async Task<SessionResults> GetEventSessions(
-        int projectId,
+        [ID] int projectId,
         int count,
         QueryInput queryParams,
         string? sortField,
@@ -3380,7 +3380,7 @@ public class PrivateQuery
     /// Returns the subset of trace IDs that have corresponding log entries.
     /// </summary>
     public async Task<List<string>> GetExistingLogsTraces(
-        int projectId,
+        [ID] int projectId,
         List<string> traceIds,
         DateTime dateRangeStart,
         DateTime dateRangeEnd,
@@ -3487,7 +3487,7 @@ public class PrivateQuery
     /// </summary>
     public async Task<List<LogLine>> GetLogLines(
         string productType,
-        int projectId,
+        [ID] int projectId,
         QueryInput queryParams,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
@@ -3514,7 +3514,7 @@ public class PrivateQuery
     /// </summary>
     public Task<List<IssuesSearchResult>> SearchIssues(
         IntegrationType integrationType,
-        int projectId,
+        [ID] int projectId,
         string query,
         ClaimsPrincipal claimsPrincipal)
     {
@@ -3527,7 +3527,7 @@ public class PrivateQuery
     /// Returns a signed JWT that Zapier can use for webhook authentication.
     /// </summary>
     public Task<string> GenerateZapierAccessToken(
-        int projectId,
+        [ID] int projectId,
         ClaimsPrincipal claimsPrincipal)
     {
         // In self-hosted mode, return a simple project-scoped token
