@@ -19,8 +19,13 @@ COPY .yarnrc.yml .
 COPY .yarn/patches ./.yarn/patches
 COPY .yarn/releases ./.yarn/releases
 
-# Install only pruned workspace deps
+# Install only pruned workspace deps.
+# rrweb/package.json (@rrweb/_monorepo) is not included by turbo prune because
+# no pruned package explicitly depends on it, but its devDeps
+# (esbuild-plugin-umd-wrapper, rollup-plugin-visualizer, vite-plugin-dts) are
+# imported by rrweb/vite.config.default.ts which every rrweb package uses.
 COPY --from=pruner /app/out/json/ .
+COPY rrweb/package.json ./rrweb/package.json
 COPY --from=pruner /app/out/yarn.lock ./yarn.lock
 
 RUN --mount=type=cache,target=/root/.yarn/berry/cache,sharing=locked \
