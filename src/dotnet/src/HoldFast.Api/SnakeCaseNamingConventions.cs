@@ -45,6 +45,17 @@ public sealed class SnakeCaseNamingConventions : DefaultNamingConventions
         return ToSnakeCase(baseName);
     }
 
+    public override string GetTypeName(Type type, TypeKind kind)
+    {
+        // HC default appends "Input" suffix to all InputObject types. The Go/gqlgen schema
+        // does NOT auto-append — types that need "Input" already have it in their C# name
+        // (e.g. SamplingInput, SessionAlertInput). Types without it (AdminAboutYouDetails)
+        // should keep the name as-is, matching the Go schema exactly.
+        if (kind == TypeKind.InputObject)
+            return type.Name;
+        return base.GetTypeName(type, kind);
+    }
+
     public new string FormatFieldName(string fieldName)
     {
         return ToSnakeCase(fieldName);
