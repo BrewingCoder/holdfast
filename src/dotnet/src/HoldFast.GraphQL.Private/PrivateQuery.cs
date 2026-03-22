@@ -149,15 +149,19 @@ public class PrivateQuery
     [UseFiltering]
     [UseSorting]
     public async Task<IQueryable<Project>> GetProjects(
-        int workspaceId,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
         CancellationToken ct)
     {
-        await AuthHelper.RequireWorkspaceAccess(claimsPrincipal, workspaceId, authz, ct);
-
-        return db.Projects.Where(p => p.WorkspaceId == workspaceId);
+        // Go schema: `projects: [Project]` — returns all projects the admin has access to.
+        // The workspace-scoped projects list comes from the Workspace entity navigation property.
+        var admin = await AuthHelper.GetRequiredAdmin(claimsPrincipal, authz, ct);
+        var workspaceIds = await db.WorkspaceAdmins
+            .Where(wa => wa.AdminId == admin.Id)
+            .Select(wa => wa.WorkspaceId)
+            .ToListAsync(ct);
+        return db.Projects.Where(p => workspaceIds.Contains(p.WorkspaceId));
     }
 
     /// <summary>
