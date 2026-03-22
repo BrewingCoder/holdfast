@@ -3236,7 +3236,7 @@ public class PrivateQuery
         [GraphQLName("date_range")] DateRangeRequiredInput dateRange,
         string? query,
         string? type,
-        string? eventName,
+        [GraphQLName("event")] string? eventName,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
         [Service] IClickHouseService clickHouse,

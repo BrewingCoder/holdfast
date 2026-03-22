@@ -307,12 +307,22 @@ public class DateRangeInput
 }
 
 /// <summary>
+/// Bucket size spec for histogram queries. Matches Go schema DateHistogramBucketSize.
+/// HC snake_case maps CalendarInterval→calendar_interval, Multiple→multiple.
+/// </summary>
+public class DateHistogramBucketSize
+{
+    public string CalendarInterval { get; set; } = string.Empty;
+    public int Multiple { get; set; }
+}
+
+/// <summary>
 /// Options for date histogram queries. Matches Go schema DateHistogramOptions.
 /// </summary>
 public class DateHistogramOptions
 {
     public DateRangeInput? Bounds { get; set; }
-    public string? BucketSize { get; set; }
+    public DateHistogramBucketSize? BucketSize { get; set; }
     public string? TimeZone { get; set; }
 }
 
@@ -343,7 +353,31 @@ public record BillingPlan(
     [property: GraphQLName("logsRate")] long LogsRate,
     [property: GraphQLName("tracesRate")] long TracesRate,
     [property: GraphQLName("metricsRate")] long MetricsRate,
-    [property: GraphQLName("aws_mp_subscription")] AwsMpSubscription? AwsMpSubscription);
+    [property: GraphQLName("aws_mp_subscription")] AwsMpSubscription? AwsMpSubscription,
+    // Self-hosted: billing limits are always enabled (unlimited quotas).
+    [property: GraphQLName("enableBillingLimits")] bool EnableBillingLimits = true);
+
+/// <summary>
+/// Subscription discount — always null in HoldFast (no SaaS billing).
+/// Concrete type required so HC can emit the schema field.
+/// </summary>
+public record SubscriptionDiscount(
+    long Amount,
+    string Name,
+    double Percent,
+    DateTime? Until);
+
+/// <summary>
+/// Invoice summary — always null in HoldFast (no SaaS billing).
+/// Concrete type required so HC can emit the schema field.
+/// </summary>
+public record Invoice(
+    [property: GraphQLName("amountDue")] long? AmountDue,
+    [property: GraphQLName("amountPaid")] long? AmountPaid,
+    [property: GraphQLName("attemptCount")] long? AttemptCount,
+    DateTime? Date,
+    string? Status,
+    string? Url);
 
 /// <summary>
 /// Stub subscription details — HoldFast has no SaaS billing.
@@ -351,10 +385,16 @@ public record BillingPlan(
 /// </summary>
 public record SubscriptionDetails(
     [property: GraphQLName("baseAmount")] long BaseAmount,
-    object? Discount,
-    [property: GraphQLName("lastInvoice")] object? LastInvoice,
+    SubscriptionDiscount? Discount,
+    [property: GraphQLName("lastInvoice")] Invoice? LastInvoice,
     [property: GraphQLName("billingIssue")] bool BillingIssue,
     [property: GraphQLName("billingIngestBlocked")] bool BillingIngestBlocked);
+
+/// <summary>
+/// Webhook destination — url and optional authorization header.
+/// Used by legacy alert types (ErrorAlert, SessionAlert, LogAlert).
+/// </summary>
+public record WebhookDestinationGql(string Url, string? Authorization);
 
 /// <summary>
 /// Saved segment with parsed params for GraphQL schema compatibility.
@@ -387,6 +427,21 @@ public record BillingDetails(
     [property: GraphQLName("logsBillingLimit")] long LogsBillingLimit,
     [property: GraphQLName("tracesBillingLimit")] long TracesBillingLimit,
     [property: GraphQLName("metricsBillingLimit")] long MetricsBillingLimit);
+
+/// <summary>
+/// A tag/op/value filter applied to metric monitor queries.
+/// </summary>
+public record MetricMonitorFilter(string Tag, string Op, string Value);
+
+/// <summary>
+/// A session track property used to filter session alerts.
+/// </summary>
+public record TrackProperty(int Id, string Name, string Value);
+
+/// <summary>
+/// A user property used to filter session alerts.
+/// </summary>
+public record UserProperty(int Id, string Name, string Value);
 
 /// <summary>
 /// Input for the updateAdminAboutYouDetails mutation — matches the Go schema AdminAboutYouDetails input.

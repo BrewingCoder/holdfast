@@ -356,7 +356,7 @@ public class ClickHouseQueryResolverTests : IDisposable
         var result = await _query.GetLogsIntegration(
             project.Id, MakePrincipal("admin-uid"), _authz, _clickHouse, CancellationToken.None);
 
-        Assert.False(result);
+        Assert.False(result.Integrated);
         Assert.Equal("ReadLogsAsync", _clickHouse.LastCalledMethod);
         Assert.Equal(project.Id, _clickHouse.LastProjectId);
     }
@@ -384,7 +384,7 @@ public class ClickHouseQueryResolverTests : IDisposable
         var result = await _query.GetTracesIntegration(
             project.Id, MakePrincipal("admin-uid"), _authz, _clickHouse, CancellationToken.None);
 
-        Assert.False(result);
+        Assert.False(result.Integrated);
         Assert.Equal("ReadTracesAsync", _clickHouse.LastCalledMethod);
         Assert.Equal(project.Id, _clickHouse.LastProjectId);
     }

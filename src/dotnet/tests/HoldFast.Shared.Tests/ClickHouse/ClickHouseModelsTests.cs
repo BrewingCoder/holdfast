@@ -279,7 +279,7 @@ public class ClickHouseModelsTests
     public void QueryInput_Defaults()
     {
         var input = new QueryInput();
-        Assert.Equal(string.Empty, input.Query);
+        Assert.Null(input.Query); // Query is nullable; defaults to null when no search filter provided
         Assert.Equal(default, input.DateRange.StartDate);
         Assert.Equal(default, input.DateRange.EndDate);
     }

@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations.Schema;
+
 namespace HoldFast.Domain.Entities;
 
 /// <summary>
@@ -37,6 +39,14 @@ public class AllWorkspaceSettings : BaseEntity
     public bool EnableJiraIntegration { get; set; } = true;
     public bool EnableTeamsIntegration { get; set; } = true;
     public bool EnableLogTraceIngestion { get; set; } = true;
+
+    // Stub flags for SaaS business-tier features — always true in HoldFast (no billing tiers).
+    // These fields exist in the Go schema for Highlight's billing tiers; HoldFast enables all.
+    [NotMapped] public bool EnableBusinessDashboards => true;
+    [NotMapped] public bool EnableBusinessProjects => true;
+    [NotMapped] public bool EnableBusinessRetention => true;
+    [NotMapped] public bool EnableBusinessSeats => true;
+    [NotMapped] public bool EnableIngestFiltering => true;
 
     public Workspace Workspace { get; set; } = null!;
 }

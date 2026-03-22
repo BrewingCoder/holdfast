@@ -311,7 +311,7 @@ public class PrivateQuerySessionAndCommentTests : IDisposable
             _project.Id, _principal, _authz, _db, CancellationToken.None);
 
         Assert.Single(list);
-        Assert.Equal(_admin.Id, list[0].Id);
+        Assert.Equal(_admin.Id, list[0].Admin.Id);
     }
 
     // ── ReplyToErrorComment ──────────────────────────────────────────

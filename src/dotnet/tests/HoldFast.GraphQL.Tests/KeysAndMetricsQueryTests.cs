@@ -4,6 +4,7 @@ using HoldFast.Data;
 using HoldFast.Data.ClickHouse;
 using HoldFast.Data.ClickHouse.Models;
 using HoldFast.Domain.Entities;
+using HoldFast.Domain.Enums;
 using HoldFast.GraphQL.Private;
 using HoldFast.Shared.Auth;
 using HoldFast.Storage;
@@ -100,8 +101,9 @@ public class KeysAndMetricsQueryTests : IDisposable
     public async Task GetKeys_AllProductTypes_ReturnsResults(string productType)
     {
         var result = await _query.GetKeys(
-            productType, _project.Id,
-            DateTime.UtcNow.AddDays(-7), DateTime.UtcNow,
+            Enum.TryParse<ProductType>(productType, ignoreCase: true, out var pt) ? pt : (ProductType?)null,
+            _project.Id,
+            new DateRangeRequiredInput { StartDate = DateTime.UtcNow.AddDays(-7), EndDate = DateTime.UtcNow },
             null, null, null, _principal, _authz, _clickHouse, CancellationToken.None);
 
         Assert.NotNull(result);
@@ -113,7 +115,7 @@ public class KeysAndMetricsQueryTests : IDisposable
     {
         var result = await _query.GetKeys(
             null, _project.Id,
-            DateTime.UtcNow.AddDays(-7), DateTime.UtcNow,
+            new DateRangeRequiredInput { StartDate = DateTime.UtcNow.AddDays(-7), EndDate = DateTime.UtcNow },
             null, null, null, _principal, _authz, _clickHouse, CancellationToken.None);
 
         // Sessions keys include reserved keys like "identifier", "city", etc.
@@ -124,13 +126,13 @@ public class KeysAndMetricsQueryTests : IDisposable
     public async Task GetKeys_CaseInsensitiveProductType()
     {
         var lower = await _query.GetKeys(
-            "logs", _project.Id,
-            DateTime.UtcNow.AddDays(-7), DateTime.UtcNow,
+            ProductType.Logs, _project.Id,
+            new DateRangeRequiredInput { StartDate = DateTime.UtcNow.AddDays(-7), EndDate = DateTime.UtcNow },
             null, null, null, _principal, _authz, _clickHouse, CancellationToken.None);
 
         var upper = await _query.GetKeys(
-            "LOGS", _project.Id,
-            DateTime.UtcNow.AddDays(-7), DateTime.UtcNow,
+            ProductType.Logs, _project.Id,
+            new DateRangeRequiredInput { StartDate = DateTime.UtcNow.AddDays(-7), EndDate = DateTime.UtcNow },
             null, null, null, _principal, _authz, _clickHouse, CancellationToken.None);
 
         Assert.Equal(lower.Count, upper.Count);
@@ -142,8 +144,8 @@ public class KeysAndMetricsQueryTests : IDisposable
         _clickHouse.LogKeysResult = ["timestamp", "severity", "body"];
 
         var result = await _query.GetKeys(
-            "LOGS", _project.Id,
-            DateTime.UtcNow.AddDays(-7), DateTime.UtcNow,
+            ProductType.Logs, _project.Id,
+            new DateRangeRequiredInput { StartDate = DateTime.UtcNow.AddDays(-7), EndDate = DateTime.UtcNow },
             null, null, null, _principal, _authz, _clickHouse, CancellationToken.None);
 
         Assert.Equal(3, result.Count);
@@ -157,8 +159,8 @@ public class KeysAndMetricsQueryTests : IDisposable
         _clickHouse.TraceKeysResult = ["span_id", "duration"];
 
         var result = await _query.GetKeys(
-            "TRACES", _project.Id,
-            DateTime.UtcNow.AddDays(-7), DateTime.UtcNow,
+            ProductType.Traces, _project.Id,
+            new DateRangeRequiredInput { StartDate = DateTime.UtcNow.AddDays(-7), EndDate = DateTime.UtcNow },
             null, null, null, _principal, _authz, _clickHouse, CancellationToken.None);
 
         Assert.Equal(2, result.Count);

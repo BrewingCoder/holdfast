@@ -1,5 +1,7 @@
 using System.Security.Claims;
 using HoldFast.Data;
+using HoldFast.Data.ClickHouse;
+using HoldFast.Data.ClickHouse.Models;
 using HoldFast.Domain.Entities;
 using HoldFast.Domain.Enums;
 using HoldFast.GraphQL.Private;
@@ -27,6 +29,7 @@ public class PrivateQueryAnalyticsTests : IDisposable
     private readonly ClaimsPrincipal _principal;
     private readonly Workspace _workspace;
     private readonly Project _project;
+    private readonly FakeClickHouseService _clickHouse = new();
 
     public PrivateQueryAnalyticsTests()
     {
@@ -128,11 +131,11 @@ public class PrivateQueryAnalyticsTests : IDisposable
             new ErrorGroup { ProjectId = _project.Id, Event = "err2", SecureId = "eg2", State = ErrorGroupState.Resolved });
         await _db.SaveChangesAsync();
 
-        var queryable = await _query.GetErrorGroups(
-            _project.Id, _principal, _authz, _db, CancellationToken.None);
-        var list = await queryable.ToListAsync();
+        var result = await _query.GetErrorGroups(
+            _project.Id, 100, new QueryInput { DateRange = new DateRangeRequiredInput { StartDate = DateTime.UtcNow.AddDays(-30), EndDate = DateTime.UtcNow.AddDays(1) } },
+            null, _principal, _authz, _clickHouse, _db, CancellationToken.None);
 
-        Assert.Equal(2, list.Count);
+        Assert.Equal(2, result.ErrorGroups.Count);
     }
 
     [Fact]
@@ -145,12 +148,12 @@ public class PrivateQueryAnalyticsTests : IDisposable
         _db.ErrorGroups.Add(new ErrorGroup { ProjectId = _project.Id, Event = "mine", SecureId = "eg-mine", State = ErrorGroupState.Open });
         await _db.SaveChangesAsync();
 
-        var queryable = await _query.GetErrorGroups(
-            _project.Id, _principal, _authz, _db, CancellationToken.None);
-        var list = await queryable.ToListAsync();
+        var result = await _query.GetErrorGroups(
+            _project.Id, 100, new QueryInput { DateRange = new DateRangeRequiredInput { StartDate = DateTime.UtcNow.AddDays(-30), EndDate = DateTime.UtcNow.AddDays(1) } },
+            null, _principal, _authz, _clickHouse, _db, CancellationToken.None);
 
-        Assert.Single(list);
-        Assert.Equal("mine", list[0].Event);
+        Assert.Single(result.ErrorGroups);
+        Assert.Equal("mine", result.ErrorGroups[0].Event);
     }
 
     // ── GetErrorObjects (IQueryable) ─────────────────────────────────
@@ -476,7 +479,7 @@ public class PrivateQueryAnalyticsTests : IDisposable
         var result = await _query.GetClientIntegration(
             _project.Id, _principal, _authz, _db, CancellationToken.None);
 
-        Assert.False(result);
+        Assert.False(result.Integrated);
     }
 
     [Fact]
@@ -488,7 +491,7 @@ public class PrivateQueryAnalyticsTests : IDisposable
         var result = await _query.GetClientIntegration(
             _project.Id, _principal, _authz, _db, CancellationToken.None);
 
-        Assert.True(result);
+        Assert.True(result.Integrated);
     }
 
     [Fact]
@@ -497,7 +500,7 @@ public class PrivateQueryAnalyticsTests : IDisposable
         var result = await _query.GetServerIntegration(
             _project.Id, _principal, _authz, _db, CancellationToken.None);
 
-        Assert.False(result);
+        Assert.False(result.Integrated);
     }
 
     [Fact]
@@ -509,7 +512,7 @@ public class PrivateQueryAnalyticsTests : IDisposable
         var result = await _query.GetServerIntegration(
             _project.Id, _principal, _authz, _db, CancellationToken.None);
 
-        Assert.True(result);
+        Assert.True(result.Integrated);
     }
 
     // ── GetUnprocessedSessionsCount ──────────────────────────────────
@@ -940,5 +943,50 @@ public class PrivateQueryAnalyticsTests : IDisposable
             _project.Id, _principal, _authz, _db, CancellationToken.None);
 
         Assert.Equal(2, list.Count);
+    }
+
+    /// <summary>
+    /// Minimal fake IClickHouseService for analytics tests.
+    /// QueryErrorGroupIdsAsync returns all IDs up to count so the DB layer
+    /// handles project-scoped filtering.
+    /// </summary>
+    private class FakeClickHouseService : IClickHouseService
+    {
+        public Task<(List<int> Ids, long Total)> QueryErrorGroupIdsAsync(int projectId, QueryInput query, int count, int page, CancellationToken ct)
+        {
+            // Return a broad range of IDs; EF query filters by projectId
+            var ids = Enumerable.Range(1, count).ToList();
+            return Task.FromResult((ids, (long)count));
+        }
+
+        public Task<MetricsBuckets> ReadMetricsAsync(int projectId, QueryInput query, string bucketBy, List<string>? groupBy, string aggregator, string? column, CancellationToken ct) => Task.FromResult(new MetricsBuckets());
+        public Task<LogConnection> ReadLogsAsync(int projectId, QueryInput query, ClickHousePagination pagination, CancellationToken ct) => Task.FromResult(new LogConnection());
+        public Task<List<HistogramBucket>> ReadLogsHistogramAsync(int projectId, QueryInput query, CancellationToken ct) => Task.FromResult(new List<HistogramBucket>());
+        public Task<List<string>> GetLogKeysAsync(int projectId, QueryInput query, CancellationToken ct) => Task.FromResult(new List<string>());
+        public Task<List<string>> GetLogKeyValuesAsync(int projectId, string key, QueryInput query, CancellationToken ct) => Task.FromResult(new List<string>());
+        public Task<TraceConnection> ReadTracesAsync(int projectId, QueryInput query, ClickHousePagination pagination, bool omitBody, CancellationToken ct) => Task.FromResult(new TraceConnection());
+        public Task<List<HistogramBucket>> ReadTracesHistogramAsync(int projectId, QueryInput query, CancellationToken ct) => Task.FromResult(new List<HistogramBucket>());
+        public Task<List<string>> GetTraceKeysAsync(int projectId, QueryInput query, CancellationToken ct) => Task.FromResult(new List<string>());
+        public Task<List<string>> GetTraceKeyValuesAsync(int projectId, string key, QueryInput query, CancellationToken ct) => Task.FromResult(new List<string>());
+        public Task<List<HistogramBucket>> ReadSessionsHistogramAsync(int projectId, QueryInput query, CancellationToken ct) => Task.FromResult(new List<HistogramBucket>());
+        public Task<(List<int> Ids, long Total)> QuerySessionIdsAsync(int projectId, QueryInput query, int count, int page, string? sortField, bool sortDesc, CancellationToken ct) => Task.FromResult((new List<int>(), 0L));
+        public Task<List<HistogramBucket>> ReadErrorObjectsHistogramAsync(int projectId, QueryInput query, CancellationToken ct) => Task.FromResult(new List<HistogramBucket>());
+        public Task<List<QueryKey>> GetSessionsKeysAsync(int projectId, DateTime startDate, DateTime endDate, string? query, CancellationToken ct) => Task.FromResult(new List<QueryKey>());
+        public Task<List<QueryKey>> GetErrorsKeysAsync(int projectId, DateTime startDate, DateTime endDate, string? query, CancellationToken ct) => Task.FromResult(new List<QueryKey>());
+        public Task<List<string>> GetErrorsKeyValuesAsync(int projectId, string keyName, DateTime startDate, DateTime endDate, string? query, int? count, CancellationToken ct) => Task.FromResult(new List<string>());
+        public Task<List<QueryKey>> GetEventsKeysAsync(int projectId, DateTime startDate, DateTime endDate, string? query, string? eventName, CancellationToken ct) => Task.FromResult(new List<QueryKey>());
+        public Task<List<string>> GetEventsKeyValuesAsync(int projectId, string keyName, DateTime startDate, DateTime endDate, string? query, int? count, string? eventName, CancellationToken ct) => Task.FromResult(new List<string>());
+        public Task<List<string>> GetSessionsKeyValuesAsync(int projectId, string keyName, DateTime startDate, DateTime endDate, string? query, int? count, CancellationToken ct) => Task.FromResult(new List<string>());
+        public Task WriteMetricAsync(int projectId, string metricName, double metricValue, string? category, DateTime timestamp, Dictionary<string, string>? tags, string? sessionSecureId, CancellationToken ct) => Task.CompletedTask;
+        public Task WriteLogsAsync(IEnumerable<LogRowInput> logs, CancellationToken ct) => Task.CompletedTask;
+        public Task WriteTracesAsync(IEnumerable<TraceRowInput> traces, CancellationToken ct) => Task.CompletedTask;
+        public Task WriteSessionsAsync(IEnumerable<SessionRowInput> sessions, CancellationToken ct) => Task.CompletedTask;
+        public Task WriteErrorGroupsAsync(IEnumerable<ErrorGroupRowInput> errorGroups, CancellationToken ct) => Task.CompletedTask;
+        public Task WriteErrorObjectsAsync(IEnumerable<ErrorObjectRowInput> errorObjects, CancellationToken ct) => Task.CompletedTask;
+        public Task<long> CountLogsAsync(int projectId, string? query, DateTime startDate, DateTime endDate, CancellationToken ct = default) => Task.FromResult(0L);
+        public Task<List<AlertStateChangeRow>> GetLastAlertStateChangesAsync(int projectId, int alertId, DateTime startDate, DateTime endDate, CancellationToken ct = default) => Task.FromResult(new List<AlertStateChangeRow>());
+        public Task<List<AlertStateChangeRow>> GetAlertingAlertStateChangesAsync(int projectId, int alertId, DateTime startDate, DateTime endDate, CancellationToken ct = default) => Task.FromResult(new List<AlertStateChangeRow>());
+        public Task<List<AlertStateChangeRow>> GetLastAlertingStatesAsync(int projectId, int alertId, DateTime startDate, DateTime endDate, CancellationToken ct = default) => Task.FromResult(new List<AlertStateChangeRow>());
+        public Task WriteAlertStateChangesAsync(int projectId, IEnumerable<AlertStateChangeRow> rows, CancellationToken ct = default) => Task.CompletedTask;
     }
 }

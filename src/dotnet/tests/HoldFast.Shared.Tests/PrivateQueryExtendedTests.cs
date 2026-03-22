@@ -338,7 +338,7 @@ public class PrivateQueryExtendedTests : IDisposable
         var result = await _query.GetClientIntegration(
             project.Id, MakePrincipal("admin-uid"), _authz, _db, CancellationToken.None);
 
-        Assert.False(result);
+        Assert.False(result.Integrated);
     }
 
     [Fact]
@@ -351,7 +351,7 @@ public class PrivateQueryExtendedTests : IDisposable
         var result = await _query.GetClientIntegration(
             project.Id, MakePrincipal("admin-uid"), _authz, _db, CancellationToken.None);
 
-        Assert.True(result);
+        Assert.True(result.Integrated);
     }
 
     // ── GetServerIntegration ───────────────────────────────────────
@@ -364,7 +364,7 @@ public class PrivateQueryExtendedTests : IDisposable
         var result = await _query.GetServerIntegration(
             project.Id, MakePrincipal("admin-uid"), _authz, _db, CancellationToken.None);
 
-        Assert.False(result);
+        Assert.False(result.Integrated);
     }
 
     [Fact]
@@ -377,7 +377,7 @@ public class PrivateQueryExtendedTests : IDisposable
         var result = await _query.GetServerIntegration(
             project.Id, MakePrincipal("admin-uid"), _authz, _db, CancellationToken.None);
 
-        Assert.True(result);
+        Assert.True(result.Integrated);
     }
 
     // ── GetLogsIntegration / GetTracesIntegration ──────────────────
@@ -390,7 +390,7 @@ public class PrivateQueryExtendedTests : IDisposable
         var result = await _query.GetLogsIntegration(
             project.Id, MakePrincipal("admin-uid"), _authz, _clickHouse, CancellationToken.None);
 
-        Assert.False(result); // Stub returns empty
+        Assert.False(result.Integrated); // Stub returns empty
         Assert.Equal("ReadLogsAsync", _clickHouse.LastCalledMethod);
     }
 
@@ -402,7 +402,7 @@ public class PrivateQueryExtendedTests : IDisposable
         var result = await _query.GetTracesIntegration(
             project.Id, MakePrincipal("admin-uid"), _authz, _clickHouse, CancellationToken.None);
 
-        Assert.False(result); // Stub returns empty
+        Assert.False(result.Integrated); // Stub returns empty
         Assert.Equal("ReadTracesAsync", _clickHouse.LastCalledMethod);
     }
 

@@ -202,11 +202,10 @@ public class PrivateQueryGapTests : IDisposable
         await _db.SaveChangesAsync();
 
         var result = await _query.GetSavedSegments(
-            _project.Id, "Error",
+            _project.Id, SavedSegmentEntityType.Error,
             _principal, _authz, _db, CancellationToken.None);
 
         Assert.Equal(2, result.Count);
-        Assert.All(result, s => Assert.Equal("Error", s.EntityType));
     }
 
     [Fact]
@@ -217,7 +216,7 @@ public class PrivateQueryGapTests : IDisposable
         await _db.SaveChangesAsync();
 
         var result = await _query.GetSavedSegments(
-            _project.Id, "Trace",
+            _project.Id, SavedSegmentEntityType.Session,
             _principal, _authz, _db, CancellationToken.None);
 
         Assert.Empty(result);

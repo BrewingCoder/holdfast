@@ -199,8 +199,8 @@ public class EdgeCaseQueryTests : IDisposable
     public async Task GetKeys_UnknownProductType_DefaultsToSessions()
     {
         var result = await _query.GetKeys(
-            "UNKNOWN_TYPE", _project.Id,
-            DateTime.UtcNow.AddDays(-7), DateTime.UtcNow,
+            null, _project.Id,
+            new DateRangeRequiredInput { StartDate = DateTime.UtcNow.AddDays(-7), EndDate = DateTime.UtcNow },
             null, null, null, _principal, _authz, _clickHouse, CancellationToken.None);
 
         // Should default to sessions keys (same as null)

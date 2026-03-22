@@ -60,8 +60,10 @@ public class Session : BaseEntity
     // Navigation
     public Project Project { get; set; } = null!;
 
-    // Computed field for HC schema compatibility — true if a user identifier was captured
+    // Computed / stub fields for HC schema compatibility
     [NotMapped] public bool? Identified => !string.IsNullOrEmpty(Identifier);
+    // Populated by the resolver from SessionAdminsView; null until hydrated.
+    [NotMapped] public bool? Viewed { get; set; }
 }
 
 /// <summary>

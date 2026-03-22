@@ -306,7 +306,7 @@ public class PrivateQueryDbTests : IDisposable
     public async Task GetClientIntegration_NoSessions_ReturnsFalse()
     {
         var result = await _query.GetClientIntegration(_project.Id, _principal, _authz, _db, CancellationToken.None);
-        Assert.False(result);
+        Assert.False(result.Integrated);
     }
 
     [Fact]
@@ -320,14 +320,14 @@ public class PrivateQueryDbTests : IDisposable
         await _db.SaveChangesAsync();
 
         var result = await _query.GetClientIntegration(_project.Id, _principal, _authz, _db, CancellationToken.None);
-        Assert.True(result);
+        Assert.True(result.Integrated);
     }
 
     [Fact]
     public async Task GetServerIntegration_NoErrors_ReturnsFalse()
     {
         var result = await _query.GetServerIntegration(_project.Id, _principal, _authz, _db, CancellationToken.None);
-        Assert.False(result);
+        Assert.False(result.Integrated);
     }
 
     [Fact]
@@ -337,7 +337,7 @@ public class PrivateQueryDbTests : IDisposable
         await _db.SaveChangesAsync();
 
         var result = await _query.GetServerIntegration(_project.Id, _principal, _authz, _db, CancellationToken.None);
-        Assert.True(result);
+        Assert.True(result.Integrated);
     }
 
     // ── Admin Check Flags ───────────────────────────────────────────
@@ -702,7 +702,7 @@ public class PrivateQueryDbTests : IDisposable
         var admins = await _query.GetWorkspaceAdminsByProjectId(
             _project.Id, _principal, _authz, _db, CancellationToken.None);
         Assert.Single(admins);
-        Assert.Equal(_admin.Id, admins[0].Id);
+        Assert.Equal(_admin.Id, admins[0].Admin.Id);
     }
 
     [Fact]

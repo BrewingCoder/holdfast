@@ -187,7 +187,7 @@ public class AnalyticsAndCommentTests : IDisposable
             _project.Id, _principal, _authz, _db, CancellationToken.None);
 
         Assert.Single(results);
-        Assert.Equal(_admin.Id, results[0].Id);
+        Assert.Equal(_admin.Id, results[0].Admin.Id);
     }
 
     // ── Comment Replies ──────────────────────────────────────────────
