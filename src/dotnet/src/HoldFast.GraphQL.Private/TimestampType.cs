@@ -9,8 +9,12 @@ namespace HoldFast.GraphQL.Private;
 /// The Go/gqlgen backend exposes all date/time fields as the Timestamp scalar (an ISO 8601 string).
 /// HC's built-in DateTime scalar uses the name "DateTime", causing schema mismatches when the
 /// frontend sends variables typed as Timestamp.
-/// Accepts ISO 8601 strings from query variables and inline literals.
-/// Serializes as ISO 8601 UTC string (e.g., "2024-01-15T10:00:00.000Z").
+///
+/// HC variable coercion flow for input scalars:
+///   JSON string → ParseResult(string) → StringValueNode → ParseLiteral(StringValueNode) → DateTime
+///
+/// Accepts common ISO 8601 formats including milliseconds ("2024-01-15T10:00:00.000Z").
+/// Serializes as ISO 8601 UTC string ("2024-01-15T10:00:00.0000000Z").
 /// </summary>
 public sealed class TimestampType : ScalarType<DateTime, StringValueNode>
 {
@@ -18,12 +22,13 @@ public sealed class TimestampType : ScalarType<DateTime, StringValueNode>
 
     protected override DateTime ParseLiteral(StringValueNode valueSyntax)
     {
-        if (DateTime.TryParse(
+        // Use DateTimeOffset.TryParse for robust ISO 8601 parsing (handles Z, +00:00, etc.)
+        if (DateTimeOffset.TryParse(
             valueSyntax.Value,
             CultureInfo.InvariantCulture,
-            DateTimeStyles.RoundtripKind | DateTimeStyles.AssumeUniversal,
-            out var dt))
-            return dt.ToUniversalTime();
+            DateTimeStyles.AssumeUniversal,
+            out var dto))
+            return dto.UtcDateTime;
         throw new SerializationException(
             $"Cannot parse '{valueSyntax.Value}' as Timestamp.", this);
     }
@@ -31,6 +36,10 @@ public sealed class TimestampType : ScalarType<DateTime, StringValueNode>
     protected override StringValueNode ParseValue(DateTime runtimeValue)
         => new(runtimeValue.ToUniversalTime().ToString("o"));
 
+    /// <summary>
+    /// Called by HC when coercing result values (e.g., from JSON variable strings).
+    /// Wraps the raw value as a StringValueNode so ParseLiteral can handle it.
+    /// </summary>
     public override IValueNode ParseResult(object? resultValue)
     {
         if (resultValue is DateTime dt)
@@ -62,13 +71,13 @@ public sealed class TimestampType : ScalarType<DateTime, StringValueNode>
             runtimeValue = dto.UtcDateTime;
             return true;
         }
-        if (resultValue is string s && DateTime.TryParse(
+        if (resultValue is string s && DateTimeOffset.TryParse(
             s,
             CultureInfo.InvariantCulture,
-            DateTimeStyles.RoundtripKind | DateTimeStyles.AssumeUniversal,
+            DateTimeStyles.AssumeUniversal,
             out var parsed))
         {
-            runtimeValue = parsed.ToUniversalTime();
+            runtimeValue = parsed.UtcDateTime;
             return true;
         }
         runtimeValue = null;
