@@ -1,0 +1,91 @@
+namespace HoldFast.Domain.Enums;
+
+/// <summary>
+/// Log severity levels matching OpenTelemetry conventions.
+/// </summary>
+public enum LogLevel
+{
+    Trace = 1,
+    Debug = 5,
+    Info = 9,
+    Warn = 13,
+    Error = 17,
+    Fatal = 21,
+}
+
+/// <summary>
+/// Source of the log entry.
+/// </summary>
+public enum LogSource
+{
+    Frontend,
+    Backend,
+}
+
+/// <summary>
+/// OpenTelemetry span kinds.
+/// </summary>
+public enum SpanKind
+{
+    Internal,
+    Server,
+    Client,
+    Producer,
+    Consumer,
+}
+
+/// <summary>
+/// Metric aggregation functions used in analytics queries.
+/// </summary>
+public enum MetricAggregator
+{
+    Count,
+    CountDistinct,
+    CountDistinctKey,
+    Sum,
+    Avg,
+    Min,
+    Max,
+    None,
+    P50,
+    P90,
+    P95,
+    P99,
+}
+
+/// <summary>
+/// Product types for cross-product queries.
+/// </summary>
+public enum ProductType
+{
+    Sessions,
+    Errors,
+    Logs,
+    Traces,
+    Metrics,
+    Events,
+}
+
+/// <summary>
+/// Data type of a query key (used in key-discovery results).
+/// Matches Go schema KeyType enum.
+/// </summary>
+public enum KeyType
+{
+    Boolean,
+    Creatable,
+    Numeric,
+    String,
+}
+
+/// <summary>
+/// Entity type for saved search segments.
+/// Matches Go schema SavedSegmentEntityType enum.
+/// </summary>
+public enum SavedSegmentEntityType
+{
+    Session,
+    Error,
+    Log,
+    Trace,
+}

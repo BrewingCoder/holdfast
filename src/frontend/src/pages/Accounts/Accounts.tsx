@@ -60,33 +60,6 @@ const COLUMNS = [
 			(a.email ?? '').localeCompare(b.email ?? ''),
 	},
 	{
-		title: 'Stripe Customer ID',
-		dataIndex: 'stripe_customer_id',
-		render: (
-			value:
-				| boolean
-				| React.ReactChild
-				| React.ReactFragment
-				| React.ReactPortal
-				| null
-				| undefined,
-			record: { stripe_customer_id: any },
-		) => (
-			<a
-				href={`https://dashboard.stripe.com/customers/${record.stripe_customer_id}`}
-			>
-				{value}
-			</a>
-		),
-		sorter: (
-			a: { stripe_customer_id: any },
-			b: { stripe_customer_id: any },
-		) =>
-			(a.stripe_customer_id ?? '').localeCompare(
-				b.stripe_customer_id ?? '',
-			),
-	},
-	{
 		title: 'Subscription Start',
 		dataIndex: 'subscription_start',
 		render: (value: moment.MomentInput) => moment(value).format('MM/DD/YY'),
@@ -230,14 +203,6 @@ export const Account = () => {
 					<h1>
 						<a href={`/w/${account_id}/team`}>
 							{accountData?.account_details?.name}
-						</a>
-					</h1>
-					<h1>
-						Stripe customer:{' '}
-						<a
-							href={`https://dashboard.stripe.com/customers/${accountData?.account_details?.stripe_customer_id}`}
-						>
-							{accountData?.account_details?.stripe_customer_id}
 						</a>
 					</h1>
 					<h1>Daily Session Count</h1>
@@ -421,7 +386,6 @@ export const Accounts = () => {
 								session_count_prev_prev:
 									a?.session_count_prev_prev,
 								session_limit: a?.session_limit,
-								stripe_customer_id: a?.stripe_customer_id,
 								subscription_start: a?.subscription_start,
 							}
 						}) ?? undefined

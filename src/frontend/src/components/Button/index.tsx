@@ -4,7 +4,6 @@ import {
 	ButtonProps as UIButtonProps,
 } from '@holdfast-io/ui/components'
 import analytics from '@util/analytics'
-import * as rudderanalytics from 'rudder-sdk-js'
 
 import * as style from './style.css'
 
@@ -14,7 +13,7 @@ export type ButtonProps = UIButtonProps & {
 	 * camelCase(${context}${action})
 	 */
 	trackingId: string
-	trackingProperties?: rudderanalytics.apiObject
+	trackingProperties?: Record<string, unknown>
 	loading?: boolean
 }
 

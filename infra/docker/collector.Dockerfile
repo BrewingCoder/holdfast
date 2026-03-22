@@ -8,7 +8,7 @@ COPY ./infra/docker/configure-collector.sh /configure-collector.sh
 
 ARG IN_DOCKER_GO
 ARG SSL
-RUN /configure-collector.sh
+RUN chmod +x /configure-collector.sh && /configure-collector.sh
 
 FROM ${OTEL_COLLECTOR_IMAGE_NAME} AS collector
 

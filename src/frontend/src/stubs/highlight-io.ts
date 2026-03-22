@@ -8,10 +8,13 @@ export interface QuickStartContent {
 	title: string
 	subtitle: string
 	logoUrl?: string
+	logoKey?: string
+	products?: string[]
 	entries: Array<{
 		title: string
 		content: string
 		code?: Array<{
+			key?: string
 			text: string
 			language: string
 		}>

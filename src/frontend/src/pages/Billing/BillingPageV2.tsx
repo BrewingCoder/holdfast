@@ -509,8 +509,8 @@ const BillingPageV2 = ({}: BillingPageProps) => {
 	const isAWSMP =
 		!!data?.billingDetails.plan.aws_mp_subscription?.product_code
 
-	const nextInvoiceDate = tryCastDate(data?.workspace?.next_invoice_date)
-	const billingPeriodEnd = tryCastDate(data?.workspace?.billing_period_end)
+	const nextInvoiceDate = undefined
+	const billingPeriodEnd = undefined
 	const nextBillingDate = getNextBillingDate(
 		isPaying,
 		nextInvoiceDate,
@@ -858,17 +858,7 @@ const BillingPageV2 = ({}: BillingPageProps) => {
 								}
 								billingIssues={billingIssue}
 								setStep={setStep}
-								billingPeriodEnd={
-									(data?.workspace?.next_invoice_date ??
-									data?.workspace?.billing_period_end)
-										? moment(
-												data?.workspace
-													?.next_invoice_date ??
-													data?.workspace
-														?.billing_period_end,
-											)
-										: undefined
-								}
+								billingPeriodEnd={undefined}
 								{...product}
 							/>
 							{idx < 3 ? <Box borderTop="secondary" /> : null}

@@ -700,8 +700,8 @@ const UpdatePlanPage = ({
 		}
 	}, [isPaying, loading, setHasChanges])
 
-	const nextInvoiceDate = tryCastDate(data?.workspace?.next_invoice_date)
-	const billingPeriodEnd = tryCastDate(data?.workspace?.billing_period_end)
+	const nextInvoiceDate = undefined
+	const billingPeriodEnd = undefined
 	const nextBillingDate = getNextBillingDate(
 		isPaying,
 		nextInvoiceDate,

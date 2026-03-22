@@ -13,9 +13,7 @@ import {
 	Box,
 	Callout,
 	Form,
-	IconSolidCheckCircle,
 	Stack,
-	SwitchButton,
 	Text,
 } from '@holdfast-io/ui/components'
 import { AuthBody, AuthFooter, AuthHeader } from '@pages/Auth/Layout'
@@ -24,7 +22,6 @@ import useLocalStorage from '@rehooks/local-storage'
 import { INVITE_TEAM_ROUTE } from '@routers/AppRouter/AppRouter'
 import analytics from '@util/analytics'
 import { getAttributionData } from '@util/attribution'
-import { isOnPrem } from '@util/onPrem/onPremUtils'
 import React, { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 
@@ -119,14 +116,10 @@ export const AdminForm: React.FC = () => {
 			promoCode: '',
 			teamSize: '',
 			heardAbout: '',
-			phoneHomeContactAllowed: true,
 		},
 	})
 
 	const submitSucceeded = formStore.useState('submitSucceed')
-	const phoneHomeContactAllowed = formStore.useValue(
-		formStore.names.phoneHomeContactAllowed,
-	)
 	const disableForm = submitSucceeded > 0
 
 	formStore.useSubmit(async (formState) => {
@@ -161,8 +154,6 @@ export const AdminForm: React.FC = () => {
 						user_defined_persona: '',
 						user_defined_team_size: formState.values.teamSize,
 						heard_about: formState.values.heardAbout,
-						phone_home_contact_allowed:
-							formState.values.phoneHomeContactAllowed,
 						referral: attributionData.referral,
 					},
 				},
@@ -278,50 +269,7 @@ export const AdminForm: React.FC = () => {
 				</AuthBody>
 				<AuthFooter>
 					<Stack gap="12">
-						{isOnPrem ? (
-							<Box width="full">
-								<Callout icon={false}>
-									<Stack gap="8">
-										<Box
-											display="flex"
-											alignItems="center"
-											gap="6"
-										>
-											<SwitchButton
-												type="button"
-												size="xxSmall"
-												iconLeft={
-													<IconSolidCheckCircle
-														size={12}
-													/>
-												}
-												checked={
-													phoneHomeContactAllowed
-												}
-												onChange={() => {
-													formStore.setValue(
-														formStore.names
-															.phoneHomeContactAllowed,
-														!phoneHomeContactAllowed,
-													)
-												}}
-											/>
-											<Text
-												size="small"
-												weight="bold"
-												color="strong"
-											>
-												Help improve HoldFast
-											</Text>
-										</Box>
-										<Text size="small" weight="medium">
-											Allow us to reach out for feedback
-											about the self-hosted version.
-										</Text>
-									</Stack>
-								</Callout>
-							</Box>
-						) : null}
+	
 						<Button
 							trackingId="about-you-submit"
 							disabled={disableForm}
