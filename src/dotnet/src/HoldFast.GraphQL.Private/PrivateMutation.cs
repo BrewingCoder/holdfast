@@ -555,7 +555,7 @@ public class PrivateMutation
     /// Update admin "about you" details.
     /// </summary>
     public async Task<bool> UpdateAdminAboutYouDetails(
-        AdminAboutYouDetailsInput adminDetails,
+        AdminAboutYouDetails adminDetails,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,

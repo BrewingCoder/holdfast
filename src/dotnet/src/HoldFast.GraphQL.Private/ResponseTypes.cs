@@ -244,9 +244,9 @@ public record ClickUpProjectMappingInput(
 
 /// <summary>
 /// Input for the updateAdminAboutYouDetails mutation — matches the Go schema AdminAboutYouDetails input.
+/// Named to exactly match the Go schema type so HC emits "AdminAboutYouDetails" in the schema.
 /// </summary>
-[HotChocolate.GraphQLName("AdminAboutYouDetails")]
-public record AdminAboutYouDetailsInput(
+public record AdminAboutYouDetails(
     string FirstName,
     string LastName,
     string UserDefinedRole,
