@@ -224,6 +224,7 @@ if (runtime.IsPrivateGraph())
         .AddSorting()
         .RegisterDbContextFactory<HoldFastDbContext>()
         .AddConvention<HotChocolate.Types.Descriptors.INamingConventions>(_ => new SnakeCaseNamingConventions())
+        .TryAddTypeInterceptor<HoldFast.GraphQL.Private.IdFieldTypeInterceptor>()
         .AddHttpRequestInterceptor<UserRequestInterceptor>();
 }
 
