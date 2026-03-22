@@ -70,6 +70,14 @@ public sealed class SnakeCaseNamingConventions : DefaultNamingConventions
         return base.GetTypeName(type, kind);
     }
 
+    public override string GetEnumValueName(object value)
+    {
+        // Go/gqlgen schema uses PascalCase for enum values (SixMonths, ThreeMonths, etc.).
+        // HC default converts to UPPER_SNAKE_CASE (SIX_MONTHS) — override to preserve the
+        // C# member name (which already matches the Go schema naming).
+        return value.ToString()!;
+    }
+
     public new string FormatFieldName(string fieldName)
     {
         return ToSnakeCase(fieldName);
