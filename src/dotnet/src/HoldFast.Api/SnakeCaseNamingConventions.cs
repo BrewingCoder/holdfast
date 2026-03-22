@@ -36,6 +36,11 @@ public sealed class SnakeCaseNamingConventions : DefaultNamingConventions
 
     public override string GetArgumentName(ParameterInfo parameter)
     {
+        // [GraphQLName] on a parameter is not honoured by the base GetArgumentName,
+        // so we check it ourselves before applying snake_case.
+        var attr = parameter.GetCustomAttribute<GraphQLNameAttribute>();
+        if (attr != null)
+            return attr.Name;
         var baseName = base.GetArgumentName(parameter);
         return ToSnakeCase(baseName);
     }
