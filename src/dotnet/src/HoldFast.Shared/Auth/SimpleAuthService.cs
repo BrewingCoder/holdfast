@@ -39,4 +39,6 @@ public class SimpleAuthService : IAuthService
 
     public string? GetEmail(ClaimsPrincipal principal) =>
         principal.FindFirst(HoldFastClaimTypes.Email)?.Value ?? DemoEmail;
+
+    public string GenerateProjectToken(int projectId) => $"simple-project-token-{projectId}";
 }

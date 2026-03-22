@@ -142,6 +142,8 @@ public class PrivateQuery
         await AuthHelper.RequireProjectAccess(claimsPrincipal, id, authz, ct);
 
         return await db.Projects
+            .Include(p => p.Workspace)
+                .ThenInclude(w => w!.Projects)
             .FirstOrDefaultAsync(p => p.Id == id, ct);
     }
 

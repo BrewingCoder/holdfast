@@ -80,6 +80,19 @@ public class JwtAuthService : IAuthService
         return principal.FindFirst(HoldFastClaimTypes.Uid)?.Value;
     }
 
+    public string GenerateProjectToken(int projectId)
+    {
+        var claims = new List<Claim>
+        {
+            new("project_id", projectId.ToString()),
+        };
+        var token = new JwtSecurityToken(
+            claims: claims,
+            expires: DateTime.UtcNow.AddHours(1),
+            signingCredentials: _signingCredentials);
+        return new JwtSecurityTokenHandler().WriteToken(token);
+    }
+
     public string? GetEmail(ClaimsPrincipal principal)
     {
         return principal.FindFirst(HoldFastClaimTypes.Email)?.Value;

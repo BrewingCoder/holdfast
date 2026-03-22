@@ -28,4 +28,10 @@ public interface IAuthService
     /// Extract the admin email from a ClaimsPrincipal.
     /// </summary>
     string? GetEmail(ClaimsPrincipal principal);
+
+    /// <summary>
+    /// Generate a short-lived project-scoped JWT (matches Go's ProjectJWTHandler).
+    /// Used by the frontend to authorize public SDK calls for a specific project.
+    /// </summary>
+    string GenerateProjectToken(int projectId);
 }

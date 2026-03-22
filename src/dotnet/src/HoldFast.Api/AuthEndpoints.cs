@@ -27,6 +27,7 @@ public static class AuthEndpoints
         var priv = app.MapGroup("/private").RequireCors("Private");
         priv.MapPost("/login", Login);
         priv.MapGet("/validate-token", WhoAmI);
+        priv.MapGet("/project-token/{project_id}", ProjectToken);
     }
 
     /// <summary>
@@ -125,6 +126,42 @@ public static class AuthEndpoints
         {
             return Results.Unauthorized();
         }
+    }
+
+    /// <summary>
+    /// GET /private/project-token/{project_id} — returns a short-lived JWT the
+    /// frontend passes to the SDK so it can make authenticated public GraphQL calls.
+    /// Matches the Go backend's ProjectJWTHandler.
+    /// </summary>
+    private static async Task<IResult> ProjectToken(
+        string project_id,
+        HttpContext context,
+        IAuthService authService,
+        HoldFast.Shared.Auth.IAuthorizationService authz,
+        HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        var uid = authService.GetUid(context.User);
+        if (string.IsNullOrEmpty(uid))
+            return Results.Unauthorized();
+
+        if (!int.TryParse(project_id, out var projectIdInt))
+            return Results.BadRequest("Invalid project_id");
+
+        // Verify the admin has access to this project
+        try
+        {
+            var admin = await authz.GetCurrentAdminAsync(uid, ct);
+            await authz.IsAdminInProjectAsync(admin.Id, projectIdInt, ct);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Results.Forbid();
+        }
+
+        // Generate a short-lived JWT with project_id claim (matches Go implementation)
+        var projectToken = authService.GenerateProjectToken(projectIdInt);
+        return Results.Ok(projectToken);
     }
 
     /// <summary>Request body for the /auth/login endpoint.</summary>
