@@ -1,85 +1,18 @@
 import { H, Metadata } from '@holdfast-io/browser'
-import * as rudderanalytics from 'rudder-sdk-js'
 
-import { DISABLE_ANALYTICS } from '@/constants'
-import { omit } from 'lodash'
+const initialize = () => {}
 
-// from https://www.rudderstack.com/docs/archive/javascript-sdk/1.1/faq/#what-is-the-reserved-keyword-error
-const rudderstackReserved = [
-	'anonymous_id',
-	'id',
-	'sent_at',
-	'received_at',
-	'timestamp',
-	'original_timestamp',
-	'event_text',
-	'event',
-]
-let rudderstackInitialized = false
-
-// necessary to ensure DISABLE_ANALYTICS value is not removed from constants.ts by tree-shaking
-const isDisabled = DISABLE_ANALYTICS === 'true'
-console.debug(`highlight analytics`, { DISABLE_ANALYTICS, isDisabled })
-
-const initialize = () => {
-	if (isDisabled) {
-		console.debug(`highlight analytics disabled`)
-		return
-	}
-
-	if (rudderstackInitialized) {
-		console.warn('Rudderstack already initialized.')
-		return
-	}
-
-	rudderstackInitialized = true
-
-	rudderanalytics.load(
-		'2HMp4bSqggu0Z8W1cn6G5nydUxg',
-		'https://highlightwjh.dataplane.rudderstack.com',
-		{ integrations: { All: true } },
-	)
-}
-
-const track = (event: string, metadata?: rudderanalytics.apiObject) => {
+const track = (event: string, metadata?: Record<string, unknown>) => {
 	H.track(event, metadata as Metadata)
-
-	if (isDisabled) {
-		console.debug(`highlight analytics disabled`)
-		return
-	}
-
-	rudderanalytics.track(event, omit(metadata, rudderstackReserved))
 }
 
-const identify = (email: string, traits?: rudderanalytics.apiObject) => {
+const identify = (email: string, traits?: Record<string, unknown>) => {
 	H.identify(email, traits as Metadata)
-
-	if (isDisabled) {
-		console.debug(`highlight analytics disabled`)
-		return
-	}
-
-	rudderanalytics.identify(email, omit(traits, rudderstackReserved))
 }
 
-const page = (name: string, properties?: rudderanalytics.apiObject) => {
-	if (isDisabled) {
-		console.debug(`highlight analytics disabled`)
-		return
-	}
+const page = (_name: string, _properties?: Record<string, unknown>) => {}
 
-	rudderanalytics.page(name, omit(properties, rudderstackReserved))
-}
-
-const trackGaEvent = (event: string, properties?: Record<string, any>) => {
-	if (window.dataLayer) {
-		window.dataLayer.push({
-			event,
-			...properties,
-		})
-	}
-}
+const trackGaEvent = (_event: string, _properties?: Record<string, unknown>) => {}
 
 const analytics = {
 	initialize,

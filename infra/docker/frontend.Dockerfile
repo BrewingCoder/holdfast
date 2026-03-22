@@ -18,7 +18,8 @@ COPY tests/e2e ./tests/e2e
 COPY tools/scripts/package.json ./tools/scripts/package.json
 COPY src/frontend/package.json ./src/frontend/package.json
 
-RUN yarn install --immutable
+RUN --mount=type=cache,target=/root/.yarn/berry/cache,sharing=locked \
+    yarn install --immutable
 
 # ── Source copy ──────────────────────────────────────────────────────────────
 COPY src/backend/localhostssl ./src/backend/localhostssl
@@ -46,7 +47,8 @@ ENV REACT_APP_PUBLIC_GRAPH_URI=$REACT_APP_PUBLIC_GRAPH_URI
 ENV REACT_APP_OTLP_ENDPOINT=$REACT_APP_OTLP_ENDPOINT
 ENV REACT_APP_IN_DOCKER=$REACT_APP_IN_DOCKER
 
-RUN yarn build:frontend
+RUN --mount=type=cache,target=/root/.turbo,sharing=locked \
+    TURBO_CACHE_DIR=/root/.turbo yarn build:frontend
 
 # ── Runtime image ─────────────────────────────────────────────────────────────
 FROM nginx:stable-alpine AS frontend-prod

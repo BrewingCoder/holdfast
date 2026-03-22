@@ -21,6 +21,12 @@ public static class AuthEndpoints
         auth.MapPost("/login", Login);
         auth.MapPost("/logout", Logout);
         auth.MapGet("/whoami", WhoAmI);
+
+        // Also register at /private/* to match the frontend's expected URL shape.
+        // These must be registered before the GraphQL middleware captures /private.
+        var priv = app.MapGroup("/private");
+        priv.MapPost("/login", Login);
+        priv.MapGet("/validate-token", WhoAmI);
     }
 
     /// <summary>

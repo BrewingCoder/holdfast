@@ -43,7 +43,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Helmet } from 'react-helmet'
 import { useHotkeys } from 'react-hotkeys-hook'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { apiObject } from 'rudder-sdk-js'
 import {
 	StringParam,
 	useQueryParam,
@@ -608,7 +607,7 @@ export function useErrorGroup(errorSecureId?: string) {
 					},
 				}).catch(console.error)
 			}
-			const properties: apiObject = {
+			const properties: Record<string, unknown> = {
 				is_guest: !isLoggedIn,
 			}
 			if (referrer) {
