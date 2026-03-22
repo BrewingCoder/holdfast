@@ -554,10 +554,8 @@ public class PrivateMutation
     /// <summary>
     /// Update admin "about you" details.
     /// </summary>
-    public async Task<Admin> UpdateAdminAboutYouDetails(
-        string? name,
-        string? referral,
-        string? role,
+    public async Task<bool> UpdateAdminAboutYouDetails(
+        AdminAboutYouDetailsInput adminDetails,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
@@ -565,12 +563,17 @@ public class PrivateMutation
     {
         var admin = await AuthHelper.GetRequiredAdmin(claimsPrincipal, authz, ct);
 
-        if (name != null) admin.Name = name;
-        if (referral != null) admin.Referral = referral;
-        if (role != null) admin.UserDefinedRole = role;
+        var firstName = adminDetails.FirstName?.Trim();
+        var lastName = adminDetails.LastName?.Trim();
+        admin.Name = string.IsNullOrEmpty(lastName)
+            ? firstName
+            : $"{firstName} {lastName}";
+        admin.UserDefinedRole = adminDetails.UserDefinedRole;
+        admin.Referral = adminDetails.Referral;
+        admin.AboutYouDetailsFilled = "true";
 
         await db.SaveChangesAsync(ct);
-        return admin;
+        return true;
     }
 
     // ── Workspace Admin Management ───────────────────────────────────

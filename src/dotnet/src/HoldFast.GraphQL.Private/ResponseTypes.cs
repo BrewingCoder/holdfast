@@ -241,3 +241,16 @@ public record VercelProjectMappingInput(
 public record ClickUpProjectMappingInput(
     int ProjectId,
     string ClickUpSpaceId);
+
+/// <summary>
+/// Input for the updateAdminAboutYouDetails mutation — matches the Go schema AdminAboutYouDetails input.
+/// </summary>
+public record AdminAboutYouDetailsInput(
+    string FirstName,
+    string LastName,
+    string UserDefinedRole,
+    string UserDefinedPersona,
+    string UserDefinedTeamSize,
+    string HeardAbout,
+    string Referral,
+    string? Phone);
