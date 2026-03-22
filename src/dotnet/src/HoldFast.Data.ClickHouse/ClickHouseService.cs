@@ -563,18 +563,23 @@ public class ClickHouseService : IClickHouseService, IDisposable
         try
         {
             await EnsureOpenAsync(_readonlyConn, ct);
+            using var cmd = _readonlyConn.CreateCommand();
+            cmd.CommandText = sql;
+            foreach (var (name, value) in parameters)
+                cmd.AddParameter(name, value);
+
+            using var reader = await cmd.ExecuteReaderAsync(ct);
             if (scalar)
             {
-                using var reader = await _readonlyConn.ExecuteReaderAsync(sql, ct);
+                // Single-column result — read first column directly
                 var results = new List<T>();
                 while (await reader.ReadAsync(ct))
-                {
-                    results.Add((T)reader.GetValue(0));
-                }
+                    results.Add((T)Convert.ChangeType(reader.GetValue(0), typeof(T))!);
                 return results;
             }
 
-            return await _readonlyConn.QueryAsync<T>(sql);
+            // Multi-column result — use Dapper to map rows to T
+            return Dapper.SqlMapper.Parse<T>(reader).ToList();
         }
         catch (Exception ex)
         {
@@ -585,13 +590,18 @@ public class ClickHouseService : IClickHouseService, IDisposable
 
     private async Task<T> QueryScalarAsync<T>(SqlBuilder sb, CancellationToken ct)
     {
-        var (sql, _) = sb.Build();
+        var (sql, parameters) = sb.Build();
         _logger.LogDebug("ClickHouse scalar query: {Sql}", sql);
 
         try
         {
             await EnsureOpenAsync(_readonlyConn, ct);
-            var result = await _readonlyConn.ExecuteScalarAsync(sql, ct);
+            using var cmd = _readonlyConn.CreateCommand();
+            cmd.CommandText = sql;
+            foreach (var (name, value) in parameters)
+                cmd.AddParameter(name, value);
+
+            var result = await cmd.ExecuteScalarAsync(ct);
             return (T)Convert.ChangeType(result!, typeof(T));
         }
         catch (Exception ex)
