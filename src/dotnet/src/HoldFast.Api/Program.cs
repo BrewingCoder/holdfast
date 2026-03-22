@@ -208,7 +208,8 @@ if (runtime.IsPrivateGraph())
         .AddFiltering()
         .AddSorting()
         .RegisterDbContextFactory<HoldFastDbContext>()
-        .AddConvention<HotChocolate.Types.Descriptors.INamingConventions>(_ => new SnakeCaseNamingConventions());
+        .AddConvention<HotChocolate.Types.Descriptors.INamingConventions>(_ => new SnakeCaseNamingConventions())
+        .AddHttpRequestInterceptor<UserRequestInterceptor>();
 }
 
 if (runtime.IsPublicGraph())
