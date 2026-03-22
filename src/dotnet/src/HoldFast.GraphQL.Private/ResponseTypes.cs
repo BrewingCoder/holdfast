@@ -81,11 +81,38 @@ public record SessionPayload(
     string LastUserInteractionTime);
 
 /// <summary>
+/// Paginated error group list result — matches Go schema error_groups wrapper type.
+/// </summary>
+public record ErrorGroupResults(
+    [property: GraphQLName("error_groups")] List<ErrorGroup> ErrorGroups,
+    [property: GraphQLName("totalCount")] long TotalCount);
+
+/// <summary>
 /// Paginated error group instances result.
 /// </summary>
 public record ErrorGroupInstances(
     List<ErrorObject> ErrorObjects,
     long TotalCount);
+
+/// <summary>
+/// A single frame of a parsed (structured) stack trace.
+/// Matches Go schema ErrorTrace type. Fields use camelCase per Go schema.
+/// </summary>
+public record ErrorTrace(
+    [property: GraphQLName("fileName")] string? FileName,
+    [property: GraphQLName("lineNumber")] int? LineNumber,
+    [property: GraphQLName("columnNumber")] int? ColumnNumber,
+    [property: GraphQLName("functionName")] string? FunctionName);
+
+/// <summary>
+/// Error occurrence count for a date bucket — used in error_metrics.
+/// Matches Go schema ErrorDistributionItem type.
+/// </summary>
+public record ErrorDistributionItem(
+    [property: GraphQLName("error_group_id")] int ErrorGroupId,
+    DateTime Date,
+    string Name,
+    long Value);
 
 /// <summary>
 /// Referrer host with visit count and percentage.

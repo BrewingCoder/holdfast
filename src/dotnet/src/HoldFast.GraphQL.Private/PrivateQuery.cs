@@ -201,19 +201,41 @@ public class PrivateQuery
         return errorGroup;
     }
 
-    [UseProjection]
-    [UseFiltering]
-    [UseSorting]
-    public async Task<IQueryable<ErrorGroup>> GetErrorGroups(
+    /// <summary>
+    /// Paginated error groups list using ClickHouse for ranking and EF for hydration.
+    /// Matches Go schema: error_groups(...) { error_groups { ... } totalCount }
+    /// </summary>
+    public async Task<ErrorGroupResults> GetErrorGroups(
         [ID] int projectId,
+        int count,
+        [GraphQLName("params")] QueryInput queryParams,
+        int? page,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
+        [Service] IClickHouseService clickHouse,
         [Service] HoldFastDbContext db,
         CancellationToken ct)
     {
         await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
 
-        return db.ErrorGroups.Where(eg => eg.ProjectId == projectId);
+        var (ids, total) = await clickHouse.QueryErrorGroupIdsAsync(
+            projectId, queryParams, count, page ?? 1, ct);
+
+        List<ErrorGroup> groups;
+        if (ids.Count > 0)
+        {
+            groups = await db.ErrorGroups
+                .Where(eg => ids.Contains(eg.Id) && eg.ProjectId == projectId)
+                .ToListAsync(ct);
+            var order = ids.Select((id, idx) => (id, idx)).ToDictionary(x => x.id, x => x.idx);
+            groups = groups.OrderBy(eg => order.TryGetValue(eg.Id, out var i) ? i : int.MaxValue).ToList();
+        }
+        else
+        {
+            groups = [];
+        }
+
+        return new ErrorGroupResults(groups, total);
     }
 
     /// <summary>

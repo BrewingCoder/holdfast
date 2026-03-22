@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations.Schema;
 using HoldFast.Domain.Enums;
 
 namespace HoldFast.Domain.Entities;
@@ -26,6 +27,14 @@ public class ErrorGroup : BaseEntity
     public Project Project { get; set; } = null!;
     public ICollection<ErrorObject> ErrorObjects { get; set; } = [];
     public ICollection<ErrorFingerprint> Fingerprints { get; set; } = [];
+
+    // ── Computed / stub fields for GraphQL schema compatibility ─────────────
+    // These are not stored in PostgreSQL; they are populated by resolvers or
+    // left as null/empty stubs so the HC schema matches the Go/gqlgen contract.
+    [NotMapped] public DateTime? FirstOccurrence { get; set; }
+    [NotMapped] public DateTime? LastOccurrence { get; set; }
+    [NotMapped] public List<long> ErrorFrequency { get; set; } = [];
+    [NotMapped] public bool? Viewed { get; set; }
 }
 
 /// <summary>
