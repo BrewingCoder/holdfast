@@ -324,7 +324,7 @@ public class NewPrivateQueryTests : IDisposable
             _session.SecureId, _principal, _authz, _db, _clickHouse, CancellationToken.None);
 
         Assert.Empty(result.Buckets);
-        Assert.Equal(0UL, result.BucketCount);
+        Assert.Equal(0L, result.BucketCount);
     }
 
     // ══════════════════════════════════════════════════════════════════

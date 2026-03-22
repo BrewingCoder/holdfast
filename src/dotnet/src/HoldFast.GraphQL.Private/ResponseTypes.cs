@@ -502,7 +502,7 @@ public class PredictionSettings
 public class MetricBucketResult
 {
     [GraphQLName("bucket_id")]
-    public ulong BucketId { get; init; }
+    public long BucketId { get; init; }
     [GraphQLName("bucket_min")]
     public double? BucketMin { get; init; }
     [GraphQLName("bucket_max")]
@@ -529,7 +529,7 @@ public class MetricBucketResult
 public class MetricsBucketsResult
 {
     [GraphQLName("bucket_count")]
-    public ulong BucketCount { get; init; }
+    public long BucketCount { get; init; }
     [GraphQLName("sample_factor")]
     public double SampleFactor { get; init; } = 1.0;
     public List<MetricBucketResult> Buckets { get; init; } = [];
@@ -538,11 +538,11 @@ public class MetricsBucketsResult
     public static MetricsBucketsResult FromClickHouse(MetricsBuckets src) =>
         new()
         {
-            BucketCount = (ulong)src.TotalCount,
+            BucketCount = src.TotalCount,
             SampleFactor = src.SampleFactor ?? 1.0,
             Buckets = src.Buckets.Select((b, i) => new MetricBucketResult
             {
-                BucketId = (ulong)i,
+                BucketId = (long)i,
                 BucketValue = b.Value,
                 Column = "value",
                 Group = b.Group != null ? [b.Group] : [],
