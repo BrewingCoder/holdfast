@@ -16,7 +16,7 @@ public static class AuthEndpoints
     /// </summary>
     public static void MapAuthEndpoints(this WebApplication app)
     {
-        var auth = app.MapGroup("/auth");
+        var auth = app.MapGroup("/auth").RequireCors("Private");
 
         auth.MapPost("/login", Login);
         auth.MapPost("/logout", Logout);
@@ -24,7 +24,7 @@ public static class AuthEndpoints
 
         // Also register at /private/* to match the frontend's expected URL shape.
         // These must be registered before the GraphQL middleware captures /private.
-        var priv = app.MapGroup("/private");
+        var priv = app.MapGroup("/private").RequireCors("Private");
         priv.MapPost("/login", Login);
         priv.MapGet("/validate-token", WhoAmI);
     }
