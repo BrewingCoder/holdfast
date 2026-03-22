@@ -121,24 +121,6 @@ public class HoldFastDbContext : DbContext
                 index.SetDatabaseName(ToSnakeCase(index.GetDatabaseName()!));
         }
 
-        // Explicit column mappings for Admin fields whose C# names don't map to the expected DB column names.
-        // The DB columns come from the Go/GORM schema; we pin them here to avoid EF Npgsql naming divergence.
-        modelBuilder.Entity<Admin>()
-            .Property(a => a.SlackImChannelId)
-            .HasColumnName("slack_im_channel_id");
-
-        modelBuilder.Entity<Admin>()
-            .Property(a => a.AboutYouDetailsFilled)
-            .HasColumnName("about_you_details_filled");
-
-        modelBuilder.Entity<Admin>()
-            .Property(a => a.UserDefinedTeamSize)
-            .HasColumnName("user_defined_team_size");
-
-        modelBuilder.Entity<Admin>()
-            .Property(a => a.HeardAbout)
-            .HasColumnName("heard_about");
-
         // Composite key for WorkspaceAdmin
         modelBuilder.Entity<WorkspaceAdmin>()
             .HasKey(wa => new { wa.AdminId, wa.WorkspaceId });

@@ -572,7 +572,7 @@ public class AdminDetailTests
             Email = "scott@example.com",
             Phone = "+1234567890",
             PhotoUrl = "https://example.com/photo.jpg",
-            AboutYouDetailsFilled = true,
+            AboutYouDetailsFilled = "true",
             UserDefinedRole = "Engineer",
             UserDefinedPersona = "Backend",
             Referral = "friend",

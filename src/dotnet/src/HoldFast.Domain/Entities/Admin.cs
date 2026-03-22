@@ -11,14 +11,15 @@ public class Admin : BaseEntity
     public string? Email { get; set; }
     public string? Phone { get; set; }
     public string? PhotoUrl { get; set; }
-    public bool? AboutYouDetailsFilled { get; set; }
+    // DB column is text (not boolean) — stored as "true"/"false" string to match legacy schema.
+    public string? AboutYouDetailsFilled { get; set; }
     public string? UserDefinedRole { get; set; }
     public string? UserDefinedPersona { get; set; }
-    public string? UserDefinedTeamSize { get; set; }
-    public string? HeardAbout { get; set; }
     public string? Referral { get; set; }
     public bool EmailVerified { get; set; }
-    public string? SlackImChannelId { get; set; }
+    // DB column is slack_imchannel_id boolean — EF Npgsql maps via convention.
+    // HC SnakeCaseNaming produces slack_im_channel_id (with underscore) matching the GQL schema.
+    public bool SlackIMChannelID { get; set; }
 
     // Navigation
     public ICollection<Organization> Organizations { get; set; } = [];
