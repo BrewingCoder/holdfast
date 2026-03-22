@@ -123,7 +123,6 @@ export const AdminForm: React.FC = () => {
 	})
 
 	const submitSucceeded = formStore.useState('submitSucceed')
-	)
 	const disableForm = submitSucceeded > 0
 
 	formStore.useSubmit(async (formState) => {
