@@ -59,7 +59,8 @@ public class DateRangeRequiredInput
 /// </summary>
 public class QueryInput
 {
-    public string Query { get; set; } = string.Empty;
+    // Nullable so the frontend can send params without a query (empty search case)
+    public string? Query { get; set; }
     public DateRangeRequiredInput DateRange { get; set; } = new();
 }
 

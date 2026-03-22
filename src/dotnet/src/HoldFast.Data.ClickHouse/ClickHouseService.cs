@@ -52,7 +52,7 @@ public class ClickHouseService : IClickHouseService, IDisposable
         sb.AddParam("projectId", projectId);
 
         AppendDateRange(sb, query);
-        AppendQueryFilter(sb, query.Query, "LogAttributes");
+        AppendQueryFilter(sb, query.Query ?? string.Empty, "LogAttributes");
         AppendCursorCondition(sb, pagination, isDesc);
 
         sb.Append($"ORDER BY Timestamp {(isDesc ? "DESC" : "ASC")}, UUID {(isDesc ? "DESC" : "ASC")} ");
@@ -118,7 +118,7 @@ public class ClickHouseService : IClickHouseService, IDisposable
         sb.AddParam("projectId", projectId);
 
         AppendDateRange(sb, query);
-        AppendQueryFilter(sb, query.Query, "TraceAttributes");
+        AppendQueryFilter(sb, query.Query ?? string.Empty, "TraceAttributes");
         AppendCursorCondition(sb, pagination, isDesc);
 
         sb.Append($"ORDER BY Timestamp {(isDesc ? "DESC" : "ASC")}, UUID {(isDesc ? "DESC" : "ASC")} ");
@@ -192,7 +192,7 @@ public class ClickHouseService : IClickHouseService, IDisposable
         countSb.Append("WHERE ProjectID = {projectId:Int32} ");
         countSb.AddParam("projectId", projectId);
         AppendSessionDateRange(countSb, query);
-        AppendSessionQueryFilter(countSb, query.Query);
+        AppendSessionQueryFilter(countSb, query.Query ?? string.Empty);
 
         var total = await QueryScalarAsync<long>(countSb, ct);
 
@@ -202,7 +202,7 @@ public class ClickHouseService : IClickHouseService, IDisposable
         sb.Append("WHERE ProjectID = {projectId:Int32} ");
         sb.AddParam("projectId", projectId);
         AppendSessionDateRange(sb, query);
-        AppendSessionQueryFilter(sb, query.Query);
+        AppendSessionQueryFilter(sb, query.Query ?? string.Empty);
 
         // Map frontend snake_case sort fields to ClickHouse PascalCase column names
         var sort = NormalizeSortField(sortField, "CreatedAt");
@@ -273,7 +273,7 @@ public class ClickHouseService : IClickHouseService, IDisposable
             sb.Append("WHERE ProjectId = {projectId:Int32} ");
             sb.AddParam("projectId", projectId);
             AppendDateRange(sb, query);
-            AppendQueryFilter(sb, query.Query, "Attributes");
+            AppendQueryFilter(sb, query.Query ?? string.Empty, "Attributes");
             if (groupByClause != null)
                 sb.Append($"GROUP BY {groupByClause} ");
             sb.Append("ORDER BY Value DESC ");
@@ -295,7 +295,7 @@ public class ClickHouseService : IClickHouseService, IDisposable
             sb.AddParam("startDate", query.DateRange.StartDate);
             sb.AddParam("endDate", query.DateRange.EndDate);
             AppendDateRange(sb, query);
-            AppendQueryFilter(sb, query.Query, "Attributes");
+            AppendQueryFilter(sb, query.Query ?? string.Empty, "Attributes");
             sb.Append("GROUP BY BucketStart ");
             if (groupByClause != null)
                 sb.Append($", {groupByClause} ");
