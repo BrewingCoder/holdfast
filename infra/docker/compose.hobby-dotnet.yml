@@ -37,6 +37,25 @@ services:
             timeout: 5s
             retries: 10
 
+    collector:
+        container_name: collector
+        build:
+            context: ../..
+            dockerfile: infra/docker/collector.Dockerfile
+            args:
+                - IN_DOCKER_GO=true
+                - SSL=false
+        restart: on-failure
+        extra_hosts:
+            - 'host.docker.internal:host-gateway'
+        ports:
+            - '0.0.0.0:4317:4317'
+            - '0.0.0.0:4318:4318'
+            - '0.0.0.0:4319:4319'
+        depends_on:
+            backend:
+                condition: service_healthy
+
     frontend:
         container_name: frontend
         build:
