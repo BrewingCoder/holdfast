@@ -356,7 +356,7 @@ public class KeysAndMetricsQueryTests : IDisposable
     {
         var result = await _query.GetLogsMetrics(
             _project.Id,
-            new QueryInput { DateRangeStart = DateTime.UtcNow.AddDays(-7), DateRangeEnd = DateTime.UtcNow },
+            new QueryInput { DateRange = new DateRangeRequiredInput { StartDate = DateTime.UtcNow.AddDays(-7), EndDate = DateTime.UtcNow } },
             ["service_name"], "Timestamp", null,
             _principal, _authz, _clickHouse, CancellationToken.None);
 
@@ -369,7 +369,7 @@ public class KeysAndMetricsQueryTests : IDisposable
     {
         var result = await _query.GetTracesMetrics(
             _project.Id,
-            new QueryInput { DateRangeStart = DateTime.UtcNow.AddDays(-7), DateRangeEnd = DateTime.UtcNow },
+            new QueryInput { DateRange = new DateRangeRequiredInput { StartDate = DateTime.UtcNow.AddDays(-7), EndDate = DateTime.UtcNow } },
             ["span_name"], null, null,
             _principal, _authz, _clickHouse, CancellationToken.None);
 
@@ -381,7 +381,7 @@ public class KeysAndMetricsQueryTests : IDisposable
     {
         await _query.GetTracesMetrics(
             _project.Id,
-            new QueryInput { DateRangeStart = DateTime.UtcNow.AddDays(-7), DateRangeEnd = DateTime.UtcNow },
+            new QueryInput { DateRange = new DateRangeRequiredInput { StartDate = DateTime.UtcNow.AddDays(-7), EndDate = DateTime.UtcNow } },
             [], null, null,
             _principal, _authz, _clickHouse, CancellationToken.None);
 
@@ -393,7 +393,7 @@ public class KeysAndMetricsQueryTests : IDisposable
     {
         var result = await _query.GetErrorsMetrics(
             _project.Id,
-            new QueryInput { DateRangeStart = DateTime.UtcNow.AddDays(-7), DateRangeEnd = DateTime.UtcNow },
+            new QueryInput { DateRange = new DateRangeRequiredInput { StartDate = DateTime.UtcNow.AddDays(-7), EndDate = DateTime.UtcNow } },
             [], "Timestamp", null,
             _principal, _authz, _clickHouse, CancellationToken.None);
 
@@ -405,7 +405,7 @@ public class KeysAndMetricsQueryTests : IDisposable
     {
         var result = await _query.GetSessionsMetrics(
             _project.Id,
-            new QueryInput { DateRangeStart = DateTime.UtcNow.AddDays(-7), DateRangeEnd = DateTime.UtcNow },
+            new QueryInput { DateRange = new DateRangeRequiredInput { StartDate = DateTime.UtcNow.AddDays(-7), EndDate = DateTime.UtcNow } },
             [], "Timestamp", null,
             _principal, _authz, _clickHouse, CancellationToken.None);
 
@@ -417,7 +417,7 @@ public class KeysAndMetricsQueryTests : IDisposable
     {
         var result = await _query.GetEventsMetrics(
             _project.Id,
-            new QueryInput { DateRangeStart = DateTime.UtcNow.AddDays(-7), DateRangeEnd = DateTime.UtcNow },
+            new QueryInput { DateRange = new DateRangeRequiredInput { StartDate = DateTime.UtcNow.AddDays(-7), EndDate = DateTime.UtcNow } },
             ["event_name"], "Timestamp", null,
             _principal, _authz, _clickHouse, CancellationToken.None);
 
@@ -433,7 +433,7 @@ public class KeysAndMetricsQueryTests : IDisposable
     {
         var result = await _query.GetEventSessions(
             _project.Id, 10,
-            new QueryInput { DateRangeStart = DateTime.UtcNow.AddDays(-7), DateRangeEnd = DateTime.UtcNow },
+            new QueryInput { DateRange = new DateRangeRequiredInput { StartDate = DateTime.UtcNow.AddDays(-7), EndDate = DateTime.UtcNow } },
             null, true, null,
             _principal, _authz, _clickHouse, _db, CancellationToken.None);
 
@@ -450,7 +450,7 @@ public class KeysAndMetricsQueryTests : IDisposable
 
         var result = await _query.GetEventSessions(
             _project.Id, 10,
-            new QueryInput { DateRangeStart = DateTime.UtcNow.AddDays(-7), DateRangeEnd = DateTime.UtcNow },
+            new QueryInput { DateRange = new DateRangeRequiredInput { StartDate = DateTime.UtcNow.AddDays(-7), EndDate = DateTime.UtcNow } },
             null, true, null,
             _principal, _authz, _clickHouse, _db, CancellationToken.None);
 
@@ -473,7 +473,7 @@ public class KeysAndMetricsQueryTests : IDisposable
 
         var result = await _query.GetEventSessions(
             _project.Id, 10,
-            new QueryInput { DateRangeStart = DateTime.UtcNow.AddDays(-7), DateRangeEnd = DateTime.UtcNow },
+            new QueryInput { DateRange = new DateRangeRequiredInput { StartDate = DateTime.UtcNow.AddDays(-7), EndDate = DateTime.UtcNow } },
             null, true, null,
             _principal, _authz, _clickHouse, _db, CancellationToken.None);
 
@@ -494,7 +494,7 @@ public class KeysAndMetricsQueryTests : IDisposable
 
         var result = await _query.GetEventSessions(
             _project.Id, 10,
-            new QueryInput { DateRangeStart = DateTime.UtcNow.AddDays(-7), DateRangeEnd = DateTime.UtcNow },
+            new QueryInput { DateRange = new DateRangeRequiredInput { StartDate = DateTime.UtcNow.AddDays(-7), EndDate = DateTime.UtcNow } },
             null, true, null,
             _principal, _authz, _clickHouse, _db, CancellationToken.None);
 
@@ -610,7 +610,7 @@ public class KeysAndMetricsQueryTests : IDisposable
     {
         var result = await _query.GetLogLines(
             "LOGS", _project.Id,
-            new QueryInput { DateRangeStart = DateTime.UtcNow.AddDays(-7), DateRangeEnd = DateTime.UtcNow },
+            new QueryInput { DateRange = new DateRangeRequiredInput { StartDate = DateTime.UtcNow.AddDays(-7), EndDate = DateTime.UtcNow } },
             _principal, _authz, _clickHouse, CancellationToken.None);
 
         Assert.Empty(result);
@@ -650,7 +650,7 @@ public class KeysAndMetricsQueryTests : IDisposable
 
         var result = await _query.GetLogLines(
             "LOGS", _project.Id,
-            new QueryInput { DateRangeStart = DateTime.UtcNow.AddDays(-7), DateRangeEnd = DateTime.UtcNow },
+            new QueryInput { DateRange = new DateRangeRequiredInput { StartDate = DateTime.UtcNow.AddDays(-7), EndDate = DateTime.UtcNow } },
             _principal, _authz, _clickHouse, CancellationToken.None);
 
         Assert.Equal(2, result.Count);
@@ -677,7 +677,7 @@ public class KeysAndMetricsQueryTests : IDisposable
 
         var result = await _query.GetLogLines(
             "LOGS", _project.Id,
-            new QueryInput { DateRangeStart = DateTime.UtcNow.AddDays(-7), DateRangeEnd = DateTime.UtcNow },
+            new QueryInput { DateRange = new DateRangeRequiredInput { StartDate = DateTime.UtcNow.AddDays(-7), EndDate = DateTime.UtcNow } },
             _principal, _authz, _clickHouse, CancellationToken.None);
 
         Assert.Single(result);

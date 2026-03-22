@@ -400,7 +400,7 @@ public class SessionAndAlertTests : IDisposable
         _db.SaveChanges();
 
         var result = await _query.GetSessionUsersReports(
-            _project.Id, new QueryInput { DateRangeStart = DateTime.UtcNow.AddDays(-1), DateRangeEnd = DateTime.UtcNow.AddDays(1) },
+            _project.Id, new QueryInput { DateRange = new DateRangeRequiredInput { StartDate = DateTime.UtcNow.AddDays(-1), EndDate = DateTime.UtcNow.AddDays(1) } },
             _principal, _authz, _db, CancellationToken.None);
 
         Assert.DoesNotContain(result, r => r.Email == "excluded@user.com");
@@ -418,7 +418,7 @@ public class SessionAndAlertTests : IDisposable
         _db.SaveChanges();
 
         var result = await _query.GetSessionUsersReports(
-            _project.Id, new QueryInput { DateRangeStart = DateTime.UtcNow.AddDays(-1), DateRangeEnd = DateTime.UtcNow.AddDays(1) },
+            _project.Id, new QueryInput { DateRange = new DateRangeRequiredInput { StartDate = DateTime.UtcNow.AddDays(-1), EndDate = DateTime.UtcNow.AddDays(1) } },
             _principal, _authz, _db, CancellationToken.None);
 
         Assert.Empty(result);
@@ -435,7 +435,7 @@ public class SessionAndAlertTests : IDisposable
         _db.SaveChanges();
 
         var result = await _query.GetSessionUsersReports(
-            _project.Id, new QueryInput { DateRangeStart = now.AddDays(-1), DateRangeEnd = now.AddDays(1) },
+            _project.Id, new QueryInput { DateRange = new DateRangeRequiredInput { StartDate = now.AddDays(-1), EndDate = now.AddDays(1) } },
             _principal, _authz, _db, CancellationToken.None);
 
         Assert.Equal(2, result.Count);
@@ -458,7 +458,7 @@ public class SessionAndAlertTests : IDisposable
         _db.SaveChanges();
 
         var result = await _query.GetSessionUsersReports(
-            _project.Id, new QueryInput { DateRangeStart = DateTime.UtcNow.AddDays(-1), DateRangeEnd = DateTime.UtcNow.AddDays(1) },
+            _project.Id, new QueryInput { DateRange = new DateRangeRequiredInput { StartDate = DateTime.UtcNow.AddDays(-1), EndDate = DateTime.UtcNow.AddDays(1) } },
             _principal, _authz, _db, CancellationToken.None);
 
         Assert.Single(result);
@@ -477,7 +477,7 @@ public class SessionAndAlertTests : IDisposable
         _db.SaveChanges();
 
         var result = await _query.GetSessionUsersReports(
-            _project.Id, new QueryInput { DateRangeStart = DateTime.UtcNow.AddDays(-1), DateRangeEnd = DateTime.UtcNow.AddDays(1) },
+            _project.Id, new QueryInput { DateRange = new DateRangeRequiredInput { StartDate = DateTime.UtcNow.AddDays(-1), EndDate = DateTime.UtcNow.AddDays(1) } },
             _principal, _authz, _db, CancellationToken.None);
 
         Assert.Single(result);
@@ -496,7 +496,7 @@ public class SessionAndAlertTests : IDisposable
         _db.SaveChanges();
 
         var result = await _query.GetSessionUsersReports(
-            _project.Id, new QueryInput { DateRangeStart = DateTime.UtcNow.AddDays(-1), DateRangeEnd = DateTime.UtcNow.AddDays(1) },
+            _project.Id, new QueryInput { DateRange = new DateRangeRequiredInput { StartDate = DateTime.UtcNow.AddDays(-1), EndDate = DateTime.UtcNow.AddDays(1) } },
             _principal, _authz, _db, CancellationToken.None);
 
         Assert.Single(result);
@@ -516,7 +516,7 @@ public class SessionAndAlertTests : IDisposable
         _db.SaveChanges();
 
         var result = await _query.GetSessionUsersReports(
-            _project.Id, new QueryInput { DateRangeStart = DateTime.UtcNow.AddDays(-1), DateRangeEnd = DateTime.UtcNow.AddDays(1) },
+            _project.Id, new QueryInput { DateRange = new DateRangeRequiredInput { StartDate = DateTime.UtcNow.AddDays(-1), EndDate = DateTime.UtcNow.AddDays(1) } },
             _principal, _authz, _db, CancellationToken.None);
 
         Assert.Single(result);
@@ -536,7 +536,7 @@ public class SessionAndAlertTests : IDisposable
         _db.SaveChanges();
 
         var result = await _query.GetSessionUsersReports(
-            _project.Id, new QueryInput { DateRangeStart = DateTime.UtcNow.AddDays(-1), DateRangeEnd = DateTime.UtcNow.AddDays(1) },
+            _project.Id, new QueryInput { DateRange = new DateRangeRequiredInput { StartDate = DateTime.UtcNow.AddDays(-1), EndDate = DateTime.UtcNow.AddDays(1) } },
             _principal, _authz, _db, CancellationToken.None);
 
         Assert.Single(result);

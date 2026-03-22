@@ -280,8 +280,8 @@ public class ClickHouseModelsTests
     {
         var input = new QueryInput();
         Assert.Equal(string.Empty, input.Query);
-        Assert.Equal(default, input.DateRangeStart);
-        Assert.Equal(default, input.DateRangeEnd);
+        Assert.Equal(default, input.DateRange.StartDate);
+        Assert.Equal(default, input.DateRange.EndDate);
     }
 
     [Fact]
@@ -292,10 +292,9 @@ public class ClickHouseModelsTests
         var input = new QueryInput
         {
             Query = "service_name:api AND level:error",
-            DateRangeStart = start,
-            DateRangeEnd = end,
+            DateRange = new DateRangeRequiredInput { StartDate = start, EndDate = end },
         };
-        Assert.True(input.DateRangeEnd > input.DateRangeStart);
+        Assert.True(input.DateRange.EndDate > input.DateRange.StartDate);
     }
 
     // ── ClickHousePagination ────────────────────────────────────────

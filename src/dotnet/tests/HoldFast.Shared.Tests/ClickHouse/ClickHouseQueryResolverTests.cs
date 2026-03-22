@@ -413,7 +413,7 @@ public class ClickHouseQueryResolverTests : IDisposable
         var end = DateTime.UtcNow;
         var result = await _query.GetSessionsHistogram(
             project.Id,
-            new QueryInput { Query = "", DateRangeStart = start, DateRangeEnd = end },
+            new QueryInput { Query = "", DateRange = new DateRangeRequiredInput { StartDate = start, EndDate = end } },
             new DateHistogramOptions { Bounds = new DateRangeInput { StartDate = start, EndDate = end } },
             MakePrincipal("admin-uid"), _authz, _clickHouse, CancellationToken.None);
 
@@ -435,7 +435,7 @@ public class ClickHouseQueryResolverTests : IDisposable
         await Assert.ThrowsAsync<GraphQLException>(() =>
             _query.GetSessionsHistogram(
                 project.Id,
-                new QueryInput { Query = "", DateRangeStart = start, DateRangeEnd = end },
+                new QueryInput { Query = "", DateRange = new DateRangeRequiredInput { StartDate = start, EndDate = end } },
                 new DateHistogramOptions { Bounds = new DateRangeInput { StartDate = start, EndDate = end } },
                 MakePrincipal("outsider-sh"), _authz, _clickHouse, CancellationToken.None));
     }

@@ -126,7 +126,8 @@ public class PrivateQueryExtendedTests : IDisposable
         var role = await _query.GetAdminRoleByProject(
             project.Id, MakePrincipal("admin-uid"), _authz, _db, CancellationToken.None);
 
-        Assert.Equal("ADMIN", role);
+        Assert.NotNull(role);
+        Assert.Equal("ADMIN", role!.Role);
     }
 
     [Fact]

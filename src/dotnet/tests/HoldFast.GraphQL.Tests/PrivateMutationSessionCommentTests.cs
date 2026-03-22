@@ -417,38 +417,44 @@ public class PrivateMutationSessionCommentTests : IDisposable
     public async Task UpdateAdminAboutYouDetails_UpdatesName()
     {
         var result = await _mutation.UpdateAdminAboutYouDetails(
-            "New Name", null, null,
+            new AdminAboutYouDetails("New Name", "", null!, null!, null!, null!, null!, null),
             MakePrincipal("sc-admin"), _authz, _db, CancellationToken.None);
 
-        Assert.Equal("New Name", result.Name);
+        Assert.True(result);
+        var admin = await _db.Admins.FindAsync(_admin.Id);
+        Assert.Equal("New Name", admin!.Name);
     }
 
     [Fact]
     public async Task UpdateAdminAboutYouDetails_UpdatesAllFields()
     {
         var result = await _mutation.UpdateAdminAboutYouDetails(
-            "Scott", "friend", "developer",
+            new AdminAboutYouDetails("Scott", "", "developer", null!, null!, null!, "friend", null),
             MakePrincipal("sc-admin"), _authz, _db, CancellationToken.None);
 
-        Assert.Equal("Scott", result.Name);
-        Assert.Equal("friend", result.Referral);
-        Assert.Equal("developer", result.UserDefinedRole);
+        Assert.True(result);
+        var admin = await _db.Admins.FindAsync(_admin.Id);
+        Assert.Equal("Scott", admin!.Name);
+        Assert.Equal("friend", admin.Referral);
+        Assert.Equal("developer", admin.UserDefinedRole);
     }
 
     [Fact]
-    public async Task UpdateAdminAboutYouDetails_NullFields_NoChange()
+    public async Task UpdateAdminAboutYouDetails_NullFields_OverwriteToNull()
     {
-        // Set initial values
+        // The mutation always overwrites all fields; null inputs set DB values to null.
         _admin.Name = "Original";
         _admin.Referral = "google";
         _db.SaveChanges();
 
         var result = await _mutation.UpdateAdminAboutYouDetails(
-            null, null, null,
+            new AdminAboutYouDetails(null!, null!, null!, null!, null!, null!, null!, null),
             MakePrincipal("sc-admin"), _authz, _db, CancellationToken.None);
 
-        Assert.Equal("Original", result.Name);
-        Assert.Equal("google", result.Referral);
+        Assert.True(result);
+        var admin = await _db.Admins.FindAsync(_admin.Id);
+        Assert.Null(admin!.Name);
+        Assert.Null(admin.Referral);
     }
 
     [Fact]
@@ -456,7 +462,7 @@ public class PrivateMutationSessionCommentTests : IDisposable
     {
         await Assert.ThrowsAsync<GraphQLException>(() =>
             _mutation.UpdateAdminAboutYouDetails(
-                "Name", null, null,
+                new AdminAboutYouDetails("Name", "", null!, null!, null!, null!, null!, null),
                 AnonymousPrincipal, _authz, _db, CancellationToken.None));
     }
 }

@@ -68,15 +68,16 @@ public class PrivateQueryAnalyticsTests : IDisposable
         }, "Test"));
 
     // ── GetProjects (IQueryable) ─────────────────────────────────────
+    // GetProjects returns all projects across every workspace the admin belongs to.
 
     [Fact]
-    public async Task GetProjects_ReturnsProjectsInWorkspace()
+    public async Task GetProjects_ReturnsAllAdminProjects()
     {
         _db.Projects.Add(new Project { Name = "Proj2", WorkspaceId = _workspace.Id });
         await _db.SaveChangesAsync();
 
         var queryable = await _query.GetProjects(
-            _workspace.Id, _principal, _authz, _db, CancellationToken.None);
+            _principal, _authz, _db, CancellationToken.None);
         var list = await queryable.ToListAsync();
 
         Assert.Equal(2, list.Count);
@@ -85,8 +86,9 @@ public class PrivateQueryAnalyticsTests : IDisposable
     }
 
     [Fact]
-    public async Task GetProjects_ExcludesOtherWorkspaceProjects()
+    public async Task GetProjects_ExcludesProjectsFromUnrelatedWorkspaces()
     {
+        // Add a workspace the admin is NOT a member of, plus a project there
         var otherWs = new Workspace { Name = "Other" };
         _db.Workspaces.Add(otherWs);
         await _db.SaveChangesAsync();
@@ -94,25 +96,23 @@ public class PrivateQueryAnalyticsTests : IDisposable
         await _db.SaveChangesAsync();
 
         var queryable = await _query.GetProjects(
-            _workspace.Id, _principal, _authz, _db, CancellationToken.None);
+            _principal, _authz, _db, CancellationToken.None);
         var list = await queryable.ToListAsync();
 
+        // Only the project in the admin's workspace is returned
         Assert.Single(list);
         Assert.Equal("TestProj", list[0].Name);
     }
 
     [Fact]
-    public async Task GetProjects_EmptyWorkspace_ReturnsEmpty()
+    public async Task GetProjects_NoProjects_ReturnsEmpty()
     {
-        var emptyWs = new Workspace { Name = "Empty" };
-        _db.Workspaces.Add(emptyWs);
-        await _db.SaveChangesAsync();
-        _db.WorkspaceAdmins.Add(new WorkspaceAdmin
-            { AdminId = _admin.Id, WorkspaceId = emptyWs.Id, Role = "ADMIN" });
+        // Remove all projects for this admin's workspaces
+        _db.Projects.Remove(_project);
         await _db.SaveChangesAsync();
 
         var queryable = await _query.GetProjects(
-            emptyWs.Id, _principal, _authz, _db, CancellationToken.None);
+            _principal, _authz, _db, CancellationToken.None);
         var list = await queryable.ToListAsync();
 
         Assert.Empty(list);

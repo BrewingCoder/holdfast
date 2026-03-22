@@ -171,8 +171,7 @@ public class MetricAlertWatcherWorker : BackgroundService
             new HoldFast.Data.ClickHouse.Models.QueryInput
             {
                 Query = alert.Query ?? "",
-                DateRangeStart = startDate,
-                DateRangeEnd = endDate,
+                DateRange = new HoldFast.Data.ClickHouse.Models.DateRangeRequiredInput { StartDate = startDate, EndDate = endDate },
             },
             bucketBy: "timestamp",
             groupBy: alert.GroupByKey != null ? [alert.GroupByKey] : null,

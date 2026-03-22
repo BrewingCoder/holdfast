@@ -180,29 +180,38 @@ public class PrivateMutationSessionMgmtTests : IDisposable
     [Fact]
     public async Task UpdateAdminAboutYouDetails_UpdatesName()
     {
-        var updated = await _mutation.UpdateAdminAboutYouDetails(
-            "Updated Name", null, null, _principal, _authz, _db, CancellationToken.None);
+        var result = await _mutation.UpdateAdminAboutYouDetails(
+            new AdminAboutYouDetails("Updated Name", "", null!, null!, null!, null!, null!, null),
+            _principal, _authz, _db, CancellationToken.None);
 
-        Assert.Equal("Updated Name", updated.Name);
+        Assert.True(result);
+        var admin = await _db.Admins.FindAsync(_admin.Id);
+        Assert.Equal("Updated Name", admin!.Name);
     }
 
     [Fact]
     public async Task UpdateAdminAboutYouDetails_UpdatesAllFields()
     {
-        var updated = await _mutation.UpdateAdminAboutYouDetails(
-            "New Name", "word-of-mouth", "Developer",
+        var result = await _mutation.UpdateAdminAboutYouDetails(
+            new AdminAboutYouDetails("New", "Name", "Developer", null!, null!, null!, "word-of-mouth", null),
             _principal, _authz, _db, CancellationToken.None);
 
-        Assert.Equal("New Name", updated.Name);
+        Assert.True(result);
+        var admin = await _db.Admins.FindAsync(_admin.Id);
+        Assert.Equal("New Name", admin!.Name);
     }
 
     [Fact]
-    public async Task UpdateAdminAboutYouDetails_NullsLeaveUnchanged()
+    public async Task UpdateAdminAboutYouDetails_NullsOverwriteFields()
     {
-        var updated = await _mutation.UpdateAdminAboutYouDetails(
-            null, null, null, _principal, _authz, _db, CancellationToken.None);
+        // The mutation always overwrites; null inputs set fields to null.
+        var result = await _mutation.UpdateAdminAboutYouDetails(
+            new AdminAboutYouDetails(null!, null!, null!, null!, null!, null!, null!, null),
+            _principal, _authz, _db, CancellationToken.None);
 
-        Assert.Equal("Test Admin", updated.Name); // Original name preserved
+        Assert.True(result);
+        var admin = await _db.Admins.FindAsync(_admin.Id);
+        Assert.Null(admin!.Name); // null inputs overwrite existing values
     }
 
     // ── ChangeProjectMembership ───────────────────────────────────────

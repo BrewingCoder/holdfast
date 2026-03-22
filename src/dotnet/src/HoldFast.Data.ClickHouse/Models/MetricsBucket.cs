@@ -44,13 +44,23 @@ public class QueryKey
 }
 
 /// <summary>
+/// Date range with required start and end. Matches Go's DateRangeRequiredInput.
+/// </summary>
+public class DateRangeRequiredInput
+{
+    public DateTime StartDate { get; set; }
+    public DateTime EndDate { get; set; }
+}
+
+/// <summary>
 /// Common query input matching Go's QueryInput.
+/// Nested date_range matches the Go schema DateRangeRequiredInput structure.
+/// HC's snake_case naming convention maps DateRange→date_range, StartDate→start_date, EndDate→end_date.
 /// </summary>
 public class QueryInput
 {
     public string Query { get; set; } = string.Empty;
-    public DateTime DateRangeStart { get; set; }
-    public DateTime DateRangeEnd { get; set; }
+    public DateRangeRequiredInput DateRange { get; set; } = new();
 }
 
 /// <summary>

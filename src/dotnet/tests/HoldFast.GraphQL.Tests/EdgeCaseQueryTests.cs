@@ -308,7 +308,7 @@ public class EdgeCaseQueryTests : IDisposable
     {
         var result = await _query.GetEventSessions(
             _project.Id, 10,
-            new QueryInput { DateRangeStart = DateTime.UtcNow.AddDays(-7), DateRangeEnd = DateTime.UtcNow },
+            new QueryInput { DateRange = new DateRangeRequiredInput { StartDate = DateTime.UtcNow.AddDays(-7), EndDate = DateTime.UtcNow } },
             null, true, null, // page = null
             _principal, _authz, _clickHouse, _db, CancellationToken.None);
 
@@ -320,7 +320,7 @@ public class EdgeCaseQueryTests : IDisposable
     {
         var result = await _query.GetEventSessions(
             _project.Id, 10,
-            new QueryInput { DateRangeStart = DateTime.UtcNow.AddDays(-7), DateRangeEnd = DateTime.UtcNow },
+            new QueryInput { DateRange = new DateRangeRequiredInput { StartDate = DateTime.UtcNow.AddDays(-7), EndDate = DateTime.UtcNow } },
             "created_at", false, 0,
             _principal, _authz, _clickHouse, _db, CancellationToken.None);
 

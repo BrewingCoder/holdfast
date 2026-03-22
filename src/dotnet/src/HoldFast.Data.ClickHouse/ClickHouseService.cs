@@ -174,8 +174,8 @@ public class ClickHouseService : IClickHouseService, IDisposable
         sb.Append("count(DISTINCT ID) AS Count ");
         sb.Append("FROM sessions ");
         sb.Append($"WHERE ProjectID = {projectId} ");
-        sb.Append($"AND CreatedAt >= '{query.DateRangeStart:yyyy-MM-dd HH:mm:ss}' ");
-        sb.Append($"AND CreatedAt <= '{query.DateRangeEnd:yyyy-MM-dd HH:mm:ss}' ");
+        sb.Append($"AND CreatedAt >= '{query.DateRange.StartDate:yyyy-MM-dd HH:mm:ss}' ");
+        sb.Append($"AND CreatedAt <= '{query.DateRange.EndDate:yyyy-MM-dd HH:mm:ss}' ");
         sb.Append("GROUP BY BucketStart, BucketEnd ORDER BY BucketStart");
 
         return (await QueryAsync<HistogramBucket>(sb, ct)).ToList();
@@ -290,8 +290,8 @@ public class ClickHouseService : IClickHouseService, IDisposable
             sb.Append("FROM metrics ");
             sb.Append("WHERE ProjectId = {projectId:Int32} ");
             sb.AddParam("projectId", projectId);
-            sb.AddParam("startDate", query.DateRangeStart);
-            sb.AddParam("endDate", query.DateRangeEnd);
+            sb.AddParam("startDate", query.DateRange.StartDate);
+            sb.AddParam("endDate", query.DateRange.EndDate);
             AppendDateRange(sb, query);
             AppendQueryFilter(sb, query.Query, "Attributes");
             sb.Append("GROUP BY BucketStart ");
@@ -342,8 +342,8 @@ public class ClickHouseService : IClickHouseService, IDisposable
         sb.Append($"FROM {table} ");
         sb.Append("WHERE ProjectId = {projectId:Int32} ");
         sb.AddParam("projectId", projectId);
-        sb.AddParam("startDate", query.DateRangeStart);
-        sb.AddParam("endDate", query.DateRangeEnd);
+        sb.AddParam("startDate", query.DateRange.StartDate);
+        sb.AddParam("endDate", query.DateRange.EndDate);
         AppendDateRange(sb, query);
         sb.Append("GROUP BY BucketStart ");
         if (groupColumn != null)
@@ -373,31 +373,31 @@ public class ClickHouseService : IClickHouseService, IDisposable
 
     private static void AppendDateRange(SqlBuilder sb, QueryInput query)
     {
-        if (query.DateRangeStart != default)
+        if (query.DateRange.StartDate != default)
         {
             sb.Append("AND Timestamp >= {startDate:DateTime} ");
-            sb.AddParam("startDate", query.DateRangeStart);
+            sb.AddParam("startDate", query.DateRange.StartDate);
         }
 
-        if (query.DateRangeEnd != default)
+        if (query.DateRange.EndDate != default)
         {
             sb.Append("AND Timestamp <= {endDate:DateTime} ");
-            sb.AddParam("endDate", query.DateRangeEnd);
+            sb.AddParam("endDate", query.DateRange.EndDate);
         }
     }
 
     private static void AppendSessionDateRange(SqlBuilder sb, QueryInput query)
     {
-        if (query.DateRangeStart != default)
+        if (query.DateRange.StartDate != default)
         {
             sb.Append("AND CreatedAt >= {startDate:DateTime} ");
-            sb.AddParam("startDate", query.DateRangeStart);
+            sb.AddParam("startDate", query.DateRange.StartDate);
         }
 
-        if (query.DateRangeEnd != default)
+        if (query.DateRange.EndDate != default)
         {
             sb.Append("AND CreatedAt <= {endDate:DateTime} ");
-            sb.AddParam("endDate", query.DateRangeEnd);
+            sb.AddParam("endDate", query.DateRange.EndDate);
         }
     }
 
@@ -413,16 +413,16 @@ public class ClickHouseService : IClickHouseService, IDisposable
 
     private static void AppendKeyDateRange(SqlBuilder sb, QueryInput query)
     {
-        if (query.DateRangeStart != default)
+        if (query.DateRange.StartDate != default)
         {
             sb.Append("AND Day >= toDate({startDate:DateTime}) ");
-            sb.AddParam("startDate", query.DateRangeStart);
+            sb.AddParam("startDate", query.DateRange.StartDate);
         }
 
-        if (query.DateRangeEnd != default)
+        if (query.DateRange.EndDate != default)
         {
             sb.Append("AND Day <= toDate({endDate:DateTime}) ");
-            sb.AddParam("endDate", query.DateRangeEnd);
+            sb.AddParam("endDate", query.DateRange.EndDate);
         }
     }
 

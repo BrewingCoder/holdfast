@@ -75,7 +75,7 @@ public class PrivateMutationPersistenceTests : IDisposable
     public async Task UpdateAdminAboutYouDetails_PersistsToDatabase()
     {
         await _mutation.UpdateAdminAboutYouDetails(
-            "Persisted Name", "referral-source", "SRE",
+            new AdminAboutYouDetails("Persisted Name", "", "SRE", "", "", "", "referral-source", null),
             _principal, _authz, _db, CancellationToken.None);
 
         // Read from a fresh context to verify it actually hit the DB
@@ -87,7 +87,7 @@ public class PrivateMutationPersistenceTests : IDisposable
     }
 
     [Fact]
-    public async Task UpdateAdminAboutYouDetails_NullFieldsNotOverwritten()
+    public async Task UpdateAdminAboutYouDetails_NullFieldsOverwriteToNull()
     {
         _admin.Name = "Keep This";
         _admin.Referral = "Keep Referral";
@@ -95,14 +95,15 @@ public class PrivateMutationPersistenceTests : IDisposable
         await _db.SaveChangesAsync();
 
         await _mutation.UpdateAdminAboutYouDetails(
-            null, null, null,
+            new AdminAboutYouDetails(null!, null!, null!, null!, null!, null!, null!, null),
             _principal, _authz, _db, CancellationToken.None);
 
         using var fresh = CreateFreshContext();
         var admin = await fresh.Admins.FindAsync(_admin.Id);
-        Assert.Equal("Keep This", admin!.Name);
-        Assert.Equal("Keep Referral", admin.Referral);
-        Assert.Equal("Keep Role", admin.UserDefinedRole);
+        // The mutation always overwrites all fields; null inputs produce null DB values.
+        Assert.Null(admin!.Name);
+        Assert.Null(admin.Referral);
+        Assert.Null(admin.UserDefinedRole);
     }
 
     // ── CreateWorkspace persistence ──────────────────────────────────────

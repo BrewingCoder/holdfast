@@ -757,7 +757,7 @@ public class PrivateQuery
         await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
 
         return await clickHouse.ReadLogsAsync(projectId,
-            new QueryInput { Query = query, DateRangeStart = dateRangeStart, DateRangeEnd = dateRangeEnd },
+            new QueryInput { Query = query, DateRange = new DateRangeRequiredInput { StartDate = dateRangeStart, EndDate = dateRangeEnd } },
             new ClickHousePagination { After = after, Before = before, At = at, Direction = direction, Limit = limit },
             ct);
     }
@@ -778,7 +778,7 @@ public class PrivateQuery
         await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
 
         return await clickHouse.ReadLogsHistogramAsync(projectId,
-            new QueryInput { Query = query, DateRangeStart = dateRangeStart, DateRangeEnd = dateRangeEnd },
+            new QueryInput { Query = query, DateRange = new DateRangeRequiredInput { StartDate = dateRangeStart, EndDate = dateRangeEnd } },
             ct);
     }
 
@@ -798,7 +798,7 @@ public class PrivateQuery
         await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
 
         return await clickHouse.GetLogKeysAsync(projectId,
-            new QueryInput { Query = query ?? "", DateRangeStart = dateRangeStart, DateRangeEnd = dateRangeEnd },
+            new QueryInput { Query = query ?? "", DateRange = new DateRangeRequiredInput { StartDate = dateRangeStart, EndDate = dateRangeEnd } },
             ct);
     }
 
@@ -818,7 +818,7 @@ public class PrivateQuery
         await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
 
         return await clickHouse.GetLogKeyValuesAsync(projectId, key,
-            new QueryInput { DateRangeStart = dateRangeStart, DateRangeEnd = dateRangeEnd },
+            new QueryInput { DateRange = new DateRangeRequiredInput { StartDate = dateRangeStart, EndDate = dateRangeEnd } },
             ct);
     }
 
@@ -845,7 +845,7 @@ public class PrivateQuery
         await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
 
         return await clickHouse.ReadTracesAsync(projectId,
-            new QueryInput { Query = query, DateRangeStart = dateRangeStart, DateRangeEnd = dateRangeEnd },
+            new QueryInput { Query = query, DateRange = new DateRangeRequiredInput { StartDate = dateRangeStart, EndDate = dateRangeEnd } },
             new ClickHousePagination { After = after, Before = before, At = at, Direction = direction, Limit = limit },
             ct: ct);
     }
@@ -866,7 +866,7 @@ public class PrivateQuery
         await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
 
         return await clickHouse.ReadTracesHistogramAsync(projectId,
-            new QueryInput { Query = query, DateRangeStart = dateRangeStart, DateRangeEnd = dateRangeEnd },
+            new QueryInput { Query = query, DateRange = new DateRangeRequiredInput { StartDate = dateRangeStart, EndDate = dateRangeEnd } },
             ct);
     }
 
@@ -886,7 +886,7 @@ public class PrivateQuery
         await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
 
         return await clickHouse.GetTraceKeysAsync(projectId,
-            new QueryInput { Query = query ?? "", DateRangeStart = dateRangeStart, DateRangeEnd = dateRangeEnd },
+            new QueryInput { Query = query ?? "", DateRange = new DateRangeRequiredInput { StartDate = dateRangeStart, EndDate = dateRangeEnd } },
             ct);
     }
 
@@ -906,7 +906,7 @@ public class PrivateQuery
         await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
 
         return await clickHouse.GetTraceKeyValuesAsync(projectId, key,
-            new QueryInput { DateRangeStart = dateRangeStart, DateRangeEnd = dateRangeEnd },
+            new QueryInput { DateRange = new DateRangeRequiredInput { StartDate = dateRangeStart, EndDate = dateRangeEnd } },
             ct);
     }
 
@@ -932,7 +932,7 @@ public class PrivateQuery
         await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
 
         return await clickHouse.ReadMetricsAsync(projectId,
-            new QueryInput { Query = query, DateRangeStart = dateRangeStart, DateRangeEnd = dateRangeEnd },
+            new QueryInput { Query = query, DateRange = new DateRangeRequiredInput { StartDate = dateRangeStart, EndDate = dateRangeEnd } },
             bucketBy, groupBy, aggregator, column, ct);
     }
 
@@ -957,7 +957,7 @@ public class PrivateQuery
         await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
 
         var (ids, total) = await clickHouse.QueryErrorGroupIdsAsync(projectId,
-            new QueryInput { Query = query, DateRangeStart = dateRangeStart, DateRangeEnd = dateRangeEnd },
+            new QueryInput { Query = query, DateRange = new DateRangeRequiredInput { StartDate = dateRangeStart, EndDate = dateRangeEnd } },
             count, page, ct);
 
         return new ErrorGroupSearchResult { ErrorGroupIds = ids, TotalCount = total };
@@ -979,7 +979,7 @@ public class PrivateQuery
         await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
 
         return await clickHouse.ReadErrorObjectsHistogramAsync(projectId,
-            new QueryInput { Query = query, DateRangeStart = dateRangeStart, DateRangeEnd = dateRangeEnd },
+            new QueryInput { Query = query, DateRange = new DateRangeRequiredInput { StartDate = dateRangeStart, EndDate = dateRangeEnd } },
             ct);
     }
 
@@ -1005,7 +1005,7 @@ public class PrivateQuery
         await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
 
         var (ids, total) = await clickHouse.QuerySessionIdsAsync(projectId,
-            new QueryInput { Query = query, DateRangeStart = dateRangeStart, DateRangeEnd = dateRangeEnd },
+            new QueryInput { Query = query, DateRange = new DateRangeRequiredInput { StartDate = dateRangeStart, EndDate = dateRangeEnd } },
             count, page, sortField, sortDesc, ct);
 
         return new SessionSearchResult { SessionIds = ids, TotalCount = total };
@@ -1330,8 +1330,7 @@ public class PrivateQuery
         var result = await clickHouse.ReadLogsAsync(projectId,
             new QueryInput
             {
-                DateRangeStart = DateTime.UtcNow.AddDays(-30),
-                DateRangeEnd = DateTime.UtcNow,
+                DateRange = new DateRangeRequiredInput { StartDate = DateTime.UtcNow.AddDays(-30), EndDate = DateTime.UtcNow }
             },
             new ClickHousePagination { Limit = 1 }, ct);
         return result.Edges.Count > 0;
@@ -1352,8 +1351,7 @@ public class PrivateQuery
         var result = await clickHouse.ReadTracesAsync(projectId,
             new QueryInput
             {
-                DateRangeStart = DateTime.UtcNow.AddDays(-30),
-                DateRangeEnd = DateTime.UtcNow,
+                DateRange = new DateRangeRequiredInput { StartDate = DateTime.UtcNow.AddDays(-30), EndDate = DateTime.UtcNow }
             },
             new ClickHousePagination { Limit = 1 }, ct: ct);
         return result.Edges.Count > 0;
@@ -1875,8 +1873,7 @@ public class PrivateQuery
             new QueryInput
             {
                 Query = query ?? "",
-                DateRangeStart = DateTime.UtcNow.AddDays(-30),
-                DateRangeEnd = DateTime.UtcNow
+                DateRange = new DateRangeRequiredInput { StartDate = DateTime.UtcNow.AddDays(-30), EndDate = DateTime.UtcNow }
             },
             ct);
         return keys;
@@ -1901,8 +1898,7 @@ public class PrivateQuery
             new QueryInput
             {
                 Query = "",
-                DateRangeStart = DateTime.UtcNow.AddDays(-30),
-                DateRangeEnd = DateTime.UtcNow
+                DateRange = new DateRangeRequiredInput { StartDate = DateTime.UtcNow.AddDays(-30), EndDate = DateTime.UtcNow }
             },
             ct);
     }
@@ -1925,16 +1921,16 @@ public class PrivateQuery
         await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
 
         // Use bounds from histogram_options if params date range is empty
-        var start = queryParams.DateRangeStart != default
-            ? queryParams.DateRangeStart
+        var start = queryParams.DateRange.StartDate != default
+            ? queryParams.DateRange.StartDate
             : histogramOptions.Bounds?.StartDate ?? DateTime.UtcNow.AddDays(-30);
-        var end = queryParams.DateRangeEnd != default
-            ? queryParams.DateRangeEnd
+        var end = queryParams.DateRange.EndDate != default
+            ? queryParams.DateRange.EndDate
             : histogramOptions.Bounds?.EndDate ?? DateTime.UtcNow;
 
         var buckets = await clickHouse.ReadSessionsHistogramAsync(
             projectId,
-            new QueryInput { Query = queryParams.Query, DateRangeStart = start, DateRangeEnd = end },
+            new QueryInput { Query = queryParams.Query, DateRange = new DateRangeRequiredInput { StartDate = start, EndDate = end } },
             ct);
 
         return new SessionsHistogram(
@@ -1962,7 +1958,7 @@ public class PrivateQuery
         await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
         return await clickHouse.ReadErrorObjectsHistogramAsync(
             projectId,
-            new QueryInput { Query = query, DateRangeStart = startDate, DateRangeEnd = endDate },
+            new QueryInput { Query = query, DateRange = new DateRangeRequiredInput { StartDate = startDate, EndDate = endDate } },
             ct);
     }
 
@@ -1998,7 +1994,7 @@ public class PrivateQuery
         await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
         return await clickHouse.ReadTracesAsync(
             projectId,
-            new QueryInput { Query = $"trace_id={traceId}", DateRangeStart = DateTime.UtcNow.AddDays(-30), DateRangeEnd = DateTime.UtcNow },
+            new QueryInput { Query = $"trace_id={traceId}", DateRange = new DateRangeRequiredInput { StartDate = DateTime.UtcNow.AddDays(-30), EndDate = DateTime.UtcNow } },
             new ClickHousePagination { Limit = 1000 },
             omitBody: false,
             ct: ct);
@@ -2111,8 +2107,7 @@ public class PrivateQuery
         var query = new QueryInput
         {
             Query = $"secure_session_id={sessionSecureId} metric_name=CLS OR metric_name=FCP OR metric_name=FID OR metric_name=LCP OR metric_name=TTFB OR metric_name=INP",
-            DateRangeStart = session.CreatedAt.AddHours(-1),
-            DateRangeEnd = session.CreatedAt.AddDays(1),
+            DateRange = new DateRangeRequiredInput { StartDate = session.CreatedAt.AddHours(-1), EndDate = session.CreatedAt.AddDays(1) }
         };
         return await clickHouse.ReadMetricsAsync(
             session.ProjectId, query, bucketBy: "None", groupBy: new List<string> { "metric_name" },
@@ -2484,8 +2479,7 @@ public class PrivateQuery
 
         var query = new QueryInput
         {
-            DateRangeStart = DateTime.UtcNow.AddDays(-lookbackDays),
-            DateRangeEnd = DateTime.UtcNow,
+            DateRange = new DateRangeRequiredInput { StartDate = DateTime.UtcNow.AddDays(-lookbackDays), EndDate = DateTime.UtcNow }
         };
 
         return await clickHouse.ReadSessionsHistogramAsync(projectId, query, ct);
@@ -2509,8 +2503,8 @@ public class PrivateQuery
             .Where(s => s.ProjectId == projectId
                 && s.Excluded != true
                 && !string.IsNullOrEmpty(s.Identifier)
-                && s.CreatedAt >= (query.DateRangeStart == default ? DateTime.UtcNow.AddDays(-30) : query.DateRangeStart)
-                && s.CreatedAt <= (query.DateRangeEnd == default ? DateTime.UtcNow : query.DateRangeEnd))
+                && s.CreatedAt >= (query.DateRange.StartDate == default ? DateTime.UtcNow.AddDays(-30) : query.DateRange.StartDate)
+                && s.CreatedAt <= (query.DateRange.EndDate == default ? DateTime.UtcNow : query.DateRange.EndDate))
             .Select(s => new { s.Identifier, s.ActiveLength, s.Length, s.CreatedAt, s.City, s.Country })
             .ToListAsync(ct);
 
@@ -3128,8 +3122,7 @@ public class PrivateQuery
             new QueryInput
             {
                 Query = queryStr,
-                DateRangeStart = date.AddDays(-1),
-                DateRangeEnd = date.AddDays(1),
+                DateRange = new DateRangeRequiredInput { StartDate = date.AddDays(-1), EndDate = date.AddDays(1) }
             },
             new ClickHousePagination { Limit = 100 },
             omitBody: false,
@@ -3160,10 +3153,10 @@ public class PrivateQuery
         return (productType?.ToUpperInvariant()) switch
         {
             "LOGS" => (await clickHouse.GetLogKeysAsync(projectId,
-                new QueryInput { Query = query ?? "", DateRangeStart = dateRangeStart, DateRangeEnd = dateRangeEnd }, ct))
+                new QueryInput { Query = query ?? "", DateRange = new DateRangeRequiredInput { StartDate = dateRangeStart, EndDate = dateRangeEnd } }, ct))
                 .Select(k => new QueryKey { Name = k, Type = type ?? "String" }).ToList(),
             "TRACES" => (await clickHouse.GetTraceKeysAsync(projectId,
-                new QueryInput { Query = query ?? "", DateRangeStart = dateRangeStart, DateRangeEnd = dateRangeEnd }, ct))
+                new QueryInput { Query = query ?? "", DateRange = new DateRangeRequiredInput { StartDate = dateRangeStart, EndDate = dateRangeEnd } }, ct))
                 .Select(k => new QueryKey { Name = k, Type = type ?? "String" }).ToList(),
             "ERRORS" => await clickHouse.GetErrorsKeysAsync(projectId, dateRangeStart, dateRangeEnd, query, ct),
             "SESSIONS" => await clickHouse.GetSessionsKeysAsync(projectId, dateRangeStart, dateRangeEnd, query, ct),
@@ -3194,9 +3187,9 @@ public class PrivateQuery
         return (productType?.ToUpperInvariant()) switch
         {
             "LOGS" => await clickHouse.GetLogKeyValuesAsync(projectId, keyName,
-                new QueryInput { Query = query ?? "", DateRangeStart = dateRangeStart, DateRangeEnd = dateRangeEnd }, ct),
+                new QueryInput { Query = query ?? "", DateRange = new DateRangeRequiredInput { StartDate = dateRangeStart, EndDate = dateRangeEnd } }, ct),
             "TRACES" => await clickHouse.GetTraceKeyValuesAsync(projectId, keyName,
-                new QueryInput { Query = query ?? "", DateRangeStart = dateRangeStart, DateRangeEnd = dateRangeEnd }, ct),
+                new QueryInput { Query = query ?? "", DateRange = new DateRangeRequiredInput { StartDate = dateRangeStart, EndDate = dateRangeEnd } }, ct),
             "ERRORS" => await clickHouse.GetErrorsKeyValuesAsync(projectId, keyName, dateRangeStart, dateRangeEnd, query, count, ct),
             "SESSIONS" => await clickHouse.GetSessionsKeyValuesAsync(projectId, keyName, dateRangeStart, dateRangeEnd, query, count, ct),
             "EVENTS" => await clickHouse.GetEventsKeyValuesAsync(projectId, keyName, dateRangeStart, dateRangeEnd, query, count, eventName, ct),
@@ -3252,7 +3245,7 @@ public class PrivateQuery
         await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
 
         var keys = await clickHouse.GetLogKeysAsync(projectId,
-            new QueryInput { Query = query ?? "", DateRangeStart = dateRangeStart, DateRangeEnd = dateRangeEnd }, ct);
+            new QueryInput { Query = query ?? "", DateRange = new DateRangeRequiredInput { StartDate = dateRangeStart, EndDate = dateRangeEnd } }, ct);
         return keys.Select(k => new QueryKey { Name = k, Type = "String" }).ToList();
     }
 
@@ -3274,7 +3267,7 @@ public class PrivateQuery
         await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
 
         return await clickHouse.GetLogKeyValuesAsync(projectId, keyName,
-            new QueryInput { Query = query ?? "", DateRangeStart = dateRangeStart, DateRangeEnd = dateRangeEnd }, ct);
+            new QueryInput { Query = query ?? "", DateRange = new DateRangeRequiredInput { StartDate = dateRangeStart, EndDate = dateRangeEnd } }, ct);
     }
 
     /// <summary>
@@ -3293,7 +3286,7 @@ public class PrivateQuery
         await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
 
         var keys = await clickHouse.GetTraceKeysAsync(projectId,
-            new QueryInput { Query = query ?? "", DateRangeStart = dateRangeStart, DateRangeEnd = dateRangeEnd }, ct);
+            new QueryInput { Query = query ?? "", DateRange = new DateRangeRequiredInput { StartDate = dateRangeStart, EndDate = dateRangeEnd } }, ct);
         return keys.Select(k => new QueryKey { Name = k, Type = "String" }).ToList();
     }
 
@@ -3315,7 +3308,7 @@ public class PrivateQuery
         await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
 
         return await clickHouse.GetTraceKeyValuesAsync(projectId, keyName,
-            new QueryInput { Query = query ?? "", DateRangeStart = dateRangeStart, DateRangeEnd = dateRangeEnd }, ct);
+            new QueryInput { Query = query ?? "", DateRange = new DateRangeRequiredInput { StartDate = dateRangeStart, EndDate = dateRangeEnd } }, ct);
     }
 
     /// <summary>
@@ -3510,8 +3503,7 @@ public class PrivateQuery
                 new QueryInput
                 {
                     Query = $"trace_id={traceId}",
-                    DateRangeStart = dateRangeStart,
-                    DateRangeEnd = dateRangeEnd,
+                    DateRange = new DateRangeRequiredInput { StartDate = dateRangeStart, EndDate = dateRangeEnd }
                 },
                 new ClickHousePagination { Limit = 1 }, ct);
 

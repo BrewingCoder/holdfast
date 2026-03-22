@@ -774,7 +774,8 @@ public class PrivateQueryDbTests : IDisposable
     public async Task GetAdminRoleByProject_ReturnsRole()
     {
         var role = await _query.GetAdminRoleByProject(_project.Id, _principal, _authz, _db, CancellationToken.None);
-        Assert.Equal("ADMIN", role);
+        Assert.NotNull(role);
+        Assert.Equal("ADMIN", role!.Role);
     }
 
     [Fact]
