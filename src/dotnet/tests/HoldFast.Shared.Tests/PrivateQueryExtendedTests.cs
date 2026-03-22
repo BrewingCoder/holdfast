@@ -173,7 +173,7 @@ public class PrivateQueryExtendedTests : IDisposable
         await _db.SaveChangesAsync();
 
         var invites = await _query.GetWorkspacePendingInvites(
-            MakePrincipal("invitee"), _authz, _db, CancellationToken.None);
+            workspace.Id, MakePrincipal("admin-uid"), _authz, _db, CancellationToken.None);
 
         Assert.Single(invites);
     }
@@ -181,10 +181,10 @@ public class PrivateQueryExtendedTests : IDisposable
     [Fact]
     public async Task GetWorkspacePendingInvites_NoInvites_ReturnsEmpty()
     {
-        await SeedFullStack();
+        var (_, workspace, _) = await SeedFullStack();
 
         var invites = await _query.GetWorkspacePendingInvites(
-            MakePrincipal("admin-uid"), _authz, _db, CancellationToken.None);
+            workspace.Id, MakePrincipal("admin-uid"), _authz, _db, CancellationToken.None);
 
         Assert.Empty(invites);
     }

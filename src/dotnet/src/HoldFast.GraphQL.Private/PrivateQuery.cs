@@ -1199,18 +1199,18 @@ public class PrivateQuery
     /// </summary>
     [GraphQLName("workspacePendingInvites")]
     public async Task<List<WorkspaceInviteLink>> GetWorkspacePendingInvites(
+        [ID] int workspaceId,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
         CancellationToken ct)
     {
-        var admin = await AuthHelper.GetRequiredAdmin(claimsPrincipal, authz, ct);
+        await AuthHelper.RequireWorkspaceAccess(claimsPrincipal, workspaceId, authz, ct);
         var now = DateTime.UtcNow;
 
         return await db.WorkspaceInviteLinks
-            .Where(l => l.InviteeEmail == admin.Email
+            .Where(l => l.WorkspaceId == workspaceId
                         && (l.ExpirationDate == null || l.ExpirationDate > now))
-            .Include(l => l.Workspace)
             .ToListAsync(ct);
     }
 

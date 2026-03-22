@@ -808,7 +808,7 @@ public class PrivateQueryDbTests : IDisposable
         });
         await _db.SaveChangesAsync();
 
-        var invites = await _query.GetWorkspacePendingInvites(_principal, _authz, _db, CancellationToken.None);
+        var invites = await _query.GetWorkspacePendingInvites(_workspace.Id, _principal, _authz, _db, CancellationToken.None);
         Assert.Single(invites);
         Assert.Equal("active1", invites[0].Secret);
     }
@@ -823,14 +823,14 @@ public class PrivateQueryDbTests : IDisposable
         });
         await _db.SaveChangesAsync();
 
-        var invites = await _query.GetWorkspacePendingInvites(_principal, _authz, _db, CancellationToken.None);
+        var invites = await _query.GetWorkspacePendingInvites(_workspace.Id, _principal, _authz, _db, CancellationToken.None);
         Assert.Single(invites);
     }
 
     [Fact]
     public async Task GetWorkspacePendingInvites_Empty()
     {
-        var invites = await _query.GetWorkspacePendingInvites(_principal, _authz, _db, CancellationToken.None);
+        var invites = await _query.GetWorkspacePendingInvites(_workspace.Id, _principal, _authz, _db, CancellationToken.None);
         Assert.Empty(invites);
     }
 

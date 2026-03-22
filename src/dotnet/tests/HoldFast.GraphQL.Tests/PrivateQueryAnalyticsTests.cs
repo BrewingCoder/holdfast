@@ -709,23 +709,18 @@ public class PrivateQueryAnalyticsTests : IDisposable
     // ── GetWorkspacePendingInvites ───────────────────────────────────
 
     [Fact]
-    public async Task GetWorkspacePendingInvites_ReturnsUnacceptedInvites()
+    public async Task GetWorkspacePendingInvites_ReturnsInvitesForWorkspace()
     {
-        // Invites must match admin's email to be returned
-        var otherWs = new Workspace { Name = "OtherWS" };
-        _db.Workspaces.Add(otherWs);
-        await _db.SaveChangesAsync();
-
+        // Resolver now takes workspace_id and returns all pending invites for that workspace.
         _db.WorkspaceInviteLinks.AddRange(
-            new WorkspaceInviteLink { WorkspaceId = otherWs.Id, Secret = "sec1", InviteeEmail = _admin.Email },
-            new WorkspaceInviteLink { WorkspaceId = otherWs.Id, Secret = "sec2", InviteeEmail = _admin.Email },
-            new WorkspaceInviteLink { WorkspaceId = otherWs.Id, Secret = "sec3", InviteeEmail = "other@test.com" }); // different email
+            new WorkspaceInviteLink { WorkspaceId = _workspace.Id, Secret = "sec1", InviteeEmail = "a@test.com" },
+            new WorkspaceInviteLink { WorkspaceId = _workspace.Id, Secret = "sec2", InviteeEmail = "b@test.com" });
         await _db.SaveChangesAsync();
 
         var list = await _query.GetWorkspacePendingInvites(
-            _principal, _authz, _db, CancellationToken.None);
+            _workspace.Id, _principal, _authz, _db, CancellationToken.None);
 
-        Assert.Equal(2, list.Count); // only the admin's invites
+        Assert.Equal(2, list.Count);
     }
 
     // ── GetVisualizations / GetVisualization / GetGraph ──────────────
