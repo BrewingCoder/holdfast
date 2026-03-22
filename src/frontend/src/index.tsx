@@ -29,7 +29,6 @@ import { AppRouter } from '@routers/AppRouter/AppRouter'
 import analytics from '@util/analytics'
 import { getAttributionData, setAttributionData } from '@util/attribution'
 import { auth } from '@util/auth'
-import { showHiringMessage } from '@util/console/hiringMessage'
 import { client } from '@util/graph'
 import { isOnPrem } from '@util/onPrem/onPremUtils'
 import { H, HighlightOptions } from '@holdfast-io/browser'
@@ -136,7 +135,6 @@ if (!isOnPrem) {
 	H.start()
 }
 
-showHiringMessage()
 setAttributionData()
 
 const App = () => {

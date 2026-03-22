@@ -163,13 +163,15 @@ if (runtime.IsWorker())
 }
 
 // ── CORS ──────────────────────────────────────────────────────────────
-var frontendUri = builder.Configuration["Frontend:Uri"] ?? "http://localhost:3000";
+// Frontend:Uri may be a comma-separated list for multi-origin dev setups.
+var frontendOrigins = (builder.Configuration["Frontend:Uri"] ?? "http://localhost:3000")
+    .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 builder.Services.AddCors(options =>
 {
     if (runtime.IsPrivateGraph())
     {
         options.AddPolicy("Private", policy =>
-            policy.WithOrigins(frontendUri)
+            policy.WithOrigins(frontendOrigins)
                   .AllowAnyHeader()
                   .AllowAnyMethod()
                   .AllowCredentials());
