@@ -409,8 +409,12 @@ public class ClickHouseQueryResolverTests : IDisposable
     {
         var (_, _, project) = await SeedFullStack();
 
+        var start = DateTime.UtcNow.AddDays(-7);
+        var end = DateTime.UtcNow;
         var result = await _query.GetSessionsHistogram(
-            project.Id, "", DateTime.UtcNow.AddDays(-7), DateTime.UtcNow,
+            project.Id,
+            new QueryInput { Query = "", DateRangeStart = start, DateRangeEnd = end },
+            new DateHistogramOptions { Bounds = new DateRangeInput { StartDate = start, EndDate = end } },
             MakePrincipal("admin-uid"), _authz, _clickHouse, CancellationToken.None);
 
         Assert.NotNull(result);
@@ -426,8 +430,13 @@ public class ClickHouseQueryResolverTests : IDisposable
         _db.Admins.Add(outsider);
         await _db.SaveChangesAsync();
 
+        var start = DateTime.UtcNow.AddDays(-7);
+        var end = DateTime.UtcNow;
         await Assert.ThrowsAsync<GraphQLException>(() =>
-            _query.GetSessionsHistogram(project.Id, "", DateTime.UtcNow.AddDays(-7), DateTime.UtcNow,
+            _query.GetSessionsHistogram(
+                project.Id,
+                new QueryInput { Query = "", DateRangeStart = start, DateRangeEnd = end },
+                new DateHistogramOptions { Bounds = new DateRangeInput { StartDate = start, EndDate = end } },
                 MakePrincipal("outsider-sh"), _authz, _clickHouse, CancellationToken.None));
     }
 

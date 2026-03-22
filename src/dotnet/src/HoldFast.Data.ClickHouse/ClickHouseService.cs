@@ -171,9 +171,9 @@ public class ClickHouseService : IClickHouseService, IDisposable
         var sb = new SqlBuilder();
         sb.Append("SELECT toStartOfInterval(CreatedAt, INTERVAL 1 hour) AS BucketStart, ");
         sb.Append("toStartOfInterval(CreatedAt, INTERVAL 1 hour) + INTERVAL 1 hour AS BucketEnd, ");
-        sb.Append("count(DISTINCT SecureSessionId) AS Count ");
+        sb.Append("count(DISTINCT ID) AS Count ");
         sb.Append("FROM sessions ");
-        sb.Append($"WHERE ProjectId = {projectId} ");
+        sb.Append($"WHERE ProjectID = {projectId} ");
         sb.Append($"AND CreatedAt >= '{query.DateRangeStart:yyyy-MM-dd HH:mm:ss}' ");
         sb.Append($"AND CreatedAt <= '{query.DateRangeEnd:yyyy-MM-dd HH:mm:ss}' ");
         sb.Append("GROUP BY BucketStart, BucketEnd ORDER BY BucketStart");
@@ -187,23 +187,23 @@ public class ClickHouseService : IClickHouseService, IDisposable
     {
         // Count query
         var countSb = new SqlBuilder();
-        countSb.Append("SELECT count(DISTINCT SecureSessionId) FROM sessions ");
-        countSb.Append("WHERE ProjectId = {projectId:Int32} ");
+        countSb.Append("SELECT count(DISTINCT ID) FROM sessions ");
+        countSb.Append("WHERE ProjectID = {projectId:Int32} ");
         countSb.AddParam("projectId", projectId);
-        AppendDateRange(countSb, query);
-        AppendQueryFilter(countSb, query.Query, "Fields");
+        AppendSessionDateRange(countSb, query);
+        AppendSessionQueryFilter(countSb, query.Query);
 
         var total = await QueryScalarAsync<long>(countSb, ct);
 
         // IDs query
         var sb = new SqlBuilder();
-        sb.Append("SELECT DISTINCT SecureSessionId FROM sessions ");
-        sb.Append("WHERE ProjectId = {projectId:Int32} ");
+        sb.Append("SELECT DISTINCT ID FROM sessions ");
+        sb.Append("WHERE ProjectID = {projectId:Int32} ");
         sb.AddParam("projectId", projectId);
-        AppendDateRange(sb, query);
-        AppendQueryFilter(sb, query.Query, "Fields");
+        AppendSessionDateRange(sb, query);
+        AppendSessionQueryFilter(sb, query.Query);
 
-        var sort = !string.IsNullOrEmpty(sortField) ? sortField : "Timestamp";
+        var sort = !string.IsNullOrEmpty(sortField) ? sortField : "CreatedAt";
         sb.Append($"ORDER BY {sort} {(sortDesc ? "DESC" : "ASC")} ");
         sb.Append($"LIMIT {Math.Min(count, MaxLimit)} OFFSET {page * count} ");
 
@@ -384,6 +384,31 @@ public class ClickHouseService : IClickHouseService, IDisposable
             sb.Append("AND Timestamp <= {endDate:DateTime} ");
             sb.AddParam("endDate", query.DateRangeEnd);
         }
+    }
+
+    private static void AppendSessionDateRange(SqlBuilder sb, QueryInput query)
+    {
+        if (query.DateRangeStart != default)
+        {
+            sb.Append("AND CreatedAt >= {startDate:DateTime} ");
+            sb.AddParam("startDate", query.DateRangeStart);
+        }
+
+        if (query.DateRangeEnd != default)
+        {
+            sb.Append("AND CreatedAt <= {endDate:DateTime} ");
+            sb.AddParam("endDate", query.DateRangeEnd);
+        }
+    }
+
+    private static void AppendSessionQueryFilter(SqlBuilder sb, string queryStr)
+    {
+        if (string.IsNullOrWhiteSpace(queryStr))
+            return;
+
+        // Sessions: search by identifier (user identity) or environment
+        sb.Append("AND (Identifier ILIKE {query:String} OR Environment ILIKE {query:String}) ");
+        sb.AddParam("query", $"%{queryStr}%");
     }
 
     private static void AppendKeyDateRange(SqlBuilder sb, QueryInput query)
@@ -820,23 +845,23 @@ public class ClickHouseService : IClickHouseService, IDisposable
         foreach (var s in list)
         {
             var sql =
-                "INSERT INTO sessions (ProjectId, SessionId, SecureSessionId, CreatedAt, " +
+                "INSERT INTO sessions (ProjectID, ID, SecureID, CreatedAt, " +
                 "Identifier, OSName, OSVersion, BrowserName, BrowserVersion, " +
-                "City, State, Country, Environment, AppVersion, ServiceName, " +
+                "City, State, Country, Environment, AppVersion, " +
                 "ActiveLength, Length, PagesVisited, HasErrors, HasRageClicks, " +
                 "Processed, FirstTime) " +
-                "VALUES ({projectId:Int32}, {sessionId:Int32}, {secureSessionId:String}, " +
+                "VALUES ({projectId:Int32}, {sessionId:Int64}, {secureSessionId:String}, " +
                 "{createdAt:DateTime64(9)}, {identifier:String}, {osName:String}, " +
                 "{osVersion:String}, {browserName:String}, {browserVersion:String}, " +
                 "{city:String}, {state:String}, {country:String}, {env:String}, " +
-                "{appVersion:String}, {serviceName:String}, {activeLength:Int32}, " +
-                "{length:Int32}, {pagesVisited:Int32}, {hasErrors:UInt8}, " +
+                "{appVersion:String}, {activeLength:Int64}, " +
+                "{length:Int64}, {pagesVisited:Int32}, {hasErrors:UInt8}, " +
                 "{hasRageClicks:UInt8}, {processed:UInt8}, {firstTime:UInt8})";
 
             using var cmd = _conn.CreateCommand();
             cmd.CommandText = sql;
             cmd.AddParameter("projectId", s.ProjectId);
-            cmd.AddParameter("sessionId", s.SessionId);
+            cmd.AddParameter("sessionId", (long)s.SessionId);
             cmd.AddParameter("secureSessionId", s.SecureSessionId);
             cmd.AddParameter("createdAt", s.CreatedAt);
             cmd.AddParameter("identifier", s.Identifier ?? "");
@@ -849,9 +874,8 @@ public class ClickHouseService : IClickHouseService, IDisposable
             cmd.AddParameter("country", s.Country ?? "");
             cmd.AddParameter("env", s.Environment ?? "");
             cmd.AddParameter("appVersion", s.AppVersion ?? "");
-            cmd.AddParameter("serviceName", s.ServiceName ?? "");
-            cmd.AddParameter("activeLength", s.ActiveLength);
-            cmd.AddParameter("length", s.Length);
+            cmd.AddParameter("activeLength", (long)s.ActiveLength);
+            cmd.AddParameter("length", (long)s.Length);
             cmd.AddParameter("pagesVisited", s.PagesVisited);
             cmd.AddParameter("hasErrors", s.HasErrors ? (byte)1 : (byte)0);
             cmd.AddParameter("hasRageClicks", s.HasRageClicks ? (byte)1 : (byte)0);
