@@ -1197,6 +1197,7 @@ public class PrivateQuery
     /// <summary>
     /// Get pending (non-expired) invites for the current admin.
     /// </summary>
+    [GraphQLName("workspacePendingInvites")]
     public async Task<List<WorkspaceInviteLink>> GetWorkspacePendingInvites(
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
@@ -1598,6 +1599,7 @@ public class PrivateQuery
     /// <summary>
     /// Check if the current admin has created any session comments.
     /// </summary>
+    [GraphQLName("adminHasCreatedComment")]
     public async Task<bool> GetAdminHasCreatedComment(
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
@@ -1611,6 +1613,7 @@ public class PrivateQuery
     /// <summary>
     /// Check if any sessions have been viewed in a project.
     /// </summary>
+    [GraphQLName("projectHasViewedASession")]
     public async Task<bool> GetProjectHasViewedASession(
         [ID] int projectId,
         ClaimsPrincipal claimsPrincipal,
@@ -2815,6 +2818,7 @@ public class PrivateQuery
     /// Get daily error frequency for an error group (last N days).
     /// Returns an array of counts, one per day.
     /// </summary>
+    [GraphQLName("dailyErrorFrequency")]
     public async Task<List<long>> GetDailyErrorFrequency(
         [ID] int projectId,
         string errorGroupSecureId,
@@ -2848,6 +2852,7 @@ public class PrivateQuery
     /// <summary>
     /// Get error group tag aggregations (browser, OS, environment, etc.).
     /// </summary>
+    [GraphQLName("errorGroupTags")]
     public async Task<List<ErrorGroupTagAggregation>> GetErrorGroupTagAggregations(
         string errorGroupSecureId,
         ClaimsPrincipal claimsPrincipal,
@@ -2927,6 +2932,7 @@ public class PrivateQuery
     /// <summary>
     /// Get top users by active time for a project.
     /// </summary>
+    [GraphQLName("topUsers")]
     public async Task<List<TopUsersPayload>> GetTopUsers(
         [ID] int projectId,
         double lookbackDays,
@@ -2963,6 +2969,7 @@ public class PrivateQuery
     /// <summary>
     /// Get average session length for a project.
     /// </summary>
+    [GraphQLName("averageSessionLength")]
     public async Task<AverageSessionLength> GetAverageSessionLength(
         [ID] int projectId,
         double lookbackDays,
@@ -2987,6 +2994,7 @@ public class PrivateQuery
     /// <summary>
     /// Count new users (first_time=1) for a project.
     /// </summary>
+    [GraphQLName("newUsersCount")]
     public async Task<NewUsersCount> GetNewUsersCount(
         [ID] int projectId,
         double lookbackDays,
@@ -3011,6 +3019,7 @@ public class PrivateQuery
     /// <summary>
     /// Count unique fingerprints for a project.
     /// </summary>
+    [GraphQLName("userFingerprintCount")]
     public async Task<UserFingerprintCount> GetUserFingerprintCount(
         [ID] int projectId,
         double lookbackDays,
