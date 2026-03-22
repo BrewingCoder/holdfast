@@ -44,8 +44,8 @@ public class ClickHouseService : IClickHouseService, IDisposable
         var isDesc = pagination.Direction.Equals("DESC", StringComparison.OrdinalIgnoreCase);
 
         var sb = new SqlBuilder();
-        sb.Append("SELECT Timestamp, ProjectId, TraceId, SpanId, SecureSessionId, UUID, ");
-        sb.Append("TraceFlags, SeverityText, SeverityNumber, Source, ServiceName, ServiceVersion, ");
+        sb.Append("SELECT Timestamp, toInt32(ProjectId) AS ProjectId, TraceId, SpanId, SecureSessionId, toString(UUID) AS UUID, ");
+        sb.Append("toInt32(TraceFlags) AS TraceFlags, SeverityText, SeverityNumber, Source, ServiceName, ServiceVersion, ");
         sb.Append("Body, LogAttributes, Environment ");
         sb.Append("FROM logs ");
         sb.Append("WHERE ProjectId = {projectId:Int32} ");
@@ -108,10 +108,11 @@ public class ClickHouseService : IClickHouseService, IDisposable
         var isDesc = pagination.Direction.Equals("DESC", StringComparison.OrdinalIgnoreCase);
 
         var sb = new SqlBuilder();
-        sb.Append("SELECT Timestamp, UUID, TraceId, SpanId, ParentSpanId, TraceState, ");
+        sb.Append("SELECT Timestamp, toString(UUID) AS UUID, TraceId, SpanId, ParentSpanId, TraceState, ");
         sb.Append("SpanName, SpanKind, ServiceName, ServiceVersion, TraceAttributes, Duration, ");
-        sb.Append("StatusCode, StatusMessage, ProjectId, SecureSessionId, Environment, HasErrors, ");
-        sb.Append("Events, Links ");
+        sb.Append("StatusCode, StatusMessage, toInt32(ProjectId) AS ProjectId, SecureSessionId, Environment, HasErrors ");
+        // Events and Links are ClickHouse Nested columns (Events.Timestamp, Events.Name, etc.)
+        // and require parallel-array handling — not yet implemented; returns empty for now.
         sb.Append("FROM traces ");
         sb.Append("WHERE ProjectId = {projectId:Int32} ");
         sb.AddParam("projectId", projectId);
