@@ -36,14 +36,6 @@
 				"esm/**/*.d.ts"
 			]
 		},
-		"prepublish": {
-			"outputs": ["dist/**"],
-			"inputs": [
-				"src/**/*.ts",
-				"vite.config.*",
-				"tsconfig.json"
-			]
-		},
 		"reflame": {
 			"dependsOn": [],
 			"cache": false

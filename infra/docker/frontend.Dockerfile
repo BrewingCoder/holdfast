@@ -29,10 +29,16 @@ RUN --mount=type=cache,target=/root/.yarn/berry/cache,sharing=locked \
 # ── Source copy ───────────────────────────────────────────────────────────────
 COPY --from=pruner /app/out/full/ .
 
-# turbo prune omits the rrweb root tsconfigs that each rrweb/packages/*/tsconfig.json
-# extends with "../../tsconfig.base.json". Copy them explicitly from the build context.
+# turbo prune omits rrweb root files that all rrweb/packages/*/  depend on.
+# Copy them explicitly from the build context.
+#   tsconfig.base.json  — extended by every rrweb package tsconfig.json
+#   tsconfig.json       — rrweb composite project references root
+#   vite.config.default.ts — imported by every rrweb package vite.config
+#   turbo.json          — defines the prepublish task (with ^prepublish), extends //
 COPY rrweb/tsconfig.base.json ./rrweb/tsconfig.base.json
 COPY rrweb/tsconfig.json ./rrweb/tsconfig.json
+COPY rrweb/vite.config.default.ts ./rrweb/vite.config.default.ts
+COPY rrweb/turbo.json ./rrweb/turbo.json
 
 # GraphQL schemas are outside the frontend workspace; copy them for codegen/typegen
 COPY src/backend/localhostssl ./src/backend/localhostssl
