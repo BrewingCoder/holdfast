@@ -317,6 +317,15 @@ public class DateHistogramOptions
 }
 
 /// <summary>
+/// AWS Marketplace subscription info — always null in HoldFast (no SaaS billing).
+/// Stub type required so the frontend schema validates when it queries this field.
+/// </summary>
+public record AwsMpSubscription(
+    [property: GraphQLName("customer_identifier")] string? CustomerIdentifier,
+    [property: GraphQLName("customer_aws_account_id")] string? CustomerAwsAccountId,
+    [property: GraphQLName("product_code")] string? ProductCode);
+
+/// <summary>
 /// Stub billing plan — returns unlimited defaults for self-hosted deployments.
 /// Go schema uses camelCase for limit/rate fields.
 /// </summary>
@@ -334,7 +343,31 @@ public record BillingPlan(
     [property: GraphQLName("logsRate")] long LogsRate,
     [property: GraphQLName("tracesRate")] long TracesRate,
     [property: GraphQLName("metricsRate")] long MetricsRate,
-    [property: GraphQLName("aws_mp_subscription")] object? AwsMpSubscription);
+    [property: GraphQLName("aws_mp_subscription")] AwsMpSubscription? AwsMpSubscription);
+
+/// <summary>
+/// Stub subscription details — HoldFast has no SaaS billing.
+/// </summary>
+public record SubscriptionDetails(
+    long BaseAmount,
+    object? Discount,
+    object? LastInvoice,
+    [property: GraphQLName("billingIssue")] bool BillingIssue,
+    [property: GraphQLName("billingIngestBlocked")] bool BillingIngestBlocked);
+
+/// <summary>
+/// Saved segment with parsed params for GraphQL schema compatibility.
+/// Go schema exposes params as an object with a query field, not a raw string.
+/// </summary>
+public record SavedSegmentGql(
+    int Id,
+    string Name,
+    [property: GraphQLName("params")] SavedSegmentParams? Params);
+
+/// <summary>
+/// Parsed params for a saved segment.
+/// </summary>
+public record SavedSegmentParams(string? Query);
 
 /// <summary>
 /// Stub billing details — returns zero meters and unlimited plan for self-hosted deployments.

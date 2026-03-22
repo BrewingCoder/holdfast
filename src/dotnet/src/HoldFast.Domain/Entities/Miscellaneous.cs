@@ -207,6 +207,14 @@ public class SystemConfiguration : BaseEntity
     public int? LogsFlushTimeout { get; set; }
     public int? TracesFlushTimeout { get; set; }
     public string? FilterSessionsWithoutError { get; set; }
+
+    // Go schema compatibility fields — HoldFast does not implement maintenance windows;
+    // these are always null indicating no scheduled maintenance.
+    [System.ComponentModel.DataAnnotations.Schema.NotMapped]
+    public DateTime? MaintenanceStart => null;
+
+    [System.ComponentModel.DataAnnotations.Schema.NotMapped]
+    public DateTime? MaintenanceEnd => null;
 }
 
 /// <summary>

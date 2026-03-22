@@ -548,6 +548,7 @@ public class PrivateQuery
 
     // ── Workspace Settings ────────────────────────────────────────────
 
+    [GraphQLName("workspaceSettings")]
     public async Task<AllWorkspaceSettings?> GetWorkspaceSettings(
         [ID] int workspaceId,
         ClaimsPrincipal claimsPrincipal,
@@ -560,6 +561,33 @@ public class PrivateQuery
         return await db.AllWorkspaceSettings
             .FirstOrDefaultAsync(s => s.WorkspaceId == workspaceId, ct);
     }
+
+    /// <summary>
+    /// Workspace-level billing details stub — HoldFast is self-hosted with no billing.
+    /// </summary>
+    [GraphQLName("billingDetails")]
+    public Task<BillingDetails> GetBillingDetails(
+        [ID] int workspaceId,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        CancellationToken ct)
+    {
+        var plan = new BillingPlan("Free", "Monthly",
+            int.MaxValue, long.MaxValue, long.MaxValue, long.MaxValue, long.MaxValue, long.MaxValue,
+            0, 0, 0, 0, 0, null);
+        return Task.FromResult(new BillingDetails(plan, 0, 0, 0, 0, 0, 0,
+            long.MaxValue, long.MaxValue, long.MaxValue, long.MaxValue, long.MaxValue));
+    }
+
+    /// <summary>
+    /// Subscription details stub — HoldFast has no SaaS billing.
+    /// </summary>
+    [GraphQLName("subscription_details")]
+    public Task<SubscriptionDetails?> GetSubscriptionDetails(
+        [ID] int workspaceId,
+        ClaimsPrincipal claimsPrincipal,
+        CancellationToken ct)
+        => Task.FromResult<SubscriptionDetails?>(null);
 
     // ── Alerts ────────────────────────────────────────────────────────
 
@@ -655,7 +683,7 @@ public class PrivateQuery
     /// <summary>
     /// List saved segments for a project, optionally filtered by entity type.
     /// </summary>
-    public async Task<List<SavedSegment>> GetSavedSegments(
+    public async Task<List<SavedSegmentGql>> GetSavedSegments(
         [ID] int projectId,
         string? entityType,
         ClaimsPrincipal claimsPrincipal,
@@ -665,10 +693,26 @@ public class PrivateQuery
     {
         await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
 
-        var query = db.SavedSegments.Where(s => s.ProjectId == projectId);
+        var q = db.SavedSegments.Where(s => s.ProjectId == projectId);
         if (entityType != null)
-            query = query.Where(s => s.EntityType == entityType);
-        return await query.ToListAsync(ct);
+            q = q.Where(s => s.EntityType == entityType);
+
+        var segments = await q.ToListAsync(ct);
+        return segments.Select(s =>
+        {
+            string? parsedQuery = null;
+            if (!string.IsNullOrEmpty(s.Params))
+            {
+                try
+                {
+                    var doc = System.Text.Json.JsonDocument.Parse(s.Params);
+                    if (doc.RootElement.TryGetProperty("query", out var qEl))
+                        parsedQuery = qEl.GetString();
+                }
+                catch { /* malformed JSON — return null query */ }
+            }
+            return new SavedSegmentGql(s.Id, s.Name ?? "", new SavedSegmentParams(parsedQuery));
+        }).ToList();
     }
 
     // ── Integrations ──────────────────────────────────────────────────
@@ -1709,7 +1753,7 @@ public class PrivateQuery
     /// <summary>
     /// Workspace admins filtered by project-level access.
     /// </summary>
-    public async Task<List<Admin>> GetWorkspaceAdminsByProjectId(
+    public async Task<List<WorkspaceAdminRole>> GetWorkspaceAdminsByProjectId(
         [ID] int projectId,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
@@ -1721,13 +1765,16 @@ public class PrivateQuery
         var project = await db.Projects.FindAsync([projectId], ct)
             ?? throw new GraphQLException("Project not found");
 
-        // Get all workspace admins via join table
-        var adminIds = await db.WorkspaceAdmins
+        var workspaceAdmins = await db.WorkspaceAdmins
+            .Include(wa => wa.Admin)
             .Where(wa => wa.WorkspaceId == project.WorkspaceId)
-            .Select(wa => wa.AdminId)
             .ToListAsync(ct);
 
-        return await db.Admins.Where(a => adminIds.Contains(a.Id)).ToListAsync(ct);
+        return workspaceAdmins.Select(wa => new WorkspaceAdminRole(
+            WorkspaceId: project.WorkspaceId.ToString(),
+            Admin: wa.Admin,
+            Role: wa.Role ?? "Member",
+            ProjectIds: [])).ToList();
     }
 
     // ── ClickHouse Key Queries (Sessions/Errors/Events) ─────────────
@@ -3186,8 +3233,7 @@ public class PrivateQuery
     public async Task<List<QueryKey>> GetKeys(
         string? productType,
         [ID] int projectId,
-        DateTime dateRangeStart,
-        DateTime dateRangeEnd,
+        [GraphQLName("date_range")] DateRangeRequiredInput dateRange,
         string? query,
         string? type,
         string? eventName,
@@ -3198,18 +3244,17 @@ public class PrivateQuery
     {
         await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
 
+        var qi = new QueryInput { Query = query, DateRange = dateRange };
         return (productType?.ToUpperInvariant()) switch
         {
-            "LOGS" => (await clickHouse.GetLogKeysAsync(projectId,
-                new QueryInput { Query = query ?? "", DateRange = new DateRangeRequiredInput { StartDate = dateRangeStart, EndDate = dateRangeEnd } }, ct))
+            "LOGS" => (await clickHouse.GetLogKeysAsync(projectId, qi, ct))
                 .Select(k => new QueryKey { Name = k, Type = type ?? "String" }).ToList(),
-            "TRACES" => (await clickHouse.GetTraceKeysAsync(projectId,
-                new QueryInput { Query = query ?? "", DateRange = new DateRangeRequiredInput { StartDate = dateRangeStart, EndDate = dateRangeEnd } }, ct))
+            "TRACES" => (await clickHouse.GetTraceKeysAsync(projectId, qi, ct))
                 .Select(k => new QueryKey { Name = k, Type = type ?? "String" }).ToList(),
-            "ERRORS" => await clickHouse.GetErrorsKeysAsync(projectId, dateRangeStart, dateRangeEnd, query, ct),
-            "SESSIONS" => await clickHouse.GetSessionsKeysAsync(projectId, dateRangeStart, dateRangeEnd, query, ct),
-            "EVENTS" => await clickHouse.GetEventsKeysAsync(projectId, dateRangeStart, dateRangeEnd, query, eventName, ct),
-            _ => await clickHouse.GetSessionsKeysAsync(projectId, dateRangeStart, dateRangeEnd, query, ct),
+            "ERRORS" => await clickHouse.GetErrorsKeysAsync(projectId, dateRange.StartDate, dateRange.EndDate, query, ct),
+            "SESSIONS" => await clickHouse.GetSessionsKeysAsync(projectId, dateRange.StartDate, dateRange.EndDate, query, ct),
+            "EVENTS" => await clickHouse.GetEventsKeysAsync(projectId, dateRange.StartDate, dateRange.EndDate, query, eventName, ct),
+            _ => await clickHouse.GetSessionsKeysAsync(projectId, dateRange.StartDate, dateRange.EndDate, query, ct),
         };
     }
 

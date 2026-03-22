@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations.Schema;
+
 namespace HoldFast.Domain.Entities;
 
 /// <summary>
@@ -57,6 +59,9 @@ public class Session : BaseEntity
 
     // Navigation
     public Project Project { get; set; } = null!;
+
+    // Computed field for HC schema compatibility — true if a user identifier was captured
+    [NotMapped] public bool? Identified => !string.IsNullOrEmpty(Identifier);
 }
 
 /// <summary>
