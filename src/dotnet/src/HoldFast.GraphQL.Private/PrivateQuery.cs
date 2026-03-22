@@ -164,7 +164,7 @@ public class PrivateQuery
     /// Get project settings (filter/sampling configuration).
     /// </summary>
     public async Task<ProjectFilterSettings?> GetProjectSettings(
-        int projectId,
+        [GraphQLName("projectId")] int projectId,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,

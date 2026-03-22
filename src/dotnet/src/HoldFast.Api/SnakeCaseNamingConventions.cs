@@ -26,6 +26,11 @@ public sealed class SnakeCaseNamingConventions : DefaultNamingConventions
     public override string GetMemberName(MemberInfo member, MemberKind kind)
     {
         var baseName = base.GetMemberName(member, kind);
+        // Methods are query/mutation resolvers — the Go/gqlgen schema uses camelCase for
+        // operation names (createProject, editProjectSettings, etc.), which matches HC's
+        // default camelCase output. Only properties (entity fields) need snake_case.
+        if (member.MemberType == MemberTypes.Method)
+            return baseName;
         return ToSnakeCase(baseName);
     }
 

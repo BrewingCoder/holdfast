@@ -172,15 +172,15 @@ public class PrivateMutation
     /// Requires project access.
     /// </summary>
     public async Task<ProjectFilterSettings> EditProjectSettings(
-        int projectId,
+        [GraphQLName("projectId")] int projectId,
         List<string>? excludedUsers,
         List<string>? errorFilters,
         int? rageClickWindowSeconds,
         int? rageClickRadiusPixels,
         int? rageClickCount,
         bool? filterChromeExtension,
-        bool? filterSessionsWithoutError,
-        int? autoResolveStaleErrorsDayInterval,
+        [GraphQLName("filterSessionsWithoutError")] bool? filterSessionsWithoutError,
+        [GraphQLName("autoResolveStaleErrorsDayInterval")] int? autoResolveStaleErrorsDayInterval,
         double? sessionSamplingRate,
         double? errorSamplingRate,
         double? logSamplingRate,
@@ -555,7 +555,7 @@ public class PrivateMutation
     /// Update admin "about you" details.
     /// </summary>
     public async Task<bool> UpdateAdminAboutYouDetails(
-        AdminAboutYouDetails adminDetails,
+        [GraphQLName("adminDetails")] AdminAboutYouDetails adminDetails,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
@@ -2000,7 +2000,7 @@ public class PrivateMutation
     /// Update the platforms configuration for a project.
     /// </summary>
     public async Task<bool> EditProjectPlatforms(
-        int projectId,
+        [GraphQLName("projectID")] int projectId,
         string platforms,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
