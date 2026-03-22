@@ -939,8 +939,8 @@ public class PrivateQuery
     /// <summary>
     /// Get the admin's role for a workspace via project ID.
     /// </summary>
-    public async Task<string?> GetAdminRoleByProject(
-        int projectId,
+    public async Task<WorkspaceAdminRole?> GetAdminRoleByProject(
+        [ID] int projectId,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
@@ -950,7 +950,12 @@ public class PrivateQuery
         var project = await db.Projects.FindAsync([projectId], ct);
         if (project == null) return null;
         var result = await authz.GetAdminRoleAsync(admin.Id, project.WorkspaceId, ct);
-        return result?.Role;
+        if (result == null) return null;
+        return new WorkspaceAdminRole(
+            WorkspaceId: project.WorkspaceId.ToString(),
+            Admin: admin,
+            Role: result.Value.Role,
+            ProjectIds: result.Value.ProjectIds?.Select(id => id.ToString()).ToList() ?? []);
     }
 
     // ── Workspace Pending Invites ───────────────────────────────────

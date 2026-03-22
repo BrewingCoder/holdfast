@@ -1,6 +1,19 @@
 using HoldFast.Domain.Entities;
+using HotChocolate;
 
 namespace HoldFast.GraphQL.Private;
+
+/// <summary>
+/// Workspace admin role with the admin entity and project scope.
+/// Matches Go schema WorkspaceAdminRole type.
+/// Fields workspaceId and projectIds are camelCase in the Go schema
+/// so they need explicit [GraphQLName] to override snake_case convention.
+/// </summary>
+public record WorkspaceAdminRole(
+    [property: GraphQLName("workspaceId")] string WorkspaceId,
+    Admin Admin,
+    string Role,
+    [property: GraphQLName("projectIds")] List<string> ProjectIds);
 
 /// <summary>
 /// Status of a specific integration setup for a project.
