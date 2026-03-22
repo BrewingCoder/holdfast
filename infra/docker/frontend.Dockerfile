@@ -33,6 +33,10 @@ RUN --mount=type=cache,target=/root/.yarn/berry/cache,sharing=locked \
 COPY --from=pruner /app/out/full/ .
 COPY turbo.json graphql.config.js tsconfig.json ./
 
+# turbo prune includes rrweb package source but omits the rrweb root tsconfig.base.json
+# that sub-packages extend. Copy it from the build context directly.
+COPY rrweb/tsconfig.base.json ./rrweb/tsconfig.base.json
+
 # GraphQL schemas used by codegen during the frontend build.
 COPY src/backend/private-graph ./src/backend/private-graph
 COPY src/backend/public-graph ./src/backend/public-graph
