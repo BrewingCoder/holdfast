@@ -3321,11 +3321,10 @@ public class PrivateQuery
         string? productType,
         [ID] int projectId,
         string keyName,
-        DateTime dateRangeStart,
-        DateTime dateRangeEnd,
+        [GraphQLName("date_range")] DateRangeRequiredInput dateRange,
         string? query,
         int? count,
-        string? eventName,
+        [GraphQLName("event")] string? eventName,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
         [Service] IClickHouseService clickHouse,
@@ -3336,13 +3335,13 @@ public class PrivateQuery
         return (productType?.ToUpperInvariant()) switch
         {
             "LOGS" => await clickHouse.GetLogKeyValuesAsync(projectId, keyName,
-                new QueryInput { Query = query ?? "", DateRange = new DateRangeRequiredInput { StartDate = dateRangeStart, EndDate = dateRangeEnd } }, ct),
+                new QueryInput { Query = query ?? "", DateRange = dateRange }, ct),
             "TRACES" => await clickHouse.GetTraceKeyValuesAsync(projectId, keyName,
-                new QueryInput { Query = query ?? "", DateRange = new DateRangeRequiredInput { StartDate = dateRangeStart, EndDate = dateRangeEnd } }, ct),
-            "ERRORS" => await clickHouse.GetErrorsKeyValuesAsync(projectId, keyName, dateRangeStart, dateRangeEnd, query, count, ct),
-            "SESSIONS" => await clickHouse.GetSessionsKeyValuesAsync(projectId, keyName, dateRangeStart, dateRangeEnd, query, count, ct),
-            "EVENTS" => await clickHouse.GetEventsKeyValuesAsync(projectId, keyName, dateRangeStart, dateRangeEnd, query, count, eventName, ct),
-            _ => await clickHouse.GetSessionsKeyValuesAsync(projectId, keyName, dateRangeStart, dateRangeEnd, query, count, ct),
+                new QueryInput { Query = query ?? "", DateRange = dateRange }, ct),
+            "ERRORS" => await clickHouse.GetErrorsKeyValuesAsync(projectId, keyName, dateRange.StartDate, dateRange.EndDate, query, count, ct),
+            "SESSIONS" => await clickHouse.GetSessionsKeyValuesAsync(projectId, keyName, dateRange.StartDate, dateRange.EndDate, query, count, ct),
+            "EVENTS" => await clickHouse.GetEventsKeyValuesAsync(projectId, keyName, dateRange.StartDate, dateRange.EndDate, query, count, eventName, ct),
+            _ => await clickHouse.GetSessionsKeyValuesAsync(projectId, keyName, dateRange.StartDate, dateRange.EndDate, query, count, ct),
         };
     }
 
@@ -3352,8 +3351,7 @@ public class PrivateQuery
     public async Task<List<KeyValueSuggestion>> GetKeyValuesSuggestions(
         string productType,
         [ID] int projectId,
-        DateTime dateRangeStart,
-        DateTime dateRangeEnd,
+        [GraphQLName("date_range")] DateRangeRequiredInput dateRange,
         List<string> keys,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
@@ -3366,7 +3364,7 @@ public class PrivateQuery
         foreach (var key in keys)
         {
             var values = await GetKeyValues(productType, projectId, key,
-                dateRangeStart, dateRangeEnd, null, 10, null,
+                dateRange, null, 10, null,
                 claimsPrincipal, authz, clickHouse, ct);
 
             results.Add(new KeyValueSuggestion(
@@ -3632,8 +3630,7 @@ public class PrivateQuery
     public async Task<List<string>> GetExistingLogsTraces(
         [ID] int projectId,
         List<string> traceIds,
-        DateTime dateRangeStart,
-        DateTime dateRangeEnd,
+        [GraphQLName("date_range")] DateRangeRequiredInput dateRange,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
         [Service] IClickHouseService clickHouse,
@@ -3652,7 +3649,7 @@ public class PrivateQuery
                 new QueryInput
                 {
                     Query = $"trace_id={traceId}",
-                    DateRange = new DateRangeRequiredInput { StartDate = dateRangeStart, EndDate = dateRangeEnd }
+                    DateRange = dateRange
                 },
                 new ClickHousePagination { Limit = 1 }, ct);
 
