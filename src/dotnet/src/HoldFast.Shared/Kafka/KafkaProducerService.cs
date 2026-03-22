@@ -27,7 +27,7 @@ public class KafkaProducerService : IDisposable
         var config = new ProducerConfig
         {
             BootstrapServers = options.Value.BootstrapServers,
-            Acks = Acks.Leader,
+            Acks = Acks.All,
             EnableIdempotence = true,
             LingerMs = 5,
             BatchNumMessages = 1000,
