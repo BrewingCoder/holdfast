@@ -413,6 +413,7 @@ public record SavedSegmentParams(string? Query);
 /// <summary>
 /// Stub billing details — returns zero meters and unlimited plan for self-hosted deployments.
 /// All billing was removed from HoldFast; this stub satisfies the frontend contract.
+/// Daily average fields always return 0 (no metering).
 /// </summary>
 public record BillingDetails(
     BillingPlan Plan,
@@ -426,7 +427,12 @@ public record BillingDetails(
     [property: GraphQLName("errorsBillingLimit")] long ErrorsBillingLimit,
     [property: GraphQLName("logsBillingLimit")] long LogsBillingLimit,
     [property: GraphQLName("tracesBillingLimit")] long TracesBillingLimit,
-    [property: GraphQLName("metricsBillingLimit")] long MetricsBillingLimit);
+    [property: GraphQLName("metricsBillingLimit")] long MetricsBillingLimit,
+    [property: GraphQLName("sessionsDailyAverage")] double SessionsDailyAverage = 0,
+    [property: GraphQLName("errorsDailyAverage")] double ErrorsDailyAverage = 0,
+    [property: GraphQLName("logsDailyAverage")] double LogsDailyAverage = 0,
+    [property: GraphQLName("tracesDailyAverage")] double TracesDailyAverage = 0,
+    [property: GraphQLName("metricsDailyAverage")] double MetricsDailyAverage = 0);
 
 /// <summary>
 /// A tag/op/value filter applied to metric monitor queries.

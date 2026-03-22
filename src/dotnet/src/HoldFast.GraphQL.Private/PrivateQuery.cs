@@ -1579,6 +1579,46 @@ public class PrivateQuery
         return await query.OrderByDescending(a => a.CreatedAt).ToListAsync(ct);
     }
 
+    // ── Legacy per-type session alert queries (Go schema compat) ──────────────────
+    // The Go schema exposed separate query fields for each session alert type.
+    // HC snake_case maps GetNewSessionAlerts → new_session_alerts etc.
+
+    public Task<List<SessionAlert>> GetNewSessionAlerts(
+        [ID] int projectId, ClaimsPrincipal cp, [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db, CancellationToken ct)
+        => GetSessionAlertsOfType(projectId, "NEW_SESSION_ALERT", cp, authz, db, ct);
+
+    public Task<List<SessionAlert>> GetRageClickAlerts(
+        [ID] int projectId, ClaimsPrincipal cp, [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db, CancellationToken ct)
+        => GetSessionAlertsOfType(projectId, "RAGE_CLICK_ALERT", cp, authz, db, ct);
+
+    public Task<List<SessionAlert>> GetNewUserAlerts(
+        [ID] int projectId, ClaimsPrincipal cp, [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db, CancellationToken ct)
+        => GetSessionAlertsOfType(projectId, "NEW_USER_ALERT", cp, authz, db, ct);
+
+    public Task<List<SessionAlert>> GetTrackPropertiesAlerts(
+        [ID] int projectId, ClaimsPrincipal cp, [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db, CancellationToken ct)
+        => GetSessionAlertsOfType(projectId, "TRACK_PROPERTIES_ALERT", cp, authz, db, ct);
+
+    public Task<List<SessionAlert>> GetUserPropertiesAlerts(
+        [ID] int projectId, ClaimsPrincipal cp, [Service] IAuthorizationService authz,
+        [Service] HoldFastDbContext db, CancellationToken ct)
+        => GetSessionAlertsOfType(projectId, "USER_PROPERTIES_ALERT", cp, authz, db, ct);
+
+    private async Task<List<SessionAlert>> GetSessionAlertsOfType(
+        int projectId, string type, ClaimsPrincipal cp, IAuthorizationService authz,
+        HoldFastDbContext db, CancellationToken ct)
+    {
+        await AuthHelper.RequireProjectAccess(cp, projectId, authz, ct);
+        return await db.SessionAlerts
+            .Where(a => a.ProjectId == projectId && a.Type == type)
+            .OrderByDescending(a => a.CreatedAt)
+            .ToListAsync(ct);
+    }
+
     /// <summary>
     /// Get log alerts for a project.
     /// </summary>
@@ -3235,7 +3275,7 @@ public class PrivateQuery
         [ID] int projectId,
         [GraphQLName("date_range")] DateRangeRequiredInput dateRange,
         string? query,
-        string? type,
+        KeyType? type,
         [GraphQLName("event")] string? eventName,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
@@ -3248,9 +3288,9 @@ public class PrivateQuery
         return productType switch
         {
             ProductType.Logs => (await clickHouse.GetLogKeysAsync(projectId, qi, ct))
-                .Select(k => new QueryKey { Name = k, Type = type ?? "String" }).ToList(),
+                .Select(k => new QueryKey { Name = k, Type = type?.ToString() ?? "String" }).ToList(),
             ProductType.Traces => (await clickHouse.GetTraceKeysAsync(projectId, qi, ct))
-                .Select(k => new QueryKey { Name = k, Type = type ?? "String" }).ToList(),
+                .Select(k => new QueryKey { Name = k, Type = type?.ToString() ?? "String" }).ToList(),
             ProductType.Errors => await clickHouse.GetErrorsKeysAsync(projectId, dateRange.StartDate, dateRange.EndDate, query, ct),
             ProductType.Sessions => await clickHouse.GetSessionsKeysAsync(projectId, dateRange.StartDate, dateRange.EndDate, query, ct),
             ProductType.Events => await clickHouse.GetEventsKeysAsync(projectId, dateRange.StartDate, dateRange.EndDate, query, eventName, ct),

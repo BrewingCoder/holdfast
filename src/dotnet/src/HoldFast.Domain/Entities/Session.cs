@@ -64,6 +64,11 @@ public class Session : BaseEntity
     [NotMapped] public bool? Identified => !string.IsNullOrEmpty(Identifier);
     // Populated by the resolver from SessionAdminsView; null until hydrated.
     [NotMapped] public bool? Viewed { get; set; }
+    // Legacy fields from Go schema — always null/false stubs for self-hosted.
+    [NotMapped] public string? UserProperties { get; set; }
+    [NotMapped] public string? EventCounts { get; set; }
+    [NotMapped] public bool IsPublic => false;
+    [NotMapped] public string? Email { get; set; }
 }
 
 /// <summary>

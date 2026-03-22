@@ -65,6 +65,18 @@ public enum ProductType
 }
 
 /// <summary>
+/// Data type of a query key (used in key-discovery results).
+/// Matches Go schema KeyType enum.
+/// </summary>
+public enum KeyType
+{
+    Boolean,
+    Creatable,
+    Numeric,
+    String,
+}
+
+/// <summary>
 /// Entity type for saved search segments.
 /// Matches Go schema SavedSegmentEntityType enum.
 /// </summary>
