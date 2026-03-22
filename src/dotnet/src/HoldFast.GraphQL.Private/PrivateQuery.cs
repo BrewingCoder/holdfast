@@ -277,6 +277,94 @@ public class PrivateQuery
 
     // ── Sessions ──────────────────────────────────────────────────────
 
+    /// <summary>
+    /// Session list query — mirrors Go schema `sessions(project_id, count, params, ...)`.
+    /// Queries session IDs from ClickHouse, then loads full Session objects from PostgreSQL.
+    /// </summary>
+    public async Task<SessionResults> GetSessions(
+        [ID] int projectId,
+        int count,
+        [GraphQLName("params")] QueryInput queryParams,
+        bool sortDesc,
+        string? sortField,
+        int? page,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        [Service] IClickHouseService clickHouse,
+        [Service] HoldFastDbContext db,
+        CancellationToken ct)
+    {
+        await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
+
+        var (ids, total) = await clickHouse.QuerySessionIdsAsync(
+            projectId, queryParams, count, page ?? 1, sortField, sortDesc, ct);
+
+        List<Session> sessions;
+        if (ids.Count > 0)
+        {
+            sessions = await db.Sessions
+                .Where(s => ids.Contains(s.Id) && s.ProjectId == projectId)
+                .ToListAsync(ct);
+
+            // Preserve ClickHouse sort order
+            var order = ids.Select((id, idx) => (id, idx)).ToDictionary(x => x.id, x => x.idx);
+            sessions = sessions
+                .OrderBy(s => order.TryGetValue(s.Id, out var i) ? i : int.MaxValue)
+                .ToList();
+        }
+        else
+        {
+            sessions = [];
+        }
+
+        var totalLength = sessions.Sum(s => (long)(s.Length ?? 0));
+        var totalActiveLength = sessions.Sum(s => (long)(s.ActiveLength ?? 0));
+        return new SessionResults(sessions, total, totalLength, totalActiveLength);
+    }
+
+    /// <summary>
+    /// Billing details stub — HoldFast is self-hosted with no billing tiers.
+    /// Returns zero meters and unlimited limits to satisfy the frontend contract.
+    /// </summary>
+    public Task<BillingDetails> GetBillingDetailsForProject(
+        [ID] int projectId,
+        ClaimsPrincipal claimsPrincipal,
+        [Service] IAuthorizationService authz,
+        CancellationToken ct)
+    {
+        var plan = new BillingPlan(
+            Type: "Free",
+            Interval: "Monthly",
+            MembersLimit: int.MaxValue,
+            SessionsLimit: long.MaxValue,
+            ErrorsLimit: long.MaxValue,
+            LogsLimit: long.MaxValue,
+            TracesLimit: long.MaxValue,
+            MetricsLimit: long.MaxValue,
+            SessionsRate: 0,
+            ErrorsRate: 0,
+            LogsRate: 0,
+            TracesRate: 0,
+            MetricsRate: 0,
+            AwsMpSubscription: null);
+
+        var details = new BillingDetails(
+            Plan: plan,
+            Meter: 0,
+            MembersMeter: 0,
+            ErrorsMeter: 0,
+            LogsMeter: 0,
+            TracesMeter: 0,
+            MetricsMeter: 0,
+            SessionsBillingLimit: long.MaxValue,
+            ErrorsBillingLimit: long.MaxValue,
+            LogsBillingLimit: long.MaxValue,
+            TracesBillingLimit: long.MaxValue,
+            MetricsBillingLimit: long.MaxValue);
+
+        return Task.FromResult(details);
+    }
+
     [UseProjection]
     public async Task<Session?> GetSession(
         string secureId,
@@ -1821,23 +1909,40 @@ public class PrivateQuery
     // ── Session Histogram ────────────────────────────────────────────
 
     /// <summary>
-    /// Get sessions histogram (delegates to ClickHouse).
+    /// Get sessions histogram — matches Go schema sessions_histogram(project_id, params, histogram_options).
+    /// Returns a SessionsHistogram with parallel arrays of bucket values.
     /// </summary>
-    public async Task<List<HistogramBucket>> GetSessionsHistogram(
+    public async Task<SessionsHistogram> GetSessionsHistogram(
         [ID] int projectId,
-        string query,
-        DateTime startDate,
-        DateTime endDate,
+        [GraphQLName("params")] QueryInput queryParams,
+        [GraphQLName("histogram_options")] DateHistogramOptions histogramOptions,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
         [Service] IClickHouseService clickHouse,
         CancellationToken ct)
     {
         await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
-        return await clickHouse.ReadSessionsHistogramAsync(
+
+        // Use bounds from histogram_options if params date range is empty
+        var start = queryParams.DateRangeStart != default
+            ? queryParams.DateRangeStart
+            : histogramOptions.Bounds?.StartDate ?? DateTime.UtcNow.AddDays(-30);
+        var end = queryParams.DateRangeEnd != default
+            ? queryParams.DateRangeEnd
+            : histogramOptions.Bounds?.EndDate ?? DateTime.UtcNow;
+
+        var buckets = await clickHouse.ReadSessionsHistogramAsync(
             projectId,
-            new QueryInput { Query = query, DateRangeStart = startDate, DateRangeEnd = endDate },
+            new QueryInput { Query = queryParams.Query, DateRangeStart = start, DateRangeEnd = end },
             ct);
+
+        return new SessionsHistogram(
+            BucketTimes: buckets.Select(b => b.BucketStart).ToList(),
+            SessionsWithoutErrors: buckets.Select(b => (long)b.Count).ToList(),
+            SessionsWithErrors: buckets.Select(_ => 0L).ToList(),
+            TotalSessions: buckets.Select(b => (long)b.Count).ToList(),
+            InactiveLengths: buckets.Select(_ => 0L).ToList(),
+            ActiveLengths: buckets.Select(_ => 0L).ToList());
     }
 
     /// <summary>

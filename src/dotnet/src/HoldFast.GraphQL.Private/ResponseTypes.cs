@@ -256,6 +256,74 @@ public record ClickUpProjectMappingInput(
     string ClickUpSpaceId);
 
 /// <summary>
+/// Sessions histogram result — arrays of counts per time bucket.
+/// Matches the Go schema SessionsHistogram type.
+/// </summary>
+public record SessionsHistogram(
+    [property: GraphQLName("bucket_times")] List<DateTime> BucketTimes,
+    [property: GraphQLName("sessions_without_errors")] List<long> SessionsWithoutErrors,
+    [property: GraphQLName("sessions_with_errors")] List<long> SessionsWithErrors,
+    [property: GraphQLName("total_sessions")] List<long> TotalSessions,
+    [property: GraphQLName("inactive_lengths")] List<long> InactiveLengths,
+    [property: GraphQLName("active_lengths")] List<long> ActiveLengths);
+
+/// <summary>
+/// Date range input for histogram bounds. Matches Go schema DateRangeInput.
+/// </summary>
+public class DateRangeInput
+{
+    public DateTime? StartDate { get; set; }
+    public DateTime? EndDate { get; set; }
+}
+
+/// <summary>
+/// Options for date histogram queries. Matches Go schema DateHistogramOptions.
+/// </summary>
+public class DateHistogramOptions
+{
+    public DateRangeInput? Bounds { get; set; }
+    public string? BucketSize { get; set; }
+    public string? TimeZone { get; set; }
+}
+
+/// <summary>
+/// Stub billing plan — returns unlimited defaults for self-hosted deployments.
+/// </summary>
+public record BillingPlan(
+    string Type,
+    string Interval,
+    int MembersLimit,
+    long SessionsLimit,
+    long ErrorsLimit,
+    long LogsLimit,
+    long TracesLimit,
+    long MetricsLimit,
+    long SessionsRate,
+    long ErrorsRate,
+    long LogsRate,
+    long TracesRate,
+    long MetricsRate,
+    [property: GraphQLName("aws_mp_subscription")] object? AwsMpSubscription);
+
+/// <summary>
+/// Stub billing details — returns zero meters and unlimited plan for self-hosted deployments.
+/// All billing was removed from HoldFast; this stub satisfies the frontend contract.
+/// </summary>
+public record BillingDetails(
+    BillingPlan Plan,
+    long Meter,
+    [property: GraphQLName("membersMeter")] long MembersMeter,
+    [property: GraphQLName("errorsMeter")] long ErrorsMeter,
+    [property: GraphQLName("logsMeter")] long LogsMeter,
+    [property: GraphQLName("tracesMeter")] long TracesMeter,
+    [property: GraphQLName("metricsMeter")] long MetricsMeter,
+    [property: GraphQLName("sessionsBillingLimit")] long SessionsBillingLimit,
+    [property: GraphQLName("errorsBillingLimit")] long ErrorsBillingLimit,
+    [property: GraphQLName("logsBillingLimit")] long LogsBillingLimit,
+    [property: GraphQLName("tracesBillingLimit")] long TracesBillingLimit,
+    [property: GraphQLName("metricsBillingLimit")] long MetricsBillingLimit);
+
+/// <summary>
 /// Input for the updateAdminAboutYouDetails mutation — matches the Go schema AdminAboutYouDetails input.
 /// Named to exactly match the Go schema type so HC emits "AdminAboutYouDetails" in the schema.
 /// </summary>
