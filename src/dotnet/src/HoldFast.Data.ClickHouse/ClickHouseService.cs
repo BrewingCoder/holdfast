@@ -204,7 +204,8 @@ public class ClickHouseService : IClickHouseService, IDisposable
         AppendSessionDateRange(sb, query);
         AppendSessionQueryFilter(sb, query.Query);
 
-        var sort = !string.IsNullOrEmpty(sortField) ? sortField : "CreatedAt";
+        // Map frontend snake_case sort fields to ClickHouse PascalCase column names
+        var sort = NormalizeSortField(sortField, "CreatedAt");
         sb.Append($"ORDER BY {sort} {(sortDesc ? "DESC" : "ASC")} ");
         sb.Append($"LIMIT {Math.Min(count, MaxLimit)} OFFSET {page * count} ");
 
@@ -731,6 +732,35 @@ public class ClickHouseService : IClickHouseService, IDisposable
     {
         // Only allow alphanumeric and underscore
         return new string(name.Where(c => char.IsLetterOrDigit(c) || c == '_').ToArray());
+    }
+
+    /// <summary>
+    /// Map a frontend snake_case sort field to the ClickHouse PascalCase column name.
+    /// Falls back to <paramref name="defaultColumn"/> if null/empty or unmapped.
+    /// </summary>
+    private static readonly Dictionary<string, string> SessionSortFieldMap = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["created_at"]      = "CreatedAt",
+        ["active_length"]   = "ActiveLength",
+        ["length"]          = "Length",
+        ["viewed"]          = "Viewed",
+        ["fingerprint"]     = "Fingerprint",
+        ["pages_visited"]   = "PagesVisited",
+        ["event_counts"]    = "EventCounts",
+        ["identifier"]      = "Identifier",
+        ["city"]            = "City",
+        ["country"]         = "Country",
+        ["os_name"]         = "OsName",
+        ["browser_name"]    = "BrowserName",
+    };
+
+    private static string NormalizeSortField(string? sortField, string defaultColumn)
+    {
+        if (string.IsNullOrEmpty(sortField)) return defaultColumn;
+        if (SessionSortFieldMap.TryGetValue(sortField, out var mapped)) return mapped;
+        // If already PascalCase (no underscore, starts uppercase), use as-is
+        if (!sortField.Contains('_') && char.IsUpper(sortField[0])) return sortField;
+        return defaultColumn;
     }
 
     // ── Write Methods (Worker ingestion) ──────────────────────────

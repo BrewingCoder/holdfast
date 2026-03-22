@@ -1286,11 +1286,15 @@ public class PrivateQuery
     }
 
     // ── Integration Status ──────────────────────────────────────────
+    // These must use [GraphQLName] because the snake_case convention converts
+    // "ClientIntegration" → "client_integration" but the Go schema uses camelCase
+    // "clientIntegration" (no underscores within a word boundary like client+Integration).
 
     /// <summary>
     /// Check if a project has any sessions (client integration working).
     /// </summary>
-    public async Task<bool> GetClientIntegration(
+    [GraphQLName("clientIntegration")]
+    public async Task<IntegrationStatus> GetClientIntegration(
         [ID] int projectId,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
@@ -1298,13 +1302,21 @@ public class PrivateQuery
         CancellationToken ct)
     {
         await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
-        return await db.Sessions.AnyAsync(s => s.ProjectId == projectId, ct);
+        var session = await db.Sessions
+            .Where(s => s.ProjectId == projectId)
+            .OrderByDescending(s => s.CreatedAt)
+            .FirstOrDefaultAsync(ct);
+        return new IntegrationStatus(
+            Integrated: session != null,
+            ResourceType: "Session",
+            CreatedAt: session?.CreatedAt);
     }
 
     /// <summary>
     /// Check if a project has any error groups (server integration working).
     /// </summary>
-    public async Task<bool> GetServerIntegration(
+    [GraphQLName("serverIntegration")]
+    public async Task<IntegrationStatus> GetServerIntegration(
         [ID] int projectId,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
@@ -1312,13 +1324,21 @@ public class PrivateQuery
         CancellationToken ct)
     {
         await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
-        return await db.ErrorGroups.AnyAsync(eg => eg.ProjectId == projectId, ct);
+        var group = await db.ErrorGroups
+            .Where(eg => eg.ProjectId == projectId)
+            .OrderByDescending(eg => eg.CreatedAt)
+            .FirstOrDefaultAsync(ct);
+        return new IntegrationStatus(
+            Integrated: group != null,
+            ResourceType: "Error",
+            CreatedAt: group?.CreatedAt);
     }
 
     /// <summary>
     /// Check if a project has received any logs.
     /// </summary>
-    public async Task<bool> GetLogsIntegration(
+    [GraphQLName("logsIntegration")]
+    public async Task<IntegrationStatus> GetLogsIntegration(
         [ID] int projectId,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
@@ -1333,13 +1353,16 @@ public class PrivateQuery
                 DateRange = new DateRangeRequiredInput { StartDate = DateTime.UtcNow.AddDays(-30), EndDate = DateTime.UtcNow }
             },
             new ClickHousePagination { Limit = 1 }, ct);
-        return result.Edges.Count > 0;
+        return new IntegrationStatus(
+            Integrated: result.Edges.Count > 0,
+            ResourceType: "Log");
     }
 
     /// <summary>
     /// Check if a project has received any traces.
     /// </summary>
-    public async Task<bool> GetTracesIntegration(
+    [GraphQLName("tracesIntegration")]
+    public async Task<IntegrationStatus> GetTracesIntegration(
         [ID] int projectId,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
@@ -1354,7 +1377,9 @@ public class PrivateQuery
                 DateRange = new DateRangeRequiredInput { StartDate = DateTime.UtcNow.AddDays(-30), EndDate = DateTime.UtcNow }
             },
             new ClickHousePagination { Limit = 1 }, ct: ct);
-        return result.Edges.Count > 0;
+        return new IntegrationStatus(
+            Integrated: result.Edges.Count > 0,
+            ResourceType: "Trace");
     }
 
     // ── Alert Detail ────────────────────────────────────────────────
@@ -2348,6 +2373,7 @@ public class PrivateQuery
     /// <summary>
     /// Check if metrics have been set up for a project.
     /// </summary>
+    [GraphQLName("metricsIntegration")]
     public async Task<IntegrationStatus> GetMetricsIntegration(
         [ID] int projectId,
         ClaimsPrincipal claimsPrincipal,
