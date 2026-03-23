@@ -26,7 +26,7 @@ require (
 	github.com/BrewingCoder/holdfast/sdk/highlight-go v0.10.2
 	github.com/DmitriyVTitov/size v1.5.0
 	github.com/PaesslerAG/jsonpath v0.1.1
-	github.com/andybalholm/brotli v1.1.1
+	github.com/andybalholm/brotli v1.2.0
 	github.com/antlr4-go/antlr/v4 v4.13.0
 	github.com/aws/aws-sdk-go-v2 v1.29.0
 	github.com/aws/aws-sdk-go-v2/config v1.27.11
