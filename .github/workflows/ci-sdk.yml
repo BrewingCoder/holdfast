@@ -20,7 +20,7 @@ concurrency:
 jobs:
   build-and-test:
     name: Build & Test SDKs
-    runs-on: [self-hosted, Linux, holdfast]
+    runs-on: k8s-personal
     timeout-minutes: 15
 
     steps:

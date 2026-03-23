@@ -14,7 +14,7 @@ concurrency:
 jobs:
   changes:
     name: Detect Changes
-    runs-on: [self-hosted, Linux, holdfast]
+    runs-on: k8s-personal
     timeout-minutes: 2
     outputs:
       backend: ${{ steps.filter.outputs.backend }}
@@ -44,7 +44,7 @@ jobs:
     name: Backend Analysis
     needs: changes
     if: needs.changes.outputs.backend == 'true' || github.event_name == 'push' || github.event_name == 'schedule'
-    runs-on: [self-hosted, Linux, holdfast]
+    runs-on: k8s-personal
     timeout-minutes: 15
     steps:
       - name: Checkout
@@ -99,7 +99,7 @@ jobs:
     name: JS/TS Analysis (all projects)
     needs: changes
     if: needs.changes.outputs.frontend == 'true' || github.event_name == 'push' || github.event_name == 'schedule'
-    runs-on: [self-hosted, Linux, holdfast]
+    runs-on: k8s-personal
     timeout-minutes: 30
     steps:
       - name: Checkout
