@@ -14,7 +14,7 @@ concurrency:
 jobs:
   changes:
     name: Detect Changes
-    runs-on: [self-hosted, Linux, holdfast]
+    runs-on: k8s-personal
     timeout-minutes: 2
     outputs:
       backend: ${{ steps.filter.outputs.backend }}
@@ -44,7 +44,7 @@ jobs:
     name: CodeQL Analysis (go)
     needs: changes
     if: needs.changes.outputs.backend == 'true' || github.event_name == 'schedule' || github.event_name == 'push'
-    runs-on: [self-hosted, Linux, holdfast]
+    runs-on: k8s-personal
     timeout-minutes: 15
     permissions:
       security-events: write
@@ -77,7 +77,7 @@ jobs:
     name: CodeQL Analysis (javascript-typescript)
     needs: changes
     if: needs.changes.outputs.frontend == 'true' || github.event_name == 'schedule' || github.event_name == 'push'
-    runs-on: [self-hosted, Linux, holdfast]
+    runs-on: k8s-personal
     timeout-minutes: 15
     permissions:
       security-events: write
@@ -100,7 +100,7 @@ jobs:
 
   dependency-audit:
     name: Dependency Audit
-    runs-on: [self-hosted, Linux, holdfast]
+    runs-on: k8s-personal
     timeout-minutes: 10
     steps:
       - name: Checkout
@@ -128,7 +128,7 @@ jobs:
 
   secret-scan:
     name: Secret Scanning
-    runs-on: [self-hosted, Linux, holdfast]
+    runs-on: k8s-personal
     timeout-minutes: 5
     steps:
       - name: Checkout

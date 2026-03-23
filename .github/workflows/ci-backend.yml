@@ -20,7 +20,7 @@ concurrency:
 jobs:
   build-and-test:
     name: Build, Lint & Test
-    runs-on: [self-hosted, Linux, holdfast]
+    runs-on: k8s-personal
     timeout-minutes: 20
 
     steps:
