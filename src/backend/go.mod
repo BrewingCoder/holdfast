@@ -1,6 +1,6 @@
 module github.com/BrewingCoder/holdfast/src/backend
 
-go 1.25
+go 1.25.0
 
 replace golang.org/x/crypto => golang.org/x/crypto v0.17.0
 
@@ -88,7 +88,7 @@ require (
 	go.opentelemetry.io/otel/trace v1.33.0
 	golang.org/x/mod v0.33.0
 	golang.org/x/oauth2 v0.24.0
-	golang.org/x/sync v0.19.0
+	golang.org/x/sync v0.20.0
 	golang.org/x/text v0.34.0
 	google.golang.org/api v0.185.0
 	gorm.io/driver/postgres v1.5.7
