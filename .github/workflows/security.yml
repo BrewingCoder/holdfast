@@ -61,7 +61,7 @@ jobs:
           queries: security-extended
 
       - name: Setup Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version-file: 'src/backend/go.mod'
 
@@ -116,7 +116,7 @@ jobs:
         continue-on-error: true
 
       - name: Setup Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version-file: 'src/backend/go.mod'
 
