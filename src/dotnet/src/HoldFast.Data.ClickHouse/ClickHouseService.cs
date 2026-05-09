@@ -826,10 +826,11 @@ public class ClickHouseService :
             var sql =
                 "INSERT INTO logs (ProjectId, Timestamp, TraceId, SpanId, " +
                 "SecureSessionId, SeverityText, SeverityNumber, Source, " +
-                "ServiceName, ServiceVersion, Body, Environment) " +
+                "ServiceName, ServiceVersion, Body, LogAttributes, Environment) " +
                 "VALUES ({projectId:Int32}, {ts:DateTime64(9)}, {traceId:String}, {spanId:String}, " +
                 "{sessionId:String}, {severity:String}, {severityNum:Int32}, {source:String}, " +
-                "{svcName:String}, {svcVer:String}, {body:String}, {env:String})";
+                "{svcName:String}, {svcVer:String}, {body:String}, " +
+                "mapFromArrays({attrKeys:Array(String)}, {attrValues:Array(String)}), {env:String})";
 
             using var cmd = _conn.CreateCommand();
             cmd.CommandText = sql;
@@ -844,6 +845,8 @@ public class ClickHouseService :
             cmd.AddParameter("svcName", l.ServiceName);
             cmd.AddParameter("svcVer", l.ServiceVersion);
             cmd.AddParameter("body", l.Body);
+            cmd.AddParameter("attrKeys", l.LogAttributes.Keys.ToArray());
+            cmd.AddParameter("attrValues", l.LogAttributes.Values.ToArray());
             cmd.AddParameter("env", l.Environment);
 
             await cmd.ExecuteNonQueryAsync(ct);
@@ -862,11 +865,14 @@ public class ClickHouseService :
             var sql =
                 "INSERT INTO traces (ProjectId, Timestamp, TraceId, SpanId, ParentSpanId, " +
                 "SecureSessionId, ServiceName, ServiceVersion, Environment, " +
-                "SpanName, SpanKind, Duration, StatusCode, StatusMessage, HasErrors) " +
+                "SpanName, SpanKind, Duration, StatusCode, StatusMessage, " +
+                "TraceAttributes, HasErrors) " +
                 "VALUES ({projectId:Int32}, {ts:DateTime64(9)}, {traceId:String}, {spanId:String}, " +
                 "{parentSpanId:String}, {sessionId:String}, {svcName:String}, {svcVer:String}, " +
                 "{env:String}, {spanName:String}, {spanKind:String}, {duration:Int64}, " +
-                "{statusCode:String}, {statusMsg:String}, {hasErrors:UInt8})";
+                "{statusCode:String}, {statusMsg:String}, " +
+                "mapFromArrays({attrKeys:Array(String)}, {attrValues:Array(String)}), " +
+                "{hasErrors:UInt8})";
 
             using var cmd = _conn.CreateCommand();
             cmd.CommandText = sql;
@@ -884,6 +890,8 @@ public class ClickHouseService :
             cmd.AddParameter("duration", t.Duration);
             cmd.AddParameter("statusCode", t.StatusCode);
             cmd.AddParameter("statusMsg", t.StatusMessage);
+            cmd.AddParameter("attrKeys", t.TraceAttributes.Keys.ToArray());
+            cmd.AddParameter("attrValues", t.TraceAttributes.Values.ToArray());
             cmd.AddParameter("hasErrors", t.HasErrors ? (byte)1 : (byte)0);
 
             await cmd.ExecuteNonQueryAsync(ct);
