@@ -1,0 +1,22 @@
+{
+  "name": "holdfast-soak",
+  "version": "0.0.0",
+  "private": true,
+  "description": "HOL-37/38 — continuous soak harness that exercises the analytics ingest surface (logs / traces / errors / sessions / metrics / events) with variable-rate scenarios. Designed to run for ~24 hours alongside the hobby stack.",
+  "type": "module",
+  "main": "index.mjs",
+  "scripts": {
+    "start": "node index.mjs"
+  },
+  "dependencies": {
+    "@opentelemetry/api": "^1.9.0",
+    "@opentelemetry/api-logs": "^0.55.0",
+    "@opentelemetry/exporter-logs-otlp-http": "^0.55.0",
+    "@opentelemetry/exporter-trace-otlp-http": "^0.55.0",
+    "@opentelemetry/resources": "^1.28.0",
+    "@opentelemetry/sdk-logs": "^0.55.0",
+    "@opentelemetry/sdk-node": "^0.55.0",
+    "@opentelemetry/sdk-trace-base": "^1.28.0",
+    "@opentelemetry/semantic-conventions": "^1.28.0"
+  }
+}
