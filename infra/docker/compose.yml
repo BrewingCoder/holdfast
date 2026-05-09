@@ -121,16 +121,6 @@ services:
             - '0.0.0.0:8318:8318'
             - '0.0.0.0:8889:8888'
 
-    predictions:
-        logging: *local-logging
-        restart: on-failure
-        build:
-            dockerfile: ./packages/predictions/predictions.Dockerfile
-            context: ../..
-        container_name: predictions
-        ports:
-            - '0.0.0.0:5001:5001'
-
 volumes:
     postgres-data:
     clickhouse-data:

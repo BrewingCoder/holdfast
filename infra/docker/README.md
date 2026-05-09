@@ -1,9 +1,12 @@
 # HoldFast — Local Docker Stack
 
 Quickstart for running HoldFast end-to-end on a single machine. Works on Linux,
-macOS, and Windows (via Docker Desktop). The stack runs as 9 services in a
-single `docker compose` project: backend, frontend, collector, predictions,
+macOS, and Windows (via Docker Desktop). The stack runs as 8 services in a
+single `docker compose` project: backend, frontend, collector,
 postgres, clickhouse, kafka, zookeeper, redis.
+
+(See [HOL-17](https://yt.brewingcoder.com/issue/HOL-17) for the in-flight
+work to reduce this further.)
 
 > Production deployments should use a Helm chart (TODO) or a managed-service
 > compose. This compose file is for development and demos only — secrets are
@@ -13,7 +16,7 @@ postgres, clickhouse, kafka, zookeeper, redis.
 
 - Docker 24+ with Docker Compose v2
 - ~6 GB free RAM (kafka + clickhouse + jvm overhead)
-- Ports free on the host: 3000, 5001, 5432, 6379, 8082, 8123, 8889, 9000, 9092, 4317-4319
+- Ports free on the host: 3000, 5432, 6379, 8082, 8123, 8889, 9000, 9092, 4317-4319
 
 If you're on Windows, also ensure `*.sh` files in your checkout have LF line
 endings. The `.gitattributes` rule should handle this for fresh clones; if
@@ -130,8 +133,8 @@ docker compose -f compose.yml -f compose.hobby-dotnet.yml up -d --force-recreate
 
 ## Compose file layering
 
-- `compose.yml` — base infra (postgres, clickhouse, kafka, redis, etc.) and
-  the predictions sidecar. Always required.
+- `compose.yml` — base infra (postgres, clickhouse, kafka, redis, etc.).
+  Always required.
 - `compose.hobby-dotnet.yml` — adds the .NET backend, frontend, and collector
   with hobby/dev defaults (DevSeed on, SSL off, plaintext password).
 - `compose.hobby.yml` — adds the **legacy Go** backend instead of .NET. Pick
