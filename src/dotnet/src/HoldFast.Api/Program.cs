@@ -22,6 +22,14 @@ using OpenTelemetry.Trace;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// One BackgroundService failing should NOT take down the whole host. The
+// .NET default is StopHost — fine for stateless web servers but not for
+// HoldFast where workers are independent. A transient ClickHouse glitch in
+// SessionEventsConsumer should not crash MetricsConsumer or the public API.
+// (HOL-12 follow-on.)
+builder.Services.Configure<HostOptions>(o =>
+    o.BackgroundServiceExceptionBehavior = BackgroundServiceExceptionBehavior.Ignore);
+
 // ── Go-compatible environment variable fallbacks ─────────────────────
 // The Go backend reads PSQL_HOST, KAFKA_SERVERS, etc. Map them to .NET config.
 var pgConnStr = GoEnvCompat.BuildPostgresConnectionString(Environment.GetEnvironmentVariable);
@@ -120,6 +128,14 @@ builder.Services.Configure<KafkaOptions>(
     builder.Configuration.GetSection("Kafka"));
 builder.Services.AddSingleton<KafkaProducerService>();
 builder.Services.AddSingleton<IKafkaProducer, KafkaProducerAdapter>();
+
+// Topic bootstrap — pre-create required topics so consumers don't crash on
+// subscribe (Confluent.Kafka auto-create only triggers on producer writes).
+// Disable via Kafka__TopicBootstrap__Disabled=true when topics are managed
+// externally (Strimzi KafkaTopic resources, Helm pre-jobs, etc).
+builder.Services.Configure<KafkaTopicBootstrapOptions>(
+    builder.Configuration.GetSection("Kafka:TopicBootstrap"));
+builder.Services.AddHostedService<KafkaTopicBootstrapService>();
 
 // ── Redis ─────────────────────────────────────────────────────────────
 builder.Services.Configure<RedisOptions>(
