@@ -1,4 +1,5 @@
 using System.Text.Json;
+using HotChocolate;
 
 namespace HoldFast.GraphQL.Public.InputTypes;
 
@@ -6,29 +7,36 @@ namespace HoldFast.GraphQL.Public.InputTypes;
 /// A single frame in an error stack trace. Maps to one line in a JS/TS stack trace.
 /// IsEval/IsNative indicate the execution context. `args` holds opaque
 /// argument values (matches Go schema's `args: [Any]`).
+///
+/// Field names use [GraphQLName] to expose camelCase to clients — the Go schema
+/// (and the SDKs generated against it) uses camelCase here even though the
+/// global convention is snake_case. Mixed casing in the upstream contract.
 /// </summary>
 public record StackFrameInput(
-    string? FunctionName,
+    [property: GraphQLName("functionName")] string? FunctionName,
     List<JsonElement?>? Args,
-    string? FileName,
-    int? LineNumber,
-    int? ColumnNumber,
-    bool? IsEval,
-    bool? IsNative,
+    [property: GraphQLName("fileName")] string? FileName,
+    [property: GraphQLName("lineNumber")] int? LineNumber,
+    [property: GraphQLName("columnNumber")] int? ColumnNumber,
+    [property: GraphQLName("isEval")] bool? IsEval,
+    [property: GraphQLName("isNative")] bool? IsNative,
     string? Source);
 
 /// <summary>
 /// Frontend error object submitted by the browser SDK. Contains the error event message,
 /// type, source URL, line/column numbers, full stack trace, and optional JSON payload.
+///
+/// Field names: lineNumber/columnNumber/stackTrace are camelCase in the Go schema;
+/// override the snake_case naming convention to match.
 /// </summary>
 public record ErrorObjectInput(
     string Event,
     string Type,
     string Url,
     string Source,
-    int LineNumber,
-    int ColumnNumber,
-    List<StackFrameInput?> StackTrace,
+    [property: GraphQLName("lineNumber")] int LineNumber,
+    [property: GraphQLName("columnNumber")] int ColumnNumber,
+    [property: GraphQLName("stackTrace")] List<StackFrameInput?> StackTrace,
     DateTime Timestamp,
     string? Payload);
 
@@ -41,7 +49,9 @@ public record ServiceInput(
 
 /// <summary>
 /// Backend error submitted by a server-side SDK. Includes distributed tracing context
-/// (TraceId, SpanId), service identity, and the error's environment.
+/// (TraceId, SpanId), service identity, and the error's environment. The Go schema's
+/// BackendErrorObjectInput uses mixed casing: most fields are snake_case, `stackTrace`
+/// is camelCase.
 /// </summary>
 public record BackendErrorObjectInput(
     string? SessionSecureId,
@@ -53,7 +63,7 @@ public record BackendErrorObjectInput(
     string Type,
     string Url,
     string Source,
-    string StackTrace,
+    [property: GraphQLName("stackTrace")] string StackTrace,
     DateTime Timestamp,
     string? Payload,
     ServiceInput Service,

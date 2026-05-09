@@ -56,11 +56,18 @@ public class KafkaTopicsTests
         Assert.Equal("alert-evaluation", KafkaTopics.AlertEvaluation);
     }
 
+    [Fact]
+    public void FrontendErrors_MatchesGoBackend()
+    {
+        Assert.Equal("frontend-errors", KafkaTopics.FrontendErrors);
+    }
+
     // ── Format validation ─────────────────────────────────────────────
 
     [Theory]
     [InlineData(nameof(KafkaTopics.SessionEvents))]
     [InlineData(nameof(KafkaTopics.BackendErrors))]
+    [InlineData(nameof(KafkaTopics.FrontendErrors))]
     [InlineData(nameof(KafkaTopics.Metrics))]
     [InlineData(nameof(KafkaTopics.Logs))]
     [InlineData(nameof(KafkaTopics.Traces))]
@@ -78,6 +85,7 @@ public class KafkaTopicsTests
     [Theory]
     [InlineData(nameof(KafkaTopics.SessionEvents))]
     [InlineData(nameof(KafkaTopics.BackendErrors))]
+    [InlineData(nameof(KafkaTopics.FrontendErrors))]
     [InlineData(nameof(KafkaTopics.Metrics))]
     [InlineData(nameof(KafkaTopics.Logs))]
     [InlineData(nameof(KafkaTopics.Traces))]
@@ -94,6 +102,7 @@ public class KafkaTopicsTests
     [Theory]
     [InlineData(nameof(KafkaTopics.SessionEvents))]
     [InlineData(nameof(KafkaTopics.BackendErrors))]
+    [InlineData(nameof(KafkaTopics.FrontendErrors))]
     [InlineData(nameof(KafkaTopics.Metrics))]
     [InlineData(nameof(KafkaTopics.Logs))]
     [InlineData(nameof(KafkaTopics.Traces))]
@@ -113,6 +122,7 @@ public class KafkaTopicsTests
         {
             KafkaTopics.SessionEvents,
             KafkaTopics.BackendErrors,
+            KafkaTopics.FrontendErrors,
             KafkaTopics.Metrics,
             KafkaTopics.Logs,
             KafkaTopics.Traces,
@@ -125,7 +135,7 @@ public class KafkaTopicsTests
     }
 
     [Fact]
-    public void TopicCount_IsEight()
+    public void TopicCount_IsNine()
     {
         // Guard against adding a topic constant without tests
         var fields = typeof(KafkaTopics)
@@ -133,7 +143,7 @@ public class KafkaTopicsTests
             .Where(f => f.IsLiteral && !f.IsInitOnly && f.FieldType == typeof(string))
             .ToArray();
 
-        Assert.Equal(8, fields.Length);
+        Assert.Equal(9, fields.Length);
     }
 
     // ── No whitespace or hidden characters ────────────────────────────
@@ -141,6 +151,7 @@ public class KafkaTopicsTests
     [Theory]
     [InlineData(nameof(KafkaTopics.SessionEvents))]
     [InlineData(nameof(KafkaTopics.BackendErrors))]
+    [InlineData(nameof(KafkaTopics.FrontendErrors))]
     [InlineData(nameof(KafkaTopics.Metrics))]
     [InlineData(nameof(KafkaTopics.Logs))]
     [InlineData(nameof(KafkaTopics.Traces))]
