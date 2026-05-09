@@ -19,6 +19,8 @@ services:
             - ClickHouse__Database=${CLICKHOUSE_DATABASE:-default}
             - ClickHouse__Username=${CLICKHOUSE_USERNAME:-default}
             - ClickHouse__Password=${CLICKHOUSE_PASSWORD:-}
+            - ClickHouse__Migrations__Path=/app/clickhouse-migrations
+            - ClickHouse__Migrations__Disabled=${CLICKHOUSE_MIGRATIONS_DISABLED:-false}
             - Redis__Configuration=${REDIS_ADDRESS:-redis:6379}
             - Kafka__BootstrapServers=${KAFKA_SERVERS:-kafka:9092}
             - Storage__Type=filesystem
