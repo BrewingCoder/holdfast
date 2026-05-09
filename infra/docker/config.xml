@@ -1,4 +1,11 @@
 <clickhouse>
+    <!-- Bind explicitly to IPv4 + IPv6 wildcards. The Docker network stack
+         disables IPv6 by default, which causes CH to log a (harmless but
+         noisy) Listen failure on `::`. Setting 0.0.0.0 silences it without
+         losing IPv6 reachability when the host network supports it. -->
+    <listen_host>0.0.0.0</listen_host>
+    <listen_try>1</listen_try>
+
     <!-- ── Memory caps (HOL-18) ──────────────────────────────────────────
          ClickHouse defaults assume big-iron data-warehouse hardware. For
          self-hosted HoldFast deployments at hobby scale the unbounded
@@ -9,41 +16,77 @@
     <mark_cache_size>67108864</mark_cache_size>                   <!-- 64 MiB -->
     <uncompressed_cache_size>67108864</uncompressed_cache_size>   <!-- 64 MiB -->
 
+    <!-- ── Idle baseline tuning (HOL-24) ─────────────────────────────────
+         Cut a 1.14 GiB-RSS / 746-thread idle baseline to something
+         appropriate for a self-hosted observability backend that stays
+         quiet between bursts. -->
+
+    <!-- Thread-pool ceilings. Default max_thread_pool_size=10000 means
+         746-thread idles are typical. We're a single-tenant box; no need
+         for thousands of cooperating threads. Each thread reserves stack
+         (default 8 MiB virtual + a few hundred KiB resident); cutting the
+         ceiling collapses idle thread count. -->
+    <max_thread_pool_size>128</max_thread_pool_size>
+    <max_thread_pool_free_size>0</max_thread_pool_free_size>
+    <thread_pool_queue_size>1000</thread_pool_queue_size>
+
+    <!-- Background pools. Defaults scale with CPU and stay warm. For
+         a 3-container hobby deploy with one ClickHouse process and no
+         distributed work, 4 each is plenty. -->
+    <!-- background_pool_size is constrained by merge_tree sanity checks:
+         pool_size * concurrency_ratio must exceed several merge-tree
+         floors (number_of_free_entries_in_pool_to_execute_mutation=20,
+         _to_execute_optimize_entire_partition=25, etc). Setting 14*2=28
+         clears all of them. The big lever for thread footprint is
+         max_thread_pool_size above, not these. -->
+    <background_pool_size>14</background_pool_size>
+    <background_merges_mutations_concurrency_ratio>2</background_merges_mutations_concurrency_ratio>
+    <background_buffer_flush_schedule_pool_size>4</background_buffer_flush_schedule_pool_size>
+    <!-- background_schedule_pool runs replication, distributed sends, MV
+         refresh — gating it too tight stalls AsyncLoader during startup
+         when ~25 default-DB tables (logs/errors/sessions/traces/metrics
+         plus their MVs) want to load in parallel. 16 is enough breathing
+         room for hobby scale. -->
+    <background_schedule_pool_size>16</background_schedule_pool_size>
+    <background_message_broker_schedule_pool_size>4</background_message_broker_schedule_pool_size>
+    <background_distributed_schedule_pool_size>4</background_distributed_schedule_pool_size>
+    <background_fetches_pool_size>4</background_fetches_pool_size>
+    <background_common_pool_size>4</background_common_pool_size>
+    <background_move_pool_size>2</background_move_pool_size>
+
+    <!-- Concurrent-query ceilings — single-tenant, no need for 100. -->
+    <max_concurrent_queries>20</max_concurrent_queries>
+    <max_concurrent_insert_queries>10</max_concurrent_insert_queries>
+    <max_concurrent_select_queries>10</max_concurrent_select_queries>
+
+    <!-- Async metrics collection. Default polls every 1s and keeps a
+         heavy 120s rollup; on an idle box that's pure noise. -->
+    <asynchronous_metrics_update_period_s>30</asynchronous_metrics_update_period_s>
+    <asynchronous_heavy_metrics_update_period_s>600</asynchronous_heavy_metrics_update_period_s>
+
+    <!-- ── System log tables ─────────────────────────────────────────────
+         A self-hosted single-tenant deployment has no operator that needs
+         server-side query history or 5.5 GB of text_log spam. Disabling
+         these drops disk usage AND eliminates their in-memory flush
+         buffers. Re-enable any one of them ad-hoc by removing the
+         `remove="remove"` attribute and restarting. -->
+    <query_log remove="remove" />
+    <query_thread_log remove="remove" />
+    <query_views_log remove="remove" />
+    <part_log remove="remove" />
+    <processors_profile_log remove="remove" />
+    <metric_log remove="remove" />
+    <asynchronous_metric_log remove="remove" />
+    <opentelemetry_span_log remove="remove" />
+    <text_log remove="remove" />
+    <trace_log remove="remove" />
+    <session_log remove="remove" />
+    <backup_log remove="remove" />
+    <crash_log remove="remove" />
+    <error_log remove="remove" />
+
     <backups>
         <allowed_path>/backups/</allowed_path>
         <remove_backup_files_after_failure>true</remove_backup_files_after_failure>
     </backups>
-    <asynchronous_metric_log>
-        <ttl>event_date + INTERVAL 1 HOUR DELETE</ttl>
-    </asynchronous_metric_log>
-    <metric_log>
-        <ttl>event_date + INTERVAL 1 HOUR DELETE</ttl>
-    </metric_log>
-    <query_log>
-        <ttl>event_date + INTERVAL 1 HOUR DELETE</ttl>
-    </query_log>
-    <query_thread_log>
-        <ttl>event_date + INTERVAL 1 HOUR DELETE</ttl>
-    </query_thread_log>
-    <trace_log>
-        <ttl>event_date + INTERVAL 1 HOUR DELETE</ttl>
-    </trace_log>
-    <crash_log>
-        <ttl>event_date + INTERVAL 1 MONTH DELETE</ttl>
-    </crash_log>
-    <text_log>
-        <ttl>event_date + INTERVAL 1 MONTH DELETE</ttl>
-    </text_log>
-    <backup_log>
-        <ttl>event_date + INTERVAL 1 MONTH DELETE</ttl>
-    </backup_log>
-    <part_log>
-        <ttl>event_date + INTERVAL 1 HOUR DELETE</ttl>
-    </part_log>
-    <processors_profile_log>
-        <ttl>event_date + INTERVAL 1 HOUR DELETE</ttl>
-    </processors_profile_log>
-    <query_views_log>
-        <ttl>event_date + INTERVAL 1 HOUR DELETE</ttl>
-    </query_views_log>
 </clickhouse>
