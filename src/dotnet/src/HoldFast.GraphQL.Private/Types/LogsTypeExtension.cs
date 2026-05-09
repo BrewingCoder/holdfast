@@ -1,5 +1,5 @@
 using System.Text.Json;
-using HoldFast.Data.ClickHouse.Models;
+using HoldFast.Analytics.Models;
 using HotChocolate;
 using HotChocolate.Types;
 

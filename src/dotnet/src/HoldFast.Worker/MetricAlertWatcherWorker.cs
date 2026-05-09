@@ -1,6 +1,6 @@
 using HoldFast.Data;
 using HoldFast.Data.ClickHouse;
-using HoldFast.Data.ClickHouse.Models;
+using HoldFast.Analytics.Models;
 using HoldFast.Domain.Entities;
 using HoldFast.Shared.Notifications;
 using Microsoft.EntityFrameworkCore;
@@ -168,10 +168,10 @@ public class MetricAlertWatcherWorker : BackgroundService
         // For other product types, use the metrics query
         var buckets = await clickHouse.ReadMetricsAsync(
             alert.ProjectId,
-            new HoldFast.Data.ClickHouse.Models.QueryInput
+            new HoldFast.Analytics.Models.QueryInput
             {
                 Query = alert.Query ?? "",
-                DateRange = new HoldFast.Data.ClickHouse.Models.DateRangeRequiredInput { StartDate = startDate, EndDate = endDate },
+                DateRange = new HoldFast.Analytics.Models.DateRangeRequiredInput { StartDate = startDate, EndDate = endDate },
             },
             bucketBy: "timestamp",
             groupBy: alert.GroupByKey != null ? [alert.GroupByKey] : null,

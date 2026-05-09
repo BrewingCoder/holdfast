@@ -1,5 +1,6 @@
+using HoldFast.Analytics;
 using HoldFast.Data.ClickHouse;
-using HoldFast.Data.ClickHouse.Models;
+using HoldFast.Analytics.Models;
 
 namespace HoldFast.Shared.Tests.ClickHouse;
 

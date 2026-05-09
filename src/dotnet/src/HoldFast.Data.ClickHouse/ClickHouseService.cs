@@ -2,7 +2,8 @@ using System.Data;
 using ClickHouse.Client.ADO;
 using ClickHouse.Client.Utility;
 using Dapper;
-using HoldFast.Data.ClickHouse.Models;
+using HoldFast.Analytics;
+using HoldFast.Analytics.Models;
 using HoldFast.Domain.Enums;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -12,8 +13,24 @@ namespace HoldFast.Data.ClickHouse;
 /// <summary>
 /// Concrete ClickHouse analytics service using ClickHouse.Client + Dapper.
 /// Mirrors Go's clickhouse.Client query methods.
+///
+/// HOL-25: this class now implements both the legacy kitchen-sink
+/// IClickHouseService and the seven backend-neutral domain stores
+/// (ILogStore, ITraceStore, …). Method signatures are identical across
+/// the two API shapes — DI registers the same instance for all eight
+/// interfaces. Existing callers stay on IClickHouseService until they
+/// migrate to the per-domain interfaces in follow-up PRs.
 /// </summary>
-public class ClickHouseService : IClickHouseService, IDisposable
+public class ClickHouseService :
+    IClickHouseService,
+    ILogStore,
+    ITraceStore,
+    ISessionAnalyticsStore,
+    IErrorAnalyticsStore,
+    IMetricStore,
+    IEventFieldStore,
+    IAlertStateStore,
+    IDisposable
 {
     private readonly ClickHouseConnection _conn;
     private readonly ClickHouseConnection _readonlyConn;

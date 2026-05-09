@@ -2,7 +2,7 @@ using System.Security.Claims;
 using System.Text;
 using HoldFast.Data;
 using HoldFast.Data.ClickHouse;
-using HoldFast.Data.ClickHouse.Models;
+using HoldFast.Analytics.Models;
 using HoldFast.Domain.Entities;
 using HoldFast.Domain.Enums;
 using HoldFast.GraphQL.Private;

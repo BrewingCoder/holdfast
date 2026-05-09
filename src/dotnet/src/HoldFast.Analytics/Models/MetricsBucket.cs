@@ -1,7 +1,7 @@
-namespace HoldFast.Data.ClickHouse.Models;
+namespace HoldFast.Analytics.Models;
 
 /// <summary>
-/// A time-bucketed aggregation result from ClickHouse metrics queries.
+/// A time-bucketed aggregation result from metrics queries.
 /// </summary>
 public class MetricsBucket
 {
@@ -65,7 +65,10 @@ public class QueryInput
 }
 
 /// <summary>
-/// Pagination parameters for cursor-based ClickHouse queries.
+/// Pagination parameters for cursor-based analytics queries.
+///
+/// Naming: kept as ClickHousePagination to minimize churn across ~20 callers.
+/// A future cleanup PR can rename to CursorPagination.
 /// </summary>
 public class ClickHousePagination
 {

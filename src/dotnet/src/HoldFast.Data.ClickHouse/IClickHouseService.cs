@@ -1,4 +1,4 @@
-using HoldFast.Data.ClickHouse.Models;
+using HoldFast.Analytics.Models;
 
 namespace HoldFast.Data.ClickHouse;
 

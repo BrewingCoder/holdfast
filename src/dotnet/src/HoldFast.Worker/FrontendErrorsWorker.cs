@@ -1,7 +1,7 @@
 using System.Text.Json;
 using HoldFast.Data;
 using HoldFast.Data.ClickHouse;
-using HoldFast.Data.ClickHouse.Models;
+using HoldFast.Analytics.Models;
 using HoldFast.Shared.AlertEvaluation;
 using HoldFast.Shared.ErrorGrouping;
 using HoldFast.Shared.Kafka;

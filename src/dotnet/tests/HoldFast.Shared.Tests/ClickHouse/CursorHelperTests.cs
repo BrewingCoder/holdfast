@@ -1,3 +1,4 @@
+using HoldFast.Analytics;
 using HoldFast.Data.ClickHouse;
 
 namespace HoldFast.Shared.Tests.ClickHouse;

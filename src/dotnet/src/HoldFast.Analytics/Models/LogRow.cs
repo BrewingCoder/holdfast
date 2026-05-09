@@ -1,10 +1,11 @@
+using HoldFast.Analytics;
 using HoldFast.Domain.Enums;
 
-namespace HoldFast.Data.ClickHouse.Models;
+namespace HoldFast.Analytics.Models;
 
 /// <summary>
-/// Represents a row in the ClickHouse logs table.
-/// Read-only model — logs are written via Kafka consumers, read via ClickHouse queries.
+/// Represents a row in the logs table.
+/// Read-only model — logs are written via the ingest pipeline, read via analytics queries.
 /// </summary>
 public class LogRow
 {

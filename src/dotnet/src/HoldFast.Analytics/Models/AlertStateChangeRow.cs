@@ -1,7 +1,7 @@
-namespace HoldFast.Data.ClickHouse.Models;
+namespace HoldFast.Analytics.Models;
 
 /// <summary>
-/// Row from the alert_state_changes ClickHouse table.
+/// Row from the alert_state_changes table.
 /// Mirrors Go's clickhouse.AlertStateChangeRow.
 /// </summary>
 public class AlertStateChangeRow

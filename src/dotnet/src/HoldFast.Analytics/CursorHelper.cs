@@ -1,11 +1,16 @@
 using System.Globalization;
 using System.Text;
 
-namespace HoldFast.Data.ClickHouse;
+namespace HoldFast.Analytics;
 
 /// <summary>
 /// Encodes and decodes pagination cursors matching Go's cursor.go format.
 /// Format: base64("{RFC3339},{uuid}")
+///
+/// Lives in HoldFast.Analytics (not a backend-specific project) because the
+/// cursor format is part of the public GraphQL API contract — every backend
+/// must produce/consume the same cursors so frontend pagination state survives
+/// a backend swap.
 /// </summary>
 public static class CursorHelper
 {

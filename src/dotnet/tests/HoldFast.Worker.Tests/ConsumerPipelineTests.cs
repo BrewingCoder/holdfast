@@ -1,6 +1,6 @@
 using HoldFast.Data;
 using HoldFast.Data.ClickHouse;
-using HoldFast.Data.ClickHouse.Models;
+using HoldFast.Analytics.Models;
 using HoldFast.Domain.Entities;
 using HoldFast.Shared.AlertEvaluation;
 using HoldFast.Shared.ErrorGrouping;
