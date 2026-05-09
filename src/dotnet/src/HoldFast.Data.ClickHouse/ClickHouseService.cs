@@ -969,23 +969,25 @@ public class ClickHouseService : IClickHouseService, IDisposable
 
         foreach (var e in list)
         {
+            // Column names match the actual error_objects table from the Go
+            // migrations (000xxx_create_errors_table.up.sql): ID (not
+            // ErrorObjectID), VisitedURL (not URL), OSName (not OS).
+            // Event/Type live on error_groups, not error_objects.
             var sql =
-                "INSERT INTO error_objects (ProjectID, ErrorObjectID, ErrorGroupID, " +
-                "Timestamp, Event, Type, URL, Environment, OS, Browser, " +
+                "INSERT INTO error_objects (ProjectID, ID, ErrorGroupID, " +
+                "Timestamp, VisitedURL, Environment, OSName, Browser, " +
                 "ServiceName, ServiceVersion) " +
-                "VALUES ({projectId:Int32}, {errorObjectId:Int32}, {errorGroupId:Int32}, " +
-                "{ts:DateTime64(9)}, {event:String}, {type:String}, {url:String}, " +
+                "VALUES ({projectId:Int32}, {errorObjectId:Int64}, {errorGroupId:Int64}, " +
+                "{ts:DateTime64(6)}, {url:String}, " +
                 "{env:String}, {os:String}, {browser:String}, " +
                 "{serviceName:String}, {serviceVersion:String})";
 
             using var cmd = _conn.CreateCommand();
             cmd.CommandText = sql;
             cmd.AddParameter("projectId", e.ProjectId);
-            cmd.AddParameter("errorObjectId", e.ErrorObjectId);
-            cmd.AddParameter("errorGroupId", e.ErrorGroupId);
+            cmd.AddParameter("errorObjectId", (long)e.ErrorObjectId);
+            cmd.AddParameter("errorGroupId", (long)e.ErrorGroupId);
             cmd.AddParameter("ts", e.Timestamp);
-            cmd.AddParameter("event", e.Event ?? "");
-            cmd.AddParameter("type", e.Type ?? "");
             cmd.AddParameter("url", e.Url ?? "");
             cmd.AddParameter("env", e.Environment ?? "");
             cmd.AddParameter("os", e.OS ?? "");
