@@ -222,9 +222,15 @@ Console.WriteLine($"HoldFast analytics backend: '{defaultBackend}' (override Sto
 // Migration runner — applies src/backend/clickhouse/migrations/*.up.sql at
 // startup, idempotently. Disable via ClickHouse__Migrations__Disabled=true
 // when the schema is managed externally (Helm pre-job, golang-migrate, etc).
+// Skip entirely when Storage:Analytics=Postgres — the CH container isn't
+// part of the deployment in PG-only mode and the migration runner would
+// crash trying to reach clickhouse:8123.
 builder.Services.Configure<ClickHouseMigrationOptions>(
     builder.Configuration.GetSection("ClickHouse:Migrations"));
-builder.Services.AddHostedService<ClickHouseMigrationService>();
+if (!defaultBackend.Equals("Postgres", StringComparison.OrdinalIgnoreCase))
+{
+    builder.Services.AddHostedService<ClickHouseMigrationService>();
+}
 
 // ── Postgres analytics (HOL-26 scaffolding) ──────────────────────────
 // Companion analytics backend; lives alongside ClickHouse rather than
@@ -352,9 +358,15 @@ if (runtime.IsPublicGraph())
 }
 
 // ── Health checks ─────────────────────────────────────────────────────
-builder.Services.AddHealthChecks()
-    .AddNpgSql(builder.Configuration.GetConnectionString("PostgreSQL")!)
-    .AddCheck<ClickHouseHealthCheck>("clickhouse");
+// CH health check is conditional on the analytics backend choice — in
+// PG-only mode (Storage:Analytics=Postgres) there is no clickhouse
+// container, so probing it would keep the backend in 'unhealthy' state.
+var healthChecks = builder.Services.AddHealthChecks()
+    .AddNpgSql(builder.Configuration.GetConnectionString("PostgreSQL")!);
+if (!defaultBackend.Equals("Postgres", StringComparison.OrdinalIgnoreCase))
+{
+    healthChecks.AddCheck<ClickHouseHealthCheck>("clickhouse");
+}
 
 var app = builder.Build();
 
