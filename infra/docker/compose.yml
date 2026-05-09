@@ -90,36 +90,11 @@ services:
             - clickhouse-data:/var/lib/clickhouse
             - clickhouse-logs:/var/log/clickhouse-server
 
-    collector:
-        logging: *local-logging
-        restart: on-failure
-        build:
-            dockerfile: ./infra/docker/collector.Dockerfile
-            pull: true
-            target: collector
-            context: ../..
-            args:
-                - IN_DOCKER_GO
-                - SSL
-        container_name: collector
-        extra_hosts:
-            - 'host.docker.internal:host-gateway'
-        volumes:
-            - ../../src/backend/localhostssl/server.crt:/server.crt
-            - ../../src/backend/localhostssl/server.key:/server.key
-        ports:
-            - '0.0.0.0:24224:24224'
-            - '0.0.0.0:34302:34302'
-            - '0.0.0.0:4317:4317'
-            - '0.0.0.0:4318:4318'
-            - '0.0.0.0:4319:4319'
-            - '0.0.0.0:4433:4433'
-            - '0.0.0.0:4434:4434'
-            - '0.0.0.0:4435:4435'
-            - '0.0.0.0:6513:6513'
-            - '0.0.0.0:6514:6514'
-            - '0.0.0.0:8318:8318'
-            - '0.0.0.0:8889:8888'
+    # Collector removed in HOL-21. The backend has a full OTLP HTTP receiver
+    # at /otel/v1/{logs,traces,metrics} (JSON + protobuf, gzip + snappy
+    # decompression). Self-hosted deployments don't need the SaaS-shaped
+    # multi-protocol relay (fluentforward, syslog, AWS Firehose, etc).
+    # Point SDKs at http://<host>:8082/otel instead of http://<host>:4318.
 
 volumes:
     postgres-data:

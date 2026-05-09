@@ -130,9 +130,12 @@ const H: HighlightPublicInterface = {
 					setupBrowserTracing({
 						backendUrl:
 							options?.backendUrl ?? 'http://localhost:8082/public',
+						// HOL-21: backend hosts the OTLP receiver at /otel.
+						// The previous :4318 default targeted the dedicated
+						// collector container, which was removed.
 						otlpEndpoint:
 							options?.otlpEndpoint ??
-							'http://localhost:4318',
+							'http://localhost:8082/otel',
 						projectId: projectID,
 						sessionSecureId: sessionSecureID,
 						environment: options?.environment ?? 'production',
