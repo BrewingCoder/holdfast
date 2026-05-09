@@ -39,24 +39,9 @@ services:
             timeout: 5s
             retries: 10
 
-    collector:
-        container_name: collector
-        build:
-            context: ../..
-            dockerfile: infra/docker/collector.Dockerfile
-            args:
-                - IN_DOCKER_GO=true
-                - SSL=false
-        restart: on-failure
-        extra_hosts:
-            - 'host.docker.internal:host-gateway'
-        ports:
-            - '0.0.0.0:4317:4317'
-            - '0.0.0.0:4318:4318'
-            - '0.0.0.0:4319:4319'
-        depends_on:
-            backend:
-                condition: service_healthy
+    # Collector removed in HOL-21 — backend has its own OTLP receiver at
+    # /otel/v1/{logs,traces,metrics}. SDKs should target the backend's
+    # OTLP endpoint (default http://backend:8082/otel).
 
     frontend:
         container_name: frontend
@@ -74,7 +59,7 @@ services:
             - REACT_APP_FRONTEND_URI=${REACT_APP_FRONTEND_URI:-http://localhost:3000}
             - REACT_APP_PRIVATE_GRAPH_URI=${REACT_APP_PRIVATE_GRAPH_URI:-http://localhost:8082/private}
             - REACT_APP_PUBLIC_GRAPH_URI=${REACT_APP_PUBLIC_GRAPH_URI:-http://localhost:8082/public}
-            - REACT_APP_OTLP_ENDPOINT=${REACT_APP_OTLP_ENDPOINT:-http://localhost:4318}
+            - REACT_APP_OTLP_ENDPOINT=${REACT_APP_OTLP_ENDPOINT:-http://localhost:8082/otel}
 
 volumes:
     highlight-data:
