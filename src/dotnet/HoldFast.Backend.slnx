@@ -3,6 +3,7 @@
     <Project Path="src/HoldFast.Analytics/HoldFast.Analytics.csproj" />
     <Project Path="src/HoldFast.Api/HoldFast.Api.csproj" />
     <Project Path="src/HoldFast.Data.ClickHouse/HoldFast.Data.ClickHouse.csproj" />
+    <Project Path="src/HoldFast.Data.Postgres/HoldFast.Data.Postgres.csproj" />
     <Project Path="src/HoldFast.Data/HoldFast.Data.csproj" />
     <Project Path="src/HoldFast.Domain/HoldFast.Domain.csproj" />
     <Project Path="src/HoldFast.GraphQL.Private/HoldFast.GraphQL.Private.csproj" />

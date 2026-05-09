@@ -175,6 +175,22 @@ builder.Services.Configure<ClickHouseMigrationOptions>(
     builder.Configuration.GetSection("ClickHouse:Migrations"));
 builder.Services.AddHostedService<ClickHouseMigrationService>();
 
+// ── Postgres analytics (HOL-26 scaffolding) ──────────────────────────
+// Companion analytics backend; lives alongside ClickHouse rather than
+// replacing it (the Storage:Analytics switch in HOL-34 chooses one at
+// runtime). For HOL-26 the PG migration runner is the only thing wired
+// up — its job is to ensure the analytics schema + schema_migrations
+// table exist on a fresh Postgres so HOL-29+ implementations have a
+// place to add their per-domain tables.
+//
+// Disabled by default so existing deployments don't get extra startup
+// work; opt in via PostgresAnalytics__Migrations__Disabled=false.
+builder.Services.Configure<HoldFast.Data.Postgres.PostgresAnalyticsOptions>(
+    builder.Configuration.GetSection("PostgresAnalytics"));
+builder.Services.Configure<HoldFast.Data.Postgres.PostgresAnalyticsMigrationOptions>(
+    builder.Configuration.GetSection("PostgresAnalytics:Migrations"));
+builder.Services.AddHostedService<HoldFast.Data.Postgres.PostgresMigrationService>();
+
 // ── Storage ───────────────────────────────────────────────────────────
 builder.Services.Configure<StorageOptions>(
     builder.Configuration.GetSection("Storage"));

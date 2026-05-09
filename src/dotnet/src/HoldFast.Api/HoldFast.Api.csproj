@@ -4,6 +4,7 @@
     <ProjectReference Include="..\HoldFast.Domain\HoldFast.Domain.csproj" />
     <ProjectReference Include="..\HoldFast.Data\HoldFast.Data.csproj" />
     <ProjectReference Include="..\HoldFast.Data.ClickHouse\HoldFast.Data.ClickHouse.csproj" />
+    <ProjectReference Include="..\HoldFast.Data.Postgres\HoldFast.Data.Postgres.csproj" />
     <ProjectReference Include="..\HoldFast.GraphQL.Public\HoldFast.GraphQL.Public.csproj" />
     <ProjectReference Include="..\HoldFast.GraphQL.Private\HoldFast.GraphQL.Private.csproj" />
     <ProjectReference Include="..\HoldFast.Worker\HoldFast.Worker.csproj" />
