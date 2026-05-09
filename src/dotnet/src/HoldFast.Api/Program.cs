@@ -154,13 +154,32 @@ builder.Services.Configure<ClickHouseOptions>(
 // HOL-25: ClickHouseService implements both the legacy IClickHouseService
 // and the seven backend-neutral domain stores. Register the singleton once
 // and resolve all eight interfaces through it — different callers can hold
-// any subset and DI hands back the same instance. When HOL-26+ lands the
-// Postgres backend, the ILogStore/etc. registrations swap to the PG impl
-// (driven by Storage:Analytics config) without disturbing IClickHouseService
-// callers, which migrate to the per-domain interfaces incrementally.
+// any subset and DI hands back the same instance.
+//
+// HOL-29: per-domain backend swap. Each store can be toggled independently
+// via Storage:Analytics:<StoreName> config (e.g. Storage:Analytics:LogStore =
+// postgres). Default is ClickHouse (matches existing behavior). HOL-34 will
+// consolidate this into a single Storage:Analytics top-level switch.
 builder.Services.AddSingleton<ClickHouseService>();
 builder.Services.AddSingleton<IClickHouseService>(sp => sp.GetRequiredService<ClickHouseService>());
-builder.Services.AddSingleton<HoldFast.Analytics.ILogStore>(sp => sp.GetRequiredService<ClickHouseService>());
+
+// PostgresLogStore registered as concrete type so it can be DI-injected
+// either as ILogStore (when LogStore=postgres) or directly for tests/health
+// checks without forcing it onto every deployment.
+builder.Services.AddSingleton<HoldFast.Data.Postgres.PostgresLogStore>();
+
+var logStoreBackend = builder.Configuration["Storage:Analytics:LogStore"] ?? "clickhouse";
+if (logStoreBackend.Equals("postgres", StringComparison.OrdinalIgnoreCase))
+{
+    builder.Services.AddSingleton<HoldFast.Analytics.ILogStore>(
+        sp => sp.GetRequiredService<HoldFast.Data.Postgres.PostgresLogStore>());
+}
+else
+{
+    builder.Services.AddSingleton<HoldFast.Analytics.ILogStore>(
+        sp => sp.GetRequiredService<ClickHouseService>());
+}
+
 builder.Services.AddSingleton<HoldFast.Analytics.ITraceStore>(sp => sp.GetRequiredService<ClickHouseService>());
 builder.Services.AddSingleton<HoldFast.Analytics.ISessionAnalyticsStore>(sp => sp.GetRequiredService<ClickHouseService>());
 builder.Services.AddSingleton<HoldFast.Analytics.IErrorAnalyticsStore>(sp => sp.GetRequiredService<ClickHouseService>());
