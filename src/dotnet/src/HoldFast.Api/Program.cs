@@ -167,6 +167,7 @@ builder.Services.AddSingleton<IClickHouseService>(sp => sp.GetRequiredService<Cl
 // either as ILogStore (when LogStore=postgres) or directly for tests/health
 // checks without forcing it onto every deployment.
 builder.Services.AddSingleton<HoldFast.Data.Postgres.PostgresLogStore>();
+builder.Services.AddSingleton<HoldFast.Data.Postgres.PostgresTraceStore>();
 
 var logStoreBackend = builder.Configuration["Storage:Analytics:LogStore"] ?? "clickhouse";
 if (logStoreBackend.Equals("postgres", StringComparison.OrdinalIgnoreCase))
@@ -180,7 +181,17 @@ else
         sp => sp.GetRequiredService<ClickHouseService>());
 }
 
-builder.Services.AddSingleton<HoldFast.Analytics.ITraceStore>(sp => sp.GetRequiredService<ClickHouseService>());
+var traceStoreBackend = builder.Configuration["Storage:Analytics:TraceStore"] ?? "clickhouse";
+if (traceStoreBackend.Equals("postgres", StringComparison.OrdinalIgnoreCase))
+{
+    builder.Services.AddSingleton<HoldFast.Analytics.ITraceStore>(
+        sp => sp.GetRequiredService<HoldFast.Data.Postgres.PostgresTraceStore>());
+}
+else
+{
+    builder.Services.AddSingleton<HoldFast.Analytics.ITraceStore>(
+        sp => sp.GetRequiredService<ClickHouseService>());
+}
 builder.Services.AddSingleton<HoldFast.Analytics.ISessionAnalyticsStore>(sp => sp.GetRequiredService<ClickHouseService>());
 builder.Services.AddSingleton<HoldFast.Analytics.IErrorAnalyticsStore>(sp => sp.GetRequiredService<ClickHouseService>());
 builder.Services.AddSingleton<HoldFast.Analytics.IMetricStore>(sp => sp.GetRequiredService<ClickHouseService>());
