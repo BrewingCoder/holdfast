@@ -24,8 +24,8 @@ public class InputTypeExtendedTests
             ColumnNumber: 13,
             StackTrace:
             [
-                new StackFrameInput("onClick", "app.js", 42, 13, false, false, ""),
-                new StackFrameInput("handleEvent", "react-dom.js", 100, 1, false, false, null),
+                new StackFrameInput("onClick", null, "app.js", 42, 13, false, false, ""),
+                new StackFrameInput("handleEvent", null, "react-dom.js", 100, 1, false, false, null),
             ],
             Timestamp: new DateTime(2025, 3, 15, 10, 30, 0, DateTimeKind.Utc),
             Payload: "{\"extra\":\"data\"}");
@@ -60,7 +60,7 @@ public class InputTypeExtendedTests
     [Fact]
     public void StackFrameInput_AllNulls()
     {
-        var frame = new StackFrameInput(null, null, null, null, null, null, null);
+        var frame = new StackFrameInput(null, null, null, null, null, null, null, null);
         Assert.Null(frame.FunctionName);
         Assert.Null(frame.FileName);
         Assert.Null(frame.LineNumber);
@@ -73,7 +73,7 @@ public class InputTypeExtendedTests
     [Fact]
     public void StackFrameInput_Roundtrip()
     {
-        var frame = new StackFrameInput("main", "app.go", 100, 5, true, false, "compiled");
+        var frame = new StackFrameInput("main", null, "app.go", 100, 5, true, false, "compiled");
         var json = JsonSerializer.Serialize(frame);
         var back = JsonSerializer.Deserialize<StackFrameInput>(json);
 
@@ -86,8 +86,8 @@ public class InputTypeExtendedTests
     [Fact]
     public void StackFrameInput_EvalAndNativeFlags()
     {
-        var evalFrame = new StackFrameInput("eval", "eval", 1, 1, true, false, null);
-        var nativeFrame = new StackFrameInput("[native code]", null, null, null, false, true, null);
+        var evalFrame = new StackFrameInput("eval", null, "eval", 1, 1, true, false, null);
+        var nativeFrame = new StackFrameInput("[native code]", null, null, null, null, false, true, null);
 
         Assert.True(evalFrame.IsEval);
         Assert.False(evalFrame.IsNative);

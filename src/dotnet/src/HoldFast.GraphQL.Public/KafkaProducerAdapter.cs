@@ -23,7 +23,7 @@ public class KafkaProducerAdapter : IKafkaProducer
 
     public Task ProducePushPayloadAsync(string sessionSecureId, long payloadId, string events,
         string messages, string resources, string? webSocketEvents,
-        List<ErrorObjectInput> errors, bool? isBeacon, bool? hasSessionUnloaded,
+        List<ErrorObjectInput?> errors, bool? isBeacon, bool? hasSessionUnloaded,
         string? highlightLogs, CancellationToken ct)
     {
         var message = new
