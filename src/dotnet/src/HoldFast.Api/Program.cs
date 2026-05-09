@@ -169,6 +169,7 @@ builder.Services.AddSingleton<IClickHouseService>(sp => sp.GetRequiredService<Cl
 builder.Services.AddSingleton<HoldFast.Data.Postgres.PostgresLogStore>();
 builder.Services.AddSingleton<HoldFast.Data.Postgres.PostgresTraceStore>();
 builder.Services.AddSingleton<HoldFast.Data.Postgres.PostgresSessionAnalyticsStore>();
+builder.Services.AddSingleton<HoldFast.Data.Postgres.PostgresErrorAnalyticsStore>();
 
 var logStoreBackend = builder.Configuration["Storage:Analytics:LogStore"] ?? "clickhouse";
 if (logStoreBackend.Equals("postgres", StringComparison.OrdinalIgnoreCase))
@@ -205,7 +206,17 @@ else
     builder.Services.AddSingleton<HoldFast.Analytics.ISessionAnalyticsStore>(
         sp => sp.GetRequiredService<ClickHouseService>());
 }
-builder.Services.AddSingleton<HoldFast.Analytics.IErrorAnalyticsStore>(sp => sp.GetRequiredService<ClickHouseService>());
+var errorStoreBackend = builder.Configuration["Storage:Analytics:ErrorStore"] ?? "clickhouse";
+if (errorStoreBackend.Equals("postgres", StringComparison.OrdinalIgnoreCase))
+{
+    builder.Services.AddSingleton<HoldFast.Analytics.IErrorAnalyticsStore>(
+        sp => sp.GetRequiredService<HoldFast.Data.Postgres.PostgresErrorAnalyticsStore>());
+}
+else
+{
+    builder.Services.AddSingleton<HoldFast.Analytics.IErrorAnalyticsStore>(
+        sp => sp.GetRequiredService<ClickHouseService>());
+}
 builder.Services.AddSingleton<HoldFast.Analytics.IMetricStore>(sp => sp.GetRequiredService<ClickHouseService>());
 builder.Services.AddSingleton<HoldFast.Analytics.IEventFieldStore>(sp => sp.GetRequiredService<ClickHouseService>());
 builder.Services.AddSingleton<HoldFast.Analytics.IAlertStateStore>(sp => sp.GetRequiredService<ClickHouseService>());
