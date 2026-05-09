@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>HoldFast Browser SDK — Ingest Smoke Test</title>
+    <script>
+        // The SDK skips initialization if navigator.webdriver is true (bot detection).
+        // Playwright sets webdriver=true. The SDK bypasses the check when
+        // window.Cypress is truthy, so set it for automated test runs.
+        if (navigator.webdriver) window.Cypress = {};
+    </script>
+    <script src="../../sdk/highlight-run/dist/index.umd.cjs"></script>
+    <style>
+        body { font-family: system-ui, sans-serif; max-width: 720px; margin: 2rem auto; padding: 0 1rem; }
+        button { display: block; margin: 0.5rem 0; padding: 0.75rem 1.25rem; font-size: 1rem; cursor: pointer; }
+        #status { background: #f0f0f0; padding: 1rem; border-radius: 4px; font-family: monospace; white-space: pre-wrap; min-height: 4rem; margin-top: 1rem; }
+        .ok { color: green; }
+        .err { color: crimson; }
+    </style>
+</head>
+<body>
+    <h1>HoldFast Browser SDK — Ingest Smoke Test</h1>
+    <p>
+        Project ID: <code id="pid"></code> &nbsp;
+        Backend: <code id="be"></code>
+    </p>
+
+    <button id="btn-error">Trigger JS Error</button>
+    <button id="btn-console">Log to console (info)</button>
+    <button id="btn-identify">Identify user</button>
+    <button id="btn-track">Track custom event</button>
+
+    <h3>Status</h3>
+    <div id="status">SDK loading…</div>
+
+    <script>
+        // Read project_id and backend from URL params, default to project 2 (HoldFast Dev / default)
+        const params = new URLSearchParams(location.search);
+        const projectID = params.get('project_id') || '2';
+        const backendUrl = params.get('backend_url') || 'http://localhost:8082/public';
+        const otlpEndpoint = params.get('otlp_endpoint') || 'http://localhost:4318';
+
+        document.getElementById('pid').textContent = projectID;
+        document.getElementById('be').textContent = backendUrl;
+
+        const status = document.getElementById('status');
+        function log(msg, cls) {
+            const span = document.createElement('div');
+            span.textContent = `[${new Date().toISOString()}] ${msg}`;
+            if (cls) span.className = cls;
+            status.appendChild(span);
+        }
+
+        try {
+            H.init(projectID, {
+                backendUrl,
+                otlpEndpoint,
+                serviceName: 'holdfast-browser-smoke-test',
+                environment: 'test',
+                networkRecording: { enabled: true, recordHeadersAndBody: true },
+            });
+            log(`SDK initialized — project ${projectID}`, 'ok');
+            // Mark globally so Playwright can detect SDK readiness
+            window.__holdfast_sdk_ready = true;
+        } catch (e) {
+            log(`SDK init failed: ${e.message}`, 'err');
+            window.__holdfast_sdk_error = e.message;
+        }
+
+        document.getElementById('btn-error').addEventListener('click', () => {
+            log('Calling H.consumeError…');
+            try {
+                H.consumeError(new Error(`HoldFast smoke test error @ ${Date.now()}`));
+                log('H.consumeError returned', 'ok');
+            } catch (e) {
+                log(`H.consumeError threw: ${e.message}`, 'err');
+            }
+            // Also do a fallback: throw async so window.onerror also has a chance
+            setTimeout(() => {
+                throw new Error(`HoldFast smoke test error (async) @ ${Date.now()}`);
+            }, 0);
+        });
+
+        document.getElementById('btn-console').addEventListener('click', () => {
+            log('Logging to console…');
+            console.log(`HoldFast smoke test info log @ ${Date.now()}`);
+        });
+
+        document.getElementById('btn-identify').addEventListener('click', () => {
+            const email = `smoke-test-${Date.now()}@holdfast.local`;
+            log(`Identifying as ${email}…`);
+            H.identify(email, { id: 'smoke-test-user', source: 'sample-browser' });
+        });
+
+        document.getElementById('btn-track').addEventListener('click', () => {
+            log('Tracking custom event…');
+            H.track('smoke_test_clicked', { ts: Date.now() });
+        });
+    </script>
+</body>
+</html>
