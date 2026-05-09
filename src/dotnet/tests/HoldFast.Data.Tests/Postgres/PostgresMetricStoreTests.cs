@@ -94,6 +94,16 @@ public class PostgresMetricStoreIntegrationTests : IAsyncLifetime
 
     private static int NextProjectId() => 999_998_000 + (int)(DateTime.UtcNow.Ticks % 1_000);
 
+    private static MetricRowInput MetricRow(int pid, string name, double value, DateTime ts) =>
+        new()
+        {
+            ProjectId = pid,
+            MetricName = name,
+            Value = value,
+            Kind = MetricKind.Gauge,
+            Timestamp = ts,
+        };
+
     private static async Task CleanupAsync(int projectId)
     {
         await using var conn = new NpgsqlConnection(ConnectionString);
@@ -113,9 +123,9 @@ public class PostgresMetricStoreIntegrationTests : IAsyncLifetime
         {
             var ts = DateTime.UtcNow;
             // 3 metric points: 10, 20, 30 — sum should be 60, count 3, avg 20
-            await _store.WriteMetricAsync(pid, "request_count", 10, "throughput", ts, null, null);
-            await _store.WriteMetricAsync(pid, "request_count", 20, "throughput", ts, null, null);
-            await _store.WriteMetricAsync(pid, "request_count", 30, "throughput", ts, null, null);
+            await _store.WriteMetricAsync(MetricRow(pid, "request_count", 10, ts));
+            await _store.WriteMetricAsync(MetricRow(pid, "request_count", 20, ts));
+            await _store.WriteMetricAsync(MetricRow(pid, "request_count", 30, ts));
 
             var queryInput = new QueryInput
             {
@@ -150,15 +160,20 @@ public class PostgresMetricStoreIntegrationTests : IAsyncLifetime
         var pid = NextProjectId();
         try
         {
-            await _store.WriteMetricAsync(
-                pid, "latency", 123.4, "http",
-                DateTime.UtcNow,
-                tags: new Dictionary<string, string>
+            await _store.WriteMetricAsync(new MetricRowInput
+            {
+                ProjectId = pid,
+                MetricName = "latency",
+                Value = 123.4,
+                Kind = MetricKind.Gauge,
+                Timestamp = DateTime.UtcNow,
+                Attributes = new Dictionary<string, string>
                 {
                     ["service.name"] = "frontend",
                     ["http.method"] = "GET",
                 },
-                sessionSecureId: "abc-secure");
+                SecureSessionId = "abc-secure",
+            });
 
             await using var conn = new NpgsqlConnection(ConnectionString);
             await conn.OpenAsync();

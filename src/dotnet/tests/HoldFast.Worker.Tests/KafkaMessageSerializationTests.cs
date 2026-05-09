@@ -18,57 +18,57 @@ public class KafkaMessageSerializationTests
     public void MetricsMessage_RoundTrip()
     {
         var ts = new DateTime(2026, 3, 20, 10, 0, 0, DateTimeKind.Utc);
-        var msg = new MetricsMessage("sess-1", "LCP", 2.5, "web-vital", ts,
+        var msg = MetricsMessage.ForGauge("sess-1", "LCP", 2.5, "web-vital", ts,
             new Dictionary<string, string> { ["page"] = "/home" });
 
         var json = JsonSerializer.Serialize(msg);
         var deserialized = JsonSerializer.Deserialize<MetricsMessage>(json);
 
         Assert.NotNull(deserialized);
-        Assert.Equal("sess-1", deserialized!.SessionSecureId);
-        Assert.Equal("LCP", deserialized.Name);
+        Assert.Equal("sess-1", deserialized!.SecureSessionId);
+        Assert.Equal("LCP", deserialized.MetricName);
         Assert.Equal(2.5, deserialized.Value);
-        Assert.Equal("web-vital", deserialized.Category);
+        Assert.Equal("web-vital", deserialized.MetricDescription);
         Assert.Equal(ts, deserialized.Timestamp);
-        Assert.Equal("/home", deserialized.Tags!["page"]);
+        Assert.Equal("/home", deserialized.Attributes!["page"]);
     }
 
     [Fact]
     public void MetricsMessage_NullOptionalFields_RoundTrip()
     {
-        var msg = new MetricsMessage("s", "m", 0.0, null, DateTime.UtcNow, null);
+        var msg = MetricsMessage.ForGauge("s", "m", 0.0, null, DateTime.UtcNow, null);
         var json = JsonSerializer.Serialize(msg);
         var deserialized = JsonSerializer.Deserialize<MetricsMessage>(json);
 
-        Assert.Null(deserialized!.Category);
-        Assert.Null(deserialized.Tags);
+        Assert.Equal(string.Empty, deserialized!.MetricDescription);
+        Assert.Null(deserialized.Attributes);
     }
 
     [Fact]
-    public void MetricsMessage_EmptyTags_RoundTrip()
+    public void MetricsMessage_EmptyAttributes_RoundTrip()
     {
-        var msg = new MetricsMessage("s", "m", 1.0, null, DateTime.UtcNow, new());
+        var msg = MetricsMessage.ForGauge("s", "m", 1.0, null, DateTime.UtcNow, new());
         var json = JsonSerializer.Serialize(msg);
         var deserialized = JsonSerializer.Deserialize<MetricsMessage>(json);
 
-        Assert.NotNull(deserialized!.Tags);
-        Assert.Empty(deserialized.Tags);
+        Assert.NotNull(deserialized!.Attributes);
+        Assert.Empty(deserialized.Attributes);
     }
 
     [Fact]
     public void MetricsMessage_SpecialCharInName()
     {
-        var msg = new MetricsMessage("s", "metric.name/with-special_chars", 1.0, null, DateTime.UtcNow, null);
+        var msg = MetricsMessage.ForGauge("s", "metric.name/with-special_chars", 1.0, null, DateTime.UtcNow, null);
         var json = JsonSerializer.Serialize(msg);
         var deserialized = JsonSerializer.Deserialize<MetricsMessage>(json);
 
-        Assert.Equal("metric.name/with-special_chars", deserialized!.Name);
+        Assert.Equal("metric.name/with-special_chars", deserialized!.MetricName);
     }
 
     [Fact]
     public void MetricsMessage_VeryLargeValue()
     {
-        var msg = new MetricsMessage("s", "m", double.MaxValue, null, DateTime.UtcNow, null);
+        var msg = MetricsMessage.ForGauge("s", "m", double.MaxValue, null, DateTime.UtcNow, null);
         var json = JsonSerializer.Serialize(msg);
         var deserialized = JsonSerializer.Deserialize<MetricsMessage>(json);
 
@@ -225,7 +225,7 @@ public class KafkaMessageSerializationTests
     [Fact]
     public void MetricsMessage_JsonDoesNotMatchLogMessage()
     {
-        var msg = new MetricsMessage("s", "m", 1.0, null, DateTime.UtcNow, null);
+        var msg = MetricsMessage.ForGauge("s", "m", 1.0, null, DateTime.UtcNow, null);
         var json = JsonSerializer.Serialize(msg);
 
         // Deserializing as LogIngestionMessage should produce an object with wrong/default values

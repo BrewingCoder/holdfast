@@ -440,8 +440,7 @@ internal class FakeMetricClickHouseService : ILogStore, ITraceStore, ISessionAna
         throw new NotImplementedException();
     public Task<List<string>> GetEventsKeyValuesAsync(int projectId, string keyName, DateTime startDate, DateTime endDate, string? query, int? count, string? eventName, CancellationToken ct) =>
         throw new NotImplementedException();
-    public Task WriteMetricAsync(int projectId, string metricName, double metricValue, string? category, DateTime timestamp, Dictionary<string, string>? tags, string? sessionSecureId, CancellationToken ct) =>
-        Task.CompletedTask;
+    public Task WriteMetricAsync(MetricRowInput row, CancellationToken ct = default) => Task.CompletedTask;
     public Task WriteLogsAsync(IEnumerable<LogRowInput> logs, CancellationToken ct) =>
         Task.CompletedTask;
     public Task WriteTracesAsync(IEnumerable<TraceRowInput> traces, CancellationToken ct) =>

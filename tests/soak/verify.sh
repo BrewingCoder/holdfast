@@ -67,8 +67,9 @@ case "$BACKEND" in
         report sessions "$(ch_query "SELECT count() FROM traces WHERE ServiceName = '$SVC' AND TraceAttributes['session.scenario'] = 'sessions'")" "$MIN"
         report events  "$(ch_query "SELECT count() FROM logs WHERE ServiceName = '$SVC' AND LogAttributes['log.scenario'] = 'events'")"  "$MIN"
 
-        # Metrics live in metrics_sum and have a slightly different filter shape.
-        report metrics "$(ch_query "SELECT count() FROM metrics_sum WHERE Tags.Value[indexOf(Tags.Name, 'metric.scenario')] = 'metrics'")" "$MIN"
+        # Metrics_sum stores Sum + Gauge in the OTeL-shaped schema (HOL-42);
+        # data-point attributes live in the Attributes Map column.
+        report metrics "$(ch_query "SELECT count() FROM metrics_sum WHERE Attributes['metric.scenario'] = 'metrics'")" "$MIN"
 
         echo
         echo "Distinct error groups (target: ~20 stable groups from errors.mjs):"

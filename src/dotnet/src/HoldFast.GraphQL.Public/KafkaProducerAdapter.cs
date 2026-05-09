@@ -80,7 +80,44 @@ public class KafkaProducerAdapter : IKafkaProducer
 
     public Task ProduceMetricAsync(MetricInput metric, CancellationToken ct)
     {
-        return _producer.PublishAsync(KafkaTopics.Metrics, metric.SessionSecureId, metric, ct);
+        // SDK-push metrics flatten to a Gauge data point. Keep the public
+        // GraphQL shape narrow (name, value, tags) and translate to the
+        // OTeL-shaped bus message MetricsConsumer expects. The anonymous
+        // object's property names must match MetricsMessage's record
+        // members exactly — JSON round-trip is the contract here, not a
+        // shared type (HoldFast.GraphQL.Public can't reach into Worker).
+        Dictionary<string, string>? attributes = null;
+        if (metric.Tags is { Count: > 0 })
+        {
+            attributes = new Dictionary<string, string>(metric.Tags.Count);
+            foreach (var tag in metric.Tags)
+                attributes[tag.Name] = tag.Value;
+        }
+
+        var message = new
+        {
+            ProjectId = 0,
+            ServiceName = string.Empty,
+            MetricName = metric.Name,
+            MetricDescription = string.Empty,
+            MetricUnit = string.Empty,
+            // 1 == MetricKind.Gauge — SDK pushes are point-in-time observations.
+            Kind = 1,
+            StartTimestamp = metric.Timestamp,
+            Timestamp = metric.Timestamp,
+            Attributes = attributes,
+            SecureSessionId = metric.SessionSecureId,
+            Value = metric.Value,
+            AggregationTemporality = 0,
+            IsMonotonic = false,
+            Count = 0UL,
+            Sum = 0.0,
+            BucketCounts = (List<ulong>?)null,
+            ExplicitBounds = (List<double>?)null,
+            Min = 0.0,
+            Max = 0.0,
+        };
+        return _producer.PublishAsync(KafkaTopics.Metrics, metric.SessionSecureId, message, ct);
     }
 
     public Task ProduceLogAsync(LogInput log, CancellationToken ct)
