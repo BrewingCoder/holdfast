@@ -12,7 +12,7 @@
          caches dominate footprint. These caps drop CH from ~11 GiB to
          <1 GiB at idle while staying plenty for our query patterns.
          Bump them back up if operating at >1M events/day. -->
-    <max_server_memory_usage>3221225472</max_server_memory_usage> <!-- 3 GiB -->
+    <max_server_memory_usage>6442450944</max_server_memory_usage> <!-- 6 GiB -->
     <mark_cache_size>67108864</mark_cache_size>                   <!-- 64 MiB -->
     <uncompressed_cache_size>67108864</uncompressed_cache_size>   <!-- 64 MiB -->
 
@@ -60,9 +60,9 @@
          The backend's six worker hosted services each keep CH busy with
          small queries; 20 wasn't enough headroom. 50 is still well below
          the default of 100 but accommodates the actual concurrency. -->
-    <max_concurrent_queries>50</max_concurrent_queries>
-    <max_concurrent_insert_queries>25</max_concurrent_insert_queries>
-    <max_concurrent_select_queries>25</max_concurrent_select_queries>
+    <max_concurrent_queries>100</max_concurrent_queries>
+    <max_concurrent_insert_queries>50</max_concurrent_insert_queries>
+    <max_concurrent_select_queries>50</max_concurrent_select_queries>
 
     <!-- Async metrics collection. Default polls every 1s and keeps a
          heavy 120s rollup; on an idle box that's pure noise. -->
