@@ -39,7 +39,13 @@ services:
             timeout: 5s
             retries: 5
 
+    # HOL-34: CH is gated behind the `clickhouse` profile. The default
+    # COMPOSE_PROFILES=clickhouse (set in .env.example) keeps the container
+    # in the existing-behavior set. PG-only deployments override
+    # COMPOSE_PROFILES=postgres in their .env and CH is skipped, saving
+    # the ~600 MiB idle baseline.
     clickhouse:
+        profiles: ["clickhouse"]
         logging: *local-logging
         container_name: clickhouse
         image: ${CLICKHOUSE_IMAGE_NAME}
