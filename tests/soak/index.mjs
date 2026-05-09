@@ -36,11 +36,21 @@ import {
   createMetricCache,
   scenarioWeights,
 } from './scenarios/index.mjs'
+import { createScheduler } from './scheduler.mjs'
 
 // ── Config ──────────────────────────────────────────────────────────
 const PROJECT_ID = process.env.HOLDFAST_PROJECT_ID || '2'
 const OTLP_ENDPOINT = process.env.OTLP_ENDPOINT || 'http://backend:8082/otel'
 const BASE_INTERVAL_MS = parseInt(process.env.SOAK_BASE_INTERVAL_MS || '60000', 10)
+// HOL-40 spike-mode tuning. Defaults: 5s ticks during a 5-15min spike,
+// occurring every 25-45min outside spike windows.
+const SPIKE_INTERVAL_MS = parseInt(process.env.SOAK_SPIKE_INTERVAL_MS || '5000', 10)
+const SPIKE_MIN_DURATION_MS = parseInt(process.env.SOAK_SPIKE_MIN_DURATION_MS || `${5 * 60_000}`, 10)
+const SPIKE_MAX_DURATION_MS = parseInt(process.env.SOAK_SPIKE_MAX_DURATION_MS || `${15 * 60_000}`, 10)
+const SPIKE_MIN_GAP_MS = parseInt(process.env.SOAK_SPIKE_MIN_GAP_MS || `${25 * 60_000}`, 10)
+const SPIKE_MAX_GAP_MS = parseInt(process.env.SOAK_SPIKE_MAX_GAP_MS || `${45 * 60_000}`, 10)
+const SUMMARY_INTERVAL_MS = parseInt(process.env.SOAK_SUMMARY_INTERVAL_MS || `${5 * 60_000}`, 10)
+const DISABLE_SPIKES = process.env.SOAK_DISABLE_SPIKES === '1'
 const SERVICE_NAME = process.env.SOAK_SERVICE_NAME || 'holdfast-soak'
 const SERVICE_VERSION = process.env.SOAK_SERVICE_VERSION || '0.0.0-soak'
 const METRIC_EXPORT_MS = parseInt(process.env.SOAK_METRIC_EXPORT_MS || '15000', 10)
@@ -95,44 +105,68 @@ const ctx = {
   metricCache: createMetricCache(),
 }
 
-// ── Tick loop ───────────────────────────────────────────────────────
+// ── Scheduler-driven tick loop ──────────────────────────────────────
 let tickCount = 0
-let stopping = false
+let totalEvents = 0
 
 function logEvent(payload) {
   process.stdout.write(JSON.stringify(payload) + '\n')
 }
 
-async function tick() {
+/**
+ * Per-tick emit callback the scheduler invokes. Emits `burstCount` events
+ * each from a freshly-picked random scenario, returns the per-event names
+ * so the scheduler's summary tracker can roll them up.
+ */
+async function emitBurst({ inSpike, burstCount }) {
   tickCount++
   const t0 = Date.now()
-  let scenarioName = null
-  let scenarioResult = null
-  try {
-    const { name, fn } = pickRandomScenario()
-    scenarioName = name
-    scenarioResult = fn(ctx)
-  } catch (e) {
-    // A scenario crash shouldn't tank the whole harness.
-    logEvent({
-      ts: new Date().toISOString(),
-      event: 'soak.tick.error',
-      tick: tickCount,
-      scenario: scenarioName,
-      error: e?.message || String(e),
-    })
-    return
+  const results = []
+  for (let i = 0; i < burstCount; i++) {
+    let scenarioName = null
+    try {
+      const { name, fn } = pickRandomScenario()
+      scenarioName = name
+      const result = fn(ctx)
+      results.push({ name: scenarioName, result })
+    } catch (e) {
+      logEvent({
+        ts: new Date().toISOString(),
+        event: 'soak.scenario.error',
+        tick: tickCount,
+        scenario: scenarioName,
+        error: e?.message || String(e),
+      })
+    }
   }
-
+  totalEvents += results.length
+  // One concise log per tick — the scheduler summary covers the per-scenario rollup.
   logEvent({
     ts: new Date().toISOString(),
     event: 'soak.tick',
     tick: tickCount,
+    burst: burstCount,
+    in_spike: inSpike,
     elapsed_ms: Date.now() - t0,
-    scenario: scenarioName,
-    result: scenarioResult,
+    scenarios: results.map((r) => r.name),
   })
+  return results
 }
+
+const scheduler = createScheduler(
+  {
+    baseIntervalMs: BASE_INTERVAL_MS,
+    spikeIntervalMs: SPIKE_INTERVAL_MS,
+    spikeMinDurationMs: SPIKE_MIN_DURATION_MS,
+    spikeMaxDurationMs: SPIKE_MAX_DURATION_MS,
+    spikeMinGapMs: SPIKE_MIN_GAP_MS,
+    spikeMaxGapMs: SPIKE_MAX_GAP_MS,
+    summaryIntervalMs: SUMMARY_INTERVAL_MS,
+    disableSpikes: DISABLE_SPIKES,
+    logEvent,
+  },
+  emitBurst,
+)
 
 async function loop() {
   logEvent({
@@ -142,6 +176,13 @@ async function loop() {
       project_id: PROJECT_ID,
       otlp_endpoint: OTLP_ENDPOINT,
       base_interval_ms: BASE_INTERVAL_MS,
+      spike_interval_ms: SPIKE_INTERVAL_MS,
+      spike_min_duration_ms: SPIKE_MIN_DURATION_MS,
+      spike_max_duration_ms: SPIKE_MAX_DURATION_MS,
+      spike_min_gap_ms: SPIKE_MIN_GAP_MS,
+      spike_max_gap_ms: SPIKE_MAX_GAP_MS,
+      summary_interval_ms: SUMMARY_INTERVAL_MS,
+      disable_spikes: DISABLE_SPIKES,
       service_name: SERVICE_NAME,
       metric_export_ms: METRIC_EXPORT_MS,
       weights: scenarioWeights,
@@ -152,21 +193,20 @@ async function loop() {
   // harness reached live state.
   ctx.tracer.startSpan('soak.started').end()
 
-  // HOL-40 will replace this fixed loop with a variable-rate scheduler.
-  while (!stopping) {
-    await tick()
-    await new Promise((resolve) => setTimeout(resolve, BASE_INTERVAL_MS))
-  }
+  await scheduler.run()
 }
 
+let shuttingDown = false
 async function shutdown(signal) {
-  if (stopping) return
-  stopping = true
+  if (shuttingDown) return
+  shuttingDown = true
+  scheduler.requestStop()
   logEvent({
     ts: new Date().toISOString(),
     event: 'soak.stopping',
     signal,
     total_ticks: tickCount,
+    total_events: totalEvents,
   })
   try {
     await sdk.shutdown()
