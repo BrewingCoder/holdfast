@@ -1,32 +1,60 @@
+FROM --platform=$BUILDPLATFORM node:lts-alpine AS pruner
+
+RUN apk add --no-cache libc6-compat && npm install -g turbo@^2
+
+WORKDIR /app
+COPY . .
+RUN turbo prune @holdfast-io/frontend --docker
+
+# ── Dependency installation layer ────────────────────────────────────────────
+# Uses the pruned package manifest (12 packages vs 87 in the full monorepo)
+# to drastically reduce yarn install time.
 FROM --platform=$BUILDPLATFORM node:lts-alpine AS frontend-build
 
 RUN apk update && apk add --no-cache build-base python3
 
-WORKDIR /highlight
+WORKDIR /app
 
-# ── Dependency installation layer ────────────────────────────────────────────
-# Copy workspace manifests and full workspace dirs so `yarn install --immutable`
-# resolves all workspace members. Full dirs are needed because the workspace
-# globs (packages/*, tests/e2e/*, rrweb/packages/*) reference many subdirs.
-COPY .yarnrc.yml package.json yarn.lock turbo.json tsconfig.json graphql.config.js ./
+COPY .yarnrc.yml .
 COPY .yarn/patches ./.yarn/patches
 COPY .yarn/releases ./.yarn/releases
-COPY packages ./packages
-COPY sdk ./sdk
-COPY rrweb ./rrweb
-COPY tests/e2e ./tests/e2e
-COPY tools/scripts/package.json ./tools/scripts/package.json
-COPY src/frontend/package.json ./src/frontend/package.json
+
+# Install only pruned workspace deps.
+# rrweb/package.json (@rrweb/_monorepo) is not included by turbo prune because
+# no pruned package explicitly depends on it, but its devDeps
+# (esbuild-plugin-umd-wrapper, rollup-plugin-visualizer, vite-plugin-dts) are
+# imported by rrweb/vite.config.default.ts which every rrweb package uses.
+COPY --from=pruner /app/out/json/ .
+COPY rrweb/package.json ./rrweb/package.json
+# Use the full yarn.lock (not the pruned subset) so --immutable works when
+# rrweb/package.json brings in deps not covered by the pruned lockfile.
+COPY yarn.lock ./yarn.lock
 
 RUN --mount=type=cache,target=/root/.yarn/berry/cache,sharing=locked \
-    yarn install --immutable
+    yarn install
 
-# ── Source copy ──────────────────────────────────────────────────────────────
+# ── Source copy ───────────────────────────────────────────────────────────────
+COPY --from=pruner /app/out/full/ .
+
+# turbo prune omits rrweb root files that all rrweb/packages/*/  depend on.
+# Copy them explicitly from the build context.
+#   tsconfig.base.json  — extended by every rrweb package tsconfig.json
+#   tsconfig.json       — rrweb composite project references root
+#   vite.config.default.ts — imported by every rrweb package vite.config
+#   turbo.json          — defines the prepublish task (with ^prepublish), extends //
+COPY rrweb/tsconfig.base.json ./rrweb/tsconfig.base.json
+COPY rrweb/tsconfig.json ./rrweb/tsconfig.json
+COPY rrweb/vite.config.default.ts ./rrweb/vite.config.default.ts
+COPY rrweb/turbo.json ./rrweb/turbo.json
+
+# Root config files not included in turbo prune full/ output
+COPY tsconfig.json ./tsconfig.json
+COPY graphql.config.js ./graphql.config.js
+
+# GraphQL schemas are outside the frontend workspace; copy them for codegen/typegen
 COPY src/backend/localhostssl ./src/backend/localhostssl
 COPY src/backend/private-graph ./src/backend/private-graph
 COPY src/backend/public-graph ./src/backend/public-graph
-COPY src/frontend ./src/frontend
-COPY tools/scripts ./tools/scripts
 
 # ── Build ────────────────────────────────────────────────────────────────────
 # Bake in the same placeholder URLs the entrypoint knows to replace at runtime.
@@ -47,15 +75,17 @@ ENV REACT_APP_PUBLIC_GRAPH_URI=$REACT_APP_PUBLIC_GRAPH_URI
 ENV REACT_APP_OTLP_ENDPOINT=$REACT_APP_OTLP_ENDPOINT
 ENV REACT_APP_IN_DOCKER=$REACT_APP_IN_DOCKER
 
+# build:fast skips tsc for the frontend; workspace deps still build normally
+# via turbo's ^build dependency. Type checking is enforced in CI via `build`.
 RUN --mount=type=cache,target=/root/.turbo,sharing=locked \
-    TURBO_CACHE_DIR=/root/.turbo yarn build:frontend
+    TURBO_CACHE_DIR=/root/.turbo npx turbo run build:fast --filter=@holdfast-io/frontend...
 
 # ── Runtime image ─────────────────────────────────────────────────────────────
 FROM nginx:stable-alpine AS frontend-prod
 
 RUN apk update && apk add --no-cache python3
 
-LABEL org.opencontainers.image.source=https://github.com/holdfast-io/holdfast
+LABEL org.opencontainers.image.source=https://github.com/BrewingCoder/holdfast
 LABEL org.opencontainers.image.description="HoldFast Frontend Image"
 LABEL org.opencontainers.image.licenses="AGPL-3.0"
 
@@ -65,7 +95,7 @@ COPY src/backend/localhostssl/server.pem /etc/ssl/certs/ssl-cert.pem
 COPY infra/docker/frontend-entrypoint.py /frontend-entrypoint.py
 
 WORKDIR /build
-COPY --from=frontend-build /highlight/src/frontend/build ./frontend/build
+COPY --from=frontend-build /app/src/frontend/build ./frontend/build
 
 # Runtime env vars — replaced in constants.js by entrypoint.py at startup
 ENV REACT_APP_AUTH_MODE=firebase
