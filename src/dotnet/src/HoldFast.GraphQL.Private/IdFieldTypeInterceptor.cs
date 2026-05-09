@@ -1,6 +1,6 @@
 using HotChocolate.Configuration;
 using HotChocolate.Types;
-using HotChocolate.Types.Descriptors.Definitions;
+using HotChocolate.Types.Descriptors.Configurations;
 
 namespace HoldFast.GraphQL.Private;
 
@@ -14,14 +14,19 @@ namespace HoldFast.GraphQL.Private;
 ///
 /// This interceptor ensures that any field named exactly "id" on any object type
 /// is typed as `ID!`, matching the Go schema convention.
+///
+/// HOL-16: HotChocolate 16 renamed the descriptor namespace
+/// (HotChocolate.Types.Descriptors.Definitions → .Configurations) and the
+/// base type (DefinitionBase → TypeSystemConfiguration). The hook signature
+/// is otherwise unchanged.
 /// </summary>
 public class IdFieldTypeInterceptor : TypeInterceptor
 {
     public override void OnBeforeCompleteType(
         ITypeCompletionContext completionContext,
-        DefinitionBase definition)
+        TypeSystemConfiguration configuration)
     {
-        if (definition is not ObjectTypeDefinition typeDef)
+        if (configuration is not ObjectTypeConfiguration typeDef)
             return;
 
         foreach (var field in typeDef.Fields)
