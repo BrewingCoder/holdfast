@@ -289,6 +289,19 @@ using (var scope = app.Services.CreateScope())
 app.MapHealthChecks("/health");
 app.UseCors(); // Must be before UseMiddleware and MapGraphQL
 
+// HOL-20: serve the SPA frontend bundle from wwwroot. The dedicated nginx
+// frontend container was removed in favor of letting Kestrel handle static
+// files. UseDefaultFiles maps "/" → "/index.html"; UseStaticFiles handles
+// /assets/*, /static/*, etc. The MapFallbackToFile call further down catches
+// SPA routes (e.g. /sessions/123) so the SPA's own router can resolve them.
+// Backed by /app/wwwroot inside the container; the directory is missing in
+// dev runs from `dotnet run`, so guard the registration.
+if (Directory.Exists(System.IO.Path.Combine(app.Environment.ContentRootPath, "wwwroot")))
+{
+    app.UseDefaultFiles();
+    app.UseStaticFiles();
+}
+
 // Only register auth middleware and endpoints for graph modes
 if (runtime.IsPrivateGraph() || runtime.IsPublicGraph())
 {
@@ -313,6 +326,14 @@ if (runtime.IsPublicGraph())
 
     // OTeL-compatible HTTP endpoints for non-GraphQL ingestion
     app.MapOtelEndpoints();
+}
+
+// HOL-20: SPA fallback — any unmatched GET hits the SPA index, letting
+// React Router handle client-side routes. Registered last so it doesn't
+// shadow /health, /private, /public, /otel/*, /api/auth/*, etc.
+if (Directory.Exists(System.IO.Path.Combine(app.Environment.ContentRootPath, "wwwroot")))
+{
+    app.MapFallbackToFile("index.html");
 }
 
 app.Run();

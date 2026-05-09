@@ -23,7 +23,7 @@ services:
             - ClickHouse__Migrations__Disabled=${CLICKHOUSE_MIGRATIONS_DISABLED:-false}
             - Storage__Type=filesystem
             - Storage__FilesystemRoot=/highlight-data
-            - Frontend__Uri=${REACT_APP_FRONTEND_URI:-http://localhost:3000}
+            - Frontend__Uri=${REACT_APP_FRONTEND_URI:-http://localhost:8082}
             - Auth__Mode=${REACT_APP_AUTH_MODE:-Password}
             - Auth__AdminPassword=${ADMIN_PASSWORD:-}
             - DevSeed__Enabled=${DEV_SEED_ENABLED:-true}
@@ -40,24 +40,11 @@ services:
     # Collector removed in HOL-21 — backend has its own OTLP receiver at
     # /otel/v1/{logs,traces,metrics}. SDKs should target the backend's
     # OTLP endpoint (default http://backend:8082/otel).
-
-    frontend:
-        container_name: frontend
-        build:
-            context: ../..
-            dockerfile: infra/docker/frontend.Dockerfile
-        image: ${FRONTEND_IMAGE_NAME:-holdfast-frontend:latest}
-        restart: on-failure
-        ports:
-            - '0.0.0.0:3000:3000'
-            - '0.0.0.0:8080:8080'
-        environment:
-            - SSL=false
-            - REACT_APP_AUTH_MODE=${REACT_APP_AUTH_MODE:-Password}
-            - REACT_APP_FRONTEND_URI=${REACT_APP_FRONTEND_URI:-http://localhost:3000}
-            - REACT_APP_PRIVATE_GRAPH_URI=${REACT_APP_PRIVATE_GRAPH_URI:-http://localhost:8082/private}
-            - REACT_APP_PUBLIC_GRAPH_URI=${REACT_APP_PUBLIC_GRAPH_URI:-http://localhost:8082/public}
-            - REACT_APP_OTLP_ENDPOINT=${REACT_APP_OTLP_ENDPOINT:-http://localhost:8082/otel}
+    #
+    # HOL-20: dedicated frontend nginx container removed. The backend image
+    # now bundles the SPA in /app/wwwroot and serves it via Kestrel on the
+    # same port (:8082). Frontend URLs are baked at backend image build time
+    # — set REACT_APP_* build args on the backend service to customize.
 
 volumes:
     highlight-data:
