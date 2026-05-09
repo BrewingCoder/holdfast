@@ -29,8 +29,9 @@ if [[ "$*" == *"--go-docker"* ]]; then
     export KAFKA_ADVERTISED_LISTENERS="PLAINTEXT://kafka:9092"
     export KAFKA_SERVERS=kafka:9092
     export ON_PREM=true
-    export OTLP_DOGFOOD_ENDPOINT=http://collector:4318
-    export OTLP_ENDPOINT=http://collector:4318
+    # HOL-21: collector container removed; backend hosts the OTLP receiver.
+    export OTLP_DOGFOOD_ENDPOINT=http://backend:8082/otel
+    export OTLP_ENDPOINT=http://backend:8082/otel
     export PSQL_HOST=postgres
     export REDIS_EVENTS_STAGING_ENDPOINT=redis:6379
     echo "Using docker-internal infra."
@@ -38,8 +39,8 @@ else
     export CLICKHOUSE_ADDRESS=localhost:9000
     export KAFKA_ADVERTISED_LISTENERS="PLAINTEXT://localhost:9092"
     export KAFKA_SERVERS=localhost:9092
-    export OTLP_DOGFOOD_ENDPOINT=http://localhost:4318
-    export OTLP_ENDPOINT=http://localhost:4318
+    export OTLP_DOGFOOD_ENDPOINT=http://localhost:8082/otel
+    export OTLP_ENDPOINT=http://localhost:8082/otel
     export PSQL_HOST=localhost
     export REDIS_EVENTS_STAGING_ENDPOINT=localhost:6379
 fi
