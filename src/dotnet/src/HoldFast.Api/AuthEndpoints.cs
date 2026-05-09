@@ -26,7 +26,8 @@ public static class AuthEndpoints
         // These must be registered before the GraphQL middleware captures /private.
         var priv = app.MapGroup("/private").RequireCors("Private");
         priv.MapPost("/login", Login);
-        priv.MapGet("/validate-token", WhoAmI);
+        priv.MapPost("/logout", Logout);
+        priv.MapGet("/validate-token", ValidateToken);
         priv.MapGet("/project-token/{project_id}", ProjectToken);
     }
 
@@ -102,6 +103,55 @@ public static class AuthEndpoints
     {
         context.Response.Cookies.Delete(authOptions.Value.TokenCookieName);
         return Results.Ok(new { message = "Logged out" });
+    }
+
+    /// <summary>
+    /// GET /private/validate-token — same idea as WhoAmI but explicitly
+    /// requires the client to present its token via the configured token
+    /// header (or Authorization: Bearer). Does NOT fall back to the cookie,
+    /// because the frontend's signOut clears its localStorage but cannot
+    /// clear an HttpOnly cookie from JS — without this restriction a
+    /// logged-out user would silently re-authenticate via the leftover
+    /// cookie on the very next page load (HOL-45).
+    /// </summary>
+    private static async Task<IResult> ValidateToken(
+        HttpContext context,
+        IAuthService authService,
+        IOptions<AuthOptions> authOptions,
+        HoldFast.Shared.Auth.IAuthorizationService authz,
+        CancellationToken ct)
+    {
+        var headerName = authOptions.Value.TokenCookieName;
+        var token = context.Request.Headers.TryGetValue(headerName, out var headerValue)
+            ? headerValue.ToString()
+            : null;
+
+        if (string.IsNullOrWhiteSpace(token))
+        {
+            // Allow Authorization: Bearer as a secondary explicit form. Still
+            // refuses the cookie path so signOut on the frontend really sticks.
+            var authz2 = context.Request.Headers.Authorization.ToString();
+            if (authz2.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+                token = authz2["Bearer ".Length..].Trim();
+        }
+
+        if (string.IsNullOrWhiteSpace(token))
+            return Results.Unauthorized();
+
+        var principal = authService.ValidateToken(token);
+        var uid = principal == null ? null : authService.GetUid(principal);
+        if (string.IsNullOrEmpty(uid))
+            return Results.Unauthorized();
+
+        try
+        {
+            var admin = await authz.GetCurrentAdminAsync(uid, ct);
+            return Results.Ok(new { admin.Id, admin.Uid, admin.Email, admin.Name });
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Results.Unauthorized();
+        }
     }
 
     /// <summary>
