@@ -67,16 +67,31 @@ var otlpEndpoint = builder.Configuration["OTEL_EXPORTER_OTLP_ENDPOINT"]
     ?? builder.Configuration["Otel:Endpoint"]
     ?? "http://localhost:8082";
 
+// Self-instrumentation sampling — defaults to 5% so dogfood traces don't
+// dominate ClickHouse footprint. Set Otel:SampleRatio to 1.0 in dev to see
+// every trace, or 0 to disable self-instrumentation entirely. Note that
+// inbound /health and /otel/* and outbound OTLP-exporter HTTP calls are
+// filtered out unconditionally below — the ratio applies to everything else.
+var otelSampleRatio = builder.Configuration.GetValue<double?>("Otel:SampleRatio") ?? 0.05;
+
 builder.Services.AddOpenTelemetry()
     .ConfigureResource(r => r
         .AddService("holdfast-backend")
         .AddAttributes([new("deployment.environment", builder.Environment.EnvironmentName)]))
     .WithTracing(tracing => tracing
+        .SetSampler(new OpenTelemetry.Trace.TraceIdRatioBasedSampler(otelSampleRatio))
         .AddAspNetCoreInstrumentation(opts => opts.Filter = ctx =>
             // Skip health checks and self-ingestion endpoints from trace noise
             !ctx.Request.Path.StartsWithSegments("/health") &&
             !ctx.Request.Path.StartsWithSegments("/otel"))
-        .AddHttpClientInstrumentation()
+        .AddHttpClientInstrumentation(opts => opts.FilterHttpRequestMessage = req =>
+            // HOL-18: don't trace the OTLP exporter's own outbound calls.
+            // Without this, each trace export to /otel/v1/* becomes a new
+            // trace, which is exported, which becomes a new trace — infinite
+            // feedback loop that filled ClickHouse with 429K traces against
+            // 47 MiB of real data.
+            req.RequestUri is null ||
+            !req.RequestUri.AbsolutePath.StartsWith("/otel/", StringComparison.OrdinalIgnoreCase))
         .AddOtlpExporter(otlp =>
         {
             otlp.Endpoint = new Uri($"{otlpEndpoint}/otel/v1/traces");
