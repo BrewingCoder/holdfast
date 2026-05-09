@@ -41,21 +41,9 @@ services:
             KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
             KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
 
-    redis:
-        logging: *local-logging
-        container_name: redis
-        image: ${REDIS_IMAGE_NAME}
-        restart: on-failure
-        environment:
-            REDIS_PASSWORD: ${REDIS_PASSWORD}
-        volumes:
-            - redis-data:/data
-        ports:
-            - '0.0.0.0:6379:6379'
-        command:
-            - redis-server
-            - --save 60 1
-            - --loglevel warning
+    # Redis removed in HOL-22 — RedisService was registered in DI but no
+    # code path actually injected it. Self-hosted scale doesn't need a
+    # separate cache layer; .NET's IMemoryCache + Postgres cover it.
 
     postgres:
         logging: *local-logging
@@ -100,7 +88,6 @@ volumes:
     postgres-data:
     clickhouse-data:
     clickhouse-logs:
-    redis-data:
     kafka-data:
     zoo-log:
     zoo-data:
