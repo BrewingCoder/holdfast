@@ -26,7 +26,7 @@ services:
             - Frontend__Uri=${REACT_APP_FRONTEND_URI:-http://localhost:3000}
             - Auth__Mode=${REACT_APP_AUTH_MODE:-Password}
             - Auth__AdminPassword=${ADMIN_PASSWORD:-}
-            - DevSeed__Enabled=${DEV_SEED_ENABLED:-false}
+            - DevSeed__Enabled=${DEV_SEED_ENABLED:-true}
             - DevSeed__AdminEmail=${DEV_SEED_ADMIN_EMAIL:-dev@holdfast.local}
             - DevSeed__AdminName=${DEV_SEED_ADMIN_NAME:-Dev Admin}
             - OTEL_EXPORTER_OTLP_ENDPOINT=http://backend:8082
