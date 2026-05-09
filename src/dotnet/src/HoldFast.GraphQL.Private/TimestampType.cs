@@ -1,86 +1,98 @@
 using System.Globalization;
+using System.Text.Json;
+using HotChocolate.Features;
 using HotChocolate.Language;
+using HotChocolate.Text.Json;
 using HotChocolate.Types;
 
 namespace HoldFast.GraphQL.Private;
 
 /// <summary>
 /// Custom scalar that maps C# DateTime to the Go schema's Timestamp scalar.
-/// The Go/gqlgen backend exposes all date/time fields as the Timestamp scalar (an ISO 8601 string).
-/// HC's built-in DateTime scalar uses the name "DateTime", causing schema mismatches when the
-/// frontend sends variables typed as Timestamp.
+/// The Go/gqlgen backend exposes all date/time fields as the Timestamp scalar
+/// (an ISO 8601 string). HC's built-in DateTime scalar uses the name "DateTime",
+/// causing schema mismatches when the frontend sends variables typed as Timestamp.
 ///
-/// HC variable coercion flow for input scalars:
-///   JSON string → ParseResult(string) → StringValueNode → ParseLiteral(StringValueNode) → DateTime
+/// HOL-16: rewritten for HotChocolate 16's ScalarType API. The four override
+/// points changed:
 ///
-/// Accepts common ISO 8601 formats including milliseconds ("2024-01-15T10:00:00.000Z").
-/// Serializes as ISO 8601 UTC string ("2024-01-15T10:00:00.0000000Z").
+///   HC 15                                    HC 16
+///   ──────────────────────────────────────   ──────────────────────────────────
+///   ParseLiteral(StringValueNode)            OnCoerceInputLiteral(StringValueNode)
+///   ParseValue(DateTime)                     OnValueToLiteral(DateTime)
+///   ParseResult(object?)                     (removed; folded into OnCoerceOutputValue)
+///   Serialize(object?)                       OnCoerceOutputValue(DateTime, ResultElement)
+///   TryDeserialize(object?, out object?)     OnCoerceInputValue(JsonElement, IFeatureProvider)
+///
+/// Accepts common ISO 8601 formats including milliseconds; serializes as ISO 8601 UTC.
 /// </summary>
 public sealed class TimestampType : ScalarType<DateTime, StringValueNode>
 {
     public TimestampType() : base("Timestamp") { }
 
-    protected override DateTime ParseLiteral(StringValueNode valueSyntax)
+    /// <summary>
+    /// HC 16 input-coercion path: literal AST node → runtime value. Called when
+    /// the GraphQL document contains a string literal for a Timestamp arg.
+    /// </summary>
+    protected override DateTime OnCoerceInputLiteral(StringValueNode valueSyntax)
     {
-        // Use DateTimeOffset.TryParse for robust ISO 8601 parsing (handles Z, +00:00, etc.)
         if (DateTimeOffset.TryParse(
-            valueSyntax.Value,
-            CultureInfo.InvariantCulture,
-            DateTimeStyles.AssumeUniversal,
-            out var dto))
+                valueSyntax.Value,
+                CultureInfo.InvariantCulture,
+                DateTimeStyles.AssumeUniversal,
+                out var dto))
+        {
             return dto.UtcDateTime;
-        throw new SerializationException(
-            $"Cannot parse '{valueSyntax.Value}' as Timestamp.", this);
+        }
+        throw new LeafCoercionException(
+            $"Cannot parse '{valueSyntax.Value}' as Timestamp.", this, HotChocolate.Path.Root);
     }
-
-    protected override StringValueNode ParseValue(DateTime runtimeValue)
-        => new(runtimeValue.ToUniversalTime().ToString("o"));
 
     /// <summary>
-    /// Called by HC when coercing result values (e.g., from JSON variable strings).
-    /// Wraps the raw value as a StringValueNode so ParseLiteral can handle it.
+    /// HC 16 input-coercion path: JSON variable → runtime value. Called when
+    /// the variable is supplied via the variables map (most common case from
+    /// the dashboard frontend, which sends timestamps as JSON strings).
     /// </summary>
-    public override IValueNode ParseResult(object? resultValue)
+    protected override DateTime OnCoerceInputValue(JsonElement value, IFeatureProvider features)
     {
-        if (resultValue is DateTime dt)
-            return new StringValueNode(dt.ToUniversalTime().ToString("o"));
-        if (resultValue is DateTimeOffset dto)
-            return new StringValueNode(dto.UtcDateTime.ToString("o"));
-        if (resultValue is string s)
-            return new StringValueNode(s);
-        if (resultValue is null)
-            return NullValueNode.Default;
-        throw new SerializationException(
-            $"Cannot serialize {resultValue.GetType().Name} as Timestamp.", this);
+        if (value.ValueKind == JsonValueKind.String)
+        {
+            var s = value.GetString();
+            if (s is null)
+                throw new LeafCoercionException("Timestamp string is null.", this, HotChocolate.Path.Root);
+            if (DateTimeOffset.TryParse(
+                    s,
+                    CultureInfo.InvariantCulture,
+                    DateTimeStyles.AssumeUniversal,
+                    out var dto))
+            {
+                return dto.UtcDateTime;
+            }
+            throw new LeafCoercionException(
+                $"Cannot parse '{s}' as Timestamp.", this, HotChocolate.Path.Root);
+        }
+        throw new LeafCoercionException(
+            $"Cannot coerce {value.ValueKind} to Timestamp; expected string.", this, HotChocolate.Path.Root);
     }
 
-    public override object? Serialize(object? runtimeValue)
-        => runtimeValue is DateTime dt
-            ? dt.ToUniversalTime().ToString("o")
-            : null;
+    /// <summary>
+    /// HC 16 literal-build path: runtime value → literal AST. Used when HC
+    /// needs to inline a Timestamp into a printed query (e.g., introspection
+    /// default values).
+    /// </summary>
+    protected override StringValueNode OnValueToLiteral(DateTime runtimeValue)
+        => new(runtimeValue.ToUniversalTime().ToString("o", CultureInfo.InvariantCulture));
 
-    public override bool TryDeserialize(object? resultValue, out object? runtimeValue)
-    {
-        if (resultValue is DateTime d)
-        {
-            runtimeValue = d;
-            return true;
-        }
-        if (resultValue is DateTimeOffset dto)
-        {
-            runtimeValue = dto.UtcDateTime;
-            return true;
-        }
-        if (resultValue is string s && DateTimeOffset.TryParse(
-            s,
-            CultureInfo.InvariantCulture,
-            DateTimeStyles.AssumeUniversal,
-            out var parsed))
-        {
-            runtimeValue = parsed.UtcDateTime;
-            return true;
-        }
-        runtimeValue = null;
-        return false;
-    }
+    /// <summary>
+    /// HC 16 output-coercion path: runtime value is written into the result
+    /// element directly. Replaces the old Serialize/ParseResult split — HC 16
+    /// inverted the contract from "return a value" to "write a value into the
+    /// destination" so the executor can avoid intermediate boxing.
+    ///
+    /// SetStringValue produces the same JSON output as the old
+    /// `Serialize(...) → string` path: a quoted ISO 8601 string matching the
+    /// Go schema's Timestamp wire format.
+    /// </summary>
+    protected override void OnCoerceOutputValue(DateTime runtimeValue, ResultElement element)
+        => element.SetStringValue(runtimeValue.ToUniversalTime().ToString("o", CultureInfo.InvariantCulture));
 }

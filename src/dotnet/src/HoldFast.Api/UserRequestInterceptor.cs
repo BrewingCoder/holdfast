@@ -32,9 +32,12 @@ public sealed class UserRequestInterceptor : DefaultHttpRequestInterceptor
             "UserRequestInterceptor: path={Path} isAuthenticated={IsAuth} uid={Uid}",
             context.Request.Path, isAuth, uid ?? "(null)");
 
-        // Forward the authenticated user into HC's global state under the well-known key.
-        // HC's resolver compiler binds ClaimsPrincipal parameters from WellKnownContextData.UserState.
-        requestBuilder.SetGlobalState(WellKnownContextData.UserState, context.User);
+        // Forward the authenticated user into the GraphQL operation request.
+        // HOL-16: HC 16 introduced OperationRequestBuilder.SetUser(...) which
+        // replaces the old WellKnownContextData.UserState global-state pattern.
+        // HC's resolver compiler binds ClaimsPrincipal parameters from this slot.
+        if (context.User is not null)
+            requestBuilder.SetUser(context.User);
 
         return base.OnCreateAsync(context, requestExecutor, requestBuilder, cancellationToken);
     }
