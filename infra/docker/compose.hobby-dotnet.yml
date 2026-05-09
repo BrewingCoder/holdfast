@@ -30,6 +30,12 @@ services:
             - DevSeed__AdminEmail=${DEV_SEED_ADMIN_EMAIL:-dev@holdfast.local}
             - DevSeed__AdminName=${DEV_SEED_ADMIN_NAME:-Dev Admin}
             - OTEL_EXPORTER_OTLP_ENDPOINT=http://backend:8082
+            # HOL-34: single-knob analytics backend selection. Defaults to
+            # ClickHouse so existing deploys behave unchanged. Set
+            # STORAGE_ANALYTICS=Postgres in .env (along with
+            # COMPOSE_PROFILES=postgres) to swap the entire analytics layer
+            # to TimescaleDB and skip the CH container.
+            - Storage__Analytics=${STORAGE_ANALYTICS:-ClickHouse}
         env_file: .env
         healthcheck:
             test: ['CMD', 'curl', '-f', 'http://localhost:8082/health']
