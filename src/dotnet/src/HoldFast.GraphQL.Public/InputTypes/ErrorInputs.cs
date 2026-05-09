@@ -1,11 +1,15 @@
+using System.Text.Json;
+
 namespace HoldFast.GraphQL.Public.InputTypes;
 
 /// <summary>
 /// A single frame in an error stack trace. Maps to one line in a JS/TS stack trace.
-/// IsEval/IsNative indicate the execution context.
+/// IsEval/IsNative indicate the execution context. `args` holds opaque
+/// argument values (matches Go schema's `args: [Any]`).
 /// </summary>
 public record StackFrameInput(
     string? FunctionName,
+    List<JsonElement?>? Args,
     string? FileName,
     int? LineNumber,
     int? ColumnNumber,
@@ -24,7 +28,7 @@ public record ErrorObjectInput(
     string Source,
     int LineNumber,
     int ColumnNumber,
-    List<StackFrameInput> StackTrace,
+    List<StackFrameInput?> StackTrace,
     DateTime Timestamp,
     string? Payload);
 

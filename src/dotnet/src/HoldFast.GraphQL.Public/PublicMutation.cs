@@ -132,22 +132,27 @@ public class PublicMutation
     [GraphQLDeprecated("Use pushSessionEvents instead")]
     public async Task<int> PushPayload(
         string sessionSecureId,
-        int? payloadId,
-        string events,
+        // Go schema: payload_id: ID (optional, string-on-the-wire). SDKs send a string.
+        [ID] string? payloadId,
+        ReplayEventsInput events,
         string messages,
         string resources,
         string? webSocketEvents,
-        List<ErrorObjectInput> errors,
+        // Go schema: errors: [ErrorObjectInput]! — list non-null, elements nullable.
+        List<ErrorObjectInput?> errors,
         bool? isBeacon,
         bool? hasSessionUnloaded,
         string? highlightLogs,
         [Service] IKafkaProducer kafka,
         CancellationToken ct)
     {
+        // Serialize structured events to JSON for the existing Kafka string body.
+        var eventsJson = JsonSerializer.Serialize(events);
+        var pid = ParsePayloadId(payloadId);
         await kafka.ProducePushPayloadAsync(
-            sessionSecureId, payloadId ?? 0, events, messages, resources,
+            sessionSecureId, pid, eventsJson, messages, resources,
             webSocketEvents, errors, isBeacon, hasSessionUnloaded, highlightLogs, ct);
-        return events.Length;
+        return eventsJson.Length;
     }
 
     /// <summary>
@@ -156,12 +161,13 @@ public class PublicMutation
     [GraphQLDeprecated("Use pushSessionEvents instead")]
     public async Task<bool> PushPayloadCompressed(
         string sessionSecureId,
-        int payloadId,
+        // Go schema: payload_id: ID! — non-null string-on-the-wire.
+        [ID] string payloadId,
         string data,
         [Service] IKafkaProducer kafka,
         CancellationToken ct)
     {
-        await kafka.ProduceSessionEventsAsync(sessionSecureId, payloadId, data, ct);
+        await kafka.ProduceSessionEventsAsync(sessionSecureId, ParsePayloadId(payloadId), data, ct);
         return true;
     }
 
@@ -172,26 +178,32 @@ public class PublicMutation
     /// </summary>
     public async Task<bool> PushSessionEvents(
         string sessionSecureId,
-        long payloadId,
+        // Go schema: payload_id: Int64ID! — 64-bit ID, string-on-the-wire.
+        [ID] string payloadId,
         string data,
         [Service] IKafkaProducer kafka,
         CancellationToken ct)
     {
-        await kafka.ProduceSessionEventsAsync(sessionSecureId, payloadId, data, ct);
+        await kafka.ProduceSessionEventsAsync(sessionSecureId, ParsePayloadId(payloadId), data, ct);
         return true;
     }
+
+    private static long ParsePayloadId(string? id) =>
+        long.TryParse(id, out var n) ? n : 0L;
 
     /// <summary>
     /// Push backend errors (from server-side SDKs).
     /// </summary>
     public async Task<bool> PushBackendPayload(
         string? projectId,
-        List<BackendErrorObjectInput> errors,
+        // Go schema: errors: [BackendErrorObjectInput]! — list non-null, elements nullable.
+        List<BackendErrorObjectInput?> errors,
         [Service] IKafkaProducer kafka,
         CancellationToken ct)
     {
         foreach (var error in errors)
         {
+            if (error is null) continue;
             await kafka.ProduceBackendErrorAsync(projectId, error, ct);
         }
         return true;

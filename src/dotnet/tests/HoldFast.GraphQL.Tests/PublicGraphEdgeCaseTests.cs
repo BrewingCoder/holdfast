@@ -220,9 +220,9 @@ public class PublicGraphEdgeCaseTests : IDisposable
     [Fact]
     public void ErrorObjectInput_Construction()
     {
-        var frames = new List<StackFrameInput>
+        var frames = new List<StackFrameInput?>
         {
-            new("main", "app.js", 42, 10, false, false, "source"),
+            new("main", null, "app.js", 42, 10, false, false, "source"),
         };
 
         var input = new ErrorObjectInput(
@@ -262,7 +262,7 @@ public class PublicGraphEdgeCaseTests : IDisposable
     [Fact]
     public void StackFrameInput_AllNullable()
     {
-        var frame = new StackFrameInput(null, null, null, null, null, null, null);
+        var frame = new StackFrameInput(null, null, null, null, null, null, null, null);
         Assert.Null(frame.FunctionName);
         Assert.Null(frame.FileName);
         Assert.Null(frame.LineNumber);
