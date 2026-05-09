@@ -1,7 +1,7 @@
 using System.Text.Json;
-using HoldFast.Data;
-using HoldFast.Data.ClickHouse;
+using HoldFast.Analytics;
 using HoldFast.Analytics.Models;
+using HoldFast.Data;
 using HoldFast.Shared.AlertEvaluation;
 using HoldFast.Shared.ErrorGrouping;
 using HoldFast.Shared.Kafka;
@@ -96,11 +96,13 @@ public class FrontendErrorsConsumer : MessageConsumerBase<FrontendErrorMessage>
             "Frontend error grouped: GroupId={GroupId}, IsNew={IsNew}, Event={Event}, Session={Session}",
             result.ErrorGroup.Id, result.IsNewGroup, value.Event, value.SessionSecureId);
 
-        // Mirror the row to ClickHouse error_objects so dashboard analytics can
-        // query it. Postgres holds the relational error_groups + error_objects;
-        // ClickHouse is the analytics surface for time-series error queries.
-        var clickhouse = scope.ServiceProvider.GetRequiredService<IClickHouseService>();
-        await clickhouse.WriteErrorObjectsAsync(
+        // Mirror the row to the analytics error_objects store so the dashboard
+        // analytics pipeline picks it up. Postgres holds the relational
+        // error_groups + error_objects via EF Core; the analytics store
+        // (CH or PG depending on Storage:Analytics) holds the time-series
+        // shape for dashboard charts.
+        var errorStore = scope.ServiceProvider.GetRequiredService<IErrorAnalyticsStore>();
+        await errorStore.WriteErrorObjectsAsync(
             [new ErrorObjectRowInput
             {
                 ProjectId = session.ProjectId,

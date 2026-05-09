@@ -1,3 +1,4 @@
+using HoldFast.Analytics;
 using HoldFast.Data;
 using HoldFast.Data.ClickHouse;
 using HoldFast.Analytics.Models;
@@ -59,7 +60,13 @@ public class LogAlertWatcherWorkerTests : IDisposable
             .UseSqlite(_connection).Options);
         services.AddScoped(sp => new HoldFastDbContext(
             sp.GetRequiredService<DbContextOptions<HoldFastDbContext>>()));
-        services.AddSingleton<IClickHouseService>(_fakeClickHouse);
+        services.AddSingleton<HoldFast.Analytics.ILogStore>(_fakeClickHouse);
+        services.AddSingleton<HoldFast.Analytics.ITraceStore>(_fakeClickHouse);
+        services.AddSingleton<HoldFast.Analytics.ISessionAnalyticsStore>(_fakeClickHouse);
+        services.AddSingleton<HoldFast.Analytics.IErrorAnalyticsStore>(_fakeClickHouse);
+        services.AddSingleton<HoldFast.Analytics.IMetricStore>(_fakeClickHouse);
+        services.AddSingleton<HoldFast.Analytics.IEventFieldStore>(_fakeClickHouse);
+        services.AddSingleton<HoldFast.Analytics.IAlertStateStore>(_fakeClickHouse);
         services.AddSingleton<INotificationService>(_fakeNotifications);
 
         _scopeFactory = services.BuildServiceProvider().GetRequiredService<IServiceScopeFactory>();
@@ -276,7 +283,7 @@ public class LogAlertWatcherWorkerTests : IDisposable
 /// Fake IClickHouseService for LogAlertWatcherWorker tests.
 /// Records CountLogsAsync call parameters for assertion.
 /// </summary>
-internal class FakeLogClickHouseService : IClickHouseService
+internal class FakeLogClickHouseService : ILogStore, ITraceStore, ISessionAnalyticsStore, IErrorAnalyticsStore, IMetricStore, IEventFieldStore, IAlertStateStore
 {
     public long LogCount { get; set; }
     public string? LastQuery { get; private set; }

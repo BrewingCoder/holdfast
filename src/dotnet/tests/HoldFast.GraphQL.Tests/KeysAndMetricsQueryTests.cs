@@ -2,6 +2,7 @@ using System.Security.Claims;
 using System.Text;
 using HoldFast.Data;
 using HoldFast.Data.ClickHouse;
+using HoldFast.Analytics;
 using HoldFast.Analytics.Models;
 using HoldFast.Domain.Entities;
 using HoldFast.Domain.Enums;
@@ -104,7 +105,7 @@ public class KeysAndMetricsQueryTests : IDisposable
             Enum.TryParse<ProductType>(productType, ignoreCase: true, out var pt) ? pt : (ProductType?)null,
             _project.Id,
             new DateRangeRequiredInput { StartDate = DateTime.UtcNow.AddDays(-7), EndDate = DateTime.UtcNow },
-            null, null, null, _principal, _authz, _clickHouse, CancellationToken.None);
+            null, null, null, _principal, _authz, _clickHouse, _clickHouse, _clickHouse, _clickHouse, _clickHouse, CancellationToken.None);
 
         Assert.NotNull(result);
         Assert.IsType<List<QueryKey>>(result);
@@ -116,7 +117,7 @@ public class KeysAndMetricsQueryTests : IDisposable
         var result = await _query.GetKeys(
             null, _project.Id,
             new DateRangeRequiredInput { StartDate = DateTime.UtcNow.AddDays(-7), EndDate = DateTime.UtcNow },
-            null, null, null, _principal, _authz, _clickHouse, CancellationToken.None);
+            null, null, null, _principal, _authz, _clickHouse, _clickHouse, _clickHouse, _clickHouse, _clickHouse, CancellationToken.None);
 
         // Sessions keys include reserved keys like "identifier", "city", etc.
         Assert.NotEmpty(result);
@@ -128,12 +129,12 @@ public class KeysAndMetricsQueryTests : IDisposable
         var lower = await _query.GetKeys(
             ProductType.Logs, _project.Id,
             new DateRangeRequiredInput { StartDate = DateTime.UtcNow.AddDays(-7), EndDate = DateTime.UtcNow },
-            null, null, null, _principal, _authz, _clickHouse, CancellationToken.None);
+            null, null, null, _principal, _authz, _clickHouse, _clickHouse, _clickHouse, _clickHouse, _clickHouse, CancellationToken.None);
 
         var upper = await _query.GetKeys(
             ProductType.Logs, _project.Id,
             new DateRangeRequiredInput { StartDate = DateTime.UtcNow.AddDays(-7), EndDate = DateTime.UtcNow },
-            null, null, null, _principal, _authz, _clickHouse, CancellationToken.None);
+            null, null, null, _principal, _authz, _clickHouse, _clickHouse, _clickHouse, _clickHouse, _clickHouse, CancellationToken.None);
 
         Assert.Equal(lower.Count, upper.Count);
     }
@@ -146,7 +147,7 @@ public class KeysAndMetricsQueryTests : IDisposable
         var result = await _query.GetKeys(
             ProductType.Logs, _project.Id,
             new DateRangeRequiredInput { StartDate = DateTime.UtcNow.AddDays(-7), EndDate = DateTime.UtcNow },
-            null, null, null, _principal, _authz, _clickHouse, CancellationToken.None);
+            null, null, null, _principal, _authz, _clickHouse, _clickHouse, _clickHouse, _clickHouse, _clickHouse, CancellationToken.None);
 
         Assert.Equal(3, result.Count);
         Assert.All(result, k => Assert.Equal("String", k.Type));
@@ -161,7 +162,7 @@ public class KeysAndMetricsQueryTests : IDisposable
         var result = await _query.GetKeys(
             ProductType.Traces, _project.Id,
             new DateRangeRequiredInput { StartDate = DateTime.UtcNow.AddDays(-7), EndDate = DateTime.UtcNow },
-            null, null, null, _principal, _authz, _clickHouse, CancellationToken.None);
+            null, null, null, _principal, _authz, _clickHouse, _clickHouse, _clickHouse, _clickHouse, _clickHouse, CancellationToken.None);
 
         Assert.Equal(2, result.Count);
         Assert.Contains(result, k => k.Name == "span_id");
@@ -182,7 +183,7 @@ public class KeysAndMetricsQueryTests : IDisposable
         var dr = new DateRangeRequiredInput { StartDate = DateTime.UtcNow.AddDays(-7), EndDate = DateTime.UtcNow };
         var result = await _query.GetKeyValues(
             productType, _project.Id, "test_key",
-            dr, null, null, null, _principal, _authz, _clickHouse, CancellationToken.None);
+            dr, null, null, null, _principal, _authz, _clickHouse, _clickHouse, _clickHouse, _clickHouse, _clickHouse, CancellationToken.None);
 
         Assert.NotNull(result);
     }
@@ -193,7 +194,7 @@ public class KeysAndMetricsQueryTests : IDisposable
         var dr = new DateRangeRequiredInput { StartDate = DateTime.UtcNow.AddDays(-7), EndDate = DateTime.UtcNow };
         var result = await _query.GetKeyValues(
             null, _project.Id, "identifier",
-            dr, null, null, null, _principal, _authz, _clickHouse, CancellationToken.None);
+            dr, null, null, null, _principal, _authz, _clickHouse, _clickHouse, _clickHouse, _clickHouse, _clickHouse, CancellationToken.None);
 
         Assert.NotNull(result);
     }
@@ -206,7 +207,7 @@ public class KeysAndMetricsQueryTests : IDisposable
 
         var result = await _query.GetKeyValues(
             "LOGS", _project.Id, "severity",
-            dr, null, null, null, _principal, _authz, _clickHouse, CancellationToken.None);
+            dr, null, null, null, _principal, _authz, _clickHouse, _clickHouse, _clickHouse, _clickHouse, _clickHouse, CancellationToken.None);
 
         Assert.Equal(2, result.Count);
         Assert.Contains("value1", result);
@@ -224,7 +225,7 @@ public class KeysAndMetricsQueryTests : IDisposable
 
         var result = await _query.GetKeyValuesSuggestions(
             "SESSIONS", _project.Id, dr,
-            ["key1", "key2"], _principal, _authz, _clickHouse, CancellationToken.None);
+            ["key1", "key2"], _principal, _authz, _clickHouse, _clickHouse, _clickHouse, _clickHouse, _clickHouse, CancellationToken.None);
 
         Assert.Equal(2, result.Count);
         Assert.Equal("key1", result[0].Key);
@@ -237,7 +238,7 @@ public class KeysAndMetricsQueryTests : IDisposable
         var dr = new DateRangeRequiredInput { StartDate = DateTime.UtcNow.AddDays(-7), EndDate = DateTime.UtcNow };
         var result = await _query.GetKeyValuesSuggestions(
             "LOGS", _project.Id, dr,
-            [], _principal, _authz, _clickHouse, CancellationToken.None);
+            [], _principal, _authz, _clickHouse, _clickHouse, _clickHouse, _clickHouse, _clickHouse, CancellationToken.None);
 
         Assert.Empty(result);
     }
@@ -250,7 +251,7 @@ public class KeysAndMetricsQueryTests : IDisposable
 
         var result = await _query.GetKeyValuesSuggestions(
             "SESSIONS", _project.Id, dr,
-            ["mykey"], _principal, _authz, _clickHouse, CancellationToken.None);
+            ["mykey"], _principal, _authz, _clickHouse, _clickHouse, _clickHouse, _clickHouse, _clickHouse, CancellationToken.None);
 
         Assert.Single(result);
         Assert.Equal(3, result[0].Values.Count);
@@ -798,7 +799,7 @@ public class KeysAndMetricsQueryTests : IDisposable
     /// <summary>
     /// Testable ClickHouse service that tracks calls and allows configuring return values.
     /// </summary>
-    private class TestableClickHouseService : IClickHouseService
+    private class TestableClickHouseService : ILogStore, ITraceStore, ISessionAnalyticsStore, IErrorAnalyticsStore, IMetricStore, IEventFieldStore, IAlertStateStore
     {
         public string? LastCalledMethod { get; private set; }
         public string? LastBucketBy { get; private set; }

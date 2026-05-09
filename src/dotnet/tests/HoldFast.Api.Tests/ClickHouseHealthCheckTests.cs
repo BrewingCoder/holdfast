@@ -1,99 +1,53 @@
 using HoldFast.Api;
 using HoldFast.Data.ClickHouse;
-using HoldFast.Analytics.Models;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Options;
 using Xunit;
 
 namespace HoldFast.Api.Tests;
 
 /// <summary>
-/// Tests for ClickHouseHealthCheck behavior.
+/// Tests for ClickHouseHealthCheck.
+///
+/// HOL-36: the old "Degraded fallback when not the concrete ClickHouseService"
+/// path is gone — the check now requires the concrete type. This test verifies
+/// the simpler post-HOL-36 behavior: Unhealthy when ClickHouse is unreachable
+/// (the actual production scenario the health check exists to cover).
 /// </summary>
 public class ClickHouseHealthCheckTests
 {
+    private static ClickHouseService UnreachableClickHouse() =>
+        new(
+            Options.Create(new ClickHouseOptions
+            {
+                // Pointing at an unreachable address — HealthCheckAsync will
+                // catch the connection error and return false.
+                Address = "localhost:65535",
+                Database = "default",
+            }),
+            NullLogger<ClickHouseService>.Instance);
+
     [Fact]
-    public async Task Healthy_WhenClickHouseServiceReportsHealthy()
+    public async Task Unhealthy_when_ClickHouse_unreachable()
     {
-        var service = new FakeClickHouseService { IsHealthy = true };
+        using var service = UnreachableClickHouse();
         var check = new ClickHouseHealthCheck(service);
         var result = await check.CheckHealthAsync(new HealthCheckContext());
 
-        // FakeClickHouseService is not a ClickHouseService, so falls to Degraded
-        Assert.Equal(HealthStatus.Degraded, result.Status);
-        Assert.Contains("not available", result.Description);
+        Assert.Equal(HealthStatus.Unhealthy, result.Status);
+        Assert.Contains("not responding", result.Description);
     }
 
     [Fact]
-    public async Task Degraded_WhenNonConcreteServiceProvided()
+    public async Task HealthCheck_respects_cancellation_token()
     {
-        var stub = new StubClickHouseService();
-        var check = new ClickHouseHealthCheck(stub);
-        var result = await check.CheckHealthAsync(new HealthCheckContext());
-
-        Assert.Equal(HealthStatus.Degraded, result.Status);
-        Assert.Contains("not available", result.Description);
-    }
-
-    [Fact]
-    public async Task HealthCheck_NullContext_NoException()
-    {
-        var stub = new StubClickHouseService();
-        var check = new ClickHouseHealthCheck(stub);
-        // HealthCheckContext with null properties should not throw
-        var result = await check.CheckHealthAsync(new HealthCheckContext());
-        // HealthCheckResult is a value type — verify no exception and a valid result
-        // Stub doesn't have a real ClickHouse, so it returns Degraded
-        Assert.Equal(HealthStatus.Degraded, result.Status);
-    }
-
-    [Fact]
-    public async Task HealthCheck_CancellationRespected()
-    {
-        var stub = new StubClickHouseService();
-        var check = new ClickHouseHealthCheck(stub);
-        using var cts = new CancellationTokenSource();
-        // Not cancelled, should complete normally
+        // CT is plumbed into HealthCheckAsync; cancellation should surface
+        // rather than hang forever on a network-unreachable host.
+        using var service = UnreachableClickHouse();
+        var check = new ClickHouseHealthCheck(service);
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
         var result = await check.CheckHealthAsync(new HealthCheckContext(), cts.Token);
-        Assert.Equal(HealthStatus.Degraded, result.Status);
-    }
-
-    // Stub that implements IClickHouseService but is NOT ClickHouseService (concrete type)
-    private class StubClickHouseService : IClickHouseService
-    {
-        public Task<LogConnection> ReadLogsAsync(int projectId, QueryInput query, ClickHousePagination pagination, CancellationToken ct) => Task.FromResult(new LogConnection());
-        public Task<List<HistogramBucket>> ReadLogsHistogramAsync(int projectId, QueryInput query, CancellationToken ct) => Task.FromResult(new List<HistogramBucket>());
-        public Task<List<string>> GetLogKeysAsync(int projectId, QueryInput query, CancellationToken ct) => Task.FromResult(new List<string>());
-        public Task<List<string>> GetLogKeyValuesAsync(int projectId, string key, QueryInput query, CancellationToken ct) => Task.FromResult(new List<string>());
-        public Task<TraceConnection> ReadTracesAsync(int projectId, QueryInput query, ClickHousePagination pagination, bool omitBody, CancellationToken ct) => Task.FromResult(new TraceConnection());
-        public Task<List<HistogramBucket>> ReadTracesHistogramAsync(int projectId, QueryInput query, CancellationToken ct) => Task.FromResult(new List<HistogramBucket>());
-        public Task<List<string>> GetTraceKeysAsync(int projectId, QueryInput query, CancellationToken ct) => Task.FromResult(new List<string>());
-        public Task<List<string>> GetTraceKeyValuesAsync(int projectId, string key, QueryInput query, CancellationToken ct) => Task.FromResult(new List<string>());
-        public Task<List<HistogramBucket>> ReadSessionsHistogramAsync(int projectId, QueryInput query, CancellationToken ct) => Task.FromResult(new List<HistogramBucket>());
-        public Task<(List<int> Ids, long Total)> QuerySessionIdsAsync(int projectId, QueryInput query, int count, int page, string? sortField, bool sortDesc, CancellationToken ct) => Task.FromResult((new List<int>(), 0L));
-        public Task<(List<int> Ids, long Total)> QueryErrorGroupIdsAsync(int projectId, QueryInput query, int count, int page, CancellationToken ct) => Task.FromResult((new List<int>(), 0L));
-        public Task<List<HistogramBucket>> ReadErrorObjectsHistogramAsync(int projectId, QueryInput query, CancellationToken ct) => Task.FromResult(new List<HistogramBucket>());
-        public Task<MetricsBuckets> ReadMetricsAsync(int projectId, QueryInput query, string bucketBy, List<string>? groupBy, string aggregator, string? column, CancellationToken ct) => Task.FromResult(new MetricsBuckets());
-        public Task<List<QueryKey>> GetSessionsKeysAsync(int projectId, DateTime startDate, DateTime endDate, string? query, CancellationToken ct) => Task.FromResult(new List<QueryKey>());
-        public Task<List<string>> GetSessionsKeyValuesAsync(int projectId, string keyName, DateTime startDate, DateTime endDate, string? query, int? count, CancellationToken ct) => Task.FromResult(new List<string>());
-        public Task<List<QueryKey>> GetErrorsKeysAsync(int projectId, DateTime startDate, DateTime endDate, string? query, CancellationToken ct) => Task.FromResult(new List<QueryKey>());
-        public Task<List<string>> GetErrorsKeyValuesAsync(int projectId, string keyName, DateTime startDate, DateTime endDate, string? query, int? count, CancellationToken ct) => Task.FromResult(new List<string>());
-        public Task<List<QueryKey>> GetEventsKeysAsync(int projectId, DateTime startDate, DateTime endDate, string? query, string? eventName, CancellationToken ct) => Task.FromResult(new List<QueryKey>());
-        public Task<List<string>> GetEventsKeyValuesAsync(int projectId, string keyName, DateTime startDate, DateTime endDate, string? query, int? count, string? eventName, CancellationToken ct) => Task.FromResult(new List<string>());
-        public Task WriteMetricAsync(int projectId, string metricName, double metricValue, string? category, DateTime timestamp, Dictionary<string, string>? tags, string? sessionSecureId, CancellationToken ct) => Task.CompletedTask;
-        public Task WriteLogsAsync(IEnumerable<LogRowInput> logs, CancellationToken ct) => Task.CompletedTask;
-        public Task WriteTracesAsync(IEnumerable<TraceRowInput> traces, CancellationToken ct) => Task.CompletedTask;
-        public Task WriteSessionsAsync(IEnumerable<SessionRowInput> sessions, CancellationToken ct) => Task.CompletedTask;
-        public Task WriteErrorGroupsAsync(IEnumerable<ErrorGroupRowInput> errorGroups, CancellationToken ct) => Task.CompletedTask;
-        public Task WriteErrorObjectsAsync(IEnumerable<ErrorObjectRowInput> errorObjects, CancellationToken ct) => Task.CompletedTask;
-        public Task<long> CountLogsAsync(int projectId, string? query, DateTime startDate, DateTime endDate, CancellationToken ct = default) => Task.FromResult(0L);
-        public Task<List<AlertStateChangeRow>> GetLastAlertStateChangesAsync(int projectId, int alertId, DateTime startDate, DateTime endDate, CancellationToken ct = default) => Task.FromResult(new List<AlertStateChangeRow>());
-        public Task<List<AlertStateChangeRow>> GetAlertingAlertStateChangesAsync(int projectId, int alertId, DateTime startDate, DateTime endDate, CancellationToken ct = default) => Task.FromResult(new List<AlertStateChangeRow>());
-        public Task<List<AlertStateChangeRow>> GetLastAlertingStatesAsync(int projectId, int alertId, DateTime startDate, DateTime endDate, CancellationToken ct = default) => Task.FromResult(new List<AlertStateChangeRow>());
-        public Task WriteAlertStateChangesAsync(int projectId, IEnumerable<AlertStateChangeRow> rows, CancellationToken ct = default) => Task.CompletedTask;
-    }
-
-    private class FakeClickHouseService : StubClickHouseService
-    {
-        public bool IsHealthy { get; set; }
+        Assert.NotEqual(HealthStatus.Healthy, result.Status);
     }
 }

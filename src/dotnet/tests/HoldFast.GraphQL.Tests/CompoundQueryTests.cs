@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using HoldFast.Data;
 using HoldFast.Data.ClickHouse;
+using HoldFast.Analytics;
 using HoldFast.Analytics.Models;
 using HoldFast.Domain.Entities;
 using HoldFast.GraphQL.Private;
@@ -518,7 +519,7 @@ public class CompoundQueryTests : IDisposable
             => Task.CompletedTask;
     }
 
-    private class FakeClickHouseService : IClickHouseService
+    private class FakeClickHouseService : ILogStore, ITraceStore, ISessionAnalyticsStore, IErrorAnalyticsStore, IMetricStore, IEventFieldStore, IAlertStateStore
     {
         public bool TracesRead { get; private set; }
         public string? LastTracesQuery { get; private set; }

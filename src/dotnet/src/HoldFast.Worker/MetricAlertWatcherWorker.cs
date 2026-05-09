@@ -1,6 +1,6 @@
-using HoldFast.Data;
-using HoldFast.Data.ClickHouse;
+using HoldFast.Analytics;
 using HoldFast.Analytics.Models;
+using HoldFast.Data;
 using HoldFast.Domain.Entities;
 using HoldFast.Shared.Notifications;
 using Microsoft.EntityFrameworkCore;
@@ -61,7 +61,9 @@ public class MetricAlertWatcherWorker : BackgroundService
     {
         using var scope = _scopeFactory.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<HoldFastDbContext>();
-        var clickHouse = scope.ServiceProvider.GetRequiredService<IClickHouseService>();
+        var logStore = scope.ServiceProvider.GetRequiredService<ILogStore>();
+        var metricStore = scope.ServiceProvider.GetRequiredService<IMetricStore>();
+        var alertStore = scope.ServiceProvider.GetRequiredService<IAlertStateStore>();
         var notifications = scope.ServiceProvider.GetRequiredService<INotificationService>();
 
         var alerts = await db.Set<Alert>()
@@ -74,7 +76,7 @@ public class MetricAlertWatcherWorker : BackgroundService
         {
             _ = Task.Run(async () =>
             {
-                try { await EvaluateAlertAsync(alert, db, clickHouse, notifications, ct); }
+                try { await EvaluateAlertAsync(alert, db, logStore, metricStore, alertStore, notifications, ct); }
                 catch (Exception ex) when (ex is not OperationCanceledException)
                 {
                     _logger.LogError(ex, "Error evaluating metric alert {AlertId}", alert.Id);
@@ -86,7 +88,9 @@ public class MetricAlertWatcherWorker : BackgroundService
     internal async Task EvaluateAlertAsync(
         Alert alert,
         HoldFastDbContext db,
-        IClickHouseService clickHouse,
+        ILogStore logStore,
+        IMetricStore metricStore,
+        IAlertStateStore alertStore,
         INotificationService notifications,
         CancellationToken ct)
     {
@@ -99,7 +103,7 @@ public class MetricAlertWatcherWorker : BackgroundService
         var cooldown = TimeSpan.FromSeconds(alert.ThresholdCooldown ?? 0);
         if (cooldown > TimeSpan.Zero)
         {
-            var recentAlerts = await clickHouse.GetLastAlertingStatesAsync(
+            var recentAlerts = await alertStore.GetLastAlertingStatesAsync(
                 alert.ProjectId, alert.Id,
                 curDate - cooldown, curDate, ct);
 
@@ -110,11 +114,11 @@ public class MetricAlertWatcherWorker : BackgroundService
             }
         }
 
-        // Query ClickHouse for the metric value
+        // Query the analytics store for the metric value
         double metricValue;
         try
         {
-            metricValue = await GetMetricValueAsync(alert, clickHouse, startDate, endDate, ct);
+            metricValue = await GetMetricValueAsync(alert, logStore, metricStore, startDate, endDate, ct);
         }
         catch (Exception ex)
         {
@@ -133,8 +137,8 @@ public class MetricAlertWatcherWorker : BackgroundService
             "MetricAlert {Id} ({ProductType}): value={Value} threshold={Threshold} state={State}",
             alert.Id, alert.ProductType, metricValue, thresholdValue, state);
 
-        // Write state change to ClickHouse
-        await clickHouse.WriteAlertStateChangesAsync(alert.ProjectId,
+        // Write state change to the analytics alert store
+        await alertStore.WriteAlertStateChangesAsync(alert.ProjectId,
         [
             new AlertStateChangeRow
             {
@@ -153,20 +157,20 @@ public class MetricAlertWatcherWorker : BackgroundService
     }
 
     private async Task<double> GetMetricValueAsync(
-        Alert alert, IClickHouseService clickHouse,
+        Alert alert, ILogStore logStore, IMetricStore metricStore,
         DateTime startDate, DateTime endDate, CancellationToken ct)
     {
         // For log alerts via the unified Alert type, use log count
         if (alert.ProductType.Equals("LOGS", StringComparison.OrdinalIgnoreCase) ||
             alert.ProductType.Equals("logs", StringComparison.OrdinalIgnoreCase))
         {
-            var count = await clickHouse.CountLogsAsync(
+            var count = await logStore.CountLogsAsync(
                 alert.ProjectId, alert.Query, startDate, endDate, ct);
             return (double)count;
         }
 
         // For other product types, use the metrics query
-        var buckets = await clickHouse.ReadMetricsAsync(
+        var buckets = await metricStore.ReadMetricsAsync(
             alert.ProjectId,
             new HoldFast.Analytics.Models.QueryInput
             {

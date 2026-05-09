@@ -1,3 +1,4 @@
+using HoldFast.Analytics;
 using HoldFast.Data;
 using HoldFast.Data.ClickHouse;
 using HoldFast.Analytics.Models;
@@ -55,7 +56,13 @@ public class DataSyncWorkerTests : IDisposable
         services.AddSingleton(new DbContextOptionsBuilder<HoldFastDbContext>()
             .UseSqlite(_connection).Options);
         services.AddScoped(sp => new HoldFastDbContext(sp.GetRequiredService<DbContextOptions<HoldFastDbContext>>()));
-        services.AddSingleton<IClickHouseService>(_fakeClickHouse);
+        services.AddSingleton<HoldFast.Analytics.ILogStore>(_fakeClickHouse);
+        services.AddSingleton<HoldFast.Analytics.ITraceStore>(_fakeClickHouse);
+        services.AddSingleton<HoldFast.Analytics.ISessionAnalyticsStore>(_fakeClickHouse);
+        services.AddSingleton<HoldFast.Analytics.IErrorAnalyticsStore>(_fakeClickHouse);
+        services.AddSingleton<HoldFast.Analytics.IMetricStore>(_fakeClickHouse);
+        services.AddSingleton<HoldFast.Analytics.IEventFieldStore>(_fakeClickHouse);
+        services.AddSingleton<HoldFast.Analytics.IAlertStateStore>(_fakeClickHouse);
 
         _scopeFactory = services.BuildServiceProvider().GetRequiredService<IServiceScopeFactory>();
         _worker = new DataSyncWorker(_scopeFactory, NullLogger<DataSyncWorker>.Instance);
@@ -405,7 +412,7 @@ public class DataSyncWorkerTests : IDisposable
 /// <summary>
 /// Hand-rolled fake for IClickHouseService that records all write calls.
 /// </summary>
-internal class FakeClickHouseService : IClickHouseService
+internal class FakeClickHouseService : ILogStore, ITraceStore, ISessionAnalyticsStore, IErrorAnalyticsStore, IMetricStore, IEventFieldStore, IAlertStateStore
 {
     public List<SessionRowInput> WrittenSessions { get; } = [];
     public List<ErrorGroupRowInput> WrittenErrorGroups { get; } = [];

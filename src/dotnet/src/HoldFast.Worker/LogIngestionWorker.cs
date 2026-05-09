@@ -1,4 +1,4 @@
-using HoldFast.Data.ClickHouse;
+using HoldFast.Analytics;
 using HoldFast.Analytics.Models;
 using HoldFast.Shared.Kafka;
 using HoldFast.Shared.Messaging;
@@ -50,7 +50,7 @@ public class LogIngestionConsumer : MessageConsumerBase<LogIngestionMessage>
         _logger.LogDebug("Processing log: {Severity} from {Service}", value.SeverityText, value.ServiceName);
 
         using var scope = _scopeFactory.CreateScope();
-        var clickHouse = scope.ServiceProvider.GetRequiredService<IClickHouseService>();
+        var logStore = scope.ServiceProvider.GetRequiredService<ILogStore>();
 
         var logRow = new LogRowInput
         {
@@ -69,7 +69,7 @@ public class LogIngestionConsumer : MessageConsumerBase<LogIngestionMessage>
             Environment = value.Environment,
         };
 
-        await clickHouse.WriteLogsAsync([logRow], ct);
+        await logStore.WriteLogsAsync([logRow], ct);
     }
 }
 

@@ -2,6 +2,7 @@ using System.Security.Claims;
 using System.Text;
 using HoldFast.Data;
 using HoldFast.Data.ClickHouse;
+using HoldFast.Analytics;
 using HoldFast.Analytics.Models;
 using HoldFast.Domain.Entities;
 using HoldFast.Domain.Enums;
@@ -1254,7 +1255,7 @@ public class SessionAndAlertTests : IDisposable
             => Task.FromResult($"file://{bucket}/{key}");
     }
 
-    private class FakeClickHouseService : IClickHouseService
+    private class FakeClickHouseService : ILogStore, ITraceStore, ISessionAnalyticsStore, IErrorAnalyticsStore, IMetricStore, IEventFieldStore, IAlertStateStore
     {
         public MetricsBuckets MetricsResult { get; set; } = new();
         public List<string> SessionKeyValuesResult { get; set; } = [];

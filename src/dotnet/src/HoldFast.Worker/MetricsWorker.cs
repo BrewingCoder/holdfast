@@ -1,4 +1,4 @@
-using HoldFast.Data.ClickHouse;
+using HoldFast.Analytics;
 using HoldFast.Shared.Kafka;
 using HoldFast.Shared.Messaging;
 using Microsoft.Extensions.DependencyInjection;
@@ -43,13 +43,13 @@ public class MetricsConsumer : MessageConsumerBase<MetricsMessage>
         _logger.LogDebug("Processing metric: {Name} = {Value}", value.Name, value.Value);
 
         using var scope = _scopeFactory.CreateScope();
-        var clickHouse = scope.ServiceProvider.GetRequiredService<IClickHouseService>();
+        var metricStore = scope.ServiceProvider.GetRequiredService<IMetricStore>();
 
         // Resolve project ID from session (if available) — for now, use 0 as fallback
         // Full session lookup will be wired in Phase 3
         var projectId = 0;
 
-        await clickHouse.WriteMetricAsync(
+        await metricStore.WriteMetricAsync(
             projectId,
             value.Name,
             value.Value,

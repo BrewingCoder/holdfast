@@ -2,6 +2,7 @@ using System.Security.Claims;
 using System.Text;
 using HoldFast.Data;
 using HoldFast.Data.ClickHouse;
+using HoldFast.Analytics;
 using HoldFast.Analytics.Models;
 using HoldFast.Domain.Entities;
 using HoldFast.Domain.Enums;
@@ -201,7 +202,7 @@ public class EdgeCaseQueryTests : IDisposable
         var result = await _query.GetKeys(
             null, _project.Id,
             new DateRangeRequiredInput { StartDate = DateTime.UtcNow.AddDays(-7), EndDate = DateTime.UtcNow },
-            null, null, null, _principal, _authz, _clickHouse, CancellationToken.None);
+            null, null, null, _principal, _authz, _clickHouse, _clickHouse, _clickHouse, _clickHouse, _clickHouse, CancellationToken.None);
 
         // Should default to sessions keys (same as null)
         Assert.NotEmpty(result);
@@ -213,7 +214,7 @@ public class EdgeCaseQueryTests : IDisposable
         var dr = new DateRangeRequiredInput { StartDate = DateTime.UtcNow.AddDays(-7), EndDate = DateTime.UtcNow };
         var result = await _query.GetKeyValues(
             "INVALID", _project.Id, "identifier",
-            dr, null, null, null, _principal, _authz, _clickHouse, CancellationToken.None);
+            dr, null, null, null, _principal, _authz, _clickHouse, _clickHouse, _clickHouse, _clickHouse, _clickHouse, CancellationToken.None);
 
         Assert.NotNull(result);
     }
@@ -230,7 +231,7 @@ public class EdgeCaseQueryTests : IDisposable
 
         var result = await _query.GetKeyValuesSuggestions(
             "SESSIONS", _project.Id, dr,
-            keys, _principal, _authz, _clickHouse, CancellationToken.None);
+            keys, _principal, _authz, _clickHouse, _clickHouse, _clickHouse, _clickHouse, _clickHouse, CancellationToken.None);
 
         Assert.Equal(20, result.Count);
     }
@@ -369,7 +370,7 @@ public class EdgeCaseQueryTests : IDisposable
         public Task<string> GetDownloadUrlAsync(string bucket, string key, TimeSpan expiry, CancellationToken ct = default) => Task.FromResult($"file://{bucket}/{key}");
     }
 
-    private class FakeClickHouseService : IClickHouseService
+    private class FakeClickHouseService : ILogStore, ITraceStore, ISessionAnalyticsStore, IErrorAnalyticsStore, IMetricStore, IEventFieldStore, IAlertStateStore
     {
         public Task<MetricsBuckets> ReadMetricsAsync(int projectId, QueryInput query, string bucketBy, List<string>? groupBy, string aggregator, string? column, CancellationToken ct) => Task.FromResult(new MetricsBuckets());
         public Task<List<string>> GetLogKeysAsync(int projectId, QueryInput query, CancellationToken ct) => Task.FromResult(new List<string>());

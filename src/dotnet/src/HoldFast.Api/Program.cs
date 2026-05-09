@@ -166,7 +166,6 @@ builder.Services.Configure<ClickHouseOptions>(
 // Set Storage:Analytics=Postgres (or env STORAGE__ANALYTICS=Postgres) to
 // run the entire analytics layer on PG and drop the ClickHouse container.
 builder.Services.AddSingleton<ClickHouseService>();
-builder.Services.AddSingleton<IClickHouseService>(sp => sp.GetRequiredService<ClickHouseService>());
 
 builder.Services.AddSingleton<HoldFast.Data.Postgres.PostgresLogStore>();
 builder.Services.AddSingleton<HoldFast.Data.Postgres.PostgresTraceStore>();
