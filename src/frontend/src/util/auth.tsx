@@ -254,6 +254,20 @@ class PasswordAuth implements SimpleAuth {
 	}
 
 	async signOut() {
+		// Clear server-side cookie before nuking local state. Without this
+		// the AuthMiddleware would still find a valid token in the cookie on
+		// the next /private request and silently re-authenticate the user
+		// (HOL-45). credentials:'include' is required so the browser sends
+		// the cookie that the endpoint is supposed to delete.
+		try {
+			await fetch(`${PRIVATE_GRAPH_URI}/logout`, {
+				method: 'POST',
+				credentials: 'include',
+				headers: { Accept: 'application/json' },
+			})
+		} catch {
+			// network failure on logout shouldn't block clearing local state.
+		}
 		localStorage.removeItem(PasswordAuth.Key)
 	}
 }
