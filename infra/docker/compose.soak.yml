@@ -1,0 +1,38 @@
+# HOL-38: soak-harness compose overlay.
+#
+# Layer this on top of the hobby/dotnet stack to run the analytics-ingest
+# soak generator alongside the existing services:
+#
+#   docker compose -f compose.yml -f compose.hobby-dotnet.yml -f compose.soak.yml up -d
+#
+# By default the harness emits one event per minute; HOL-40 turns that into
+# a variable-rate timer with periodic spike windows. Start/stop is via the
+# `soak` profile so existing `up` invocations don't accidentally pull it in:
+#
+#   docker compose --profile soak ... up -d        # include soak
+#   docker compose ... up -d                       # skip soak (default)
+
+services:
+    soak:
+        profiles: ["soak"]
+        container_name: holdfast-soak
+        build:
+            context: ../../tests/soak
+            dockerfile: Dockerfile
+        image: holdfast-soak:latest
+        restart: on-failure
+        depends_on:
+            backend:
+                condition: service_healthy
+        environment:
+            # Hobby DevSeed assigns ID 2 to the "HoldFast Dev / default" project.
+            # Override SOAK_PROJECT_ID for non-DevSeed deployments.
+            - HOLDFAST_PROJECT_ID=${SOAK_PROJECT_ID:-2}
+            # Backend's in-cluster name on the compose network.
+            - OTLP_ENDPOINT=http://backend:8082/otel
+            # Default 60 s base interval — HOL-40 will document the spike-mode
+            # env vars that build on this.
+            - SOAK_BASE_INTERVAL_MS=${SOAK_BASE_INTERVAL_MS:-60000}
+            - SOAK_SERVICE_NAME=${SOAK_SERVICE_NAME:-holdfast-soak}
+            - SOAK_SERVICE_VERSION=${SOAK_SERVICE_VERSION:-0.0.0-soak}
+        # No port mappings; soak is outbound-only.
