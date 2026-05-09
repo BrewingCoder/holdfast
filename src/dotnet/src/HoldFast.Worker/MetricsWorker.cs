@@ -10,14 +10,28 @@ namespace HoldFast.Worker;
 
 /// <summary>
 /// Kafka message for custom metrics pushed by SDKs.
+///
+/// Shape mirrors <see cref="HoldFast.GraphQL.Public.InputTypes.MetricInput"/>
+/// so the in-process bus's JSON round-trip preserves the producer's payload.
+/// Tags are an array of {Name, Value} objects on the wire — the consumer
+/// flattens them to a Dictionary at the analytics-store boundary.
 /// </summary>
 public record MetricsMessage(
     string SessionSecureId,
+    string? SpanId,
+    string? ParentSpanId,
+    string? TraceId,
+    string? Group,
     string Name,
     double Value,
     string? Category,
     DateTime Timestamp,
-    Dictionary<string, string>? Tags);
+    List<MetricTagPair>? Tags);
+
+/// <summary>
+/// On-the-wire shape of a MetricInput tag — matches MetricInput.Tags.
+/// </summary>
+public record MetricTagPair(string Name, string Value);
 
 /// <summary>
 /// Consumes metrics from Kafka and writes to ClickHouse.
@@ -49,13 +63,24 @@ public class MetricsConsumer : MessageConsumerBase<MetricsMessage>
         // Full session lookup will be wired in Phase 3
         var projectId = 0;
 
+        // MetricInput.Tags arrives as List<{Name, Value}> over the wire.
+        // The IMetricStore expects Dictionary<string, string>; flatten here,
+        // taking the last-wins value if a tag name repeats.
+        Dictionary<string, string>? tagDict = null;
+        if (value.Tags is { Count: > 0 })
+        {
+            tagDict = new Dictionary<string, string>();
+            foreach (var tag in value.Tags)
+                tagDict[tag.Name] = tag.Value;
+        }
+
         await metricStore.WriteMetricAsync(
             projectId,
             value.Name,
             value.Value,
             value.Category,
             value.Timestamp,
-            value.Tags,
+            tagDict,
             value.SessionSecureId,
             ct);
     }
