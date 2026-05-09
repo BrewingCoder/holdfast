@@ -77,11 +77,17 @@ FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:10.0 AS backend-buil
 
 WORKDIR /src
 
-# Copy project files first for layer caching
+# Copy project files first for layer caching. Every project in the slnx
+# must be listed here — `dotnet restore` walks the project graph and needs
+# each .csproj to exist on disk before generating the assets file. Adding
+# a new project means adding a new line here (HOL-25 added Analytics,
+# HOL-26 added Data.Postgres).
 COPY src/dotnet/HoldFast.Backend.slnx .
+COPY src/dotnet/src/HoldFast.Analytics/HoldFast.Analytics.csproj src/HoldFast.Analytics/
 COPY src/dotnet/src/HoldFast.Api/HoldFast.Api.csproj src/HoldFast.Api/
 COPY src/dotnet/src/HoldFast.Data/HoldFast.Data.csproj src/HoldFast.Data/
 COPY src/dotnet/src/HoldFast.Data.ClickHouse/HoldFast.Data.ClickHouse.csproj src/HoldFast.Data.ClickHouse/
+COPY src/dotnet/src/HoldFast.Data.Postgres/HoldFast.Data.Postgres.csproj src/HoldFast.Data.Postgres/
 COPY src/dotnet/src/HoldFast.Domain/HoldFast.Domain.csproj src/HoldFast.Domain/
 COPY src/dotnet/src/HoldFast.GraphQL.Private/HoldFast.GraphQL.Private.csproj src/HoldFast.GraphQL.Private/
 COPY src/dotnet/src/HoldFast.GraphQL.Public/HoldFast.GraphQL.Public.csproj src/HoldFast.GraphQL.Public/
