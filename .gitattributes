@@ -11,3 +11,8 @@ frontend/src/components/Search/Parser/antlr/* linguist-generated=true
 /.yarn/releases/** binary
 /.yarn/plugins/** binary
 __generated/* linguist-generated=true
+
+# Shell scripts must use LF — they run inside Linux containers and CRLF
+# breaks the shebang line ("/bin/sh: illegal option -" in Docker builds).
+*.sh text eol=lf
+*.bash text eol=lf
