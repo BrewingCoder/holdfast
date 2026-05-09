@@ -273,21 +273,23 @@ public class ErrorGroupingWorkerTests : IDisposable
     public void MetricsMessage_AllFields()
     {
         var tags = new Dictionary<string, string> { ["host"] = "server-1" };
-        var msg = new MetricsMessage(
+        var msg = MetricsMessage.ForGauge(
             "sess-1", "cpu.usage", 85.5, "system",
             DateTime.UtcNow, tags);
 
-        Assert.Equal("cpu.usage", msg.Name);
+        Assert.Equal("cpu.usage", msg.MetricName);
         Assert.Equal(85.5, msg.Value);
-        Assert.Equal("system", msg.Category);
+        Assert.Equal("system", msg.MetricDescription);
     }
 
     [Fact]
     public void MetricsMessage_NullOptionalFields()
     {
-        var msg = new MetricsMessage("sess-1", "latency", 12.3, null, DateTime.UtcNow, null);
+        var msg = MetricsMessage.ForGauge("sess-1", "latency", 12.3, null, DateTime.UtcNow, null);
 
-        Assert.Null(msg.Category);
-        Assert.Null(msg.Tags);
+        // ForGauge maps a null category to an empty MetricDescription rather
+        // than leaving it null, so the round-trip JSON shape stays uniform.
+        Assert.Equal(string.Empty, msg.MetricDescription);
+        Assert.Null(msg.Attributes);
     }
 }

@@ -1,7 +1,11 @@
 using System.IO.Compression;
 using System.Text.Json;
+using HoldFast.Analytics.Models;
 using HoldFast.GraphQL.Public;
 using HoldFast.GraphQL.Public.InputTypes;
+using HoldFast.Shared.Kafka;
+using HoldFast.Shared.Messaging;
+using HoldFast.Worker;
 
 namespace HoldFast.Api;
 
@@ -92,31 +96,63 @@ public static class OtelEndpoints
         return Results.Ok(new { accepted = traces.Count });
     }
 
-    private static async Task<IResult> HandleMetrics(HttpContext ctx, IKafkaProducer kafka, CancellationToken ct)
+    private static async Task<IResult> HandleMetrics(HttpContext ctx, IMessageBus bus, CancellationToken ct)
     {
         var body = await ReadBodyAsync(ctx.Request);
 
-        List<MetricInput>? metrics = IsProtobufContentType(ctx.Request)
-            ? ProtobufOtelParser.ParseMetrics(body)
-            : null;
-
-        if (metrics == null || metrics.Count == 0)
-            metrics = ParseOtelMetrics(body);
-
-        if (metrics == null || metrics.Count == 0)
+        // Protobuf path is still narrow (NumberDataPoint only — no histogram
+        // bucket fields). Promote each MetricInput to a Gauge MetricsMessage
+        // until ProtobufOtelParser is widened. JSON path produces full
+        // OTeL-shaped messages directly.
+        List<MetricsMessage>? metrics = null;
+        if (IsProtobufContentType(ctx.Request))
         {
-            var simple = JsonSerializer.Deserialize<MetricInput[]>(body, JsonOptions);
-            if (simple != null)
-                metrics = simple.ToList();
+            var legacyProto = ProtobufOtelParser.ParseMetrics(body);
+            if (legacyProto != null)
+                metrics = legacyProto.Select(LegacyToGauge).ToList();
         }
+
+        if (metrics == null || metrics.Count == 0)
+            metrics = ParseOtelMetricsRich(body);
 
         if (metrics == null || metrics.Count == 0)
             return Results.BadRequest("No metrics provided");
 
         foreach (var metric in metrics)
-            await kafka.ProduceMetricAsync(metric, ct);
+            await bus.PublishAsync(KafkaTopics.Metrics, metric.SecureSessionId, metric, ct);
 
         return Results.Ok(new { accepted = metrics.Count });
+    }
+
+    private static MetricsMessage LegacyToGauge(MetricInput m)
+    {
+        Dictionary<string, string>? attrs = null;
+        if (m.Tags is { Count: > 0 })
+        {
+            attrs = new Dictionary<string, string>(m.Tags.Count);
+            foreach (var t in m.Tags)
+                attrs[t.Name] = t.Value;
+        }
+        return new MetricsMessage(
+            ProjectId: 0,
+            ServiceName: string.Empty,
+            MetricName: m.Name,
+            MetricDescription: string.Empty,
+            MetricUnit: string.Empty,
+            Kind: MetricKind.Gauge,
+            StartTimestamp: m.Timestamp,
+            Timestamp: m.Timestamp,
+            Attributes: attrs,
+            SecureSessionId: m.SessionSecureId,
+            Value: m.Value,
+            AggregationTemporality: 0,
+            IsMonotonic: false,
+            Count: 0UL,
+            Sum: 0.0,
+            BucketCounts: null,
+            ExplicitBounds: null,
+            Min: 0.0,
+            Max: 0.0);
     }
 
     /// <summary>
@@ -301,8 +337,206 @@ public static class OtelEndpoints
     }
 
     /// <summary>
-    /// Parse OTeL ExportMetricsServiceRequest JSON format.
+    /// Parse OTeL ExportMetricsServiceRequest JSON into the OTeL-shaped
+    /// bus messages MetricsConsumer expects. Replaces the legacy
+    /// <see cref="ParseOtelMetrics"/> path which dropped per-kind detail
+    /// (no MetricType, no AggregationTemporality, no histogram buckets) and
+    /// wrote against an INSERT shape that no longer matched the
+    /// metrics_sum schema.
+    ///
     /// Structure: { resourceMetrics: [{ scopeMetrics: [{ metrics: [...] }] }] }
+    /// Handles Sum, Gauge, Histogram. Summary / ExponentialHistogram are
+    /// tolerated but ignored — soak doesn't emit them and they'd need
+    /// per-kind table writes.
+    /// </summary>
+    internal static List<MetricsMessage>? ParseOtelMetricsRich(byte[] body)
+    {
+        try
+        {
+            using var doc = JsonDocument.Parse(body);
+            var root = doc.RootElement;
+
+            if (root.ValueKind != JsonValueKind.Object) return null;
+            if (!root.TryGetProperty("resourceMetrics", out var resourceMetrics)) return null;
+
+            var messages = new List<MetricsMessage>();
+
+            foreach (var rm in resourceMetrics.EnumerateArray())
+            {
+                var (serviceName, _, projectId, _) = ExtractResourceAttributes(rm);
+                if (!rm.TryGetProperty("scopeMetrics", out var scopeMetrics)) continue;
+
+                foreach (var sm in scopeMetrics.EnumerateArray())
+                {
+                    if (!sm.TryGetProperty("metrics", out var metricList)) continue;
+
+                    foreach (var metric in metricList.EnumerateArray())
+                    {
+                        var name = metric.TryGetProperty("name", out var mn) ? mn.GetString() : null;
+                        if (string.IsNullOrEmpty(name)) continue;
+
+                        var description = metric.TryGetProperty("description", out var md)
+                            ? md.GetString() ?? string.Empty : string.Empty;
+                        var unit = metric.TryGetProperty("unit", out var mu)
+                            ? mu.GetString() ?? string.Empty : string.Empty;
+
+                        if (metric.TryGetProperty("sum", out var sumNode))
+                        {
+                            var aggTemp = sumNode.TryGetProperty("aggregationTemporality", out var at)
+                                ? at.GetInt32() : 0;
+                            var isMonotonic = sumNode.TryGetProperty("isMonotonic", out var im)
+                                && im.GetBoolean();
+                            EmitNumberPoints(sumNode, MetricKind.Sum, projectId, serviceName ?? "",
+                                name, description, unit, aggTemp, isMonotonic, messages);
+                        }
+                        else if (metric.TryGetProperty("gauge", out var gaugeNode))
+                        {
+                            EmitNumberPoints(gaugeNode, MetricKind.Gauge, projectId, serviceName ?? "",
+                                name, description, unit, 0, false, messages);
+                        }
+                        else if (metric.TryGetProperty("histogram", out var histNode))
+                        {
+                            var aggTemp = histNode.TryGetProperty("aggregationTemporality", out var at)
+                                ? at.GetInt32() : 0;
+                            EmitHistogramPoints(histNode, projectId, serviceName ?? "",
+                                name, description, unit, aggTemp, messages);
+                        }
+                        // Summary / ExponentialHistogram fall through silently — no
+                        // soak workload emits them and they'd require their own writers.
+                    }
+                }
+            }
+
+            return messages.Count > 0 ? messages : null;
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
+    }
+
+    private static void EmitNumberPoints(JsonElement node, MetricKind kind,
+        int projectId, string serviceName, string name, string description, string unit,
+        int aggTemp, bool isMonotonic, List<MetricsMessage> messages)
+    {
+        if (!node.TryGetProperty("dataPoints", out var dps)) return;
+        foreach (var dp in dps.EnumerateArray())
+        {
+            var value = ReadNumberValue(dp);
+            var startTs = ParseTimestamp(dp, "startTimeUnixNano", "timeUnixNano");
+            var ts = ParseTimestamp(dp, "timeUnixNano");
+            var attrs = ExtractAttributes(dp);
+            var sessionId = attrs.GetValueOrDefault("highlight.session_id") ?? string.Empty;
+
+            messages.Add(new MetricsMessage(
+                ProjectId: projectId,
+                ServiceName: serviceName,
+                MetricName: name,
+                MetricDescription: description,
+                MetricUnit: unit,
+                Kind: kind,
+                StartTimestamp: startTs,
+                Timestamp: ts,
+                Attributes: attrs,
+                SecureSessionId: sessionId,
+                Value: value,
+                AggregationTemporality: aggTemp,
+                IsMonotonic: isMonotonic,
+                Count: 0UL,
+                Sum: 0.0,
+                BucketCounts: null,
+                ExplicitBounds: null,
+                Min: 0.0,
+                Max: 0.0));
+        }
+    }
+
+    private static void EmitHistogramPoints(JsonElement node,
+        int projectId, string serviceName, string name, string description, string unit,
+        int aggTemp, List<MetricsMessage> messages)
+    {
+        if (!node.TryGetProperty("dataPoints", out var dps)) return;
+        foreach (var dp in dps.EnumerateArray())
+        {
+            var startTs = ParseTimestamp(dp, "startTimeUnixNano", "timeUnixNano");
+            var ts = ParseTimestamp(dp, "timeUnixNano");
+            var attrs = ExtractAttributes(dp);
+            var sessionId = attrs.GetValueOrDefault("highlight.session_id") ?? string.Empty;
+
+            ulong count = 0;
+            if (dp.TryGetProperty("count", out var c))
+            {
+                count = c.ValueKind == JsonValueKind.String && ulong.TryParse(c.GetString(), out var cs)
+                    ? cs : c.TryGetUInt64(out var cn) ? cn : 0;
+            }
+
+            double sum = dp.TryGetProperty("sum", out var s) && s.ValueKind == JsonValueKind.Number
+                ? s.GetDouble() : 0;
+            double min = dp.TryGetProperty("min", out var mn) && mn.ValueKind == JsonValueKind.Number
+                ? mn.GetDouble() : 0;
+            double max = dp.TryGetProperty("max", out var mx) && mx.ValueKind == JsonValueKind.Number
+                ? mx.GetDouble() : 0;
+
+            var bucketCounts = new List<ulong>();
+            if (dp.TryGetProperty("bucketCounts", out var bcs))
+            {
+                foreach (var bc in bcs.EnumerateArray())
+                {
+                    var v = bc.ValueKind == JsonValueKind.String && ulong.TryParse(bc.GetString(), out var bcs2)
+                        ? bcs2 : bc.TryGetUInt64(out var bcn) ? bcn : 0;
+                    bucketCounts.Add(v);
+                }
+            }
+
+            var explicitBounds = new List<double>();
+            if (dp.TryGetProperty("explicitBounds", out var ebs))
+            {
+                foreach (var eb in ebs.EnumerateArray())
+                    if (eb.ValueKind == JsonValueKind.Number) explicitBounds.Add(eb.GetDouble());
+            }
+
+            messages.Add(new MetricsMessage(
+                ProjectId: projectId,
+                ServiceName: serviceName,
+                MetricName: name,
+                MetricDescription: description,
+                MetricUnit: unit,
+                Kind: MetricKind.Histogram,
+                StartTimestamp: startTs,
+                Timestamp: ts,
+                Attributes: attrs,
+                SecureSessionId: sessionId,
+                Value: 0.0,
+                AggregationTemporality: aggTemp,
+                IsMonotonic: false,
+                Count: count,
+                Sum: sum,
+                BucketCounts: bucketCounts,
+                ExplicitBounds: explicitBounds,
+                Min: min,
+                Max: max));
+        }
+    }
+
+    private static double ReadNumberValue(JsonElement dp)
+    {
+        if (dp.TryGetProperty("asDouble", out var ad) && ad.ValueKind == JsonValueKind.Number)
+            return ad.GetDouble();
+        if (dp.TryGetProperty("asInt", out var ai))
+        {
+            if (ai.ValueKind == JsonValueKind.String && long.TryParse(ai.GetString(), out var v))
+                return v;
+            if (ai.ValueKind == JsonValueKind.Number && ai.TryGetInt64(out var n))
+                return n;
+        }
+        return 0.0;
+    }
+
+    /// <summary>
+    /// Legacy entry point retained because tests reference it; new code
+    /// should call <see cref="ParseOtelMetricsRich"/>. This shim simply
+    /// projects the rich messages onto the old narrow record so existing
+    /// test assertions still type-check.
     /// </summary>
     internal static List<MetricInput>? ParseOtelMetrics(byte[] body)
     {

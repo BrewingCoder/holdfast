@@ -233,14 +233,14 @@ public class WorkerMessageTests
     }
 
     [Fact]
-    public void MetricsMessage_WithTags()
+    public void MetricsMessage_WithAttributes()
     {
-        var msg = new MetricsMessage(
+        var msg = MetricsMessage.ForGauge(
             "session-1", "cpu.usage", 85.5, "system",
             DateTime.UtcNow,
             new Dictionary<string, string> { ["host"] = "web-01", ["region"] = "us-east" });
 
-        Assert.Equal(2, msg.Tags!.Count);
-        Assert.Equal("web-01", msg.Tags["host"]);
+        Assert.Equal(2, msg.Attributes!.Count);
+        Assert.Equal("web-01", msg.Attributes["host"]);
     }
 }

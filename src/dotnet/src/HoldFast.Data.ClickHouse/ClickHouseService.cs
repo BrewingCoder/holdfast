@@ -779,39 +779,119 @@ public class ClickHouseService :
 
     // ── Write Methods (Worker ingestion) ──────────────────────────
 
-    public async Task WriteMetricAsync(
-        int projectId,
-        string metricName,
-        double metricValue,
-        string? category,
-        DateTime timestamp,
-        Dictionary<string, string>? tags,
-        string? sessionSecureId,
-        CancellationToken ct)
+    public async Task WriteMetricAsync(MetricRowInput row, CancellationToken ct)
     {
-        var sql =
-            "INSERT INTO metrics_sum (ProjectId, MetricName, MetricValue, " +
-            "Category, Timestamp, Tags.Name, Tags.Value, SecureSessionId) " +
-            "VALUES ({projectId:Int32}, {metricName:String}, {metricValue:Float64}, " +
-            "{category:String}, {timestamp:DateTime64(9)}, {tagNames:Array(String)}, " +
-            "{tagValues:Array(String)}, {sessionSecureId:String})";
-
-        var tagNames = tags?.Keys.ToArray() ?? [];
-        var tagValues = tags?.Values.ToArray() ?? [];
-
-        using var cmd = _conn.CreateCommand();
-        cmd.CommandText = sql;
-        cmd.AddParameter("projectId", projectId);
-        cmd.AddParameter("metricName", metricName);
-        cmd.AddParameter("metricValue", metricValue);
-        cmd.AddParameter("category", category ?? "");
-        cmd.AddParameter("timestamp", timestamp);
-        cmd.AddParameter("tagNames", tagNames);
-        cmd.AddParameter("tagValues", tagValues);
-        cmd.AddParameter("sessionSecureId", sessionSecureId ?? "");
-
         await EnsureOpenAsync(_conn, ct);
-        await cmd.ExecuteNonQueryAsync(ct);
+
+        var attrKeys = row.Attributes.Keys.ToArray();
+        var attrValues = row.Attributes.Values.ToArray();
+        var startTimestamp = row.StartTimestamp == default ? row.Timestamp : row.StartTimestamp;
+
+        switch (row.Kind)
+        {
+            case MetricKind.Histogram:
+            case MetricKind.ExponentialHistogram:
+            {
+                var sql =
+                    "INSERT INTO metrics_histogram (ProjectId, ServiceName, MetricName, " +
+                    "MetricDescription, MetricUnit, Attributes, StartTimestamp, Timestamp, " +
+                    "Flags, Count, Sum, BucketCounts, ExplicitBounds, Min, Max, " +
+                    "AggregationTemporality) VALUES (" +
+                    "{projectId:UInt32}, {svcName:String}, {metricName:String}, " +
+                    "{metricDesc:String}, {metricUnit:String}, " +
+                    "mapFromArrays({attrKeys:Array(String)}, {attrValues:Array(String)}), " +
+                    "{startTs:DateTime64(9)}, {ts:DateTime64(9)}, " +
+                    "{flags:UInt32}, {count:UInt64}, {sum:Float64}, " +
+                    "{bucketCounts:Array(UInt64)}, {explicitBounds:Array(Float64)}, " +
+                    "{min:Float64}, {max:Float64}, {aggTemp:Int32})";
+
+                using var cmd = _conn.CreateCommand();
+                cmd.CommandText = sql;
+                cmd.AddParameter("projectId", (uint)row.ProjectId);
+                cmd.AddParameter("svcName", row.ServiceName);
+                cmd.AddParameter("metricName", row.MetricName);
+                cmd.AddParameter("metricDesc", row.MetricDescription);
+                cmd.AddParameter("metricUnit", row.MetricUnit);
+                cmd.AddParameter("attrKeys", attrKeys);
+                cmd.AddParameter("attrValues", attrValues);
+                cmd.AddParameter("startTs", startTimestamp);
+                cmd.AddParameter("ts", row.Timestamp);
+                cmd.AddParameter("flags", 0u);
+                cmd.AddParameter("count", row.Count);
+                cmd.AddParameter("sum", row.Sum);
+                cmd.AddParameter("bucketCounts", row.BucketCounts.ToArray());
+                cmd.AddParameter("explicitBounds", row.ExplicitBounds.ToArray());
+                cmd.AddParameter("min", row.Min);
+                cmd.AddParameter("max", row.Max);
+                cmd.AddParameter("aggTemp", row.AggregationTemporality);
+                await cmd.ExecuteNonQueryAsync(ct);
+                return;
+            }
+
+            case MetricKind.Summary:
+            {
+                var sql =
+                    "INSERT INTO metrics_summary (ProjectId, ServiceName, MetricName, " +
+                    "MetricDescription, MetricUnit, Attributes, StartTimestamp, Timestamp, " +
+                    "Flags, Count, Sum) VALUES (" +
+                    "{projectId:UInt32}, {svcName:String}, {metricName:String}, " +
+                    "{metricDesc:String}, {metricUnit:String}, " +
+                    "mapFromArrays({attrKeys:Array(String)}, {attrValues:Array(String)}), " +
+                    "{startTs:DateTime64(9)}, {ts:DateTime64(9)}, " +
+                    "{flags:UInt32}, {count:Float64}, {sum:Float64})";
+
+                using var cmd = _conn.CreateCommand();
+                cmd.CommandText = sql;
+                cmd.AddParameter("projectId", (uint)row.ProjectId);
+                cmd.AddParameter("svcName", row.ServiceName);
+                cmd.AddParameter("metricName", row.MetricName);
+                cmd.AddParameter("metricDesc", row.MetricDescription);
+                cmd.AddParameter("metricUnit", row.MetricUnit);
+                cmd.AddParameter("attrKeys", attrKeys);
+                cmd.AddParameter("attrValues", attrValues);
+                cmd.AddParameter("startTs", startTimestamp);
+                cmd.AddParameter("ts", row.Timestamp);
+                cmd.AddParameter("flags", 0u);
+                cmd.AddParameter("count", (double)row.Count);
+                cmd.AddParameter("sum", row.Sum);
+                await cmd.ExecuteNonQueryAsync(ct);
+                return;
+            }
+
+            // Sum, Gauge, Empty all use metrics_sum and discriminate via MetricType.
+            default:
+            {
+                var sql =
+                    "INSERT INTO metrics_sum (ProjectId, ServiceName, MetricName, " +
+                    "MetricDescription, MetricUnit, Attributes, StartTimestamp, Timestamp, " +
+                    "MetricType, Flags, Value, AggregationTemporality, IsMonotonic) VALUES (" +
+                    "{projectId:UInt32}, {svcName:String}, {metricName:String}, " +
+                    "{metricDesc:String}, {metricUnit:String}, " +
+                    "mapFromArrays({attrKeys:Array(String)}, {attrValues:Array(String)}), " +
+                    "{startTs:DateTime64(9)}, {ts:DateTime64(9)}, " +
+                    "{metricType:Int8}, {flags:UInt32}, {value:Float64}, " +
+                    "{aggTemp:Int32}, {isMonotonic:Bool})";
+
+                using var cmd = _conn.CreateCommand();
+                cmd.CommandText = sql;
+                cmd.AddParameter("projectId", (uint)row.ProjectId);
+                cmd.AddParameter("svcName", row.ServiceName);
+                cmd.AddParameter("metricName", row.MetricName);
+                cmd.AddParameter("metricDesc", row.MetricDescription);
+                cmd.AddParameter("metricUnit", row.MetricUnit);
+                cmd.AddParameter("attrKeys", attrKeys);
+                cmd.AddParameter("attrValues", attrValues);
+                cmd.AddParameter("startTs", startTimestamp);
+                cmd.AddParameter("ts", row.Timestamp);
+                cmd.AddParameter("metricType", (sbyte)row.Kind);
+                cmd.AddParameter("flags", 0u);
+                cmd.AddParameter("value", row.Value);
+                cmd.AddParameter("aggTemp", row.AggregationTemporality);
+                cmd.AddParameter("isMonotonic", row.IsMonotonic);
+                await cmd.ExecuteNonQueryAsync(ct);
+                return;
+            }
+        }
     }
 
     public async Task WriteLogsAsync(IEnumerable<LogRowInput> logs, CancellationToken ct)

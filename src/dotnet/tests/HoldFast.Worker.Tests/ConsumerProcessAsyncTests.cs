@@ -58,7 +58,7 @@ public class ConsumerProcessAsyncTests : IDisposable
     public async Task MetricsConsumer_WritesMetricToClickHouse()
     {
         var consumer = new TestableMetricsConsumer(ScopeFactory);
-        var msg = new MetricsMessage("sess-1", "LCP", 2.5, "web-vital",
+        var msg = MetricsMessage.ForGauge("sess-1", "LCP", 2.5, "web-vital",
             new DateTime(2026, 3, 20, 10, 0, 0, DateTimeKind.Utc),
             new Dictionary<string, string> { ["page"] = "/home" });
 
@@ -66,30 +66,30 @@ public class ConsumerProcessAsyncTests : IDisposable
 
         Assert.Single(_clickHouse.WrittenMetrics);
         var m = _clickHouse.WrittenMetrics[0];
-        Assert.Equal("LCP", m.Name);
+        Assert.Equal("LCP", m.MetricName);
         Assert.Equal(2.5, m.Value);
-        Assert.Equal("web-vital", m.Category);
+        Assert.Equal("web-vital", m.MetricDescription);
         Assert.Equal("sess-1", m.SessionId);
-        Assert.Equal("/home", m.Tags!["page"]);
+        Assert.Equal("/home", m.Attributes!["page"]);
     }
 
     [Fact]
     public async Task MetricsConsumer_NullTags_PassedThrough()
     {
         var consumer = new TestableMetricsConsumer(ScopeFactory);
-        var msg = new MetricsMessage("sess-1", "CLS", 0.1, null, DateTime.UtcNow, null);
+        var msg = MetricsMessage.ForGauge("sess-1", "CLS", 0.1, null, DateTime.UtcNow, null);
 
         await consumer.ProcessAsync("sess-1", msg, CancellationToken.None);
 
-        Assert.Null(_clickHouse.WrittenMetrics[0].Tags);
-        Assert.Null(_clickHouse.WrittenMetrics[0].Category);
+        Assert.Null(_clickHouse.WrittenMetrics[0].Attributes);
+        Assert.Null(_clickHouse.WrittenMetrics[0].MetricDescription);
     }
 
     [Fact]
     public async Task MetricsConsumer_ZeroValue()
     {
         var consumer = new TestableMetricsConsumer(ScopeFactory);
-        await consumer.ProcessAsync("k", new MetricsMessage("s", "m", 0.0, null, DateTime.UtcNow, null), default);
+        await consumer.ProcessAsync("k", MetricsMessage.ForGauge("s", "m", 0.0, null, DateTime.UtcNow, null), default);
         Assert.Equal(0.0, _clickHouse.WrittenMetrics[0].Value);
     }
 
@@ -97,7 +97,7 @@ public class ConsumerProcessAsyncTests : IDisposable
     public async Task MetricsConsumer_NegativeValue()
     {
         var consumer = new TestableMetricsConsumer(ScopeFactory);
-        await consumer.ProcessAsync("k", new MetricsMessage("s", "delta", -42.5, null, DateTime.UtcNow, null), default);
+        await consumer.ProcessAsync("k", MetricsMessage.ForGauge("s", "delta", -42.5, null, DateTime.UtcNow, null), default);
         Assert.Equal(-42.5, _clickHouse.WrittenMetrics[0].Value);
     }
 
@@ -105,8 +105,8 @@ public class ConsumerProcessAsyncTests : IDisposable
     public async Task MetricsConsumer_EmptyStringName()
     {
         var consumer = new TestableMetricsConsumer(ScopeFactory);
-        await consumer.ProcessAsync("k", new MetricsMessage("s", "", 1.0, null, DateTime.UtcNow, null), default);
-        Assert.Equal("", _clickHouse.WrittenMetrics[0].Name);
+        await consumer.ProcessAsync("k", MetricsMessage.ForGauge("s", "", 1.0, null, DateTime.UtcNow, null), default);
+        Assert.Equal("", _clickHouse.WrittenMetrics[0].MetricName);
     }
 
     [Fact]
@@ -114,8 +114,8 @@ public class ConsumerProcessAsyncTests : IDisposable
     {
         var consumer = new TestableMetricsConsumer(ScopeFactory);
         var tags = Enumerable.Range(0, 20).ToDictionary(i => $"tag{i}", i => $"val{i}");
-        await consumer.ProcessAsync("k", new MetricsMessage("s", "m", 1.0, "cat", DateTime.UtcNow, tags), default);
-        Assert.Equal(20, _clickHouse.WrittenMetrics[0].Tags!.Count);
+        await consumer.ProcessAsync("k", MetricsMessage.ForGauge("s", "m", 1.0, "cat", DateTime.UtcNow, tags), default);
+        Assert.Equal(20, _clickHouse.WrittenMetrics[0].Attributes!.Count);
     }
 
     // ══════════════════════════════════════════════════════════════════
@@ -293,8 +293,8 @@ public class ConsumerProcessAsyncTests : IDisposable
     [Fact]
     public void MetricsMessage_Equality()
     {
-        var a = new MetricsMessage("s", "m", 1.0, "c", DateTime.UnixEpoch, null);
-        var b = new MetricsMessage("s", "m", 1.0, "c", DateTime.UnixEpoch, null);
+        var a = MetricsMessage.ForGauge("s", "m", 1.0, "c", DateTime.UnixEpoch, null);
+        var b = MetricsMessage.ForGauge("s", "m", 1.0, "c", DateTime.UnixEpoch, null);
         Assert.Equal(a, b);
     }
 
@@ -326,13 +326,20 @@ public class ConsumerProcessAsyncTests : IDisposable
     {
         public List<LogRowInput> WrittenLogs { get; } = [];
         public List<TraceRowInput> WrittenTraces { get; } = [];
-        public List<(int ProjectId, string Name, double Value, string? Category, DateTime Timestamp, Dictionary<string, string>? Tags, string? SessionId)> WrittenMetrics { get; } = [];
+        public List<(int ProjectId, string MetricName, double Value, string? MetricDescription, DateTime Timestamp, Dictionary<string, string>? Attributes, string? SessionId)> WrittenMetrics { get; } = [];
 
         public Task WriteLogsAsync(IEnumerable<LogRowInput> logs, CancellationToken ct) { WrittenLogs.AddRange(logs); return Task.CompletedTask; }
         public Task WriteTracesAsync(IEnumerable<TraceRowInput> traces, CancellationToken ct) { WrittenTraces.AddRange(traces); return Task.CompletedTask; }
-        public Task WriteMetricAsync(int projectId, string metricName, double metricValue, string? category, DateTime timestamp, Dictionary<string, string>? tags, string? sessionSecureId, CancellationToken ct)
+        public Task WriteMetricAsync(MetricRowInput row, CancellationToken ct = default)
         {
-            WrittenMetrics.Add((projectId, metricName, metricValue, category, timestamp, tags, sessionSecureId));
+            // Tests treat empty Attributes as null for back-compat with the
+            // pre-MetricRowInput stub shape.
+            var tags = row.Attributes.Count > 0 ? row.Attributes : null;
+            // MetricDescription comes through as "" when the producer didn't
+            // set one; flatten that to null so old assertions on a missing
+            // category-equivalent still see null.
+            var desc = string.IsNullOrEmpty(row.MetricDescription) ? null : row.MetricDescription;
+            WrittenMetrics.Add((row.ProjectId, row.MetricName, row.Value, desc, row.Timestamp, tags, row.SecureSessionId));
             return Task.CompletedTask;
         }
 

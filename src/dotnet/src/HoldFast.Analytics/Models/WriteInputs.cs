@@ -112,3 +112,54 @@ public class ErrorObjectRowInput
     public string? ServiceName { get; set; }
     public string? ServiceVersion { get; set; }
 }
+
+/// <summary>
+/// OTeL-shaped metric row. Replaces the (name, value, tags) triple with the
+/// full metric envelope so the analytics store can land rows in the schemas
+/// upstream Highlight migrated to (metrics_sum / metrics_histogram /
+/// metrics_summary). Sum and Gauge share metrics_sum and discriminate on
+/// <see cref="Kind"/>; histograms get the bucket fields populated.
+/// </summary>
+public class MetricRowInput
+{
+    public int ProjectId { get; set; }
+    public string ServiceName { get; set; } = string.Empty;
+    public string MetricName { get; set; } = string.Empty;
+    public string MetricDescription { get; set; } = string.Empty;
+    public string MetricUnit { get; set; } = string.Empty;
+    public MetricKind Kind { get; set; } = MetricKind.Gauge;
+    public DateTime StartTimestamp { get; set; }
+    public DateTime Timestamp { get; set; }
+    public Dictionary<string, string> Attributes { get; set; } = new();
+    public string SecureSessionId { get; set; } = string.Empty;
+
+    // Sum / Gauge
+    public double Value { get; set; }
+
+    // Sum only — defaults match OTeL's UNSPECIFIED / non-monotonic
+    public int AggregationTemporality { get; set; }
+    public bool IsMonotonic { get; set; }
+
+    // Histogram — defaults safe to ignore for non-Histogram kinds
+    public ulong Count { get; set; }
+    public double Sum { get; set; }
+    public List<ulong> BucketCounts { get; set; } = new();
+    public List<double> ExplicitBounds { get; set; } = new();
+    public double Min { get; set; }
+    public double Max { get; set; }
+}
+
+/// <summary>
+/// OTeL metric instrument kind. Numeric values match the
+/// <c>metrics_sum.MetricType</c> Enum8 column on the ClickHouse side
+/// so the cast at write time is a no-op.
+/// </summary>
+public enum MetricKind
+{
+    Empty = 0,
+    Gauge = 1,
+    Sum = 2,
+    Histogram = 3,
+    ExponentialHistogram = 4,
+    Summary = 5,
+}

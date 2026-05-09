@@ -1,3 +1,5 @@
+using HoldFast.Analytics.Models;
+
 namespace HoldFast.Worker.Tests;
 
 public class SessionEventsMessageTests
@@ -182,113 +184,85 @@ public class BackendErrorMessageTests
 
 public class MetricsMessageTests
 {
+    private static MetricsMessage Gauge(
+        string sessionId = "s", string name = "m", double value = 1.0,
+        string? category = null, DateTime? timestamp = null,
+        Dictionary<string, string>? tags = null) =>
+        MetricsMessage.ForGauge(sessionId, name, value, category, timestamp ?? DateTime.UtcNow, tags);
+
     [Fact]
     public void MetricsMessage_HasRequiredFields()
     {
-        var msg = new MetricsMessage(
-            SessionSecureId: "sess-1",
-            Name: "LCP",
-            Value: 2.5,
-            Category: "web-vital",
-            Timestamp: DateTime.UtcNow,
-            Tags: new Dictionary<string, string> { ["page"] = "/home" });
+        var msg = Gauge("sess-1", "LCP", 2.5, "web-vital",
+            tags: new Dictionary<string, string> { ["page"] = "/home" });
 
-        Assert.Equal("LCP", msg.Name);
+        Assert.Equal("LCP", msg.MetricName);
         Assert.Equal(2.5, msg.Value);
-        Assert.Single(msg.Tags!);
+        Assert.Equal(MetricKind.Gauge, msg.Kind);
+        Assert.Single(msg.Attributes!);
     }
 
     [Fact]
-    public void MetricsMessage_NullableTagsAllowed()
+    public void MetricsMessage_NullableAttributesAllowed()
     {
-        var msg = new MetricsMessage(
-            SessionSecureId: "sess-1",
-            Name: "request_duration",
-            Value: 150.0,
-            Category: null,
-            Timestamp: DateTime.UtcNow,
-            Tags: null);
+        var msg = Gauge("sess-1", "request_duration", 150.0, null, tags: null);
 
-        Assert.Null(msg.Tags);
-        Assert.Null(msg.Category);
+        Assert.Null(msg.Attributes);
+        Assert.Equal(string.Empty, msg.MetricDescription);
     }
 
     [Fact]
-    public void MetricsMessage_ZeroValue()
+    public void MetricsMessage_ZeroValue() =>
+        Assert.Equal(0.0, Gauge(value: 0.0).Value);
+
+    [Fact]
+    public void MetricsMessage_NegativeValue() =>
+        Assert.Equal(-100.50, Gauge(value: -100.50).Value);
+
+    [Fact]
+    public void MetricsMessage_PositiveInfinity() =>
+        Assert.Equal(double.PositiveInfinity, Gauge(value: double.PositiveInfinity).Value);
+
+    [Fact]
+    public void MetricsMessage_NaN() =>
+        Assert.True(double.IsNaN(Gauge(value: double.NaN).Value));
+
+    [Fact]
+    public void MetricsMessage_EmptyAttributes()
     {
-        var msg = new MetricsMessage("s", "counter", 0.0, null, DateTime.UtcNow, null);
-        Assert.Equal(0.0, msg.Value);
+        var msg = Gauge(tags: new Dictionary<string, string>());
+        Assert.NotNull(msg.Attributes);
+        Assert.Empty(msg.Attributes!);
     }
 
     [Fact]
-    public void MetricsMessage_NegativeValue()
-    {
-        var msg = new MetricsMessage("s", "balance", -100.50, null, DateTime.UtcNow, null);
-        Assert.Equal(-100.50, msg.Value);
-    }
-
-    [Fact]
-    public void MetricsMessage_PositiveInfinity()
-    {
-        var msg = new MetricsMessage("s", "infinity", double.PositiveInfinity, null, DateTime.UtcNow, null);
-        Assert.Equal(double.PositiveInfinity, msg.Value);
-    }
-
-    [Fact]
-    public void MetricsMessage_NaN()
-    {
-        var msg = new MetricsMessage("s", "nan", double.NaN, null, DateTime.UtcNow, null);
-        Assert.True(double.IsNaN(msg.Value));
-    }
-
-    [Fact]
-    public void MetricsMessage_EmptyTags()
-    {
-        var msg = new MetricsMessage("s", "m", 1.0, null, DateTime.UtcNow,
-            new Dictionary<string, string>());
-        Assert.NotNull(msg.Tags);
-        Assert.Empty(msg.Tags!);
-    }
-
-    [Fact]
-    public void MetricsMessage_ManyTags()
+    public void MetricsMessage_ManyAttributes()
     {
         var tags = Enumerable.Range(0, 100)
             .ToDictionary(i => $"key{i}", i => $"val{i}");
-
-        var msg = new MetricsMessage("s", "m", 1.0, null, DateTime.UtcNow, tags);
-        Assert.Equal(100, msg.Tags!.Count);
+        var msg = Gauge(tags: tags);
+        Assert.Equal(100, msg.Attributes!.Count);
     }
 
     [Fact]
-    public void MetricsMessage_MinDateTimestamp()
-    {
-        var msg = new MetricsMessage("s", "m", 1.0, null, DateTime.MinValue, null);
-        Assert.Equal(DateTime.MinValue, msg.Timestamp);
-    }
+    public void MetricsMessage_MinDateTimestamp() =>
+        Assert.Equal(DateTime.MinValue, Gauge(timestamp: DateTime.MinValue).Timestamp);
 
     [Fact]
-    public void MetricsMessage_MaxDateTimestamp()
-    {
-        var msg = new MetricsMessage("s", "m", 1.0, null, DateTime.MaxValue, null);
-        Assert.Equal(DateTime.MaxValue, msg.Timestamp);
-    }
+    public void MetricsMessage_MaxDateTimestamp() =>
+        Assert.Equal(DateTime.MaxValue, Gauge(timestamp: DateTime.MaxValue).Timestamp);
 
     [Fact]
     public void MetricsMessage_RecordEquality()
     {
         var ts = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-        var msg1 = new MetricsMessage("s", "m", 1.0, "c", ts, null);
-        var msg2 = new MetricsMessage("s", "m", 1.0, "c", ts, null);
-        Assert.Equal(msg1, msg2);
+        Assert.Equal(Gauge("s", "m", 1.0, "c", ts), Gauge("s", "m", 1.0, "c", ts));
     }
 
     [Fact]
     public void MetricsMessage_RecordInequality_DifferentValue()
     {
         var ts = DateTime.UtcNow;
-        var msg1 = new MetricsMessage("s", "m", 1.0, null, ts, null);
-        var msg2 = new MetricsMessage("s", "m", 2.0, null, ts, null);
-        Assert.NotEqual(msg1, msg2);
+        Assert.NotEqual(Gauge("s", "m", 1.0, null, ts), Gauge("s", "m", 2.0, null, ts));
     }
 }

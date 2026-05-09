@@ -623,7 +623,7 @@ public class PrivateQueryExtendedTests : IDisposable
         { LastCalledMethod = nameof(GetEventsKeysAsync); return Task.FromResult(new List<QueryKey>()); }
         public Task<List<string>> GetEventsKeyValuesAsync(int projectId, string keyName, DateTime startDate, DateTime endDate, string? query, int? count, string? eventName, CancellationToken ct)
         { LastCalledMethod = nameof(GetEventsKeyValuesAsync); return Task.FromResult(new List<string>()); }
-        public Task WriteMetricAsync(int projectId, string metricName, double metricValue, string? category, DateTime timestamp, Dictionary<string, string>? tags, string? sessionSecureId, CancellationToken ct)
+        public Task WriteMetricAsync(MetricRowInput row, CancellationToken ct = default)
         { LastCalledMethod = nameof(WriteMetricAsync); return Task.CompletedTask; }
         public Task WriteLogsAsync(IEnumerable<LogRowInput> logs, CancellationToken ct)
         { LastCalledMethod = nameof(WriteLogsAsync); return Task.CompletedTask; }

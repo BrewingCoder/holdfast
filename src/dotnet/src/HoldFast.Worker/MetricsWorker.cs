@@ -1,4 +1,5 @@
 using HoldFast.Analytics;
+using HoldFast.Analytics.Models;
 using HoldFast.Shared.Kafka;
 using HoldFast.Shared.Messaging;
 using Microsoft.Extensions.DependencyInjection;
@@ -9,29 +10,68 @@ using Microsoft.Extensions.Options;
 namespace HoldFast.Worker;
 
 /// <summary>
-/// Kafka message for custom metrics pushed by SDKs.
-///
-/// Shape mirrors <see cref="HoldFast.GraphQL.Public.InputTypes.MetricInput"/>
-/// so the in-process bus's JSON round-trip preserves the producer's payload.
-/// Tags are an array of {Name, Value} objects on the wire — the consumer
-/// flattens them to a Dictionary at the analytics-store boundary.
+/// Kafka message for OTeL-ingested metric data points. Shape matches the
+/// OTeL spec's NumberDataPoint / HistogramDataPoint envelopes — the
+/// metrics_sum / metrics_histogram tables are populated directly from
+/// these fields.
 /// </summary>
 public record MetricsMessage(
-    string SessionSecureId,
-    string? SpanId,
-    string? ParentSpanId,
-    string? TraceId,
-    string? Group,
-    string Name,
-    double Value,
-    string? Category,
+    int ProjectId,
+    string ServiceName,
+    string MetricName,
+    string MetricDescription,
+    string MetricUnit,
+    MetricKind Kind,
+    DateTime StartTimestamp,
     DateTime Timestamp,
-    List<MetricTagPair>? Tags);
-
-/// <summary>
-/// On-the-wire shape of a MetricInput tag — matches MetricInput.Tags.
-/// </summary>
-public record MetricTagPair(string Name, string Value);
+    Dictionary<string, string>? Attributes,
+    string SecureSessionId,
+    // Sum / Gauge
+    double Value,
+    int AggregationTemporality,
+    bool IsMonotonic,
+    // Histogram
+    ulong Count,
+    double Sum,
+    List<ulong>? BucketCounts,
+    List<double>? ExplicitBounds,
+    double Min,
+    double Max)
+{
+    /// <summary>
+    /// Build a Gauge-shaped message from the legacy SDK-push narrow form
+    /// (sessionId, name, value, category, ts, tags). Used by tests and by
+    /// any caller that still has the old positional shape on hand. The
+    /// category survives the round-trip so existing assertions keep working.
+    /// </summary>
+    public static MetricsMessage ForGauge(
+        string sessionSecureId,
+        string name,
+        double value,
+        string? category,
+        DateTime timestamp,
+        Dictionary<string, string>? tags) =>
+        new(
+            ProjectId: 0,
+            ServiceName: string.Empty,
+            MetricName: name,
+            MetricDescription: category ?? string.Empty,
+            MetricUnit: string.Empty,
+            Kind: MetricKind.Gauge,
+            StartTimestamp: timestamp,
+            Timestamp: timestamp,
+            Attributes: tags,
+            SecureSessionId: sessionSecureId,
+            Value: value,
+            AggregationTemporality: 0,
+            IsMonotonic: false,
+            Count: 0UL,
+            Sum: 0.0,
+            BucketCounts: null,
+            ExplicitBounds: null,
+            Min: 0.0,
+            Max: 0.0);
+}
 
 /// <summary>
 /// Consumes metrics from Kafka and writes to ClickHouse.
@@ -54,35 +94,36 @@ public class MetricsConsumer : MessageConsumerBase<MetricsMessage>
 
     protected override async Task ProcessAsync(string key, MetricsMessage value, CancellationToken ct)
     {
-        _logger.LogDebug("Processing metric: {Name} = {Value}", value.Name, value.Value);
+        _logger.LogDebug("Processing metric: {Name} ({Kind}) = {Value}",
+            value.MetricName, value.Kind, value.Value);
 
         using var scope = _scopeFactory.CreateScope();
         var metricStore = scope.ServiceProvider.GetRequiredService<IMetricStore>();
 
-        // Resolve project ID from session (if available) — for now, use 0 as fallback
-        // Full session lookup will be wired in Phase 3
-        var projectId = 0;
-
-        // MetricInput.Tags arrives as List<{Name, Value}> over the wire.
-        // The IMetricStore expects Dictionary<string, string>; flatten here,
-        // taking the last-wins value if a tag name repeats.
-        Dictionary<string, string>? tagDict = null;
-        if (value.Tags is { Count: > 0 })
+        var row = new MetricRowInput
         {
-            tagDict = new Dictionary<string, string>();
-            foreach (var tag in value.Tags)
-                tagDict[tag.Name] = tag.Value;
-        }
+            ProjectId = value.ProjectId,
+            ServiceName = value.ServiceName,
+            MetricName = value.MetricName,
+            MetricDescription = value.MetricDescription,
+            MetricUnit = value.MetricUnit,
+            Kind = value.Kind,
+            StartTimestamp = value.StartTimestamp,
+            Timestamp = value.Timestamp,
+            Attributes = value.Attributes ?? new Dictionary<string, string>(),
+            SecureSessionId = value.SecureSessionId,
+            Value = value.Value,
+            AggregationTemporality = value.AggregationTemporality,
+            IsMonotonic = value.IsMonotonic,
+            Count = value.Count,
+            Sum = value.Sum,
+            BucketCounts = value.BucketCounts ?? new List<ulong>(),
+            ExplicitBounds = value.ExplicitBounds ?? new List<double>(),
+            Min = value.Min,
+            Max = value.Max,
+        };
 
-        await metricStore.WriteMetricAsync(
-            projectId,
-            value.Name,
-            value.Value,
-            value.Category,
-            value.Timestamp,
-            tagDict,
-            value.SessionSecureId,
-            ct);
+        await metricStore.WriteMetricAsync(row, ct);
     }
 }
 

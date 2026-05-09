@@ -191,12 +191,21 @@ public sealed class PostgresMetricStore : IMetricStore
         return new MetricsBuckets { Buckets = buckets, TotalCount = total };
     }
 
-    public async Task WriteMetricAsync(
-        int projectId, string metricName, double metricValue,
-        string? category, DateTime timestamp,
-        Dictionary<string, string>? tags, string? sessionSecureId,
-        CancellationToken ct = default)
+    public async Task WriteMetricAsync(MetricRowInput row, CancellationToken ct = default)
     {
+        // Postgres flattens the OTeL-shaped row to a single (name, value, tags)
+        // record. For Histogram/Summary kinds the bucket detail is collapsed
+        // into the value field — we land Sum (the total) so dashboards still
+        // get a usable number. ExplicitBounds and BucketCounts aren't kept on
+        // PG today (no equivalent column); HOL-44 covers richer histogram
+        // support if we ever need percentile queries on the PG backend.
+        var value = row.Kind switch
+        {
+            MetricKind.Histogram or MetricKind.ExponentialHistogram or MetricKind.Summary
+                => row.Sum,
+            _ => row.Value,
+        };
+
         const string sql = @"
             INSERT INTO analytics.metrics (
                 timestamp, project_id, metric_name, metric_value,
@@ -205,14 +214,14 @@ public sealed class PostgresMetricStore : IMetricStore
 
         await using var conn = await OpenAsync(ct);
         await using var cmd = new NpgsqlCommand(sql, conn);
-        cmd.Parameters.AddWithValue("ts", NpgsqlDbType.TimestampTz, timestamp);
-        cmd.Parameters.AddWithValue("projectId", projectId);
-        cmd.Parameters.AddWithValue("name", metricName ?? "");
-        cmd.Parameters.AddWithValue("value", metricValue);
-        cmd.Parameters.AddWithValue("category", category ?? "");
+        cmd.Parameters.AddWithValue("ts", NpgsqlDbType.TimestampTz, row.Timestamp);
+        cmd.Parameters.AddWithValue("projectId", row.ProjectId);
+        cmd.Parameters.AddWithValue("name", row.MetricName);
+        cmd.Parameters.AddWithValue("value", value);
+        cmd.Parameters.AddWithValue("category", row.Kind.ToString());
         cmd.Parameters.AddWithValue("tags", NpgsqlDbType.Jsonb,
-            JsonSerializer.Serialize(tags ?? new Dictionary<string, string>()));
-        cmd.Parameters.AddWithValue("sessionId", sessionSecureId ?? "");
+            JsonSerializer.Serialize(row.Attributes));
+        cmd.Parameters.AddWithValue("sessionId", row.SecureSessionId);
         await cmd.ExecuteNonQueryAsync(ct);
     }
 }

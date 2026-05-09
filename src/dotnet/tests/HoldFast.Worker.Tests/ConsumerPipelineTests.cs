@@ -79,11 +79,13 @@ public class ConsumerPipelineTests : IDisposable
             return Task.CompletedTask;
         }
 
-        public Task WriteMetricAsync(int projectId, string metricName, double metricValue,
-            string? category, DateTime timestamp, Dictionary<string, string>? tags,
-            string? sessionSecureId, CancellationToken ct)
+        public Task WriteMetricAsync(MetricRowInput row, CancellationToken ct = default)
         {
-            WrittenMetrics.Add((projectId, metricName, metricValue, category, timestamp, tags, sessionSecureId));
+            // Tests treat empty Attributes as null for back-compat with the
+            // pre-MetricRowInput stub shape.
+            var tags = row.Attributes.Count > 0 ? row.Attributes : null;
+            var desc = string.IsNullOrEmpty(row.MetricDescription) ? null : row.MetricDescription;
+            WrittenMetrics.Add((row.ProjectId, row.MetricName, row.Value, desc, row.Timestamp, tags, row.SecureSessionId));
             return Task.CompletedTask;
         }
 
@@ -379,19 +381,28 @@ public class ConsumerPipelineTests : IDisposable
             ["host"] = "web-01",
             ["region"] = "us-east-1",
         };
-        var msg = new MetricsMessage("sess-abc", "cpu.usage", 78.5, "system", ts, tags);
+        var msg = MetricsMessage.ForGauge("sess-abc", "cpu.usage", 78.5, "system", ts, tags);
 
         // Simulate MetricsConsumer's ProcessAsync (uses projectId=0 currently)
-        await _clickHouse.WriteMetricAsync(
-            0, msg.Name, msg.Value, msg.Category,
-            msg.Timestamp, msg.Tags, msg.SessionSecureId,
-            CancellationToken.None);
+        await _clickHouse.WriteMetricAsync(new MetricRowInput
+        {
+            ProjectId = 0,
+            MetricName = msg.MetricName,
+            Value = msg.Value,
+            MetricDescription = msg.MetricDescription,
+            Timestamp = msg.Timestamp,
+            Attributes = msg.Attributes ?? new(),
+            SecureSessionId = msg.SecureSessionId,
+        }, CancellationToken.None);
 
         Assert.Single(_clickHouse.WrittenMetrics);
         var (projId, name, val, cat, timestamp, writtenTags, sessId) = _clickHouse.WrittenMetrics[0];
         Assert.Equal(0, projId); // consumer uses 0 as fallback currently
         Assert.Equal("cpu.usage", name);
         Assert.Equal(78.5, val);
+        // The recording stub maps row.MetricDescription onto the legacy
+        // Category tuple slot — ForGauge stuffed "system" into MetricDescription
+        // so the test still sees it.
         Assert.Equal("system", cat);
         Assert.Equal(ts, timestamp);
         Assert.Equal(2, writtenTags!.Count);
@@ -401,12 +412,16 @@ public class ConsumerPipelineTests : IDisposable
     [Fact]
     public async Task Metrics_NullCategoryAndTags()
     {
-        var msg = new MetricsMessage("sess", "latency", 12.3, null, DateTime.UtcNow, null);
+        var msg = MetricsMessage.ForGauge("sess", "latency", 12.3, null, DateTime.UtcNow, null);
 
-        await _clickHouse.WriteMetricAsync(
-            0, msg.Name, msg.Value, msg.Category,
-            msg.Timestamp, msg.Tags, msg.SessionSecureId,
-            CancellationToken.None);
+        await _clickHouse.WriteMetricAsync(new MetricRowInput
+        {
+            ProjectId = 0,
+            MetricName = msg.MetricName,
+            Value = msg.Value,
+            Timestamp = msg.Timestamp,
+            SecureSessionId = msg.SecureSessionId,
+        }, CancellationToken.None);
 
         var written = _clickHouse.WrittenMetrics[0];
         Assert.Null(written.Category);
@@ -416,10 +431,13 @@ public class ConsumerPipelineTests : IDisposable
     [Fact]
     public async Task Metrics_ZeroValue()
     {
-        await _clickHouse.WriteMetricAsync(
-            0, "counter.reset", 0.0, "counter",
-            DateTime.UtcNow, null, "sess",
-            CancellationToken.None);
+        await _clickHouse.WriteMetricAsync(new MetricRowInput
+        {
+            MetricName = "counter.reset",
+            Value = 0.0,
+            Timestamp = DateTime.UtcNow,
+            SecureSessionId = "sess",
+        }, CancellationToken.None);
 
         Assert.Equal(0.0, _clickHouse.WrittenMetrics[0].Value);
     }
@@ -427,10 +445,13 @@ public class ConsumerPipelineTests : IDisposable
     [Fact]
     public async Task Metrics_NegativeValue()
     {
-        await _clickHouse.WriteMetricAsync(
-            0, "temperature", -40.5, "environment",
-            DateTime.UtcNow, null, "sess",
-            CancellationToken.None);
+        await _clickHouse.WriteMetricAsync(new MetricRowInput
+        {
+            MetricName = "temperature",
+            Value = -40.5,
+            Timestamp = DateTime.UtcNow,
+            SecureSessionId = "sess",
+        }, CancellationToken.None);
 
         Assert.Equal(-40.5, _clickHouse.WrittenMetrics[0].Value);
     }
@@ -440,10 +461,14 @@ public class ConsumerPipelineTests : IDisposable
     {
         for (int i = 0; i < 10; i++)
         {
-            await _clickHouse.WriteMetricAsync(
-                _project.Id, $"metric_{i}", i * 1.5, "batch",
-                DateTime.UtcNow, null, "sess",
-                CancellationToken.None);
+            await _clickHouse.WriteMetricAsync(new MetricRowInput
+            {
+                ProjectId = _project.Id,
+                MetricName = $"metric_{i}",
+                Value = i * 1.5,
+                Timestamp = DateTime.UtcNow,
+                SecureSessionId = "sess",
+            }, CancellationToken.None);
         }
 
         Assert.Equal(10, _clickHouse.WrittenMetrics.Count);

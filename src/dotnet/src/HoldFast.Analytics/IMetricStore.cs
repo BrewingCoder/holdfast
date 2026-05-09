@@ -16,13 +16,11 @@ public interface IMetricStore
         string? column,
         CancellationToken ct = default);
 
-    Task WriteMetricAsync(
-        int projectId,
-        string metricName,
-        double metricValue,
-        string? category,
-        DateTime timestamp,
-        Dictionary<string, string>? tags,
-        string? sessionSecureId,
-        CancellationToken ct = default);
+    /// <summary>
+    /// Writes a metric data point. Stores choose the destination table from
+    /// <see cref="MetricRowInput.Kind"/>: Sum/Gauge → metrics_sum,
+    /// Histogram → metrics_histogram, Summary → metrics_summary on the
+    /// ClickHouse side. The Postgres store flattens to a single table.
+    /// </summary>
+    Task WriteMetricAsync(MetricRowInput row, CancellationToken ct = default);
 }
