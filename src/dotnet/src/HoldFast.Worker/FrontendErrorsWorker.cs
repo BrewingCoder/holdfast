@@ -5,6 +5,7 @@ using HoldFast.Data.ClickHouse.Models;
 using HoldFast.Shared.AlertEvaluation;
 using HoldFast.Shared.ErrorGrouping;
 using HoldFast.Shared.Kafka;
+using HoldFast.Shared.Messaging;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -41,16 +42,16 @@ public record FrontendErrorMessage(
 /// IErrorGroupingService. Mirrors how ErrorGroupingConsumer handles backend
 /// errors, but resolves projectId via the session.
 /// </summary>
-public class FrontendErrorsConsumer : KafkaConsumerService<FrontendErrorMessage>
+public class FrontendErrorsConsumer : MessageConsumerBase<FrontendErrorMessage>
 {
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<FrontendErrorsConsumer> _logger;
 
     public FrontendErrorsConsumer(
-        IOptions<KafkaOptions> options,
+        IMessageBus bus,
         IServiceScopeFactory scopeFactory,
         ILogger<FrontendErrorsConsumer> logger)
-        : base(options, KafkaTopics.FrontendErrors, "frontend-errors-worker", logger)
+        : base(bus, KafkaTopics.FrontendErrors, "frontend-errors-worker", logger)
     {
         _scopeFactory = scopeFactory;
         _logger = logger;

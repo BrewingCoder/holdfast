@@ -26,8 +26,6 @@ fi
 if [[ "$*" == *"--go-docker"* ]]; then
     export CLICKHOUSE_ADDRESS=clickhouse:9000
     export IN_DOCKER_GO=true
-    export KAFKA_ADVERTISED_LISTENERS="PLAINTEXT://kafka:9092"
-    export KAFKA_SERVERS=kafka:9092
     export ON_PREM=true
     # HOL-21: collector container removed; backend hosts the OTLP receiver.
     export OTLP_DOGFOOD_ENDPOINT=http://backend:8082/otel
@@ -36,8 +34,6 @@ if [[ "$*" == *"--go-docker"* ]]; then
     echo "Using docker-internal infra."
 else
     export CLICKHOUSE_ADDRESS=localhost:9000
-    export KAFKA_ADVERTISED_LISTENERS="PLAINTEXT://localhost:9092"
-    export KAFKA_SERVERS=localhost:9092
     export OTLP_DOGFOOD_ENDPOINT=http://localhost:8082/otel
     export OTLP_ENDPOINT=http://localhost:8082/otel
     export PSQL_HOST=localhost

@@ -1,6 +1,7 @@
 using HoldFast.Data.ClickHouse;
 using HoldFast.Data.ClickHouse.Models;
 using HoldFast.Shared.Kafka;
+using HoldFast.Shared.Messaging;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -32,16 +33,16 @@ public record TraceIngestionMessage(
 /// <summary>
 /// Consumes trace spans from Kafka and writes to ClickHouse.
 /// </summary>
-public class TraceIngestionConsumer : KafkaConsumerService<TraceIngestionMessage>
+public class TraceIngestionConsumer : MessageConsumerBase<TraceIngestionMessage>
 {
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<TraceIngestionConsumer> _logger;
 
     public TraceIngestionConsumer(
-        IOptions<KafkaOptions> options,
+        IMessageBus bus,
         IServiceScopeFactory scopeFactory,
         ILogger<TraceIngestionConsumer> logger)
-        : base(options, KafkaTopics.Traces, "trace-ingestion-worker", logger)
+        : base(bus, KafkaTopics.Traces, "trace-ingestion-worker", logger)
     {
         _scopeFactory = scopeFactory;
         _logger = logger;

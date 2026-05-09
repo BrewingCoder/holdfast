@@ -1,17 +1,21 @@
 using System.Text.Json;
 using HoldFast.GraphQL.Public.InputTypes;
 using HoldFast.Shared.Kafka;
+using HoldFast.Shared.Messaging;
 
 namespace HoldFast.GraphQL.Public;
 
 /// <summary>
-/// Implements IKafkaProducer by forwarding to the shared KafkaProducerService.
+/// Implements IKafkaProducer by forwarding to the shared <see cref="IMessageBus"/>.
+/// (HOL-23: the bus is now an in-process Channel-backed implementation by default,
+/// not Confluent.Kafka. The class name is kept for now to keep the diff narrow —
+/// rename pending in a follow-up.)
 /// </summary>
 public class KafkaProducerAdapter : IKafkaProducer
 {
-    private readonly KafkaProducerService _producer;
+    private readonly IMessageBus _producer;
 
-    public KafkaProducerAdapter(KafkaProducerService producer)
+    public KafkaProducerAdapter(IMessageBus producer)
     {
         _producer = producer;
     }
@@ -19,7 +23,7 @@ public class KafkaProducerAdapter : IKafkaProducer
     public Task ProduceSessionEventsAsync(string sessionSecureId, long payloadId, string data, CancellationToken ct)
     {
         var message = new { SessionSecureId = sessionSecureId, PayloadId = payloadId, Data = data };
-        return _producer.ProduceAsync(KafkaTopics.SessionEvents, sessionSecureId, message, ct);
+        return _producer.PublishAsync(KafkaTopics.SessionEvents, sessionSecureId, message, ct);
     }
 
     public async Task ProducePushPayloadAsync(string sessionSecureId, long payloadId, string events,
@@ -37,7 +41,7 @@ public class KafkaProducerAdapter : IKafkaProducer
             PayloadId = payloadId,
             Data = events,
         };
-        await _producer.ProduceAsync(KafkaTopics.SessionEvents, sessionSecureId, sessionMsg, ct);
+        await _producer.PublishAsync(KafkaTopics.SessionEvents, sessionSecureId, sessionMsg, ct);
 
         // Each frontend error → FrontendErrors topic so FrontendErrorsConsumer can
         // group them into ClickHouse error_objects. Errors are dropped on the
@@ -58,7 +62,7 @@ public class KafkaProducerAdapter : IKafkaProducer
                 Timestamp = err.Timestamp,
                 Payload = err.Payload,
             };
-            await _producer.ProduceAsync(KafkaTopics.FrontendErrors, sessionSecureId, frontendMsg, ct);
+            await _producer.PublishAsync(KafkaTopics.FrontendErrors, sessionSecureId, frontendMsg, ct);
         }
 
         // _ = messages; _ = resources; _ = webSocketEvents; _ = isBeacon;
@@ -71,21 +75,21 @@ public class KafkaProducerAdapter : IKafkaProducer
 
     public Task ProduceBackendErrorAsync(string? projectId, BackendErrorObjectInput error, CancellationToken ct)
     {
-        return _producer.ProduceAsync(KafkaTopics.BackendErrors, projectId ?? "unknown", error, ct);
+        return _producer.PublishAsync(KafkaTopics.BackendErrors, projectId ?? "unknown", error, ct);
     }
 
     public Task ProduceMetricAsync(MetricInput metric, CancellationToken ct)
     {
-        return _producer.ProduceAsync(KafkaTopics.Metrics, metric.SessionSecureId, metric, ct);
+        return _producer.PublishAsync(KafkaTopics.Metrics, metric.SessionSecureId, metric, ct);
     }
 
     public Task ProduceLogAsync(LogInput log, CancellationToken ct)
     {
-        return _producer.ProduceAsync(KafkaTopics.Logs, log.TraceId, log, ct);
+        return _producer.PublishAsync(KafkaTopics.Logs, log.TraceId, log, ct);
     }
 
     public Task ProduceTraceAsync(TraceInput trace, CancellationToken ct)
     {
-        return _producer.ProduceAsync(KafkaTopics.Traces, trace.TraceId, trace, ct);
+        return _producer.PublishAsync(KafkaTopics.Traces, trace.TraceId, trace, ct);
     }
 }
