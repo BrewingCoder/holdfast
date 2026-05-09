@@ -162,6 +162,8 @@ if (runtime.IsWorker())
     builder.Services.AddHostedService<SessionEventsWorker>();
     builder.Services.AddSingleton<ErrorGroupingConsumer>();
     builder.Services.AddHostedService<ErrorGroupingWorker>();
+    builder.Services.AddSingleton<FrontendErrorsConsumer>();
+    builder.Services.AddHostedService<FrontendErrorsWorker>();
     builder.Services.AddSingleton<MetricsConsumer>();
     builder.Services.AddHostedService<MetricsWorker>();
     builder.Services.AddSingleton<LogIngestionConsumer>();
