@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using HoldFast.Shared.Kafka;
+using HoldFast.Shared.Messaging;
 using Xunit;
 
 namespace HoldFast.Worker.Tests;
@@ -39,7 +40,7 @@ public class ConsumerProcessAsyncTests : IDisposable
     private class TestableMetricsConsumer : MetricsConsumer
     {
         public TestableMetricsConsumer(IServiceScopeFactory sf)
-            : base(Options.Create(new KafkaOptions { BootstrapServers = "test:9092" }),
+            : base(new InProcessMessageBus(NullLogger<InProcessMessageBus>.Instance),
                    sf, NullLogger<MetricsConsumer>.Instance) { }
 
         public new Task ProcessAsync(string key, MetricsMessage value, CancellationToken ct)
@@ -117,7 +118,7 @@ public class ConsumerProcessAsyncTests : IDisposable
     private class TestableLogConsumer : LogIngestionConsumer
     {
         public TestableLogConsumer(IServiceScopeFactory sf)
-            : base(Options.Create(new KafkaOptions { BootstrapServers = "test:9092" }),
+            : base(new InProcessMessageBus(NullLogger<InProcessMessageBus>.Instance),
                    sf, NullLogger<LogIngestionConsumer>.Instance) { }
 
         public new Task ProcessAsync(string key, LogIngestionMessage value, CancellationToken ct)
@@ -193,7 +194,7 @@ public class ConsumerProcessAsyncTests : IDisposable
     private class TestableTraceConsumer : TraceIngestionConsumer
     {
         public TestableTraceConsumer(IServiceScopeFactory sf)
-            : base(Options.Create(new KafkaOptions { BootstrapServers = "test:9092" }),
+            : base(new InProcessMessageBus(NullLogger<InProcessMessageBus>.Instance),
                    sf, NullLogger<TraceIngestionConsumer>.Instance) { }
 
         public new Task ProcessAsync(string key, TraceIngestionMessage value, CancellationToken ct)

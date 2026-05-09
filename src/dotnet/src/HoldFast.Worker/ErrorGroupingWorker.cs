@@ -3,6 +3,7 @@ using HoldFast.Domain.Entities;
 using HoldFast.Shared.AlertEvaluation;
 using HoldFast.Shared.ErrorGrouping;
 using HoldFast.Shared.Kafka;
+using HoldFast.Shared.Messaging;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -34,16 +35,16 @@ public record BackendErrorMessage(
 /// Consumes backend errors from Kafka, groups them, and stores to database.
 /// Replaces the Go worker's processBackendPayloadImpl handler.
 /// </summary>
-public class ErrorGroupingConsumer : KafkaConsumerService<BackendErrorMessage>
+public class ErrorGroupingConsumer : MessageConsumerBase<BackendErrorMessage>
 {
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<ErrorGroupingConsumer> _logger;
 
     public ErrorGroupingConsumer(
-        IOptions<KafkaOptions> options,
+        IMessageBus bus,
         IServiceScopeFactory scopeFactory,
         ILogger<ErrorGroupingConsumer> logger)
-        : base(options, KafkaTopics.BackendErrors, "error-grouping-worker", logger)
+        : base(bus, KafkaTopics.BackendErrors, "error-grouping-worker", logger)
     {
         _scopeFactory = scopeFactory;
         _logger = logger;

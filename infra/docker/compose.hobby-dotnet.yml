@@ -21,7 +21,6 @@ services:
             - ClickHouse__Password=${CLICKHOUSE_PASSWORD:-}
             - ClickHouse__Migrations__Path=/app/clickhouse-migrations
             - ClickHouse__Migrations__Disabled=${CLICKHOUSE_MIGRATIONS_DISABLED:-false}
-            - Kafka__BootstrapServers=${KAFKA_SERVERS:-kafka:9092}
             - Storage__Type=filesystem
             - Storage__FilesystemRoot=/highlight-data
             - Frontend__Uri=${REACT_APP_FRONTEND_URI:-http://localhost:3000}

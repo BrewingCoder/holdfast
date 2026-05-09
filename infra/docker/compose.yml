@@ -3,43 +3,10 @@ x-local-logging: &local-logging
 
 # HoldFast services for the development deployment.
 services:
-    zookeeper:
-        logging: *local-logging
-        image: ${ZOOKEEPER_IMAGE_NAME}
-        container_name: zookeeper
-        restart: on-failure
-        volumes:
-            - zoo-data:/var/lib/zookeeper/data
-            - zoo-log:/var/lib/zookeeper/log
-        environment:
-            ZOOKEEPER_CLIENT_PORT: 2181
-            ZOOKEEPER_TICK_TIME: 2000
-
-    kafka:
-        logging: *local-logging
-        image: ${KAFKA_IMAGE_NAME}
-        container_name: kafka
-        volumes:
-            - kafka-data:/var/lib/kafka/data
-        ports:
-            - '0.0.0.0:9092:9092'
-        restart: on-failure
-        depends_on:
-            - zookeeper
-        environment:
-            KAFKA_ADVERTISED_LISTENERS: ${KAFKA_ADVERTISED_LISTENERS}
-            KAFKA_BROKER_ID: 1
-            KAFKA_CONSUMER_MAX_PARTITION_FETCH_BYTES: 268435456
-            KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT
-            KAFKA_LOG_RETENTION_HOURS: 1
-            KAFKA_LOG_SEGMENT_BYTES: 268435456
-            KAFKA_MESSAGE_MAX_BYTES: 268435456
-            KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-            KAFKA_PRODUCER_MAX_REQUEST_SIZE: 268435456
-            KAFKA_REPLICA_FETCH_MAX_BYTES: 268435456
-            KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
-            KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
-            KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+    # Kafka + Zookeeper removed in HOL-23 — backend uses an in-process
+    # Channel-backed message bus (HoldFast.Shared.Messaging.InProcessMessageBus).
+    # Producers and consumers live in the same .NET host (all-in-one runtime
+    # mode), so no broker is required at hobby/lean self-hosted scale.
 
     # Redis removed in HOL-22 — RedisService was registered in DI but no
     # code path actually injected it. Self-hosted scale doesn't need a
@@ -88,6 +55,3 @@ volumes:
     postgres-data:
     clickhouse-data:
     clickhouse-logs:
-    kafka-data:
-    zoo-log:
-    zoo-data:

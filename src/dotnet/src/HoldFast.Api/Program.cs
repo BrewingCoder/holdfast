@@ -10,6 +10,7 @@ using HoldFast.Shared.Auth;
 using HoldFast.Shared.Notifications;
 using HoldFast.Shared.ErrorGrouping;
 using HoldFast.Shared.Kafka;
+using HoldFast.Shared.Messaging;
 using HoldFast.Shared.Runtime;
 using HoldFast.Shared.SessionProcessing;
 using HoldFast.Storage;
@@ -137,19 +138,14 @@ builder.Services.AddSingleton<IAuthService>(sp =>
 });
 builder.Services.AddScoped<IAuthorizationService, AuthorizationService>();
 
-// ── Kafka ─────────────────────────────────────────────────────────────
-builder.Services.Configure<KafkaOptions>(
-    builder.Configuration.GetSection("Kafka"));
-builder.Services.AddSingleton<KafkaProducerService>();
+// ── Message bus ──────────────────────────────────────────────────────
+// HOL-23: in-process Channel<T>-backed bus replaces Kafka for hobby/lean
+// self-hosted deployments. Producer and consumers both run in the same
+// .NET host (all-in-one runtime mode); see HoldFast.Shared.Messaging.
+// To run the worker in a separate process from the API, swap in a
+// Kafka-backed IMessageBus implementation that honors the same shape.
+builder.Services.AddSingleton<IMessageBus, InProcessMessageBus>();
 builder.Services.AddSingleton<IKafkaProducer, KafkaProducerAdapter>();
-
-// Topic bootstrap — pre-create required topics so consumers don't crash on
-// subscribe (Confluent.Kafka auto-create only triggers on producer writes).
-// Disable via Kafka__TopicBootstrap__Disabled=true when topics are managed
-// externally (Strimzi KafkaTopic resources, Helm pre-jobs, etc).
-builder.Services.Configure<KafkaTopicBootstrapOptions>(
-    builder.Configuration.GetSection("Kafka:TopicBootstrap"));
-builder.Services.AddHostedService<KafkaTopicBootstrapService>();
 
 // ── ClickHouse ────────────────────────────────────────────────────────
 builder.Services.Configure<ClickHouseOptions>(

@@ -1,6 +1,7 @@
 using HoldFast.Data.ClickHouse;
 using HoldFast.Data.ClickHouse.Models;
 using HoldFast.Shared.Kafka;
+using HoldFast.Shared.Messaging;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -29,16 +30,16 @@ public record LogIngestionMessage(
 /// <summary>
 /// Consumes log rows from Kafka and writes to ClickHouse.
 /// </summary>
-public class LogIngestionConsumer : KafkaConsumerService<LogIngestionMessage>
+public class LogIngestionConsumer : MessageConsumerBase<LogIngestionMessage>
 {
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<LogIngestionConsumer> _logger;
 
     public LogIngestionConsumer(
-        IOptions<KafkaOptions> options,
+        IMessageBus bus,
         IServiceScopeFactory scopeFactory,
         ILogger<LogIngestionConsumer> logger)
-        : base(options, KafkaTopics.Logs, "log-ingestion-worker", logger)
+        : base(bus, KafkaTopics.Logs, "log-ingestion-worker", logger)
     {
         _scopeFactory = scopeFactory;
         _logger = logger;

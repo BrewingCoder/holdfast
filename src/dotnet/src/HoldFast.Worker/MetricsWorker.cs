@@ -1,5 +1,6 @@
 using HoldFast.Data.ClickHouse;
 using HoldFast.Shared.Kafka;
+using HoldFast.Shared.Messaging;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -22,16 +23,16 @@ public record MetricsMessage(
 /// Consumes metrics from Kafka and writes to ClickHouse.
 /// Replaces the Go worker's pushMetrics handler.
 /// </summary>
-public class MetricsConsumer : KafkaConsumerService<MetricsMessage>
+public class MetricsConsumer : MessageConsumerBase<MetricsMessage>
 {
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<MetricsConsumer> _logger;
 
     public MetricsConsumer(
-        IOptions<KafkaOptions> options,
+        IMessageBus bus,
         IServiceScopeFactory scopeFactory,
         ILogger<MetricsConsumer> logger)
-        : base(options, KafkaTopics.Metrics, "metrics-worker", logger)
+        : base(bus, KafkaTopics.Metrics, "metrics-worker", logger)
     {
         _scopeFactory = scopeFactory;
         _logger = logger;

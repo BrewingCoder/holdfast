@@ -1,4 +1,5 @@
 using HoldFast.Shared.Kafka;
+using HoldFast.Shared.Messaging;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -18,16 +19,16 @@ public record SessionEventsMessage(
 /// Consumes session events from Kafka and processes them.
 /// Replaces the Go worker's processPublicWorkerMessage handler.
 /// </summary>
-public class SessionEventsConsumer : KafkaConsumerService<SessionEventsMessage>
+public class SessionEventsConsumer : MessageConsumerBase<SessionEventsMessage>
 {
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<SessionEventsConsumer> _logger;
 
     public SessionEventsConsumer(
-        IOptions<KafkaOptions> options,
+        IMessageBus bus,
         IServiceScopeFactory scopeFactory,
         ILogger<SessionEventsConsumer> logger)
-        : base(options, KafkaTopics.SessionEvents, "session-events-worker", logger)
+        : base(bus, KafkaTopics.SessionEvents, "session-events-worker", logger)
     {
         _scopeFactory = scopeFactory;
         _logger = logger;
