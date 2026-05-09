@@ -54,10 +54,15 @@
     <background_common_pool_size>4</background_common_pool_size>
     <background_move_pool_size>2</background_move_pool_size>
 
-    <!-- Concurrent-query ceilings — single-tenant, no need for 100. -->
-    <max_concurrent_queries>20</max_concurrent_queries>
-    <max_concurrent_insert_queries>10</max_concurrent_insert_queries>
-    <max_concurrent_select_queries>10</max_concurrent_select_queries>
+    <!-- Concurrent-query ceilings. HOL-35: bumped from 20→50 / 10→25 /
+         10→25 after HOL-29 schema-discovery work hit
+         "Too many simultaneous queries" on simple SHOW CREATE TABLE.
+         The backend's six worker hosted services each keep CH busy with
+         small queries; 20 wasn't enough headroom. 50 is still well below
+         the default of 100 but accommodates the actual concurrency. -->
+    <max_concurrent_queries>50</max_concurrent_queries>
+    <max_concurrent_insert_queries>25</max_concurrent_insert_queries>
+    <max_concurrent_select_queries>25</max_concurrent_select_queries>
 
     <!-- Async metrics collection. Default polls every 1s and keeps a
          heavy 120s rollup; on an idle box that's pure noise. -->

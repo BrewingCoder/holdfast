@@ -15,7 +15,11 @@ services:
     postgres:
         logging: *local-logging
         container_name: postgres
-        # a postgres image with pgvector installed
+        # HOL-35: timescale/timescaledb-ha bundles TimescaleDB + pgvector +
+        # pg_partman, replacing ankane/pgvector. Same PG 16 underneath so
+        # the data volume is drop-in reusable; first start activates the
+        # extra extensions once HOL-26's 0003_install_extensions migration
+        # runs (or analyst opens psql + CREATE EXTENSION manually).
         image: ${POSTGRES_IMAGE_NAME}
         restart: on-failure
         ports:
@@ -23,7 +27,11 @@ services:
         environment:
             POSTGRES_HOST_AUTH_METHOD: trust
         volumes:
-            - postgres-data:/var/lib/postgresql/data
+            # HOL-35: timescale/timescaledb-ha lays out its data dir at
+            # /home/postgres/pgdata/data, not the upstream PG default. If
+            # you swap to a different PG image (e.g. plain postgres:16 or
+            # ankane/pgvector), revert to /var/lib/postgresql/data.
+            - postgres-data:/home/postgres/pgdata/data
             - ../../tools/scripts/migrations/init.sql:/root/init.sql
         healthcheck:
             test: ['CMD-SHELL', 'pg_isready -U postgres']
