@@ -131,6 +131,13 @@ builder.Services.Configure<ClickHouseOptions>(
     builder.Configuration.GetSection("ClickHouse"));
 builder.Services.AddSingleton<IClickHouseService, ClickHouseService>();
 
+// Migration runner — applies src/backend/clickhouse/migrations/*.up.sql at
+// startup, idempotently. Disable via ClickHouse__Migrations__Disabled=true
+// when the schema is managed externally (Helm pre-job, golang-migrate, etc).
+builder.Services.Configure<ClickHouseMigrationOptions>(
+    builder.Configuration.GetSection("ClickHouse:Migrations"));
+builder.Services.AddHostedService<ClickHouseMigrationService>();
+
 // ── Storage ───────────────────────────────────────────────────────────
 builder.Services.Configure<StorageOptions>(
     builder.Configuration.GetSection("Storage"));

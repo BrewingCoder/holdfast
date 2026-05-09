@@ -40,6 +40,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf 
 WORKDIR /app
 COPY --from=build /app .
 
+# ClickHouse migration files — applied at startup by ClickHouseMigrationService.
+# Disable via ClickHouse__Migrations__Disabled=true when the schema is managed
+# externally (e.g. golang-migrate run by a Helm pre-job).
+COPY src/backend/clickhouse/migrations /app/clickhouse-migrations
+
 # Default port — matches Go backend convention
 ENV ASPNETCORE_URLS=http://+:8082
 EXPOSE 8082
