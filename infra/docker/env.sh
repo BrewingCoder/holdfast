@@ -33,7 +33,6 @@ if [[ "$*" == *"--go-docker"* ]]; then
     export OTLP_DOGFOOD_ENDPOINT=http://backend:8082/otel
     export OTLP_ENDPOINT=http://backend:8082/otel
     export PSQL_HOST=postgres
-    export REDIS_EVENTS_STAGING_ENDPOINT=redis:6379
     echo "Using docker-internal infra."
 else
     export CLICKHOUSE_ADDRESS=localhost:9000
@@ -42,7 +41,6 @@ else
     export OTLP_DOGFOOD_ENDPOINT=http://localhost:8082/otel
     export OTLP_ENDPOINT=http://localhost:8082/otel
     export PSQL_HOST=localhost
-    export REDIS_EVENTS_STAGING_ENDPOINT=localhost:6379
 fi
 
 # setup path to include go installed binaries

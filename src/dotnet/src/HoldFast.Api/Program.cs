@@ -12,7 +12,6 @@ using HoldFast.Shared.ErrorGrouping;
 using HoldFast.Shared.Kafka;
 using HoldFast.Shared.Runtime;
 using HoldFast.Shared.SessionProcessing;
-using HoldFast.Shared.Redis;
 using HoldFast.Storage;
 using HoldFast.Worker;
 using Microsoft.EntityFrameworkCore;
@@ -151,11 +150,6 @@ builder.Services.AddSingleton<IKafkaProducer, KafkaProducerAdapter>();
 builder.Services.Configure<KafkaTopicBootstrapOptions>(
     builder.Configuration.GetSection("Kafka:TopicBootstrap"));
 builder.Services.AddHostedService<KafkaTopicBootstrapService>();
-
-// ── Redis ─────────────────────────────────────────────────────────────
-builder.Services.Configure<RedisOptions>(
-    builder.Configuration.GetSection("Redis"));
-builder.Services.AddSingleton<RedisService>();
 
 // ── ClickHouse ────────────────────────────────────────────────────────
 builder.Services.Configure<ClickHouseOptions>(
