@@ -1,10 +1,11 @@
+using HoldFast.Analytics;
 using HoldFast.Domain.Enums;
 
-namespace HoldFast.Data.ClickHouse.Models;
+namespace HoldFast.Analytics.Models;
 
 /// <summary>
-/// Represents a row in the ClickHouse traces table.
-/// Read-only model — traces are written via OTLP collector, read via ClickHouse queries.
+/// Represents a row in the traces table.
+/// Read-only model — traces are written via OTLP ingest, read via analytics queries.
 /// </summary>
 public class TraceRow
 {

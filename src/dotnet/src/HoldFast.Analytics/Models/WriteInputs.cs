@@ -1,7 +1,7 @@
-namespace HoldFast.Data.ClickHouse.Models;
+namespace HoldFast.Analytics.Models;
 
 /// <summary>
-/// Input for writing a log row to ClickHouse.
+/// Input for writing a log row.
 /// Matches the log_rows table schema.
 /// </summary>
 public class LogRowInput
@@ -22,7 +22,7 @@ public class LogRowInput
 }
 
 /// <summary>
-/// Input for writing a trace span row to ClickHouse.
+/// Input for writing a trace span row.
 /// Matches the trace_rows table schema.
 /// </summary>
 public class TraceRowInput
@@ -46,7 +46,7 @@ public class TraceRowInput
 }
 
 /// <summary>
-/// Input for writing a session row to ClickHouse.
+/// Input for writing a session row to the analytics store.
 /// Matches the sessions table schema used for analytics/search.
 /// </summary>
 public class SessionRowInput
@@ -76,7 +76,7 @@ public class SessionRowInput
 }
 
 /// <summary>
-/// Input for writing an error group row to ClickHouse.
+/// Input for writing an error group row to the analytics store.
 /// Matches the error_groups table schema used for analytics/search.
 /// </summary>
 public class ErrorGroupRowInput
@@ -94,7 +94,7 @@ public class ErrorGroupRowInput
 }
 
 /// <summary>
-/// Input for writing an error object row to ClickHouse.
+/// Input for writing an error object row to the analytics store.
 /// Matches the error_objects table schema used for analytics/search.
 /// </summary>
 public class ErrorObjectRowInput

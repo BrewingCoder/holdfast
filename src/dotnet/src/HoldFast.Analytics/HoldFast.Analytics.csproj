@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    HoldFast.Analytics — backend-neutral abstractions for analytics storage
+    (logs, traces, sessions, errors, metrics, events, alert state).
+    Carved out of HoldFast.Data.ClickHouse in HOL-25 to enable a future
+    Postgres backend (HOL-26+) without touching call sites again.
+
+    This project must depend ONLY on HoldFast.Domain. No client SDKs
+    (ClickHouse.Client, Npgsql, Dapper). Adding one would re-couple the
+    abstractions to a specific backend and defeat the point of the seam.
+  -->
+  <ItemGroup>
+    <ProjectReference Include="..\HoldFast.Domain\HoldFast.Domain.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+</Project>

@@ -1,5 +1,5 @@
 using System.Text.Json;
-using HoldFast.Data.ClickHouse.Models;
+using HoldFast.Analytics.Models;
 using HoldFast.Worker;
 using Xunit;
 

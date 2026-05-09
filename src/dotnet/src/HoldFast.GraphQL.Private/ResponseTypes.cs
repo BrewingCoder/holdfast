@@ -1,4 +1,4 @@
-using HoldFast.Data.ClickHouse.Models;
+using HoldFast.Analytics.Models;
 using HoldFast.Domain.Entities;
 using HoldFast.Domain.Enums;
 using HotChocolate;

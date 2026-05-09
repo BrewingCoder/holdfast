@@ -150,7 +150,23 @@ builder.Services.AddSingleton<IKafkaProducer, KafkaProducerAdapter>();
 // ── ClickHouse ────────────────────────────────────────────────────────
 builder.Services.Configure<ClickHouseOptions>(
     builder.Configuration.GetSection("ClickHouse"));
-builder.Services.AddSingleton<IClickHouseService, ClickHouseService>();
+
+// HOL-25: ClickHouseService implements both the legacy IClickHouseService
+// and the seven backend-neutral domain stores. Register the singleton once
+// and resolve all eight interfaces through it — different callers can hold
+// any subset and DI hands back the same instance. When HOL-26+ lands the
+// Postgres backend, the ILogStore/etc. registrations swap to the PG impl
+// (driven by Storage:Analytics config) without disturbing IClickHouseService
+// callers, which migrate to the per-domain interfaces incrementally.
+builder.Services.AddSingleton<ClickHouseService>();
+builder.Services.AddSingleton<IClickHouseService>(sp => sp.GetRequiredService<ClickHouseService>());
+builder.Services.AddSingleton<HoldFast.Analytics.ILogStore>(sp => sp.GetRequiredService<ClickHouseService>());
+builder.Services.AddSingleton<HoldFast.Analytics.ITraceStore>(sp => sp.GetRequiredService<ClickHouseService>());
+builder.Services.AddSingleton<HoldFast.Analytics.ISessionAnalyticsStore>(sp => sp.GetRequiredService<ClickHouseService>());
+builder.Services.AddSingleton<HoldFast.Analytics.IErrorAnalyticsStore>(sp => sp.GetRequiredService<ClickHouseService>());
+builder.Services.AddSingleton<HoldFast.Analytics.IMetricStore>(sp => sp.GetRequiredService<ClickHouseService>());
+builder.Services.AddSingleton<HoldFast.Analytics.IEventFieldStore>(sp => sp.GetRequiredService<ClickHouseService>());
+builder.Services.AddSingleton<HoldFast.Analytics.IAlertStateStore>(sp => sp.GetRequiredService<ClickHouseService>());
 
 // Migration runner — applies src/backend/clickhouse/migrations/*.up.sql at
 // startup, idempotently. Disable via ClickHouse__Migrations__Disabled=true

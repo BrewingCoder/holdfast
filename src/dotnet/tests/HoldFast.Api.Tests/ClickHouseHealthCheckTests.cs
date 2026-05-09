@@ -1,6 +1,6 @@
 using HoldFast.Api;
 using HoldFast.Data.ClickHouse;
-using HoldFast.Data.ClickHouse.Models;
+using HoldFast.Analytics.Models;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Xunit;
 

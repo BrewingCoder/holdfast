@@ -1,5 +1,6 @@
 <Solution>
   <Folder Name="/src/">
+    <Project Path="src/HoldFast.Analytics/HoldFast.Analytics.csproj" />
     <Project Path="src/HoldFast.Api/HoldFast.Api.csproj" />
     <Project Path="src/HoldFast.Data.ClickHouse/HoldFast.Data.ClickHouse.csproj" />
     <Project Path="src/HoldFast.Data/HoldFast.Data.csproj" />

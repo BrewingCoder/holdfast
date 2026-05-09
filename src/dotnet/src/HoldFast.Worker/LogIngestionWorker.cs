@@ -1,5 +1,5 @@
 using HoldFast.Data.ClickHouse;
-using HoldFast.Data.ClickHouse.Models;
+using HoldFast.Analytics.Models;
 using HoldFast.Shared.Kafka;
 using HoldFast.Shared.Messaging;
 using Microsoft.Extensions.DependencyInjection;
