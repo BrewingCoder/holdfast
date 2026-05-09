@@ -63,15 +63,10 @@ const resource = new Resource({
   [ATTR_SERVICE_VERSION]: SERVICE_VERSION,
 })
 
-const sdk = new NodeSDK({
-  resource,
-  traceExporter: new OTLPTraceExporter({
-    url: `${OTLP_ENDPOINT}/v1/traces`,
-    headers,
-  }),
-})
-sdk.start()
-
+// LoggerProvider must be registered BEFORE NodeSDK.start(): NodeSDK's start
+// path registers a default global LoggerProvider, and api-logs@0.55.0's
+// setGlobalLoggerProvider is a no-op when a global is already set, so a
+// later call would silently fail and every emitted log would be dropped.
 const loggerProvider = new LoggerProvider({ resource })
 loggerProvider.addLogRecordProcessor(
   new BatchLogRecordProcessor(
@@ -80,6 +75,15 @@ loggerProvider.addLogRecordProcessor(
   ),
 )
 logs.setGlobalLoggerProvider(loggerProvider)
+
+const sdk = new NodeSDK({
+  resource,
+  traceExporter: new OTLPTraceExporter({
+    url: `${OTLP_ENDPOINT}/v1/traces`,
+    headers,
+  }),
+})
+sdk.start()
 
 // HOL-39: dedicated MeterProvider for the metrics scenario. Periodic export
 // at SOAK_METRIC_EXPORT_MS (default 15s) so the dashboard sees fresh
