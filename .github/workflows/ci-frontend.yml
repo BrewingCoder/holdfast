@@ -46,6 +46,21 @@ jobs:
           yarn turbo run build --filter='rrweb...'
           yarn turbo run build --filter='@rrweb/*' --filter='!@rrweb/web-extension'
 
+      # HOL-9: catch stale committed GraphQL types. Regenerate from the .graphqls
+      # schema and .gql operations and fail if the working tree differs from what's
+      # committed. We hit this in HOL-13 — the committed schemas.tsx referenced
+      # phone_home_contact_allowed which the schema no longer exposed, and local
+      # tsc was happy until the Docker build (which always regenerates) caught it.
+      - name: Verify GraphQL types are in sync
+        run: |
+          yarn workspace @holdfast-io/frontend codegen
+          if ! git diff --exit-code -- src/frontend/src/graph/generated/; then
+            echo ""
+            echo "::error::Generated GraphQL types in src/frontend/src/graph/generated/ are stale."
+            echo "Run 'yarn workspace @holdfast-io/frontend codegen' locally and commit the changes."
+            exit 1
+          fi
+
       - name: TypeScript check
         run: yarn workspace @holdfast-io/frontend types:check
 
