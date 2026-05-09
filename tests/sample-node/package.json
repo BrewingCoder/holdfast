@@ -1,0 +1,25 @@
+{
+  "name": "holdfast-sample-node",
+  "version": "0.0.0",
+  "private": true,
+  "description": "HOL-5: Node.js sample app instrumented with OTLP for the analytics-ingest E2E test.",
+  "type": "module",
+  "main": "server.mjs",
+  "scripts": {
+    "start": "node server.mjs"
+  },
+  "dependencies": {
+    "@opentelemetry/api": "^1.9.0",
+    "@opentelemetry/api-logs": "^0.55.0",
+    "@opentelemetry/exporter-logs-otlp-http": "^0.55.0",
+    "@opentelemetry/exporter-trace-otlp-http": "^0.55.0",
+    "@opentelemetry/instrumentation": "^0.55.0",
+    "@opentelemetry/instrumentation-http": "^0.55.0",
+    "@opentelemetry/resources": "^1.28.0",
+    "@opentelemetry/sdk-logs": "^0.55.0",
+    "@opentelemetry/sdk-node": "^0.55.0",
+    "@opentelemetry/sdk-trace-base": "^1.28.0",
+    "@opentelemetry/semantic-conventions": "^1.28.0",
+    "express": "^4.21.1"
+  }
+}
