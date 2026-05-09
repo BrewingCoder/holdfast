@@ -1,0 +1,50 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    HoldFast.Data.Postgres — Postgres + TimescaleDB analytics backend.
+    Companion to HoldFast.Data.ClickHouse; users pick one at deploy time
+    via the Storage:Analytics config switch (HOL-34).
+
+    Phase 1 (HOL-26): scaffolding only — project, options, migration runner,
+    foundational migrations (analytics schema + schema_migrations tracking).
+    Phase 2 (HOL-29..33): per-domain IXxxStore implementations.
+
+    Dependencies are deliberately minimal:
+    - HoldFast.Analytics (the seam — interfaces + DTOs)
+    - Npgsql (the only real external dep)
+    - Microsoft.Extensions.* abstractions for DI/hosting
+    No EF Core in the analytics path — the relational HoldFast.Data project
+    owns that. Keeping the analytics layer query-direct avoids pulling EF
+    overhead into the high-volume insert path.
+  -->
+  <ItemGroup>
+    <ProjectReference Include="..\HoldFast.Analytics\HoldFast.Analytics.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Npgsql" Version="10.0.2" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.0.5" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.5" />
+    <PackageReference Include="Microsoft.Extensions.Options" Version="10.0.5" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="HoldFast.Data.Tests" />
+  </ItemGroup>
+
+  <!-- Migration files are bundled with the published image; runtime path
+       defaults to /app/postgres-analytics-migrations (see backend-dotnet
+       Dockerfile + PostgresAnalyticsMigrationOptions.Path). -->
+  <ItemGroup>
+    <None Include="Migrations\*.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+</Project>

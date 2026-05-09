@@ -21,6 +21,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\HoldFast.Data\HoldFast.Data.csproj" />
+    <ProjectReference Include="..\..\src\HoldFast.Data.Postgres\HoldFast.Data.Postgres.csproj" />
     <ProjectReference Include="..\..\src\HoldFast.Domain\HoldFast.Domain.csproj" />
   </ItemGroup>
 

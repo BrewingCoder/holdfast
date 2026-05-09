@@ -122,6 +122,11 @@ COPY --from=frontend-build /app/src/frontend/build /app/wwwroot
 # externally (e.g. golang-migrate run by a Helm pre-job).
 COPY src/backend/clickhouse/migrations /app/clickhouse-migrations
 
+# Postgres analytics migration files (HOL-26) — applied at startup by
+# PostgresMigrationService when the Postgres analytics backend is enabled.
+# Disable via PostgresAnalytics__Migrations__Disabled=true.
+COPY src/dotnet/src/HoldFast.Data.Postgres/Migrations /app/postgres-analytics-migrations
+
 # Default port — matches Go backend convention
 ENV ASPNETCORE_URLS=http://+:8082
 EXPOSE 8082
