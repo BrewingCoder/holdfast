@@ -1,3 +1,4 @@
+using HoldFast.Analytics;
 using HoldFast.Data.ClickHouse;
 using HoldFast.Analytics.Models;
 using HoldFast.Worker;
@@ -25,7 +26,13 @@ public class ConsumerProcessAsyncTests : IDisposable
         _clickHouse = new RecordingClickHouseService();
 
         var services = new ServiceCollection();
-        services.AddSingleton<IClickHouseService>(_clickHouse);
+        services.AddSingleton<HoldFast.Analytics.ILogStore>(_clickHouse);
+        services.AddSingleton<HoldFast.Analytics.ITraceStore>(_clickHouse);
+        services.AddSingleton<HoldFast.Analytics.ISessionAnalyticsStore>(_clickHouse);
+        services.AddSingleton<HoldFast.Analytics.IErrorAnalyticsStore>(_clickHouse);
+        services.AddSingleton<HoldFast.Analytics.IMetricStore>(_clickHouse);
+        services.AddSingleton<HoldFast.Analytics.IEventFieldStore>(_clickHouse);
+        services.AddSingleton<HoldFast.Analytics.IAlertStateStore>(_clickHouse);
         _serviceProvider = services.BuildServiceProvider();
     }
 
@@ -315,7 +322,7 @@ public class ConsumerProcessAsyncTests : IDisposable
     // Recording ClickHouse fake
     // ══════════════════════════════════════════════════════════════════
 
-    private class RecordingClickHouseService : IClickHouseService
+    private class RecordingClickHouseService : ILogStore, ITraceStore, ISessionAnalyticsStore, IErrorAnalyticsStore, IMetricStore, IEventFieldStore, IAlertStateStore
     {
         public List<LogRowInput> WrittenLogs { get; } = [];
         public List<TraceRowInput> WrittenTraces { get; } = [];

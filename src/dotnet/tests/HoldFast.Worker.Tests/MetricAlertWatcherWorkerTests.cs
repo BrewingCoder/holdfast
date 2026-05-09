@@ -1,3 +1,4 @@
+using HoldFast.Analytics;
 using HoldFast.Data;
 using HoldFast.Data.ClickHouse;
 using HoldFast.Analytics.Models;
@@ -59,7 +60,13 @@ public class MetricAlertWatcherWorkerTests : IDisposable
             .UseSqlite(_connection).Options);
         services.AddScoped(sp => new HoldFastDbContext(
             sp.GetRequiredService<DbContextOptions<HoldFastDbContext>>()));
-        services.AddSingleton<IClickHouseService>(_fakeClickHouse);
+        services.AddSingleton<HoldFast.Analytics.ILogStore>(_fakeClickHouse);
+        services.AddSingleton<HoldFast.Analytics.ITraceStore>(_fakeClickHouse);
+        services.AddSingleton<HoldFast.Analytics.ISessionAnalyticsStore>(_fakeClickHouse);
+        services.AddSingleton<HoldFast.Analytics.IErrorAnalyticsStore>(_fakeClickHouse);
+        services.AddSingleton<HoldFast.Analytics.IMetricStore>(_fakeClickHouse);
+        services.AddSingleton<HoldFast.Analytics.IEventFieldStore>(_fakeClickHouse);
+        services.AddSingleton<HoldFast.Analytics.IAlertStateStore>(_fakeClickHouse);
         services.AddSingleton<INotificationService>(_fakeNotifications);
 
         _scopeFactory = services.BuildServiceProvider().GetRequiredService<IServiceScopeFactory>();
@@ -108,7 +115,7 @@ public class MetricAlertWatcherWorkerTests : IDisposable
         var alert = MakeAlert(aboveThreshold: 100.0);
         _fakeClickHouse.MetricsValue = 150.0; // above threshold
 
-        await _worker.EvaluateAlertAsync(alert, _db, _fakeClickHouse, _fakeNotifications, CancellationToken.None);
+        await _worker.EvaluateAlertAsync(alert, _db, _fakeClickHouse, _fakeClickHouse, _fakeClickHouse, _fakeNotifications, CancellationToken.None);
 
         Assert.Single(_fakeClickHouse.WrittenStateChanges);
         Assert.Equal("Alerting", _fakeClickHouse.WrittenStateChanges[0].State);
@@ -120,7 +127,7 @@ public class MetricAlertWatcherWorkerTests : IDisposable
         var alert = MakeAlert(aboveThreshold: 100.0);
         _fakeClickHouse.MetricsValue = 50.0; // below threshold
 
-        await _worker.EvaluateAlertAsync(alert, _db, _fakeClickHouse, _fakeNotifications, CancellationToken.None);
+        await _worker.EvaluateAlertAsync(alert, _db, _fakeClickHouse, _fakeClickHouse, _fakeClickHouse, _fakeNotifications, CancellationToken.None);
 
         Assert.Single(_fakeClickHouse.WrittenStateChanges);
         Assert.Equal("Normal", _fakeClickHouse.WrittenStateChanges[0].State);
@@ -132,7 +139,7 @@ public class MetricAlertWatcherWorkerTests : IDisposable
         var alert = MakeAlert(aboveThreshold: 100.0);
         _fakeClickHouse.MetricsValue = 100.0; // exactly at threshold
 
-        await _worker.EvaluateAlertAsync(alert, _db, _fakeClickHouse, _fakeNotifications, CancellationToken.None);
+        await _worker.EvaluateAlertAsync(alert, _db, _fakeClickHouse, _fakeClickHouse, _fakeClickHouse, _fakeNotifications, CancellationToken.None);
 
         Assert.Equal("Alerting", _fakeClickHouse.WrittenStateChanges[0].State);
     }
@@ -145,7 +152,7 @@ public class MetricAlertWatcherWorkerTests : IDisposable
         var alert = MakeAlert(aboveThreshold: 100.0, belowThreshold: 1.0); // alert when metric <= 100
         _fakeClickHouse.MetricsValue = 50.0;
 
-        await _worker.EvaluateAlertAsync(alert, _db, _fakeClickHouse, _fakeNotifications, CancellationToken.None);
+        await _worker.EvaluateAlertAsync(alert, _db, _fakeClickHouse, _fakeClickHouse, _fakeClickHouse, _fakeNotifications, CancellationToken.None);
 
         Assert.Equal("Alerting", _fakeClickHouse.WrittenStateChanges[0].State);
     }
@@ -156,7 +163,7 @@ public class MetricAlertWatcherWorkerTests : IDisposable
         var alert = MakeAlert(aboveThreshold: 100.0, belowThreshold: 1.0);
         _fakeClickHouse.MetricsValue = 200.0; // above, so below-condition is NOT met
 
-        await _worker.EvaluateAlertAsync(alert, _db, _fakeClickHouse, _fakeNotifications, CancellationToken.None);
+        await _worker.EvaluateAlertAsync(alert, _db, _fakeClickHouse, _fakeClickHouse, _fakeClickHouse, _fakeNotifications, CancellationToken.None);
 
         Assert.Equal("Normal", _fakeClickHouse.WrittenStateChanges[0].State);
     }
@@ -174,7 +181,7 @@ public class MetricAlertWatcherWorkerTests : IDisposable
 
         _fakeClickHouse.MetricsValue = 50.0;
 
-        await _worker.EvaluateAlertAsync(alert, _db, _fakeClickHouse, _fakeNotifications, CancellationToken.None);
+        await _worker.EvaluateAlertAsync(alert, _db, _fakeClickHouse, _fakeClickHouse, _fakeClickHouse, _fakeNotifications, CancellationToken.None);
 
         Assert.Single(_fakeNotifications.SentWebhooks);
         Assert.Equal("https://hook.example.com", _fakeNotifications.SentWebhooks[0]);
@@ -191,7 +198,7 @@ public class MetricAlertWatcherWorkerTests : IDisposable
 
         _fakeClickHouse.MetricsValue = 5.0; // below threshold
 
-        await _worker.EvaluateAlertAsync(alert, _db, _fakeClickHouse, _fakeNotifications, CancellationToken.None);
+        await _worker.EvaluateAlertAsync(alert, _db, _fakeClickHouse, _fakeClickHouse, _fakeClickHouse, _fakeNotifications, CancellationToken.None);
 
         Assert.Empty(_fakeNotifications.SentWebhooks);
     }
@@ -206,7 +213,7 @@ public class MetricAlertWatcherWorkerTests : IDisposable
 
         _fakeClickHouse.MetricsValue = 100.0;
 
-        await _worker.EvaluateAlertAsync(alert, _db, _fakeClickHouse, _fakeNotifications, CancellationToken.None);
+        await _worker.EvaluateAlertAsync(alert, _db, _fakeClickHouse, _fakeClickHouse, _fakeClickHouse, _fakeNotifications, CancellationToken.None);
 
         Assert.Empty(_fakeNotifications.SentWebhooks);
     }
@@ -227,7 +234,7 @@ public class MetricAlertWatcherWorkerTests : IDisposable
 
         _fakeClickHouse.MetricsValue = 100.0;
 
-        await _worker.EvaluateAlertAsync(alert, _db, _fakeClickHouse, _fakeNotifications, CancellationToken.None);
+        await _worker.EvaluateAlertAsync(alert, _db, _fakeClickHouse, _fakeClickHouse, _fakeClickHouse, _fakeNotifications, CancellationToken.None);
 
         Assert.Empty(_fakeNotifications.SentWebhooks);
     }
@@ -253,7 +260,7 @@ public class MetricAlertWatcherWorkerTests : IDisposable
             Timestamp = DateTime.UtcNow.AddMinutes(-5),
         }];
 
-        await _worker.EvaluateAlertAsync(alert, _db, _fakeClickHouse, _fakeNotifications, CancellationToken.None);
+        await _worker.EvaluateAlertAsync(alert, _db, _fakeClickHouse, _fakeClickHouse, _fakeClickHouse, _fakeNotifications, CancellationToken.None);
 
         // Suppressed by cooldown — no state written, no notification
         Assert.Empty(_fakeClickHouse.WrittenStateChanges);
@@ -268,7 +275,7 @@ public class MetricAlertWatcherWorkerTests : IDisposable
         _fakeClickHouse.LastAlertingStates = [];
         _fakeClickHouse.MetricsValue = 100.0;
 
-        await _worker.EvaluateAlertAsync(alert, _db, _fakeClickHouse, _fakeNotifications, CancellationToken.None);
+        await _worker.EvaluateAlertAsync(alert, _db, _fakeClickHouse, _fakeClickHouse, _fakeClickHouse, _fakeNotifications, CancellationToken.None);
 
         Assert.Single(_fakeClickHouse.WrittenStateChanges);
         Assert.Equal("Alerting", _fakeClickHouse.WrittenStateChanges[0].State);
@@ -280,7 +287,7 @@ public class MetricAlertWatcherWorkerTests : IDisposable
         var alert = MakeAlert(aboveThreshold: 10.0, cooldown: null);
         _fakeClickHouse.MetricsValue = 100.0;
 
-        await _worker.EvaluateAlertAsync(alert, _db, _fakeClickHouse, _fakeNotifications, CancellationToken.None);
+        await _worker.EvaluateAlertAsync(alert, _db, _fakeClickHouse, _fakeClickHouse, _fakeClickHouse, _fakeNotifications, CancellationToken.None);
 
         Assert.Single(_fakeClickHouse.WrittenStateChanges);
     }
@@ -293,7 +300,7 @@ public class MetricAlertWatcherWorkerTests : IDisposable
         var alert = MakeAlert(productType: "LOGS", aboveThreshold: 5.0);
         _fakeClickHouse.LogCountResult = 10;
 
-        await _worker.EvaluateAlertAsync(alert, _db, _fakeClickHouse, _fakeNotifications, CancellationToken.None);
+        await _worker.EvaluateAlertAsync(alert, _db, _fakeClickHouse, _fakeClickHouse, _fakeClickHouse, _fakeNotifications, CancellationToken.None);
 
         Assert.True(_fakeClickHouse.CountLogsWasCalled);
         Assert.False(_fakeClickHouse.ReadMetricsWasCalled);
@@ -306,7 +313,7 @@ public class MetricAlertWatcherWorkerTests : IDisposable
         var alert = MakeAlert(productType: "logs", aboveThreshold: 5.0);
         _fakeClickHouse.LogCountResult = 10;
 
-        await _worker.EvaluateAlertAsync(alert, _db, _fakeClickHouse, _fakeNotifications, CancellationToken.None);
+        await _worker.EvaluateAlertAsync(alert, _db, _fakeClickHouse, _fakeClickHouse, _fakeClickHouse, _fakeNotifications, CancellationToken.None);
 
         Assert.True(_fakeClickHouse.CountLogsWasCalled);
     }
@@ -317,7 +324,7 @@ public class MetricAlertWatcherWorkerTests : IDisposable
         var alert = MakeAlert(productType: "METRICS", aboveThreshold: 5.0);
         _fakeClickHouse.MetricsValue = 10.0;
 
-        await _worker.EvaluateAlertAsync(alert, _db, _fakeClickHouse, _fakeNotifications, CancellationToken.None);
+        await _worker.EvaluateAlertAsync(alert, _db, _fakeClickHouse, _fakeClickHouse, _fakeClickHouse, _fakeNotifications, CancellationToken.None);
 
         Assert.True(_fakeClickHouse.ReadMetricsWasCalled);
         Assert.False(_fakeClickHouse.CountLogsWasCalled);
@@ -332,7 +339,7 @@ public class MetricAlertWatcherWorkerTests : IDisposable
         alert.ProjectId = _project.Id;
         _fakeClickHouse.MetricsValue = 100.0;
 
-        await _worker.EvaluateAlertAsync(alert, _db, _fakeClickHouse, _fakeNotifications, CancellationToken.None);
+        await _worker.EvaluateAlertAsync(alert, _db, _fakeClickHouse, _fakeClickHouse, _fakeClickHouse, _fakeNotifications, CancellationToken.None);
 
         var state = _fakeClickHouse.WrittenStateChanges[0];
         Assert.Equal(alert.ProjectId, state.ProjectId);
@@ -353,7 +360,7 @@ public class MetricAlertWatcherWorkerTests : IDisposable
 /// Fake IClickHouseService for MetricAlertWatcherWorker tests.
 /// Records method calls and returns configurable values.
 /// </summary>
-internal class FakeMetricClickHouseService : IClickHouseService
+internal class FakeMetricClickHouseService : ILogStore, ITraceStore, ISessionAnalyticsStore, IErrorAnalyticsStore, IMetricStore, IEventFieldStore, IAlertStateStore
 {
     public double MetricsValue { get; set; }
     public long LogCountResult { get; set; }

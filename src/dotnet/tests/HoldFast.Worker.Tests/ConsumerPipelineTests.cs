@@ -1,3 +1,4 @@
+using HoldFast.Analytics;
 using HoldFast.Data;
 using HoldFast.Data.ClickHouse;
 using HoldFast.Analytics.Models;
@@ -57,7 +58,7 @@ public class ConsumerPipelineTests : IDisposable
 
     // ── Fake ClickHouse ────────────────────────────────────────────────
 
-    private class FakeClickHouseService : IClickHouseService
+    private class FakeClickHouseService : ILogStore, ITraceStore, ISessionAnalyticsStore, IErrorAnalyticsStore, IMetricStore, IEventFieldStore, IAlertStateStore
     {
         public List<LogRowInput> WrittenLogs { get; } = [];
         public List<TraceRowInput> WrittenTraces { get; } = [];

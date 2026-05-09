@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using HoldFast.Data;
 using HoldFast.Data.ClickHouse;
+using HoldFast.Analytics;
 using HoldFast.Analytics.Models;
 using HoldFast.Domain.Entities;
 using HoldFast.Domain.Enums;
@@ -950,7 +951,7 @@ public class PrivateQueryAnalyticsTests : IDisposable
     /// QueryErrorGroupIdsAsync returns all IDs up to count so the DB layer
     /// handles project-scoped filtering.
     /// </summary>
-    private class FakeClickHouseService : IClickHouseService
+    private class FakeClickHouseService : ILogStore, ITraceStore, ISessionAnalyticsStore, IErrorAnalyticsStore, IMetricStore, IEventFieldStore, IAlertStateStore
     {
         public Task<(List<int> Ids, long Total)> QueryErrorGroupIdsAsync(int projectId, QueryInput query, int count, int page, CancellationToken ct)
         {

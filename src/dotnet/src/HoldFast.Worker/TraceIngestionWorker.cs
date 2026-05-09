@@ -1,4 +1,4 @@
-using HoldFast.Data.ClickHouse;
+using HoldFast.Analytics;
 using HoldFast.Analytics.Models;
 using HoldFast.Shared.Kafka;
 using HoldFast.Shared.Messaging;
@@ -53,7 +53,7 @@ public class TraceIngestionConsumer : MessageConsumerBase<TraceIngestionMessage>
         _logger.LogDebug("Processing trace span: {SpanName} ({TraceId})", value.SpanName, value.TraceId);
 
         using var scope = _scopeFactory.CreateScope();
-        var clickHouse = scope.ServiceProvider.GetRequiredService<IClickHouseService>();
+        var traceStore = scope.ServiceProvider.GetRequiredService<ITraceStore>();
 
         var traceRow = new TraceRowInput
         {
@@ -75,7 +75,7 @@ public class TraceIngestionConsumer : MessageConsumerBase<TraceIngestionMessage>
             HasErrors = value.HasErrors,
         };
 
-        await clickHouse.WriteTracesAsync([traceRow], ct);
+        await traceStore.WriteTracesAsync([traceRow], ct);
     }
 }
 

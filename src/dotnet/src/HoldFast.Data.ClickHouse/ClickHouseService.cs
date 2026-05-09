@@ -14,15 +14,12 @@ namespace HoldFast.Data.ClickHouse;
 /// Concrete ClickHouse analytics service using ClickHouse.Client + Dapper.
 /// Mirrors Go's clickhouse.Client query methods.
 ///
-/// HOL-25: this class now implements both the legacy kitchen-sink
-/// IClickHouseService and the seven backend-neutral domain stores
-/// (ILogStore, ITraceStore, …). Method signatures are identical across
-/// the two API shapes — DI registers the same instance for all eight
-/// interfaces. Existing callers stay on IClickHouseService until they
-/// migrate to the per-domain interfaces in follow-up PRs.
+/// HOL-36: implements the seven backend-neutral domain stores from
+/// HoldFast.Analytics. The legacy kitchen-sink IClickHouseService that this
+/// class used to implement was deleted in HOL-36 — all callers migrated to
+/// the per-domain interfaces.
 /// </summary>
 public class ClickHouseService :
-    IClickHouseService,
     ILogStore,
     ITraceStore,
     ISessionAnalyticsStore,

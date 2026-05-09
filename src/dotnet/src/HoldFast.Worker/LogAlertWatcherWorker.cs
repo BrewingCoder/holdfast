@@ -1,6 +1,6 @@
-using HoldFast.Data;
-using HoldFast.Data.ClickHouse;
+using HoldFast.Analytics;
 using HoldFast.Analytics.Models;
+using HoldFast.Data;
 using HoldFast.Domain.Entities;
 using HoldFast.Shared.Notifications;
 using Microsoft.EntityFrameworkCore;
@@ -86,14 +86,14 @@ public class LogAlertWatcherWorker : BackgroundService
         {
             using var scope = _scopeFactory.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<HoldFastDbContext>();
-            var clickHouse = scope.ServiceProvider.GetRequiredService<IClickHouseService>();
+            var logStore = scope.ServiceProvider.GetRequiredService<ILogStore>();
             var notifications = scope.ServiceProvider.GetRequiredService<INotificationService>();
 
             var thresholdWindow = alert.ThresholdWindow ?? alert.Frequency ?? 300; // default 5 min
             var end = DateTime.UtcNow - IngestDelay;
             var start = end - TimeSpan.FromSeconds(thresholdWindow);
 
-            var count = await clickHouse.CountLogsAsync(
+            var count = await logStore.CountLogsAsync(
                 alert.ProjectId, alert.Query, start, end, ct);
 
             var countThreshold = alert.CountThreshold ?? 0;

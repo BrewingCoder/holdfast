@@ -1,6 +1,6 @@
-using HoldFast.Data;
-using HoldFast.Data.ClickHouse;
+using HoldFast.Analytics;
 using HoldFast.Analytics.Models;
+using HoldFast.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -79,13 +79,14 @@ public class DataSyncWorker : BackgroundService
     {
         using var scope = _scopeFactory.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<HoldFastDbContext>();
-        var clickHouse = scope.ServiceProvider.GetRequiredService<IClickHouseService>();
+        var sessionStore = scope.ServiceProvider.GetRequiredService<ISessionAnalyticsStore>();
+        var errorStore = scope.ServiceProvider.GetRequiredService<IErrorAnalyticsStore>();
 
         var cutoff = DateTime.UtcNow.Subtract(SyncWindow);
 
-        var sessionCount = await SyncSessionsAsync(db, clickHouse, cutoff, ct);
-        var errorGroupCount = await SyncErrorGroupsAsync(db, clickHouse, cutoff, ct);
-        var errorObjectCount = await SyncErrorObjectsAsync(db, clickHouse, cutoff, ct);
+        var sessionCount = await SyncSessionsAsync(db, sessionStore, cutoff, ct);
+        var errorGroupCount = await SyncErrorGroupsAsync(db, errorStore, cutoff, ct);
+        var errorObjectCount = await SyncErrorObjectsAsync(db, errorStore, cutoff, ct);
 
         if (sessionCount > 0 || errorGroupCount > 0 || errorObjectCount > 0)
         {
@@ -99,12 +100,12 @@ public class DataSyncWorker : BackgroundService
     /// Sync processed sessions updated after <paramref name="cutoff"/> to ClickHouse.
     /// </summary>
     /// <param name="db">PostgreSQL database context.</param>
-    /// <param name="clickHouse">ClickHouse write service.</param>
+    /// <param name="sessionStore">Session analytics store (CH or PG).</param>
     /// <param name="cutoff">Only sync sessions updated on or after this time.</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>Number of sessions synced.</returns>
     internal static async Task<int> SyncSessionsAsync(
-        HoldFastDbContext db, IClickHouseService clickHouse, DateTime cutoff, CancellationToken ct)
+        HoldFastDbContext db, ISessionAnalyticsStore sessionStore, DateTime cutoff, CancellationToken ct)
     {
         var sessions = await db.Sessions
             .Where(s => s.Processed == true && s.UpdatedAt >= cutoff)
@@ -141,7 +142,7 @@ public class DataSyncWorker : BackgroundService
             FirstTime = s.FirstTime == 1,
         });
 
-        await clickHouse.WriteSessionsAsync(rows, ct);
+        await sessionStore.WriteSessionsAsync(rows, ct);
         return sessions.Count;
     }
 
@@ -149,12 +150,12 @@ public class DataSyncWorker : BackgroundService
     /// Sync error groups updated after <paramref name="cutoff"/> to ClickHouse.
     /// </summary>
     /// <param name="db">PostgreSQL database context.</param>
-    /// <param name="clickHouse">ClickHouse write service.</param>
+    /// <param name="errorStore">Error analytics store (CH or PG).</param>
     /// <param name="cutoff">Only sync error groups updated on or after this time.</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>Number of error groups synced.</returns>
     internal static async Task<int> SyncErrorGroupsAsync(
-        HoldFastDbContext db, IClickHouseService clickHouse, DateTime cutoff, CancellationToken ct)
+        HoldFastDbContext db, IErrorAnalyticsStore errorStore, DateTime cutoff, CancellationToken ct)
     {
         var groups = await db.ErrorGroups
             .Where(g => g.UpdatedAt >= cutoff)
@@ -179,7 +180,7 @@ public class DataSyncWorker : BackgroundService
             Environments = g.Environments,
         });
 
-        await clickHouse.WriteErrorGroupsAsync(rows, ct);
+        await errorStore.WriteErrorGroupsAsync(rows, ct);
         return groups.Count;
     }
 
@@ -187,12 +188,12 @@ public class DataSyncWorker : BackgroundService
     /// Sync error objects created after <paramref name="cutoff"/> to ClickHouse.
     /// </summary>
     /// <param name="db">PostgreSQL database context.</param>
-    /// <param name="clickHouse">ClickHouse write service.</param>
+    /// <param name="errorStore">Error analytics store (CH or PG).</param>
     /// <param name="cutoff">Only sync error objects created on or after this time.</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>Number of error objects synced.</returns>
     internal static async Task<int> SyncErrorObjectsAsync(
-        HoldFastDbContext db, IClickHouseService clickHouse, DateTime cutoff, CancellationToken ct)
+        HoldFastDbContext db, IErrorAnalyticsStore errorStore, DateTime cutoff, CancellationToken ct)
     {
         var objects = await db.ErrorObjects
             .Where(e => e.CreatedAt >= cutoff)
@@ -219,7 +220,7 @@ public class DataSyncWorker : BackgroundService
             ServiceVersion = e.ServiceVersion,
         });
 
-        await clickHouse.WriteErrorObjectsAsync(rows, ct);
+        await errorStore.WriteErrorObjectsAsync(rows, ct);
         return objects.Count;
     }
 }

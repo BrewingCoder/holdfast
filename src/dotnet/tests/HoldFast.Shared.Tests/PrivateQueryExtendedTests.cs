@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using HoldFast.Data;
 using HoldFast.Data.ClickHouse;
+using HoldFast.Analytics;
 using HoldFast.Analytics.Models;
 using HoldFast.Domain.Entities;
 using HoldFast.GraphQL.Private;
@@ -579,7 +580,7 @@ public class PrivateQueryExtendedTests : IDisposable
 
     // ── Stub ───────────────────────────────────────────────────────
 
-    private class StubClickHouseService : IClickHouseService
+    private class StubClickHouseService : ILogStore, ITraceStore, ISessionAnalyticsStore, IErrorAnalyticsStore, IMetricStore, IEventFieldStore, IAlertStateStore
     {
         public string? LastCalledMethod { get; private set; }
         public int LastProjectId { get; private set; }

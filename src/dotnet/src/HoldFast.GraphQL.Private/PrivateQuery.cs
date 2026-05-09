@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using HoldFast.Data;
 using HoldFast.Data.ClickHouse;
+using HoldFast.Analytics;
 using HoldFast.Analytics.Models;
 using HoldFast.Domain;
 using HoldFast.Domain.Entities;
@@ -258,7 +259,7 @@ public class PrivateQuery
         int? page,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
-        [Service] IClickHouseService clickHouse,
+        [Service] IErrorAnalyticsStore clickHouse,
         [Service] HoldFastDbContext db,
         CancellationToken ct)
     {
@@ -358,7 +359,7 @@ public class PrivateQuery
         int? page,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
-        [Service] IClickHouseService clickHouse,
+        [Service] ISessionAnalyticsStore clickHouse,
         [Service] HoldFastDbContext db,
         CancellationToken ct)
     {
@@ -862,7 +863,7 @@ public class PrivateQuery
         int? limit,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
-        [Service] IClickHouseService clickHouse,
+        [Service] ILogStore clickHouse,
         CancellationToken ct)
     {
         await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
@@ -882,7 +883,7 @@ public class PrivateQuery
         [GraphQLName("params")] QueryInput queryParams,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
-        [Service] IClickHouseService clickHouse,
+        [Service] ILogStore clickHouse,
         CancellationToken ct)
     {
         await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
@@ -922,7 +923,7 @@ public class PrivateQuery
         string? query,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
-        [Service] IClickHouseService clickHouse,
+        [Service] ILogStore clickHouse,
         CancellationToken ct)
     {
         await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
@@ -942,7 +943,7 @@ public class PrivateQuery
         DateTime dateRangeEnd,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
-        [Service] IClickHouseService clickHouse,
+        [Service] ILogStore clickHouse,
         CancellationToken ct)
     {
         await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
@@ -969,7 +970,7 @@ public class PrivateQuery
         [GraphQLName("omitBody")] bool omitBody,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
-        [Service] IClickHouseService clickHouse,
+        [Service] ITraceStore clickHouse,
         CancellationToken ct)
     {
         await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
@@ -990,7 +991,7 @@ public class PrivateQuery
         [GraphQLName("params")] QueryInput queryParams,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
-        [Service] IClickHouseService clickHouse,
+        [Service] ITraceStore clickHouse,
         CancellationToken ct)
     {
         await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
@@ -1008,7 +1009,7 @@ public class PrivateQuery
         string? query,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
-        [Service] IClickHouseService clickHouse,
+        [Service] ITraceStore clickHouse,
         CancellationToken ct)
     {
         await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
@@ -1028,7 +1029,7 @@ public class PrivateQuery
         DateTime dateRangeEnd,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
-        [Service] IClickHouseService clickHouse,
+        [Service] ITraceStore clickHouse,
         CancellationToken ct)
     {
         await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
@@ -1060,7 +1061,7 @@ public class PrivateQuery
         [GraphQLName("expressions")] List<MetricExpressionInput> expressions,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
-        [Service] IClickHouseService clickHouse,
+        [Service] IMetricStore clickHouse,
         CancellationToken ct)
     {
         await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
@@ -1087,7 +1088,7 @@ public class PrivateQuery
         int page,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
-        [Service] IClickHouseService clickHouse,
+        [Service] IErrorAnalyticsStore clickHouse,
         CancellationToken ct)
     {
         await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
@@ -1109,7 +1110,7 @@ public class PrivateQuery
         DateTime dateRangeEnd,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
-        [Service] IClickHouseService clickHouse,
+        [Service] IErrorAnalyticsStore clickHouse,
         CancellationToken ct)
     {
         await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
@@ -1135,7 +1136,7 @@ public class PrivateQuery
         bool sortDesc,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
-        [Service] IClickHouseService clickHouse,
+        [Service] ISessionAnalyticsStore clickHouse,
         CancellationToken ct)
     {
         await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
@@ -1486,7 +1487,7 @@ public class PrivateQuery
         [ID] int projectId,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
-        [Service] IClickHouseService clickHouse,
+        [Service] ILogStore clickHouse,
         CancellationToken ct)
     {
         await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
@@ -1510,7 +1511,7 @@ public class PrivateQuery
         [ID] int projectId,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
-        [Service] IClickHouseService clickHouse,
+        [Service] ITraceStore clickHouse,
         CancellationToken ct)
     {
         await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
@@ -1909,7 +1910,7 @@ public class PrivateQuery
         string? query,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
-        [Service] IClickHouseService clickHouse,
+        [Service] ISessionAnalyticsStore clickHouse,
         CancellationToken ct)
     {
         await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
@@ -1928,7 +1929,7 @@ public class PrivateQuery
         int? count,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
-        [Service] IClickHouseService clickHouse,
+        [Service] ISessionAnalyticsStore clickHouse,
         CancellationToken ct)
     {
         await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
@@ -1972,7 +1973,7 @@ public class PrivateQuery
         int? count,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
-        [Service] IClickHouseService clickHouse,
+        [Service] IErrorAnalyticsStore clickHouse,
         CancellationToken ct)
     {
         await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
@@ -1990,7 +1991,7 @@ public class PrivateQuery
         string? eventName,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
-        [Service] IClickHouseService clickHouse,
+        [Service] IEventFieldStore clickHouse,
         CancellationToken ct)
     {
         await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
@@ -2010,7 +2011,7 @@ public class PrivateQuery
         string? eventName,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
-        [Service] IClickHouseService clickHouse,
+        [Service] IEventFieldStore clickHouse,
         CancellationToken ct)
     {
         await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
@@ -2078,7 +2079,7 @@ public class PrivateQuery
         string? query,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
-        [Service] IClickHouseService clickHouse,
+        [Service] ITraceStore clickHouse,
         CancellationToken ct)
     {
         await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
@@ -2102,7 +2103,7 @@ public class PrivateQuery
         string tagName,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
-        [Service] IClickHouseService clickHouse,
+        [Service] ITraceStore clickHouse,
         CancellationToken ct)
     {
         await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
@@ -2129,7 +2130,7 @@ public class PrivateQuery
         [GraphQLName("histogram_options")] DateHistogramOptions histogramOptions,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
-        [Service] IClickHouseService clickHouse,
+        [Service] ISessionAnalyticsStore clickHouse,
         CancellationToken ct)
     {
         await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
@@ -2166,7 +2167,7 @@ public class PrivateQuery
         [GraphQLName("histogram_options")] DateHistogramOptions histogramOptions,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
-        [Service] IClickHouseService clickHouse,
+        [Service] IErrorAnalyticsStore clickHouse,
         CancellationToken ct)
     {
         await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
@@ -2204,7 +2205,7 @@ public class PrivateQuery
         string? sessionSecureId,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
-        [Service] IClickHouseService clickHouse,
+        [Service] ITraceStore clickHouse,
         CancellationToken ct)
     {
         await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
@@ -2312,7 +2313,7 @@ public class PrivateQuery
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
-        [Service] IClickHouseService clickHouse,
+        [Service] IMetricStore clickHouse,
         CancellationToken ct)
     {
         var session = await db.Sessions.FirstOrDefaultAsync(s => s.SecureId == sessionSecureId, ct)
@@ -2440,7 +2441,7 @@ public class PrivateQuery
         [ID] int projectId,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
-        [Service] IClickHouseService clickHouse,
+        [Service] ISessionAnalyticsStore clickHouse,
         CancellationToken ct)
     {
         await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
@@ -2467,7 +2468,7 @@ public class PrivateQuery
         string? query,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
-        [Service] IClickHouseService clickHouse,
+        [Service] ISessionAnalyticsStore clickHouse,
         CancellationToken ct)
     {
         await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
@@ -2690,7 +2691,7 @@ public class PrivateQuery
         double lookbackDays,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
-        [Service] IClickHouseService clickHouse,
+        [Service] ISessionAnalyticsStore clickHouse,
         CancellationToken ct)
     {
         await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
@@ -3329,7 +3330,7 @@ public class PrivateQuery
         DateTime date,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
-        [Service] IClickHouseService clickHouse,
+        [Service] ITraceStore clickHouse,
         CancellationToken ct)
     {
         await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
@@ -3368,7 +3369,11 @@ public class PrivateQuery
         [GraphQLName("event")] string? eventName,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
-        [Service] IClickHouseService clickHouse,
+        [Service] ILogStore logStore,
+        [Service] ITraceStore traceStore,
+        [Service] ISessionAnalyticsStore sessionStore,
+        [Service] IErrorAnalyticsStore errorStore,
+        [Service] IEventFieldStore eventFieldStore,
         CancellationToken ct)
     {
         await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
@@ -3376,14 +3381,14 @@ public class PrivateQuery
         var qi = new QueryInput { Query = query, DateRange = dateRange };
         return productType switch
         {
-            ProductType.Logs => (await clickHouse.GetLogKeysAsync(projectId, qi, ct))
+            ProductType.Logs => (await logStore.GetLogKeysAsync(projectId, qi, ct))
                 .Select(k => new QueryKey { Name = k, Type = type?.ToString() ?? "String" }).ToList(),
-            ProductType.Traces => (await clickHouse.GetTraceKeysAsync(projectId, qi, ct))
+            ProductType.Traces => (await traceStore.GetTraceKeysAsync(projectId, qi, ct))
                 .Select(k => new QueryKey { Name = k, Type = type?.ToString() ?? "String" }).ToList(),
-            ProductType.Errors => await clickHouse.GetErrorsKeysAsync(projectId, dateRange.StartDate, dateRange.EndDate, query, ct),
-            ProductType.Sessions => await clickHouse.GetSessionsKeysAsync(projectId, dateRange.StartDate, dateRange.EndDate, query, ct),
-            ProductType.Events => await clickHouse.GetEventsKeysAsync(projectId, dateRange.StartDate, dateRange.EndDate, query, eventName, ct),
-            _ => await clickHouse.GetSessionsKeysAsync(projectId, dateRange.StartDate, dateRange.EndDate, query, ct),
+            ProductType.Errors => await errorStore.GetErrorsKeysAsync(projectId, dateRange.StartDate, dateRange.EndDate, query, ct),
+            ProductType.Sessions => await sessionStore.GetSessionsKeysAsync(projectId, dateRange.StartDate, dateRange.EndDate, query, ct),
+            ProductType.Events => await eventFieldStore.GetEventsKeysAsync(projectId, dateRange.StartDate, dateRange.EndDate, query, eventName, ct),
+            _ => await sessionStore.GetSessionsKeysAsync(projectId, dateRange.StartDate, dateRange.EndDate, query, ct),
         };
     }
 
@@ -3400,21 +3405,25 @@ public class PrivateQuery
         [GraphQLName("event")] string? eventName,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
-        [Service] IClickHouseService clickHouse,
+        [Service] ILogStore logStore,
+        [Service] ITraceStore traceStore,
+        [Service] ISessionAnalyticsStore sessionStore,
+        [Service] IErrorAnalyticsStore errorStore,
+        [Service] IEventFieldStore eventFieldStore,
         CancellationToken ct)
     {
         await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
 
         return (productType?.ToUpperInvariant()) switch
         {
-            "LOGS" => await clickHouse.GetLogKeyValuesAsync(projectId, keyName,
+            "LOGS" => await logStore.GetLogKeyValuesAsync(projectId, keyName,
                 new QueryInput { Query = query ?? "", DateRange = dateRange }, ct),
-            "TRACES" => await clickHouse.GetTraceKeyValuesAsync(projectId, keyName,
+            "TRACES" => await traceStore.GetTraceKeyValuesAsync(projectId, keyName,
                 new QueryInput { Query = query ?? "", DateRange = dateRange }, ct),
-            "ERRORS" => await clickHouse.GetErrorsKeyValuesAsync(projectId, keyName, dateRange.StartDate, dateRange.EndDate, query, count, ct),
-            "SESSIONS" => await clickHouse.GetSessionsKeyValuesAsync(projectId, keyName, dateRange.StartDate, dateRange.EndDate, query, count, ct),
-            "EVENTS" => await clickHouse.GetEventsKeyValuesAsync(projectId, keyName, dateRange.StartDate, dateRange.EndDate, query, count, eventName, ct),
-            _ => await clickHouse.GetSessionsKeyValuesAsync(projectId, keyName, dateRange.StartDate, dateRange.EndDate, query, count, ct),
+            "ERRORS" => await errorStore.GetErrorsKeyValuesAsync(projectId, keyName, dateRange.StartDate, dateRange.EndDate, query, count, ct),
+            "SESSIONS" => await sessionStore.GetSessionsKeyValuesAsync(projectId, keyName, dateRange.StartDate, dateRange.EndDate, query, count, ct),
+            "EVENTS" => await eventFieldStore.GetEventsKeyValuesAsync(projectId, keyName, dateRange.StartDate, dateRange.EndDate, query, count, eventName, ct),
+            _ => await sessionStore.GetSessionsKeyValuesAsync(projectId, keyName, dateRange.StartDate, dateRange.EndDate, query, count, ct),
         };
     }
 
@@ -3428,7 +3437,11 @@ public class PrivateQuery
         List<string> keys,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
-        [Service] IClickHouseService clickHouse,
+        [Service] ILogStore logStore,
+        [Service] ITraceStore traceStore,
+        [Service] ISessionAnalyticsStore sessionStore,
+        [Service] IErrorAnalyticsStore errorStore,
+        [Service] IEventFieldStore eventFieldStore,
         CancellationToken ct)
     {
         await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
@@ -3438,7 +3451,8 @@ public class PrivateQuery
         {
             var values = await GetKeyValues(productType, projectId, key,
                 dateRange, null, 10, null,
-                claimsPrincipal, authz, clickHouse, ct);
+                claimsPrincipal, authz,
+                logStore, traceStore, sessionStore, errorStore, eventFieldStore, ct);
 
             results.Add(new KeyValueSuggestion(
                 key,
@@ -3459,7 +3473,7 @@ public class PrivateQuery
         string? query,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
-        [Service] IClickHouseService clickHouse,
+        [Service] ILogStore clickHouse,
         CancellationToken ct)
     {
         await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
@@ -3481,7 +3495,7 @@ public class PrivateQuery
         int? count,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
-        [Service] IClickHouseService clickHouse,
+        [Service] ILogStore clickHouse,
         CancellationToken ct)
     {
         await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
@@ -3500,7 +3514,7 @@ public class PrivateQuery
         string? query,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
-        [Service] IClickHouseService clickHouse,
+        [Service] ITraceStore clickHouse,
         CancellationToken ct)
     {
         await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
@@ -3522,7 +3536,7 @@ public class PrivateQuery
         int? count,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
-        [Service] IClickHouseService clickHouse,
+        [Service] ITraceStore clickHouse,
         CancellationToken ct)
     {
         await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
@@ -3541,7 +3555,7 @@ public class PrivateQuery
         string? query,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
-        [Service] IClickHouseService clickHouse,
+        [Service] IErrorAnalyticsStore clickHouse,
         CancellationToken ct)
     {
         await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
@@ -3562,7 +3576,7 @@ public class PrivateQuery
         string? column,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
-        [Service] IClickHouseService clickHouse,
+        [Service] IMetricStore clickHouse,
         CancellationToken ct)
     {
         await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
@@ -3583,7 +3597,7 @@ public class PrivateQuery
         string? column,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
-        [Service] IClickHouseService clickHouse,
+        [Service] IMetricStore clickHouse,
         CancellationToken ct)
     {
         await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
@@ -3604,7 +3618,7 @@ public class PrivateQuery
         string? column,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
-        [Service] IClickHouseService clickHouse,
+        [Service] IMetricStore clickHouse,
         CancellationToken ct)
     {
         await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
@@ -3625,7 +3639,7 @@ public class PrivateQuery
         string? column,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
-        [Service] IClickHouseService clickHouse,
+        [Service] IMetricStore clickHouse,
         CancellationToken ct)
     {
         await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
@@ -3646,7 +3660,7 @@ public class PrivateQuery
         string? column,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
-        [Service] IClickHouseService clickHouse,
+        [Service] IMetricStore clickHouse,
         CancellationToken ct)
     {
         await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
@@ -3670,7 +3684,7 @@ public class PrivateQuery
         int? page,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
-        [Service] IClickHouseService clickHouse,
+        [Service] ISessionAnalyticsStore clickHouse,
         [Service] HoldFastDbContext db,
         CancellationToken ct)
     {
@@ -3711,7 +3725,7 @@ public class PrivateQuery
         [GraphQLName("date_range")] DateRangeRequiredInput dateRange,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
-        [Service] IClickHouseService clickHouse,
+        [Service] ILogStore clickHouse,
         CancellationToken ct)
     {
         await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
@@ -3815,7 +3829,7 @@ public class PrivateQuery
         QueryInput queryParams,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
-        [Service] IClickHouseService clickHouse,
+        [Service] ILogStore clickHouse,
         CancellationToken ct)
     {
         await AuthHelper.RequireProjectAccess(claimsPrincipal, projectId, authz, ct);
