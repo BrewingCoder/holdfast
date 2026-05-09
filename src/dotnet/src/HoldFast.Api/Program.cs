@@ -170,6 +170,9 @@ builder.Services.AddSingleton<HoldFast.Data.Postgres.PostgresLogStore>();
 builder.Services.AddSingleton<HoldFast.Data.Postgres.PostgresTraceStore>();
 builder.Services.AddSingleton<HoldFast.Data.Postgres.PostgresSessionAnalyticsStore>();
 builder.Services.AddSingleton<HoldFast.Data.Postgres.PostgresErrorAnalyticsStore>();
+builder.Services.AddSingleton<HoldFast.Data.Postgres.PostgresMetricStore>();
+builder.Services.AddSingleton<HoldFast.Data.Postgres.PostgresEventFieldStore>();
+builder.Services.AddSingleton<HoldFast.Data.Postgres.PostgresAlertStateStore>();
 
 var logStoreBackend = builder.Configuration["Storage:Analytics:LogStore"] ?? "clickhouse";
 if (logStoreBackend.Equals("postgres", StringComparison.OrdinalIgnoreCase))
@@ -217,9 +220,29 @@ else
     builder.Services.AddSingleton<HoldFast.Analytics.IErrorAnalyticsStore>(
         sp => sp.GetRequiredService<ClickHouseService>());
 }
-builder.Services.AddSingleton<HoldFast.Analytics.IMetricStore>(sp => sp.GetRequiredService<ClickHouseService>());
-builder.Services.AddSingleton<HoldFast.Analytics.IEventFieldStore>(sp => sp.GetRequiredService<ClickHouseService>());
-builder.Services.AddSingleton<HoldFast.Analytics.IAlertStateStore>(sp => sp.GetRequiredService<ClickHouseService>());
+var metricStoreBackend = builder.Configuration["Storage:Analytics:MetricStore"] ?? "clickhouse";
+if (metricStoreBackend.Equals("postgres", StringComparison.OrdinalIgnoreCase))
+    builder.Services.AddSingleton<HoldFast.Analytics.IMetricStore>(
+        sp => sp.GetRequiredService<HoldFast.Data.Postgres.PostgresMetricStore>());
+else
+    builder.Services.AddSingleton<HoldFast.Analytics.IMetricStore>(
+        sp => sp.GetRequiredService<ClickHouseService>());
+
+var eventFieldStoreBackend = builder.Configuration["Storage:Analytics:EventFieldStore"] ?? "clickhouse";
+if (eventFieldStoreBackend.Equals("postgres", StringComparison.OrdinalIgnoreCase))
+    builder.Services.AddSingleton<HoldFast.Analytics.IEventFieldStore>(
+        sp => sp.GetRequiredService<HoldFast.Data.Postgres.PostgresEventFieldStore>());
+else
+    builder.Services.AddSingleton<HoldFast.Analytics.IEventFieldStore>(
+        sp => sp.GetRequiredService<ClickHouseService>());
+
+var alertStoreBackend = builder.Configuration["Storage:Analytics:AlertStateStore"] ?? "clickhouse";
+if (alertStoreBackend.Equals("postgres", StringComparison.OrdinalIgnoreCase))
+    builder.Services.AddSingleton<HoldFast.Analytics.IAlertStateStore>(
+        sp => sp.GetRequiredService<HoldFast.Data.Postgres.PostgresAlertStateStore>());
+else
+    builder.Services.AddSingleton<HoldFast.Analytics.IAlertStateStore>(
+        sp => sp.GetRequiredService<ClickHouseService>());
 
 // Migration runner — applies src/backend/clickhouse/migrations/*.up.sql at
 // startup, idempotently. Disable via ClickHouse__Migrations__Disabled=true
