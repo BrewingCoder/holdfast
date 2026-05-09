@@ -1,3 +1,4 @@
+using System.Text.Json;
 using HoldFast.Data;
 using HoldFast.Domain.Entities;
 using HoldFast.GraphQL.Public.InputTypes;
@@ -11,6 +12,13 @@ namespace HoldFast.GraphQL.Public;
 /// <summary>
 /// Public GraphQL mutations — SDK data ingestion endpoint.
 /// These are called by client SDKs to send session replay, errors, and metrics.
+///
+/// Method signatures intentionally use flat snake_case args (via the global
+/// SnakeCaseNamingConvention applied to camelCase parameter names) to match
+/// the upstream Go schema — the existing @holdfast-io/* SDKs are generated
+/// against that schema and call mutations with flat arguments. Wrapping them
+/// in input objects breaks the SDK with "argument X does not exist" errors.
+/// See HOL-13.
 /// </summary>
 public class PublicMutation
 {
@@ -19,13 +27,31 @@ public class PublicMutation
     /// Creates the session record with device/geo metadata and returns the secure ID + project ID.
     /// </summary>
     public async Task<InitializeSessionResponse> InitializeSession(
-        InitializeSessionInput input,
+        string sessionSecureId,
+        string? sessionKey,
+        string organizationVerboseId,
+        bool enableStrictPrivacy,
+        bool enableRecordingNetworkContents,
+        // The Go schema authors used camelCase for these five args even though the
+        // rest of the mutation uses snake_case. The SDK is generated against that
+        // contract, so override the global SnakeCaseNamingConvention here.
+        [GraphQLName("clientVersion")] string clientVersion,
+        [GraphQLName("firstloadVersion")] string firstloadVersion,
+        [GraphQLName("clientConfig")] string clientConfig,
+        string environment,
+        [GraphQLName("appVersion")] string? appVersion,
+        [GraphQLName("serviceName")] string? serviceName,
+        string fingerprint,
+        string clientId,
+        List<string>? networkRecordingDomains,
+        bool? disableSessionRecording,
+        string? privacySetting,
         [Service] ISessionInitializationService initService,
         [Service] IHttpContextAccessor httpContextAccessor,
         [Service] HoldFastDbContext db,
         CancellationToken ct)
     {
-        var projectId = Project.FromVerboseId(input.OrganizationVerboseId);
+        var projectId = Project.FromVerboseId(organizationVerboseId);
         var project = await db.Projects.FindAsync([projectId], ct)
             ?? throw new GraphQLException("Project not found");
 
@@ -36,20 +62,20 @@ public class PublicMutation
         var ipAddress = httpContext?.Connection.RemoteIpAddress?.ToString();
 
         var result = await initService.InitializeSessionAsync(
-            input.SessionSecureId,
-            input.SessionKey,
+            sessionSecureId,
+            sessionKey,
             project.Id,
-            input.Fingerprint,
-            input.ClientId,
-            input.ClientVersion,
-            input.FirstloadVersion,
-            input.ClientConfig,
-            input.Environment,
-            input.AppVersion,
-            input.ServiceName,
-            input.EnableStrictPrivacy,
-            input.EnableRecordingNetworkContents,
-            input.PrivacySetting,
+            fingerprint,
+            clientId,
+            clientVersion,
+            firstloadVersion,
+            clientConfig,
+            environment,
+            appVersion,
+            serviceName,
+            enableStrictPrivacy,
+            enableRecordingNetworkContents,
+            privacySetting,
             userAgent,
             acceptLanguage,
             ipAddress,
@@ -63,14 +89,16 @@ public class PublicMutation
     /// Detects first-time users and backfills unidentified sessions.
     /// </summary>
     public async Task<string> IdentifySession(
-        IdentifySessionInput input,
+        string sessionSecureId,
+        string userIdentifier,
+        JsonElement? userObject,
         [Service] ISessionInitializationService initService,
         CancellationToken ct)
     {
         var session = await initService.IdentifySessionAsync(
-            input.SessionSecureId,
-            input.UserIdentifier,
-            input.UserObject,
+            sessionSecureId,
+            userIdentifier,
+            userObject,
             ct);
 
         return session.SecureId;
@@ -80,15 +108,17 @@ public class PublicMutation
     /// Add custom properties to a session.
     /// </summary>
     public async Task<string> AddSessionProperties(
-        AddSessionPropertiesInput input,
+        string sessionSecureId,
+        JsonElement? propertiesObject,
         [Service] HoldFastDbContext db,
         CancellationToken ct)
     {
+        _ = propertiesObject; // properties handled by worker via session field updates
+
         var session = await db.Sessions
-            .FirstOrDefaultAsync(s => s.SecureId == input.SessionSecureId, ct)
+            .FirstOrDefaultAsync(s => s.SecureId == sessionSecureId, ct)
             ?? throw new GraphQLException("Session not found");
 
-        // Properties are stored as session fields — will be processed by worker
         await db.SaveChangesAsync(ct);
 
         return session.SecureId;
@@ -219,12 +249,18 @@ public class PublicMutation
     /// Add user feedback to a session.
     /// </summary>
     public async Task<string> AddSessionFeedback(
-        AddSessionFeedbackInput input,
+        string sessionSecureId,
+        string? userName,
+        string? userEmail,
+        string verbatim,
+        DateTime timestamp,
         [Service] HoldFastDbContext db,
         CancellationToken ct)
     {
+        _ = userName; _ = userEmail; _ = timestamp; // unused in current backend; kept for schema parity
+
         var session = await db.Sessions
-            .FirstOrDefaultAsync(s => s.SecureId == input.SessionSecureId, ct)
+            .FirstOrDefaultAsync(s => s.SecureId == sessionSecureId, ct)
             ?? throw new GraphQLException("Session not found");
 
         // Store feedback as a session comment with type "FEEDBACK"
@@ -232,7 +268,7 @@ public class PublicMutation
         {
             ProjectId = session.ProjectId,
             SessionId = session.Id,
-            Text = input.Verbatim,
+            Text = verbatim,
             Type = "FEEDBACK",
         };
 
