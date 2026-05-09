@@ -8,6 +8,9 @@
         <default>
             <query_profiler_real_time_period_ns>1000000000</query_profiler_real_time_period_ns>
             <query_profiler_cpu_time_period_ns>1000000000</query_profiler_cpu_time_period_ns>
+            <!-- HOL-18: per-query / per-user memory caps for hobby scale. -->
+            <max_memory_usage>268435456</max_memory_usage>                  <!-- 256 MiB per query -->
+            <max_memory_usage_for_user>536870912</max_memory_usage_for_user>  <!-- 512 MiB per user -->
         </default>
     </profiles>
 </clickhouse>

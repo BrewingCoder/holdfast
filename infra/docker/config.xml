@@ -1,4 +1,14 @@
 <clickhouse>
+    <!-- ── Memory caps (HOL-18) ──────────────────────────────────────────
+         ClickHouse defaults assume big-iron data-warehouse hardware. For
+         self-hosted HoldFast deployments at hobby scale the unbounded
+         caches dominate footprint. These caps drop CH from ~11 GiB to
+         <1 GiB at idle while staying plenty for our query patterns.
+         Bump them back up if operating at >1M events/day. -->
+    <max_server_memory_usage>3221225472</max_server_memory_usage> <!-- 3 GiB -->
+    <mark_cache_size>67108864</mark_cache_size>                   <!-- 64 MiB -->
+    <uncompressed_cache_size>67108864</uncompressed_cache_size>   <!-- 64 MiB -->
+
     <backups>
         <allowed_path>/backups/</allowed_path>
         <remove_backup_files_after_failure>true</remove_backup_files_after_failure>
