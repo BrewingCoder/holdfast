@@ -71,7 +71,7 @@ All features are enabled by default. No tiers. No feature gates. No billing.
 
 ## Quick Start
 
-Deploy a hobby instance on Linux with Docker (minimum: 8GB RAM, 4 CPUs, 64 GB disk):
+Deploy a hobby instance on Linux with Docker. The default ClickHouse-backed stack runs comfortably on **2 CPUs / 2 GiB RAM**; the Postgres-only stack runs on **1 CPU / 1 GiB RAM**.
 
 ```bash
 git clone https://github.com/BrewingCoder/holdfast
@@ -80,22 +80,32 @@ cd holdfast/infra/docker
 ./run-hobby.sh
 ```
 
-The app is accessible at `https://localhost`. Log in with any email address and the password you set in `.env`.
+The app is accessible at `http://localhost:8082`. Log in with any email address and the password you set in `.env`.
 
 All service endpoints are configurable via environment variables — deploy to any domain, IP, or localhost. See `infra/docker/.env` and `docs/HOLDFAST-NOTES.md` for configuration details.
+
+### Choose your analytics backend
+
+A single environment variable picks where session/log/trace/metric/error data lands:
+
+```bash
+COMPOSE_PROFILES=clickhouse  STORAGE_ANALYTICS=ClickHouse  # default — recommended for >100k events/day
+COMPOSE_PROFILES=postgres    STORAGE_ANALYTICS=Postgres    # PG-only — drops the ClickHouse container entirely
+```
+
+In Postgres-only mode the deployment is **two containers** (backend + Postgres). At hobby scale the PG backend handles the same workload with a fraction of the resource footprint and zero columnar-database operations cost.
 
 ## Tech Stack
 
 | Component | Technology |
 |-----------|-----------|
-| Backend | Go |
-| Frontend | React / TypeScript |
-| Analytics DB | ClickHouse |
-| Relational DB | PostgreSQL |
-| Cache | Redis |
-| Message Queue | Kafka |
-| Ingestion | OpenTelemetry Collector |
-| Build | Vite, Turborepo, Yarn Berry |
+| Backend | **.NET 10** with HotChocolate GraphQL |
+| Frontend | React / TypeScript (Vite, Turborepo, Yarn Berry) |
+| Analytics DB | ClickHouse 24.3 *(optional — opt-in via compose profile)* |
+| Relational DB | TimescaleDB-HA (Postgres 16 + Timescale + pgvector) |
+| Message bus | In-process `Channel<T>` *(Kafka removed)* |
+| Ingestion | OTLP/HTTP receivers hosted by the backend *(OTel collector removed)* |
+| Frontend serving | Same backend image — no separate nginx container |
 
 ## SDKs
 
@@ -114,11 +124,56 @@ All SDKs support configurable endpoints — point them at your HoldFast instance
 See [CONTRIBUTING.md](CONTRIBUTING.md) for full setup instructions.
 
 ```bash
-# Prerequisites: Go 1.23+, Node.js 18+, Docker
-cd infra/docker && docker-compose up       # Start infrastructure
-cd src/backend && make migrate && make start  # Start backend
-cd src/frontend && yarn dev                   # Start frontend
+# Prerequisites: .NET 10 SDK, Node.js 22+, Docker
+
+# Bring up the data plane only (Postgres + optional ClickHouse)
+cd infra/docker && docker compose up -d postgres clickhouse
+
+# Run the backend on the host with hot reload
+cd src/dotnet && dotnet watch --project src/HoldFast.Api
+
+# Run the frontend on the host with hot reload
+cd src/frontend && yarn dev
 ```
+
+The legacy Go backend tree under `src/backend/` is preserved for reference (the fork-source schema files still drive frontend codegen) but is no longer the runtime — the .NET solution under `src/dotnet/` is what ships.
+
+## Why the Architecture Changed
+
+Upstream Highlight.io was a SaaS-shaped product. The infrastructure assumptions that come with that — fleets of replicated services, dedicated message brokers, per-domain microservices — make sense when you're running a multi-tenant cloud. They make almost no sense when a single team is running a single instance of an observability platform on their own hardware.
+
+So we rebuilt the parts that hurt the most.
+
+### Smaller footprint by design
+
+The original hobby stack was **9 containers** consuming **~12 GiB of RAM at warm idle** with no traffic. Most of that was infrastructure overhead for services we didn't actually need at single-tenant scale.
+
+The current ClickHouse-backed hobby stack is **3 containers** at **~700 MiB warm idle** (backend + Postgres + ClickHouse). The Postgres-only mode cuts that to **2 containers at ~400 MiB warm idle**.
+
+| | Upstream Highlight | HoldFast (CH mode) | HoldFast (PG mode) |
+|---|---|---|---|
+| Containers | 9 | 3 | **2** |
+| Warm idle RAM | ~12 GiB | ~700 MiB | **~400 MiB** |
+| Hobby host minimum | 8 GiB / 4 CPU | 2 GiB / 2 CPU | **1 GiB / 1 CPU** |
+
+What got dropped: the standalone OTel collector (the backend hosts OTLP receivers directly), the predictions service (Python ML container that nobody self-hosting actually used), Redis (the in-memory cache layer was load-bearing for a cloud at scale; at hobby scale a `MemoryCache` is faster and free), Zookeeper, Kafka, and the dedicated nginx-frontend container (the backend's Kestrel serves the SPA bundle from `wwwroot`). Each removal is documented in HOL-18 through HOL-23 on the issue tracker.
+
+### Why we ditched Go
+
+The Go backend was the worst offender for resource pressure in self-hosted deployments. It wasn't a Go problem in the abstract — it was a *running this Go service on a constrained box* problem:
+
+- **Memory growth that never plateaued.** The Go runtime's GC strategy keeps a generous heap reservation proportional to peak allocation. Ingest bursts (which observability workloads constantly do — error storms, deploy spikes, replay-heavy sessions) walked the heap up and the GC never gave it back. Pods got OOM-killed under cgroup limits that wouldn't have bothered a tighter runtime. Operators learned to over-provision RAM by 3-4x just to keep restarts at bay.
+- **Goroutine deadlocks under contention.** The original kitchen-sink `IClickHouseService` interface fanned out work across many goroutines that shared mutexes for connection pooling, Kafka producer batching, and resolver state. Under load — particularly during retention sweeps or the autoresolve worker firing — we observed lock contention degenerating into outright deadlocks that wedged the whole pod until a restart. Reproducing them was painful; fixing them more so.
+- **Cgroup behavior.** The Go runtime predates modern container-aware tuning. `GOGC` and `GOMEMLIMIT` help, but the defaults guess wrong about cgroup memory limits often enough that operators needed bespoke tuning per deployment. Self-hosted users don't want to be Go runtime experts.
+- **Deployment surface.** A single Go binary is famously easy to ship — but that binary still had `cgo` dependencies for some integrations, and the Helm/compose configurations still needed to wire all the supporting services. Simplicity at the binary level didn't translate into operational simplicity.
+
+The .NET 10 rewrite (issue-55) replaces every public/private GraphQL resolver, every worker, every ingest path. We kept the same external API contracts — same OTLP endpoints, same GraphQL shape, same SDK protocol — so client SDKs and the React frontend didn't need to change. The migration shipped with **3,153 unit tests** and a continuous-soak harness validating end-to-end ingest paths. Memory profile is dramatically tighter: backend pods run comfortably with **128 MiB requests / 256 MiB limits** in Kubernetes; the host process behaves predictably under cgroup pressure; and the analytics writer dispatches by metric kind rather than fighting a single shared lock.
+
+### Kafka → in-process bus
+
+For a single-tenant deployment, Kafka was overkill. It existed because Highlight ran a multi-tenant cloud where Kafka was the seam between ingest and worker pods. HoldFast doesn't have that seam — ingest and workers run in the same process. Kafka was replaced (HOL-23) by a `Channel<T>`-backed in-process message bus that preserves the same `produce → consume` contract for the worker code and JSON-round-trips the same message types. That alone dropped two containers (Kafka + Zookeeper) and several hundred MiB of resident memory.
+
+Multi-node deployments that *do* need a real broker can still plug one in — the bus is behind an interface — but the default deployment is now a single process talking to a single database.
 
 ## What Was Removed
 
@@ -130,6 +185,9 @@ HoldFast is lighter than upstream Highlight.io. We stripped everything that serv
 - **Phonehome** — Usage telemetry reporting to Highlight's servers
 - **Marketing website** — The `highlight.io` Next.js site
 - **Feature gates** — All boolean flags defaulted to enabled
+- **Calendly / "Book a call" CTAs** — SaaS sales flow
+- **Discord help/community links** — HoldFast has no Discord
+- **Harold AI** — Highlight's paid-tier AI assistant; UI surfaces removed pending a clean self-hosted AI integration
 
 See [CHANGELOG-FORK.md](docs/CHANGELOG-FORK.md) for the detailed record of every change.
 
@@ -139,7 +197,7 @@ Observability data is sensitive. Session replays capture user behavior. Error tr
 
 HoldFast takes this seriously. Our security roadmap (see [ROADMAP.md](docs/ROADMAP.md) Phase 2) includes:
 
-- **Encryption at rest** — All stored data (PostgreSQL, ClickHouse, Redis, S3, Kafka) encrypted using configurable key management (AWS KMS, GCP KMS, HashiCorp Vault, or local keys)
+- **Encryption at rest** — All stored data (PostgreSQL, ClickHouse, object storage) encrypted using configurable key management (AWS KMS, GCP KMS, HashiCorp Vault, or local keys)
 - **Field-level encryption** — Application-layer encryption for PII, credentials, and sensitive telemetry fields. Even database admins can't read them without the application key.
 - **TLS 1.2+ everywhere** — All connections, external and inter-service, require TLS 1.2 or higher. No plaintext. Strong cipher suites only.
 - **OIDC / SSO** — Bring your own identity provider. Connect to Okta, Azure AD, Google Workspace, Keycloak, or any OIDC-compliant IdP. One digital identity, no separate credentials.
@@ -152,9 +210,9 @@ HoldFast takes this seriously. Our security roadmap (see [ROADMAP.md](docs/ROADM
 
 See [ROADMAP.md](docs/ROADMAP.md) for the full plan. Highlights:
 
-- **Done:** SaaS/marketing strip, feature gate unlock, domain configurability, `@holdfast-io` npm scope, browser SDK renamed to `@holdfast-io/browser`, Go module paths renamed, NPM publish workflow passing, AGPL-3.0 licensing
-- **Next:** Security hardening (encryption at rest, TLS enforcement, OIDC auth, MFA), dependency updates
-- **Future:** AI provider modernization (Claude/Anthropic), Helm charts, compliance documentation, ARM64 support
+- **Done:** SaaS/marketing strip, feature gate unlock, domain configurability, `@holdfast-io` npm scope, browser SDK rename, AGPL-3.0 licensing, **.NET 10 backend rewrite (issue-55)**, **LEAN stack (9 → 3 containers, ~12 GiB → ~700 MiB warm idle)**, **Kafka → in-process bus**, **Postgres-only analytics mode (CH optional)**
+- **Next:** Security hardening (encryption at rest, TLS enforcement, OIDC auth, MFA), 24h soak validation, frontend Highlight-branding cleanup pass
+- **Future:** Helm charts, compliance documentation, ARM64 support, native AI integrations (Claude/Anthropic) for self-hosted operators
 
 ## Governance
 
