@@ -712,29 +712,11 @@ const BillingBanner: React.FC = () => {
 	const { loading: subscriptionLoading, subscriptionData } = useBillingHook({
 		project_id: projectId,
 	})
-	const billingIssues =
-		!subscriptionLoading &&
-		!!subscriptionData?.subscription_details?.billingIssue
-
-	useEffect(() => {
-		if (
-			!hasReportedTrialExtension &&
-			data?.project?.workspace?.trial_extension_enabled
-		) {
-			analytics.track('TrialExtensionEnabled', {
-				projectId,
-				workspace_id: data?.project?.workspace.id,
-			})
-			setHasReportedTrialExtension(true)
-		}
-	}, [
-		data?.project?.workspace?.id,
-		data?.project?.workspace?.trial_extension_enabled,
-		hasReportedTrialExtension,
-		projectId,
-		setHasReportedTrialExtension,
-	])
-
+	// HOL-49: HoldFast is self-hosted only — no SaaS plan, no trial, no
+	// billing issues, no quota overage, no launch-week marketing. Maintenance
+	// banner is the only legitimate signal here. Everything else from upstream
+	// (BillingIssuesBanner, trial countdown, FreePlan upgrade prompt,
+	// LaunchWeekBanner) is dead weight.
 	const isMaintenance = moment().isBetween(
 		systemData?.system_configuration?.maintenance_start,
 		systemData?.system_configuration?.maintenance_end,
@@ -743,90 +725,8 @@ const BillingBanner: React.FC = () => {
 		return <MaintenanceBanner />
 	}
 
-	if (billingIssues) {
-		toggleShowBanner(true)
-		return <BillingIssuesBanner />
-	}
-
-	if (loading) {
-		toggleShowBanner(false)
-		return null
-	}
-
-	if (temporarilyHideBanner) {
-		toggleShowBanner(false)
-		return null
-	}
-
-	if (!data) {
-		toggleShowBanner(false)
-		return null
-	}
-
-	let bannerMessage: string | React.ReactNode = ''
-	const hasTrial = isProjectWithinTrial(data?.project?.workspace)
-
-	const records = getQuotaPercents(data)
-
-	const productsApproachingQuota = records
-		.filter((r) => r[1] > APPROACHING_QUOTA_THRESHOLD && r[1] <= 1)
-		.map((r) => r[0])
-	const productsOverQuota = records.filter((r) => r[1] > 1).map((r) => r[0])
-
-	if (productsOverQuota.length > 0) {
-		bannerMessage += `You've reached your monthly limit for ${productsToString(
-			productsOverQuota,
-		)}.`
-		if (data?.billingDetailsForProject?.plan.type === PlanType.Free) {
-			bannerMessage += ` New data won't be recorded.`
-		}
-	}
-	if (productsApproachingQuota.length > 0) {
-		bannerMessage += ` You're approaching your monthly limit for ${productsToString(
-			productsApproachingQuota,
-		)}.`
-	}
-
-	if (!bannerMessage && !hasTrial) {
-		const isLaunchWeek = moment().isBetween(
-			'2024-10-21T13:00:00Z', // 6AM PST
-			'2024-10-26T13:00:00Z',
-		)
-		if (isLaunchWeek) {
-			return <LaunchWeekBanner />
-		} else {
-			toggleShowBanner(false)
-			return null
-		}
-	}
-
-	if (hasTrial) {
-		bannerMessage = getTrialEndDateMessage(
-			data?.project?.workspace?.trial_end_date,
-		)
-	}
-
-	toggleShowBanner(true)
-
-	return (
-		<div className={styles.trialWrapper}>
-			<div className={styles.trialTimeText}>
-				{bannerMessage} Upgrade{' '}
-				<Link to={`/w/${currentWorkspace?.id}/current-plan`}>here</Link>
-				.
-			</div>
-			<button
-				onClick={() => {
-					analytics.track('TemporarilyHideFreePlanBanner', {
-						hasTrial,
-					})
-					setTemporarilyHideBanner(true)
-				}}
-			>
-				<SvgXIcon />
-			</button>
-		</div>
-	)
+	toggleShowBanner(false)
+	return null
 }
 
 const productsToString = (p: ProductType[]): string => {

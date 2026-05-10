@@ -2,21 +2,13 @@ import { useLocation } from 'react-router-dom'
 
 export type SettingGroups = 'account' | 'project'
 
-export type WorkspaceSettingsTab =
-	| 'team'
-	| 'settings'
-	| 'current-plan'
-	| 'upgrade-plan'
-	| 'harold-ai'
+export type WorkspaceSettingsTab = 'team' | 'settings'
 
 export const isSettingsPath = (path: string[]) => {
 	const settingsPaths: (WorkspaceSettingsTab | SettingGroups)[] = [
 		'settings',
 		'account',
 		'team',
-		'current-plan',
-		'upgrade-plan',
-		'harold-ai',
 	]
 	return settingsPaths.some(
 		(settingsPath) => path.indexOf(settingsPath) !== -1,

@@ -8,6 +8,11 @@
 .vercel
 .yarn/cache
 build
+# Stale `turbo prune --docker` output from a host-side run; the
+# Dockerfile runs turbo prune inside the container and shouldn't see
+# leftover host artifacts that may pin removed deps (HOL-49).
+out
+
 # .NET build artifacts — prevent Windows obj/bin from polluting Linux container builds
 src/dotnet/**/obj
 src/dotnet/**/bin
