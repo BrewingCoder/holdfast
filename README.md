@@ -160,14 +160,41 @@ What got dropped: the standalone OTel collector (the backend hosts OTLP receiver
 
 ### Why we ditched Go
 
-The Go backend was the worst offender for resource pressure in self-hosted deployments. It wasn't a Go problem in the abstract — it was a *running this Go service on a constrained box* problem:
+This isn't an argument against Go. Plenty of services run beautifully on it. The argument is narrower: *this specific service, with this dependency graph, on the shape of infrastructure self-hosting operators actually have*, was painful to build and painful to run, and the pain compounded in ways that didn't show up until you tried to live with it. The runtime pain was real, but the part that drove the rewrite was discovering how much of the pain happened *before* the binary ever started.
 
-- **Memory growth that never plateaued.** The Go runtime's GC strategy keeps a generous heap reservation proportional to peak allocation. Ingest bursts (which observability workloads constantly do — error storms, deploy spikes, replay-heavy sessions) walked the heap up and the GC never gave it back. Pods got OOM-killed under cgroup limits that wouldn't have bothered a tighter runtime. Operators learned to over-provision RAM by 3-4x just to keep restarts at bay.
-- **Goroutine deadlocks under contention.** The original kitchen-sink `IClickHouseService` interface fanned out work across many goroutines that shared mutexes for connection pooling, Kafka producer batching, and resolver state. Under load — particularly during retention sweeps or the autoresolve worker firing — we observed lock contention degenerating into outright deadlocks that wedged the whole pod until a restart. Reproducing them was painful; fixing them more so.
-- **Cgroup behavior.** The Go runtime predates modern container-aware tuning. `GOGC` and `GOMEMLIMIT` help, but the defaults guess wrong about cgroup memory limits often enough that operators needed bespoke tuning per deployment. Self-hosted users don't want to be Go runtime experts.
-- **Deployment surface.** A single Go binary is famously easy to ship — but that binary still had `cgo` dependencies for some integrations, and the Helm/compose configurations still needed to wire all the supporting services. Simplicity at the binary level didn't translate into operational simplicity.
+#### Building it was painful
 
-The .NET 10 rewrite (issue-55) replaces every public/private GraphQL resolver, every worker, every ingest path. We kept the same external API contracts — same OTLP endpoints, same GraphQL shape, same SDK protocol — so client SDKs and the React frontend didn't need to change. The migration shipped with **3,153 unit tests** and a continuous-soak harness validating end-to-end ingest paths. Memory profile is dramatically tighter: backend pods run comfortably with **128 MiB requests / 256 MiB limits** in Kubernetes; the host process behaves predictably under cgroup pressure; and the analytics writer dispatches by metric kind rather than fighting a single shared lock.
+The dimensions that don't make it onto benchmarks but absolutely make it into the operator's day:
+
+- **Cold builds took ~45 minutes on a workstation that should have eaten this for breakfast.** Concrete reference machine: i9-14900K (24 physical / 32 logical cores), 64 GiB RAM, NVMe system drive. CPU sat bored most of the build. The bottleneck was the linker. Go's linker holds the entire transitive symbol table in memory during link, and the Highlight backend's dependency graph — the ClickHouse driver, three Kafka client variants, the OpenTelemetry collector packages, multiple cgo bindings — was big enough to push linker peak working set well past **8 GiB**. A workstation-class box was effectively serial-bottlenecked on a single linker process for tens of minutes per build.
+- **Windows Defender turned every build into a war with the antivirus.** The Go build cache (`%LOCALAPPDATA%\go-build`, `%GOPATH%\pkg`) is a churn-heavy directory of thousands of small object files written and rewritten on every build. Defender's real-time scan inspects each one. This is well-known among Go-on-Windows veterans and completely invisible to anyone new to the toolchain — it doesn't show up on a CPU graph, it just doubles or triples the wall clock. Telling every operator to add antivirus exclusions for two paths is not a serious self-hosting story.
+- **Cgo on Windows pulled in a second toolchain mid-build.** Some Highlight integrations required cgo, which on Windows means a MinGW or MSYS2 process tree spinning up its own compiler with its own memory pool alongside the Go toolchain. The Windows scheduler did not handle that gracefully under load; the two toolchains contended for cores, file handles, and the page cache, and the build pipeline went from "slow" to "unstable."
+- **Builds didn't just slow down. They crashed Windows.** Once Go's linker heap plus the rest of the running developer environment (an IDE, Docker Desktop with WSL2, browser tabs, Slack, etc.) exceeded physical RAM, Windows started paging. Go's GC walks the entire heap during sweep, and walking a heap that's been paged to disk thrashes the system to its knees — multi-second UI hangs, then stalls long enough that the OS itself became unresponsive. We lost build sessions to hard reboots, not to failed builds. That's a real cost: every blue-screened or hung-and-rebooted workstation is also lost developer hours, lost shell history, lost in-flight work.
+- **CI ran into the same shape of problem at smaller scale.** Build agents that comfortably run almost any other language toolchain ran out of memory linking this one. Either the runners got upsized (which costs money) or the build got partitioned (which is its own form of operational debt).
+
+For a self-hosted observability platform, where the prospective operator's first interaction with the codebase is often "let me build this and see if it works on my hardware," that build experience is the loudest signal the project sends. It said "this is going to be painful" before anyone touched the runtime.
+
+#### Running it was painful
+
+Once the binary did exist, the operational dimensions piled on:
+
+- **Memory growth that never plateaued.** The Go runtime's GC strategy keeps a generous heap reservation proportional to peak allocation. Ingest bursts — which observability workloads constantly do; error storms, deploy spikes, replay-heavy sessions — walked the heap up and the GC never gave it back. Pods got OOM-killed under cgroup limits that wouldn't have bothered a tighter runtime. Operators learned to over-provision RAM by 3-4x just to keep restarts at bay.
+- **Goroutine deadlocks under contention.** The original kitchen-sink `ClickHouseService` fanned out work across many goroutines that shared mutexes for connection pooling, Kafka producer batching, and resolver state. Under load — particularly during retention sweeps or the autoresolve worker firing — we observed lock contention degenerating into outright deadlocks that wedged the whole pod until a restart. Reproducing them was painful; fixing them more so.
+- **Cgroup behavior.** The Go runtime is improving here, but the defaults still guess wrong about cgroup memory and CPU limits often enough that operators ended up tuning `GOGC` and `GOMEMLIMIT` per deployment. Self-hosted users don't want to be Go runtime experts.
+- **Deployment surface.** A single Go binary is famously easy to ship — but this binary still had `cgo` dependencies pulling glibc and OpenSSL versions into the runtime image, and the Helm/compose configurations still needed to wire all the supporting services. Simplicity at the binary level didn't translate into operational simplicity at the cluster level.
+
+#### What the .NET 10 rewrite changed
+
+The .NET 10 rewrite (issue-55) replaces every public/private GraphQL resolver, every worker, and every ingest path. The external contracts didn't move — same OTLP endpoints, same GraphQL shape, same SDK protocol — so client SDKs and the React frontend didn't need to change. It shipped with **3,153 unit tests** and a continuous-soak harness validating end-to-end ingest paths.
+
+Operationally, the picture is dramatically tighter:
+
+- Backend pods run comfortably with **128 MiB requests / 256 MiB limits** in Kubernetes (vs the old 1-4 GiB envelopes).
+- Cold builds on the same i9-14900K reference workstation take **single-digit minutes**, peak link memory is well inside developer-machine norms, and Windows Defender exclusions are not a prerequisite to keep the toolchain usable.
+- The host process behaves predictably under cgroup pressure; the GC is container-aware by default.
+- The analytics writer dispatches by metric kind rather than fighting a single shared lock; the deadlock class that wedged the Go pods doesn't exist in this shape.
+
+The point isn't that .NET is uniformly faster than Go — it isn't. The point is that *this* service, on *this* dependency graph, on the developer machines and CI agents and self-hosted target hosts that operators actually run, behaves like a service you'd want to run unattended. The Go version didn't.
 
 ### Kafka → in-process bus
 
