@@ -7,6 +7,10 @@ out
 build
 **/.next
 
+# Inter-agent MCP server config — points at our private lab URL and is
+# per-workspace, never shared between forks.
+.mcp.json
+
 apollo.config.js
 .yalc
 yalc.lock
