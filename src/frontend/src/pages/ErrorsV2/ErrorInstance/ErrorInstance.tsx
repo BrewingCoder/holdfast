@@ -43,7 +43,6 @@ import { useNavigate } from 'react-router-dom'
 import { useSearchContext } from '@/components/Search/SearchContext'
 import { useGetWorkspaceSettingsQuery } from '@/graph/generated/hooks'
 import ErrorBodyText from '@/pages/ErrorsV2/ErrorBody/components/ErrorBodyText'
-import { AiErrorSuggestion } from '@/pages/ErrorsV2/ErrorInstance/AiErrorSuggestion'
 import { ErrorBoundaryFeedback } from '@/pages/ErrorsV2/ErrorInstance/ErrorBoundaryFeedback'
 import { ErrorSessionMissingOrExcluded } from '@/pages/ErrorsV2/ErrorInstance/ErrorSessionMissingOrExcluded'
 import { PreviousNextInstance } from '@/pages/ErrorsV2/ErrorInstance/PreviousNextInstance'
@@ -181,20 +180,6 @@ export const ErrorInstance: React.FC<Props> = ({ errorGroup }) => {
 			</Stack>
 
 			<ErrorInstanceBody errorInstance={errorInstance} />
-
-			{workspaceSettingsData?.workspaceSettings?.ai_application && (
-				<Box display="flex" flexDirection="column" mb="40">
-					<Stack direction="row" align="center" pb="8" gap="8">
-						<Text size="large" weight="bold" color="strong">
-							Harold AI
-						</Text>
-						<Badge label="Beta" size="medium" variant="purple" />
-					</Stack>
-					<AiErrorSuggestion
-						errorObjectId={errorInstance.error_object.id}
-					/>
-				</Box>
-			)}
 
 			<ErrorInstanceInfo
 				errorGroup={errorGroup}

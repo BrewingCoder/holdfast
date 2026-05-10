@@ -12,7 +12,6 @@ import {
 	IconSolidClock,
 	IconSolidExternalLink,
 	IconSolidSearch,
-	IconSolidSparkles,
 	IconSolidSwitchVertical,
 	IconSolidXCircle,
 	Menu,
@@ -42,7 +41,6 @@ import {
 	useSearchContext,
 } from '@/components/Search/SearchContext'
 import {
-	AI_SEARCH_PLACEHOLDERS,
 	TIME_FORMAT,
 	TIME_MODE,
 } from '@/components/Search/SearchForm/constants'
@@ -61,7 +59,6 @@ import { useApplicationContext } from '@/routers/AppRouter/context/ApplicationCo
 import { btoaSafe } from '@/util/string'
 
 import { SearchEntry } from './hooks'
-import { AiSearch } from './AiSearch'
 import * as styles from './SearchForm.css'
 
 export const QueryParam = withDefault(StringParam, '')
@@ -146,7 +143,7 @@ const SearchForm: React.FC<SearchFormProps> = ({
 }) => {
 	const navigate = useNavigate()
 	const { projectId } = useProjectId()
-	const { query, setQuery, onSubmit, aiMode } = useSearchContext()
+	const { query, setQuery, onSubmit } = useSearchContext()
 
 	const handleQueryChange = (query?: string) => {
 		const updatedQuery = query ?? ''
@@ -246,66 +243,57 @@ const SearchForm: React.FC<SearchFormProps> = ({
 	if (isPanelView) {
 		return (
 			<>
-				{aiMode ? (
-					<AiSearch
-						placeholder={AI_SEARCH_PLACEHOLDERS[productType]}
-						panelView
-					/>
-				) : (
-					<>
-						{SegmentModals}
-						<Stack
-							alignItems="flex-start"
-							gap="8"
-							width="full"
-							p="8"
+				{SegmentModals}
+				<Stack
+					alignItems="flex-start"
+					gap="8"
+					width="full"
+					p="8"
+				>
+					<Stack
+						flexDirection="row"
+						justifyContent="space-between"
+						width="full"
+					>
+						{DatePickerComponent}
+						{ActionsComponent}
+					</Stack>
+					<Stack
+						gap="0"
+						border="dividerWeak"
+						borderRadius="6"
+						width="full"
+					>
+						<Box
+							background="white"
+							borderTopLeftRadius="4"
+							borderTopRightRadius="4"
 						>
-							<Stack
-								flexDirection="row"
-								justifyContent="space-between"
-								width="full"
-							>
-								{DatePickerComponent}
-								{ActionsComponent}
-							</Stack>
-							<Stack
-								gap="0"
-								border="dividerWeak"
-								borderRadius="6"
-								width="full"
-							>
-								<Box
-									background="white"
-									borderTopLeftRadius="4"
-									borderTopRightRadius="4"
-								>
-									{SearchComponent}
-								</Box>
-								<Box borderBottom="dividerWeak" />
-								<Stack
-									flexDirection="row"
-									borderBottomLeftRadius="4"
-									borderBottomRightRadius="4"
-									justifyContent="space-between"
-									py="6"
-									pl="8"
-									pr="4"
-								>
-									<Box display="flex" alignItems="center">
-										{loading ? (
-											<LoadingBox />
-										) : resultFormatted ? (
-											<Text color="weak">
-												{resultFormatted}
-											</Text>
-										) : null}
-									</Box>
-									{SegmentMenu}
-								</Stack>
-							</Stack>
+							{SearchComponent}
+						</Box>
+						<Box borderBottom="dividerWeak" />
+						<Stack
+							flexDirection="row"
+							borderBottomLeftRadius="4"
+							borderBottomRightRadius="4"
+							justifyContent="space-between"
+							py="6"
+							pl="8"
+							pr="4"
+						>
+							<Box display="flex" alignItems="center">
+								{loading ? (
+									<LoadingBox />
+								) : resultFormatted ? (
+									<Text color="weak">
+										{resultFormatted}
+									</Text>
+								) : null}
+							</Box>
+							{SegmentMenu}
 						</Stack>
-					</>
-				)}
+					</Stack>
+				</Stack>
 			</>
 		)
 	}
@@ -322,34 +310,26 @@ const SearchForm: React.FC<SearchFormProps> = ({
 				width="full"
 				borderBottom="dividerWeak"
 			>
-				{aiMode ? (
-					<AiSearch
-						placeholder={AI_SEARCH_PLACEHOLDERS[productType]}
-					/>
-				) : (
-					<>
-						{SearchComponent}
+				{SearchComponent}
+				<Box
+					alignItems="flex-start"
+					display="flex"
+					pr="8"
+					py="6"
+					gap="6"
+				>
+					{MonitorComponent}
+					{SegmentMenu}
+					{displaySeparator && (
 						<Box
-							alignItems="flex-start"
-							display="flex"
-							pr="8"
-							py="6"
-							gap="6"
-						>
-							{MonitorComponent}
-							{SegmentMenu}
-							{displaySeparator && (
-								<Box
-									as="span"
-									borderRight="dividerWeak"
-									style={{ marginTop: 5, height: 18 }}
-								/>
-							)}
-							{ActionsComponent}
-							{DatePickerComponent}
-						</Box>
-					</>
-				)}
+							as="span"
+							borderRight="dividerWeak"
+							style={{ marginTop: 5, height: 18 }}
+						/>
+					)}
+					{ActionsComponent}
+					{DatePickerComponent}
+				</Box>
 			</Box>
 		</>
 	)
@@ -390,7 +370,6 @@ export const Search: React.FC<{
 		tokenGroups,
 		onSubmit,
 		setQuery,
-		setAiMode,
 		recentSearches,
 	} = useSearchContext()
 	const navigate = useNavigate()
@@ -900,36 +879,6 @@ export const Search: React.FC<{
 					fixed
 				>
 					<Box cssClass={styles.comboboxResults}>
-						{aiSupportedSearch && activePart.text === '' && (
-							<Combobox.Group
-								className={styles.comboboxGroup}
-								store={comboboxStore}
-							>
-								<Combobox.Item
-									className={styles.comboboxItem}
-									onClick={() =>
-										enableAIMode
-											? setAiMode(true)
-											: navigate(
-													`/w/${workspaceId}/harold-ai`,
-												)
-									}
-									store={comboboxStore}
-								>
-									<Stack
-										direction="row"
-										gap="4"
-										align="center"
-									>
-										<IconSolidSparkles />
-										<Text color="weak" size="small">
-											Generate query from plain English
-											(Harold AI)
-										</Text>
-									</Stack>
-								</Combobox.Item>
-							</Combobox.Group>
-						)}
 						{activePart.value?.length > 0 && (
 							<Combobox.Group
 								className={styles.comboboxGroup}

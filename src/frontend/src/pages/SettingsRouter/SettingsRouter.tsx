@@ -22,7 +22,6 @@ import {
 import { useAuthContext } from '@/authentication/AuthContext'
 import { WorkspaceSettingsTab } from '@/hooks/useIsSettingsPath'
 import { EmailOptOutPanel } from '@/pages/EmailOptOut/EmailOptOut'
-import { HaroldAISettings } from '@/pages/HaroldAISettings/HaroldAISettings'
 import { ProjectColorLabel } from '@/pages/ProjectSettings/ProjectColorLabel/ProjectColorLabel'
 import ProjectSettings from '@/pages/ProjectSettings/ProjectSettings'
 import Auth from '@/pages/UserSettings/Auth/Auth'
@@ -47,8 +46,6 @@ const getTitle = (tab: WorkspaceSettingsTab | string): string => {
 			return 'Billing plans'
 		case 'upgrade-plan':
 			return 'Upgrade plan'
-		case 'harold-ai':
-			return 'Harold AI'
 		case 'plan-features':
 			return 'Plan comparison'
 		default:
@@ -118,11 +115,6 @@ export const SettingsRouter = () => {
 			key: 'current-plan',
 			title: getTitle('current-plan'),
 			panelContent: billingContent,
-		},
-		{
-			key: 'harold-ai',
-			title: getTitle('harold-ai'),
-			panelContent: <HaroldAISettings />,
 		},
 	]
 
