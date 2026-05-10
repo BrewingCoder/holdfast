@@ -44,15 +44,8 @@ const useInkeepSettings = (): InkeepSharedSettings => {
 			'https://storage.googleapis.com/organization-image-assets/highlightio-botAvatarSrcUrl-1718084264557.svg',
 		getHelpCallToActions: [
 			{
-				name: 'Discord',
-				url: 'https://discord.gg/yxaXEAqgwN',
-				icon: {
-					builtIn: 'FaDiscord',
-				},
-			},
-			{
 				name: 'Github',
-				url: 'https://github.com/highlight/highlight',
+				url: 'https://github.com/BrewingCoder/holdfast',
 				icon: {
 					builtIn: 'FaGithub',
 				},

@@ -58,7 +58,7 @@ import { Divider } from 'antd'
 import clsx from 'clsx'
 import moment from 'moment'
 import React, { useEffect, useMemo, useRef, useState } from 'react'
-import { FaDiscord, FaGithub } from 'react-icons/fa'
+import { FaGithub } from 'react-icons/fa'
 import { Link, matchRoutes, useLocation, useNavigate } from 'react-router-dom'
 import { useSessionStorage } from 'react-use'
 
@@ -66,7 +66,6 @@ import { useGetWorkspaceSettingsQuery } from '@/graph/generated/hooks'
 import { useIsSettingsPath } from '@/hooks/useIsSettingsPath'
 import { generateRandomColor } from '@/util/color'
 
-import { CalendlyButton } from '../CalendlyModal/CalendlyButton'
 import { CommandBar as CommandBarV1 } from './CommandBar/CommandBar'
 import styles from './Header.module.css'
 import InkeepChatSupportMenuItem from '@/components/Header/InkeepChatSupportMenuItem'
@@ -320,7 +319,6 @@ export const Header: React.FC<Props> = ({ fullyIntegrated }) => {
 							)}
 							{!isSettings && (
 								<Box display="flex" alignItems="center" gap="4">
-									<CalendlyButton />
 									<Box>
 										<ButtonIcon
 											cssClass={styles.button}
@@ -329,32 +327,7 @@ export const Header: React.FC<Props> = ({ fullyIntegrated }) => {
 											emphasis="high"
 											onClick={() => {
 												window.open(
-													'https://discord.gg/yxaXEAqgwN',
-													'_blank',
-												)
-											}}
-											icon={
-												<FaDiscord
-													style={{
-														height: 14,
-														width: 14,
-													}}
-													color={
-														vars.theme.interactive
-															.fill.secondary
-															.content.text
-													}
-												/>
-											}
-										/>
-										<ButtonIcon
-											cssClass={styles.button}
-											kind="secondary"
-											size="small"
-											emphasis="high"
-											onClick={() => {
-												window.open(
-													'https://github.com/highlight/highlight',
+													'https://github.com/BrewingCoder/holdfast',
 													'_blank',
 												)
 											}}
