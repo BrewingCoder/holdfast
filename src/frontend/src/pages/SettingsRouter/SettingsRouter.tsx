@@ -5,10 +5,9 @@ import WorkspaceSettings from '@pages/WorkspaceSettings/WorkspaceSettings'
 import WorkspaceTeam from '@pages/WorkspaceTeam/WorkspaceTeam'
 import { useApplicationContext } from '@routers/AppRouter/context/ApplicationContext'
 import analytics from '@util/analytics'
-import { isOnPrem } from '@util/onPrem/onPremUtils'
 import { useParams } from '@util/react-router/useParams'
 import clsx from 'clsx'
-import React, { Suspense, useEffect, useMemo } from 'react'
+import { useEffect, useMemo } from 'react'
 import { Helmet } from 'react-helmet'
 import {
 	NavLink,
@@ -31,23 +30,12 @@ import { auth } from '@/util/auth'
 
 import * as styles from './SettingsRouter.css'
 
-const BillingPageV2 = React.lazy(() => import('../Billing/BillingPageV2'))
-const PlanComparisonPage = React.lazy(
-	() => import('../Billing/PlanComparisonPage'),
-)
-
 const getTitle = (tab: WorkspaceSettingsTab | string): string => {
 	switch (tab) {
 		case 'team':
 			return 'Members'
 		case 'settings':
 			return 'Properties'
-		case 'current-plan':
-			return 'Billing plans'
-		case 'upgrade-plan':
-			return 'Upgrade plan'
-		case 'plan-features':
-			return 'Plan comparison'
 		default:
 			return ''
 	}
@@ -86,19 +74,6 @@ export const SettingsRouter = () => {
 
 	toggleShowBanner(false)
 
-	const billingContent = (
-		<Suspense fallback={null}>
-			{isOnPrem ? (
-				<PlanComparisonPage
-					setSelectedPlanType={() => {}}
-					setStep={() => {}}
-				/>
-			) : (
-				<BillingPageV2 />
-			)}
-		</Suspense>
-	)
-
 	const workspaceSettingTabs = [
 		{
 			key: 'team',
@@ -110,11 +85,6 @@ export const SettingsRouter = () => {
 			key: 'settings',
 			title: getTitle('settings'),
 			panelContent: <WorkspaceSettings />,
-		},
-		{
-			key: 'current-plan',
-			title: getTitle('current-plan'),
-			panelContent: billingContent,
 		},
 	]
 
@@ -296,14 +266,6 @@ export const SettingsRouter = () => {
 										/>
 									)
 								})}
-								<Route
-									path="current-plan/success"
-									element={billingContent}
-								/>
-								<Route
-									path="upgrade-plan"
-									element={billingContent}
-								/>
 								{accountSettingTabs.map((tab) => (
 									<Route
 										key={tab.key}
