@@ -241,7 +241,6 @@ export type CreateAdminMutation = { __typename?: 'Mutation' } & {
 
 export type CreateWorkspaceMutationVariables = Types.Exact<{
 	name: Types.Scalars['String']
-	promo_code?: Types.Maybe<Types.Scalars['String']>
 }>
 
 export type CreateWorkspaceMutation = { __typename?: 'Mutation' } & {
@@ -320,7 +319,9 @@ export type EditProjectSettingsMutation = { __typename?: 'Mutation' } & {
 
 export type EditProjectPlatformsMutationVariables = Types.Exact<{
 	projectId: Types.Scalars['ID']
-	platforms?: Types.Maybe<Types.Scalars['StringArray']>
+	platforms?: Types.Maybe<
+		Array<Types.Scalars['String']> | Types.Scalars['String']
+	>
 }>
 
 export type EditProjectPlatformsMutation = { __typename?: 'Mutation' } & Pick<
@@ -1287,20 +1288,6 @@ export type UpdateErrorGroupIsPublicMutation = { __typename?: 'Mutation' } & {
 	>
 }
 
-export type UpdateAllowMeterOverageMutationVariables = Types.Exact<{
-	workspace_id: Types.Scalars['ID']
-	allow_meter_overage: Types.Scalars['Boolean']
-}>
-
-export type UpdateAllowMeterOverageMutation = { __typename?: 'Mutation' } & {
-	updateAllowMeterOverage?: Types.Maybe<
-		{ __typename?: 'Workspace' } & Pick<
-			Types.Workspace,
-			'id' | 'allow_meter_overage'
-		>
-	>
-}
-
 export type SyncSlackIntegrationMutationVariables = Types.Exact<{
 	project_id: Types.Scalars['ID']
 }>
@@ -2197,7 +2184,6 @@ export type GetAccountsQuery = { __typename?: 'Query' } & {
 					| 'email'
 					| 'subscription_start'
 					| 'plan_tier'
-					| 'stripe_customer_id'
 					| 'member_count'
 					| 'member_limit'
 				>
@@ -2213,7 +2199,7 @@ export type GetAccountDetailsQueryVariables = Types.Exact<{
 export type GetAccountDetailsQuery = { __typename?: 'Query' } & {
 	account_details: { __typename?: 'AccountDetails' } & Pick<
 		Types.AccountDetails,
-		'id' | 'name' | 'stripe_customer_id'
+		'id' | 'name'
 	> & {
 			session_count_per_month?: Types.Maybe<
 				Array<
@@ -2985,9 +2971,6 @@ export type GetBillingDetailsForProjectQuery = { __typename?: 'Query' } & {
 					Types.Workspace,
 					| 'id'
 					| 'trial_end_date'
-					| 'billing_period_end'
-					| 'next_invoice_date'
-					| 'allow_meter_overage'
 					| 'eligible_for_trial_extension'
 					| 'trial_extension_enabled'
 				>
@@ -3104,9 +3087,6 @@ export type GetBillingDetailsQuery = { __typename?: 'Query' } & {
 			Types.Workspace,
 			| 'id'
 			| 'trial_end_date'
-			| 'billing_period_end'
-			| 'next_invoice_date'
-			| 'allow_meter_overage'
 			| 'eligible_for_trial_extension'
 			| 'retention_period'
 			| 'errors_retention_period'
@@ -5565,7 +5545,6 @@ export const namedOperations = {
 		UpdateSessionAlert: 'UpdateSessionAlert' as const,
 		UpdateSessionIsPublic: 'UpdateSessionIsPublic' as const,
 		UpdateErrorGroupIsPublic: 'UpdateErrorGroupIsPublic' as const,
-		UpdateAllowMeterOverage: 'UpdateAllowMeterOverage' as const,
 		SyncSlackIntegration: 'SyncSlackIntegration' as const,
 		RequestAccess: 'RequestAccess' as const,
 		ModifyClearbitIntegration: 'ModifyClearbitIntegration' as const,

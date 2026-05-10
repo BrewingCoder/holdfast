@@ -2757,7 +2757,7 @@ type Mutation {
 		autoResolveStaleErrorsDayInterval: Int
 		sampling: SamplingInput
 	): AllProjectSettings
-	editProjectPlatforms(projectID: ID!, platforms: StringArray): Boolean!
+	editProjectPlatforms(projectID: ID!, platforms: [String!]): Boolean!
 	editWorkspace(id: ID!, name: String): Workspace
 	editWorkspaceSettings(
 		workspace_id: ID!

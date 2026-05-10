@@ -55,7 +55,6 @@ export type Account = {
 	session_count_prev: Scalars['Int']
 	session_count_prev_prev: Scalars['Int']
 	session_limit: Scalars['Int']
-	stripe_customer_id: Scalars['String']
 	subscription_start?: Maybe<Scalars['Timestamp']>
 	unlimited_members: Scalars['Boolean']
 	view_count_cur: Scalars['Int']
@@ -69,7 +68,6 @@ export type AccountDetails = {
 	name: Scalars['String']
 	session_count_per_day?: Maybe<Array<Maybe<NamedCount>>>
 	session_count_per_month?: Maybe<Array<Maybe<NamedCount>>>
-	stripe_customer_id: Scalars['String']
 }
 
 export type AccountDetailsMember = {
@@ -104,7 +102,6 @@ export type AdminAboutYouDetails = {
 	heard_about: Scalars['String']
 	last_name: Scalars['String']
 	phone?: InputMaybe<Scalars['String']>
-	phone_home_contact_allowed: Scalars['Boolean']
 	referral: Scalars['String']
 	user_defined_persona: Scalars['String']
 	user_defined_role: Scalars['String']
@@ -116,8 +113,6 @@ export type AdminAndWorkspaceDetails = {
 	first_name: Scalars['String']
 	heard_about: Scalars['String']
 	last_name: Scalars['String']
-	phone_home_contact_allowed: Scalars['Boolean']
-	promo_code?: InputMaybe<Scalars['String']>
 	referral: Scalars['String']
 	user_defined_role: Scalars['String']
 	user_defined_team_size: Scalars['String']
@@ -1337,7 +1332,6 @@ export type Mutation = {
 	updateAdminAndCreateWorkspace?: Maybe<Project>
 	updateAlert?: Maybe<Alert>
 	updateAlertDisabled: Scalars['Boolean']
-	updateAllowMeterOverage?: Maybe<Workspace>
 	updateAllowedEmailOrigins?: Maybe<Scalars['ID']>
 	updateBillingDetails?: Maybe<Scalars['Boolean']>
 	updateClickUpProjectMappings: Scalars['Boolean']
@@ -1556,7 +1550,6 @@ export type MutationCreateSessionCommentWithExistingIssueArgs = {
 
 export type MutationCreateWorkspaceArgs = {
 	name: Scalars['String']
-	promo_code?: InputMaybe<Scalars['String']>
 }
 
 export type MutationDeleteAdminFromWorkspaceArgs = {
@@ -1635,7 +1628,7 @@ export type MutationEditProjectArgs = {
 }
 
 export type MutationEditProjectPlatformsArgs = {
-	platforms?: InputMaybe<Scalars['StringArray']>
+	platforms?: InputMaybe<Array<Scalars['String']>>
 	projectID: Scalars['ID']
 }
 
@@ -1857,11 +1850,6 @@ export type MutationUpdateAlertDisabledArgs = {
 	alert_id: Scalars['ID']
 	disabled: Scalars['Boolean']
 	project_id: Scalars['ID']
-}
-
-export type MutationUpdateAllowMeterOverageArgs = {
-	allow_meter_overage: Scalars['Boolean']
-	workspace_id: Scalars['ID']
 }
 
 export type MutationUpdateAllowedEmailOriginsArgs = {
@@ -4102,9 +4090,7 @@ export type WebhookDestinationInput = {
 
 export type Workspace = {
 	__typename?: 'Workspace'
-	allow_meter_overage: Scalars['Boolean']
 	allowed_auto_join_email_origins?: Maybe<Scalars['String']>
-	billing_period_end?: Maybe<Scalars['Timestamp']>
 	clearbit_enabled: Scalars['Boolean']
 	cloudflare_proxy?: Maybe<Scalars['String']>
 	eligible_for_trial_extension: Scalars['Boolean']
@@ -4116,7 +4102,6 @@ export type Workspace = {
 	metrics_max_cents?: Maybe<Scalars['Int']>
 	metrics_retention_period: RetentionPeriod
 	name: Scalars['String']
-	next_invoice_date?: Maybe<Scalars['Timestamp']>
 	plan_tier: Scalars['String']
 	projects: Array<Maybe<Project>>
 	retention_period: RetentionPeriod

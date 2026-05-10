@@ -288,7 +288,7 @@ mutation EditProjectSettings(
 	}
 }
 
-mutation EditProjectPlatforms($projectId: ID!, $platforms: StringArray) {
+mutation EditProjectPlatforms($projectId: ID!, $platforms: [String!]) {
 	editProjectPlatforms(projectID: $projectId, platforms: $platforms)
 }
 

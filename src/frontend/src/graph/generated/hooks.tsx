@@ -1431,8 +1431,8 @@ export type CreateAdminMutationOptions = Apollo.BaseMutationOptions<
 	Types.CreateAdminMutationVariables
 >
 export const CreateWorkspaceDocument = gql`
-	mutation CreateWorkspace($name: String!, $promo_code: String) {
-		createWorkspace(name: $name, promo_code: $promo_code) {
+	mutation CreateWorkspace($name: String!) {
+		createWorkspace(name: $name) {
 			id
 			name
 		}
@@ -1457,7 +1457,6 @@ export type CreateWorkspaceMutationFn = Apollo.MutationFunction<
  * const [createWorkspaceMutation, { data, loading, error }] = useCreateWorkspaceMutation({
  *   variables: {
  *      name: // value for 'name'
- *      promo_code: // value for 'promo_code'
  *   },
  * });
  */
@@ -1646,7 +1645,7 @@ export type EditProjectSettingsMutationOptions = Apollo.BaseMutationOptions<
 	Types.EditProjectSettingsMutationVariables
 >
 export const EditProjectPlatformsDocument = gql`
-	mutation EditProjectPlatforms($projectId: ID!, $platforms: StringArray) {
+	mutation EditProjectPlatforms($projectId: ID!, $platforms: [String!]) {
 		editProjectPlatforms(projectID: $projectId, platforms: $platforms)
 	}
 `
@@ -4438,63 +4437,6 @@ export type UpdateErrorGroupIsPublicMutationOptions =
 		Types.UpdateErrorGroupIsPublicMutation,
 		Types.UpdateErrorGroupIsPublicMutationVariables
 	>
-export const UpdateAllowMeterOverageDocument = gql`
-	mutation UpdateAllowMeterOverage(
-		$workspace_id: ID!
-		$allow_meter_overage: Boolean!
-	) {
-		updateAllowMeterOverage(
-			workspace_id: $workspace_id
-			allow_meter_overage: $allow_meter_overage
-		) {
-			id
-			allow_meter_overage
-		}
-	}
-`
-export type UpdateAllowMeterOverageMutationFn = Apollo.MutationFunction<
-	Types.UpdateAllowMeterOverageMutation,
-	Types.UpdateAllowMeterOverageMutationVariables
->
-
-/**
- * __useUpdateAllowMeterOverageMutation__
- *
- * To run a mutation, you first call `useUpdateAllowMeterOverageMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useUpdateAllowMeterOverageMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [updateAllowMeterOverageMutation, { data, loading, error }] = useUpdateAllowMeterOverageMutation({
- *   variables: {
- *      workspace_id: // value for 'workspace_id'
- *      allow_meter_overage: // value for 'allow_meter_overage'
- *   },
- * });
- */
-export function useUpdateAllowMeterOverageMutation(
-	baseOptions?: Apollo.MutationHookOptions<
-		Types.UpdateAllowMeterOverageMutation,
-		Types.UpdateAllowMeterOverageMutationVariables
-	>,
-) {
-	return Apollo.useMutation<
-		Types.UpdateAllowMeterOverageMutation,
-		Types.UpdateAllowMeterOverageMutationVariables
-	>(UpdateAllowMeterOverageDocument, baseOptions)
-}
-export type UpdateAllowMeterOverageMutationHookResult = ReturnType<
-	typeof useUpdateAllowMeterOverageMutation
->
-export type UpdateAllowMeterOverageMutationResult =
-	Apollo.MutationResult<Types.UpdateAllowMeterOverageMutation>
-export type UpdateAllowMeterOverageMutationOptions = Apollo.BaseMutationOptions<
-	Types.UpdateAllowMeterOverageMutation,
-	Types.UpdateAllowMeterOverageMutationVariables
->
 export const SyncSlackIntegrationDocument = gql`
 	mutation SyncSlackIntegration($project_id: ID!) {
 		syncSlackIntegration(project_id: $project_id) {
@@ -6874,7 +6816,6 @@ export const GetAccountsDocument = gql`
 			email
 			subscription_start
 			plan_tier
-			stripe_customer_id
 			member_count
 			member_limit
 		}
@@ -6939,7 +6880,6 @@ export const GetAccountDetailsDocument = gql`
 				name
 				count
 			}
-			stripe_customer_id
 			members {
 				id
 				name
