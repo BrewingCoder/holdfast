@@ -1998,11 +1998,17 @@ public class PrivateMutation
     // ── Edit Project Platforms ────────────────────────────────────────
 
     /// <summary>
-    /// Update the platforms configuration for a project.
+    /// Update the platforms configuration for a project. The frontend's
+    /// codegen schema declared this argument as a list (StringArray scalar),
+    /// so the wire shape is a JSON array of strings — accept it as
+    /// <c>List&lt;string&gt;</c> directly. Earlier the resolver took a
+    /// single comma-joined <c>string</c>, which made HotChocolate refuse the
+    /// payload as type-mismatched and the entire setup wizard at
+    /// /connect/new failed silently (HOL-52).
     /// </summary>
     public async Task<bool> EditProjectPlatforms(
         [GraphQLName("projectID")] [ID] int projectId,
-        string platforms,
+        List<string>? platforms,
         ClaimsPrincipal claimsPrincipal,
         [Service] IAuthorizationService authz,
         [Service] HoldFastDbContext db,
@@ -2013,7 +2019,10 @@ public class PrivateMutation
         var project = await db.Projects.FindAsync([projectId], ct)
             ?? throw new GraphQLException("Project not found");
 
-        project.Platforms = platforms.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList();
+        project.Platforms = (platforms ?? new())
+            .Where(p => !string.IsNullOrWhiteSpace(p))
+            .Select(p => p.Trim())
+            .ToList();
         await db.SaveChangesAsync(ct);
         return true;
     }
