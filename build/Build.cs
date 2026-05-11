@@ -11,16 +11,21 @@ class Build : TampBuild
     [Parameter("Build configuration (Debug|Release)")]
     Configuration Configuration = IsLocalBuild ? Configuration.Debug : Configuration.Release;
 
-    [Solution(Path = "src/dotnet/HoldFast.Backend.slnx")] readonly Solution Solution = null!;
+    // HoldFast is a multi-solution monorepo (SDK + e2e scaffolds also carry
+    // .sln/.slnx files), so the subtree search would be ambiguous. Pin explicitly.
+    [Solution("src/dotnet/HoldFast.Backend.slnx")] readonly Solution Solution = null!;
     [GitRepository] readonly GitRepository Git = null!;
 
+    [FromPath("yarn")] readonly Tool YarnTool = null!;
+    [FromNodeModules("turbo")] readonly Tool TurboTool = null!;
+
     AbsolutePath Artifacts => RootDirectory / "artifacts";
+    AbsolutePath PublishDir => Artifacts / "publish" / "HoldFast.Api";
 
     Target Info => _ => _
-        .TopLevel()
         .Executes(() =>
         {
-            Console.WriteLine("HoldFast build — first Tamp run");
+            Console.WriteLine("HoldFast build via Tamp");
             Console.WriteLine($"  Configuration:  {Configuration}");
             Console.WriteLine($"  Solution:       {Solution?.Path}");
             Console.WriteLine($"  Root:           {RootDirectory}");
@@ -30,21 +35,20 @@ class Build : TampBuild
         });
 
     Target Restore => _ => _
-        .TopLevel()
         .Executes(() => DotNet.Restore(s => s
             .SetProject(Solution.Path)));
 
     Target Compile => _ => _
-        .TopLevel()
-        .DependsOn(nameof(Restore))
+        .DependsOn(Restore)
         .Executes(() => DotNet.Build(s => s
             .SetProject(Solution.Path)
             .SetConfiguration(Configuration)
             .SetNoRestore(true)));
 
+    // NetCli.V10 1.0.9+ auto-expands LogFileName → LogFilePrefix in solution
+    // mode, so this produces one TRX file per test assembly.
     Target Test => _ => _
-        .TopLevel()
-        .DependsOn(nameof(Compile))
+        .DependsOn(Compile)
         .Executes(() => DotNet.Test(s => s
             .SetProject(Solution.Path)
             .SetConfiguration(Configuration)
@@ -53,26 +57,14 @@ class Build : TampBuild
             .SetResultsDirectory(Artifacts / "test-results")
             .AddLogger("trx;LogFileName=test-results.trx")));
 
-    AbsolutePath DotnetSrc => RootDirectory / "src" / "dotnet";
-
+    // CleanArtifacts(): framework-provided safe wipe — Solution.Projects only,
+    // self-deletion guarded. Never use RootDirectory.GlobDirectories("**/bin")
+    // — that's the friction-#12 footgun.
     Target Clean => _ => _
-        .TopLevel()
-        .Executes(() =>
-        {
-            if (Artifacts.DirectoryExists())
-            {
-                Console.WriteLine($"  rm -rf {Artifacts}");
-                Artifacts.DeleteDirectory();
-            }
-            Artifacts.EnsureDirectoryExists();
-
-        });
-
-    AbsolutePath PublishDir => Artifacts / "publish" / "HoldFast.Api";
+        .Executes(() => CleanArtifacts());
 
     Target Publish => _ => _
-        .TopLevel()
-        .DependsOn(nameof(Compile))
+        .DependsOn(Compile)
         .Executes(() => DotNet.Publish(s => s
             .SetProject(RootDirectory / "src" / "dotnet" / "src" / "HoldFast.Api" / "HoldFast.Api.csproj")
             .SetConfiguration(Configuration)
@@ -82,43 +74,35 @@ class Build : TampBuild
 
     // ── Frontend (Yarn Berry 4.x + Turbo + Vite) ──────────────────────
 
-    // No [FromPath] attribute in Tamp.Core yet — manually resolve yarn on PATH.
-    // Tool ctor takes (AbsolutePath executable, string workingDirectory).
-    static AbsolutePath ResolveOnPath(string name)
-    {
-        var pathEnv = Environment.GetEnvironmentVariable("PATH") ?? "";
-        var sep = OperatingSystem.IsWindows() ? ';' : ':';
-        var exts = OperatingSystem.IsWindows()
-            ? new[] { ".CMD", ".cmd", ".exe", ".EXE", ".bat", "" }
-            : new[] { "" };
-        foreach (var dir in pathEnv.Split(sep, StringSplitOptions.RemoveEmptyEntries))
-        {
-            foreach (var ext in exts)
-            {
-                var candidate = Path.Combine(dir, name + ext);
-                if (File.Exists(candidate)) return AbsolutePath.Create(candidate);
-            }
-        }
-        throw new InvalidOperationException($"Could not find '{name}' on PATH");
-    }
-
-    Tool YarnTool => new(ResolveOnPath("yarn"), RootDirectory);
-
     Target YarnInstall => _ => _
-        .TopLevel()
         .Executes(() => Yarn.Install(YarnTool, s => s.SetImmutable(true)));
 
+    // Workspace-local turbo only exists after YarnInstall populates
+    // node_modules/.bin/turbo, so this DependsOn is mandatory.
     Target FrontendBuild => _ => _
-        .TopLevel()
-        .DependsOn(nameof(YarnInstall))
-        .Executes(() => Yarn.Run(YarnTool, s => s.SetScript("build:frontend")));
+        .DependsOn(YarnInstall)
+        .Executes(() => Turbo.Run(TurboTool, s => s
+            .SetWorkingDirectory(RootDirectory)
+            .AddTask("build:fast")
+            .AddFilter("@holdfast-io/frontend...")));
 
     // ── Docker ──────────────────────────────────────────────────────
 
+    // Docker.V27 0.3.0 routes to `docker buildx build`, so the Dockerfile's
+    // `RUN --mount=type=cache` directives work as expected.
     Target DockerBuildBackend => _ => _
-        .TopLevel()
         .Executes(() => Docker.Build(s => s
             .SetContext(RootDirectory)
             .SetDockerfile(RootDirectory / "infra" / "docker" / "backend-dotnet.Dockerfile")
             .AddTag("holdfast-backend-dotnet:tamp")));
+
+    // ── CI entry ─────────────────────────────────────────────────────
+
+    // `dotnet tamp` (no args) runs the full verification + artifact pipeline.
+    Target Ci => _ => _
+        .Default()
+        .DependsOn(Test)
+        .DependsOn(Publish)
+        .DependsOn(FrontendBuild)
+        .DependsOn(DockerBuildBackend);
 }
