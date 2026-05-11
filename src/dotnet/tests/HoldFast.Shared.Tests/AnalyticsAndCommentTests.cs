@@ -427,7 +427,8 @@ public class AnalyticsAndCommentTests : IDisposable
     public async Task EditProjectPlatforms_UpdatesPlatforms()
     {
         await _mutation.EditProjectPlatforms(
-            _project.Id, "web,mobile,backend", _principal, _authz, _db, CancellationToken.None);
+            _project.Id, new List<string> { "web", "mobile", "backend" },
+            _principal, _authz, _db, CancellationToken.None);
 
         var project = await _db.Projects.FindAsync(_project.Id);
         Assert.Equal(3, project!.Platforms.Count);
@@ -437,13 +438,13 @@ public class AnalyticsAndCommentTests : IDisposable
     }
 
     [Fact]
-    public async Task EditProjectPlatforms_EmptyString_ClearsPlatforms()
+    public async Task EditProjectPlatforms_EmptyList_ClearsPlatforms()
     {
         _project.Platforms = ["web", "mobile"];
         await _db.SaveChangesAsync();
 
         await _mutation.EditProjectPlatforms(
-            _project.Id, "", _principal, _authz, _db, CancellationToken.None);
+            _project.Id, new List<string>(), _principal, _authz, _db, CancellationToken.None);
 
         var project = await _db.Projects.FindAsync(_project.Id);
         Assert.Empty(project!.Platforms);
@@ -453,6 +454,7 @@ public class AnalyticsAndCommentTests : IDisposable
     public async Task EditProjectPlatforms_NotFound_Throws()
     {
         await Assert.ThrowsAsync<GraphQLException>(() =>
-            _mutation.EditProjectPlatforms(9999, "web", _principal, _authz, _db, CancellationToken.None));
+            _mutation.EditProjectPlatforms(9999, new List<string> { "web" },
+                _principal, _authz, _db, CancellationToken.None));
     }
 }

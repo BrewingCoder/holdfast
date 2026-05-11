@@ -369,7 +369,7 @@ public class PrivateMutationMiscTests : IDisposable
     public async Task EditProjectPlatforms_SetsPlatforms()
     {
         var result = await _mutation.EditProjectPlatforms(
-            _project.Id, "javascript,python,go",
+            _project.Id, new List<string> { "javascript", "python", "go" },
             _principal, _authz, _db, CancellationToken.None);
 
         Assert.True(result);
@@ -382,10 +382,10 @@ public class PrivateMutationMiscTests : IDisposable
     }
 
     [Fact]
-    public async Task EditProjectPlatforms_EmptyString_ClearsPlatforms()
+    public async Task EditProjectPlatforms_EmptyList_ClearsPlatforms()
     {
         var result = await _mutation.EditProjectPlatforms(
-            _project.Id, "",
+            _project.Id, new List<string>(),
             _principal, _authz, _db, CancellationToken.None);
 
         Assert.True(result);
@@ -395,16 +395,30 @@ public class PrivateMutationMiscTests : IDisposable
     }
 
     [Fact]
-    public async Task EditProjectPlatforms_TrimsWhitespace()
+    public async Task EditProjectPlatforms_Null_ClearsPlatforms()
+    {
+        var result = await _mutation.EditProjectPlatforms(
+            _project.Id, null,
+            _principal, _authz, _db, CancellationToken.None);
+
+        Assert.True(result);
+        var project = await _db.Projects.FindAsync(_project.Id);
+        Assert.NotNull(project!.Platforms);
+        Assert.Empty(project.Platforms!);
+    }
+
+    [Fact]
+    public async Task EditProjectPlatforms_TrimsWhitespaceAndDropsBlankEntries()
     {
         await _mutation.EditProjectPlatforms(
-            _project.Id, " javascript , python , go ",
+            _project.Id, new List<string> { " javascript ", "  ", " python ", "", " go " },
             _principal, _authz, _db, CancellationToken.None);
 
         var project = await _db.Projects.FindAsync(_project.Id);
-        Assert.Contains("javascript", project!.Platforms!);
-        Assert.Contains("python", project.Platforms!);
-        Assert.Contains("go", project.Platforms!);
+        Assert.Equal(3, project!.Platforms!.Count);
+        Assert.Contains("javascript", project.Platforms);
+        Assert.Contains("python", project.Platforms);
+        Assert.Contains("go", project.Platforms);
     }
 
     [Fact]
@@ -412,7 +426,7 @@ public class PrivateMutationMiscTests : IDisposable
     {
         await Assert.ThrowsAsync<GraphQLException>(() =>
             _mutation.EditProjectPlatforms(
-                99999, "javascript",
+                99999, new List<string> { "javascript" },
                 _principal, _authz, _db, CancellationToken.None));
     }
 
@@ -420,7 +434,7 @@ public class PrivateMutationMiscTests : IDisposable
     public async Task EditProjectPlatforms_SinglePlatform()
     {
         await _mutation.EditProjectPlatforms(
-            _project.Id, "javascript",
+            _project.Id, new List<string> { "javascript" },
             _principal, _authz, _db, CancellationToken.None);
 
         var project = await _db.Projects.FindAsync(_project.Id);
@@ -432,11 +446,11 @@ public class PrivateMutationMiscTests : IDisposable
     public async Task EditProjectPlatforms_OverwritesPrevious()
     {
         await _mutation.EditProjectPlatforms(
-            _project.Id, "javascript,python",
+            _project.Id, new List<string> { "javascript", "python" },
             _principal, _authz, _db, CancellationToken.None);
 
         await _mutation.EditProjectPlatforms(
-            _project.Id, "go,rust",
+            _project.Id, new List<string> { "go", "rust" },
             _principal, _authz, _db, CancellationToken.None);
 
         var project = await _db.Projects.FindAsync(_project.Id);
