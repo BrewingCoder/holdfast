@@ -74,3 +74,13 @@ sdk/highlight-wordpress/highlight-io/highlight.js
 # .NET build outputs
 **/bin/
 **/obj/
+
+# Tamp build scripts (HOL-54) — un-ignore the root /build/ dir that holds
+# Build.cs + Build.csproj. The **/build rule above still hides nested build/
+# trees inside packages, and **/bin/ + **/obj/ still hide compile output
+# inside /build/ itself.
+!/build/
+!/build/**
+
+# Tamp's own artifacts/ folder (TRX, coverage, publish output)
+/artifacts/
