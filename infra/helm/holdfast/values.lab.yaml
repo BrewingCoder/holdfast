@@ -25,7 +25,11 @@ postgres:
 publicUrl: https://holdfast.brewingcoder.com
 publicGraphUri: https://holdfast.brewingcoder.com/public
 privateGraphUri: https://holdfast.brewingcoder.com/private
-collectorOtlpEndpoint: https://holdfast.brewingcoder.com/otel
+# Self-export of backend telemetry: disabled in QA. The backend hosts its
+# own OTLP receivers for incoming data; self-tracing to the public hostname
+# 502s through Cloudflare and adds noise without value. Set to a real endpoint
+# in operator deployments that want backend traces shipped elsewhere.
+collectorOtlpEndpoint: ""
 
 # Auth handled at the CF Access edge in the lab; app stays in dev mode.
 auth:

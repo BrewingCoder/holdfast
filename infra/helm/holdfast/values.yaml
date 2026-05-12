@@ -28,11 +28,12 @@ serviceAccount:
 backend:
   replicaCount: 1
 
-  # The Service name microk8s's Cloudflare tunnel points at must stay stable.
-  # Don't rename without coordinating with the cluster operator.
+  # Backend Kestrel binds on 8082 (see infra/docker/backend-dotnet.Dockerfile
+  # `ENV ASPNETCORE_URLS=http://+:8082`). If you change the bind port, update
+  # this AND the cluster operator's tunnel/ingress rule.
   service:
     type: ClusterIP
-    port: 8080
+    port: 8082
     annotations: {}
 
   resources:
@@ -51,7 +52,7 @@ backend:
   livenessProbe:
     httpGet:
       path: /health/live
-      port: 8080
+      port: 8082
     initialDelaySeconds: 30
     periodSeconds: 10
     timeoutSeconds: 5
@@ -60,7 +61,7 @@ backend:
   readinessProbe:
     httpGet:
       path: /health/ready
-      port: 8080
+      port: 8082
     initialDelaySeconds: 10
     periodSeconds: 5
     timeoutSeconds: 5

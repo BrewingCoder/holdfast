@@ -33,6 +33,10 @@ data:
   REACT_APP_AUTH_MODE: {{ .Values.auth.mode | quote }}
 
   # OTLP endpoint — for the backend to export its OWN telemetry to (it hosts
-  # OTLP receivers itself for incoming data). Empty string disables self-tracing.
+  # the OTLP receivers itself for incoming data, that's separate). Gate on
+  # non-empty so empty-string disables self-tracing entirely; setting it to a
+  # URL the backend can't reach produces noisy 5xx errors with no value.
   # The .NET host reads OTEL_EXPORTER_OTLP_ENDPOINT (OTel SDK convention).
+  {{- if .Values.collectorOtlpEndpoint }}
   OTEL_EXPORTER_OTLP_ENDPOINT: {{ .Values.collectorOtlpEndpoint | quote }}
+  {{- end }}
