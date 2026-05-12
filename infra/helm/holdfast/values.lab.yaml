@@ -13,6 +13,12 @@ image:
 postgres:
   persistence:
     storageClassName: nfs-va-vm
+  auth:
+    # microk8s pre-created the holdfast-postgres Secret with key "password";
+    # chart's secret.yaml template is gated on `not .existingSecret` so it
+    # won't try to overwrite.
+    existingSecret: holdfast-postgres
+    passwordKey: password
 
 # Public URLs — Cloudflare tunnel terminates TLS at the edge; the backend
 # itself serves plain HTTP on :8080.

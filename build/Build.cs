@@ -19,10 +19,6 @@ class Build : TampBuild
     [Parameter("QA hostname (no trailing slash)")]
     readonly string QaUrl = "https://holdfast.brewingcoder.com";
 
-    [Parameter("Postgres admin password for QA deploy — set via TAMP_POSTGRESPASSWORD env",
-               EnvironmentVariable = "HOLDFAST_PG_PASSWORD")]
-    readonly string PostgresPassword = "";
-
     // HoldFast is a multi-solution monorepo (SDK + e2e scaffolds also carry
     // .sln/.slnx files), so the subtree search would be ambiguous. Pin explicitly.
     [Solution("src/dotnet/HoldFast.Backend.slnx")] readonly Solution Solution = null!;
@@ -141,7 +137,6 @@ class Build : TampBuild
             .SetChart(HelmChart)
             .AddValuesFile(HelmChart / "values.lab.yaml")
             .SetValue("image.tag", ImageTag)
-            .SetValue("postgres.auth.password", PostgresPassword)
             .SetWait(true)
             .SetAtomic(true)
             .SetTimeout(TimeSpan.FromMinutes(5))));

@@ -119,7 +119,13 @@ postgres:
     existingSecret: ""
     passwordKey: password
 
-  podSecurityContext: {}
+  # Default fsGroup matches `postgres` UID in timescale/timescaledb-ha:pg16
+  # (UID 1000). PSA-restricted clusters require this to be set; permissive
+  # clusters don't care, so this costs nothing and saves an operator who
+  # adopts a stricter cluster profile from one debug cycle.
+  # Override if you swap the image to one that runs as a different UID.
+  podSecurityContext:
+    fsGroup: 1000
   securityContext: {}
   nodeSelector: {}
   tolerations: []
