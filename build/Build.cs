@@ -148,10 +148,13 @@ class Build : TampBuild
     // Post-deploy smoke probe — polls /health/live until it returns 200 or
     // the timeout elapses. HttpProbe handles transient HttpRequestExceptions
     // and per-request timeouts as expected during pod warmup.
+    // Backend's MapHealthChecks lands on /health (single endpoint, no
+    // live/ready split). Don't append /live or /ready — those fall through
+    // the SPA fallback to index.html (HTTP 200) and lie about health.
     Target SmokeQa => _ => _
         .DependsOn(DeployQa)
         .Executes(async () => await HttpProbe.WaitForHealthy(
-            url: $"{QaUrl}/health/live",
+            url: $"{QaUrl}/health",
             timeout: TimeSpan.FromMinutes(2)));
 
     // ── CI entry ─────────────────────────────────────────────────────

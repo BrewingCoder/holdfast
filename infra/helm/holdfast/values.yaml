@@ -49,9 +49,14 @@ backend:
   podSecurityContext: {}
   securityContext: {}
 
+  # Backend exposes a single /health endpoint (Program.cs uses
+  # app.MapHealthChecks("/health") — no live/ready split). Probing nested
+  # paths like /health/live falls through to the SPA index.html fallback
+  # which returns 200 → probes "pass" for the wrong reason. Don't change
+  # the path without re-checking what's actually mapped server-side.
   livenessProbe:
     httpGet:
-      path: /health/live
+      path: /health
       port: 8082
     initialDelaySeconds: 30
     periodSeconds: 10
@@ -60,7 +65,7 @@ backend:
 
   readinessProbe:
     httpGet:
-      path: /health/ready
+      path: /health
       port: 8082
     initialDelaySeconds: 10
     periodSeconds: 5
