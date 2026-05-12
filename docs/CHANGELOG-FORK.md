@@ -1,5 +1,83 @@
 # BrewingCoder Fork — Changelog
 
+## 2026-05-12: Build + Deploy on Tamp; Helm Chart for Self-Hosted Operators (HOL-54)
+
+Replaced ad-hoc `dotnet`/`yarn`/`docker` shell scripting with a Tamp-driven
+build pipeline, and added a published-shape Helm chart that operators can
+consume directly. Net change: **17 files added, ~1,036 lines** (no deletions).
+
+### Added: Tamp build pipeline (`build/Build.cs` + `build/Build.csproj`)
+
+A .NET 10 console project under `/build` defines the entire pipeline as
+typed targets against [Tamp](https://github.com/tamp-build/tamp). Surface:
+
+| Target | Action |
+|---|---|
+| `Info` | Print configuration / solution / git / image tag context |
+| `Clean` | `CleanArtifacts()` — Solution.Projects scope only, no globbing |
+| `Restore` | `dotnet restore` on the solution |
+| `Compile` | `dotnet build --no-restore` |
+| `Test` | `dotnet test --no-build` with per-assembly TRX output |
+| `Publish` | `dotnet publish HoldFast.Api → artifacts/publish/HoldFast.Api/` |
+| `YarnInstall` | Yarn Berry 4.x workspace install (`--immutable`) |
+| `FrontendBuild` | Turbo runs `build:fast` filtered to `@holdfast-io/frontend...` |
+| `DockerBuildBackend` | BuildKit-routed `docker build` of the backend image (multi-tag) |
+| `DockerPush` | Push registry-prefixed tag to the configured registry |
+| `DeployQa` | `helm upgrade --install` against `infra/helm/holdfast/` |
+| `SmokeQa` | `HttpProbe.WaitForHealthy(/health)` against the deployed hostname |
+| `Ci` | Default — fans out to Test + Publish + FrontendBuild + DockerBuildBackend |
+
+One-line invocation: `dotnet tamp Ci` or `dotnet tamp SmokeQa --registry <host>`.
+
+Pinned against the post-Wave-9 Tamp ecosystem (Core 1.3.0, NetCli.V10 1.3.0,
+Helm.V3 0.1.0, Http 0.1.1, plus satellite patches). 16 frictions surfaced and
+filed during the integration trial; all fixed in coordinated Tamp release
+waves.
+
+### Added: Helm chart at `infra/helm/holdfast/`
+
+Standard-shape, AGPL-operator-consumable chart for the two-pod deployment.
+Renders 7 resources via `helm template`:
+
+```
+ServiceAccount  holdfast
+Secret          holdfast-postgres            (chart-managed OR existingSecret)
+ConfigMap       holdfast-backend             (env: PSQL_*, STORAGE__ANALYTICS,
+                                              REACT_APP_FRONTEND_URI, etc.)
+Service         holdfast-backend  :8082      (ClusterIP, named `http`)
+Service         holdfast-postgres :5432      (ClusterIP, internal only)
+Deployment      holdfast-backend             (1 replica, /health probes)
+StatefulSet     holdfast-postgres            (1 replica, volumeClaimTemplate)
+```
+
+Operator-facing defaults in `values.yaml` (community-idiomatic). Lab-cluster
+overrides in `values.lab.yaml` (storage class, registry, hostnames, existing
+Secret reference). README + NOTES.txt document required values and the
+`auth.mode=dev → front with a zero-trust proxy` operator guidance.
+
+### Removed: Nothing
+
+This change is purely additive. The existing `docker compose -f compose.yml
+-f compose.hobby-dotnet.yml up` hobby workflow still works unchanged; Tamp
+runs side-by-side. CI/CD workflows remain disabled per the rewrite-stabilization
+directive; flipping them to invoke `dotnet tamp Ci` is a follow-up.
+
+### Cutover criterion (proven against the lab cluster)
+
+`dotnet tamp SmokeQa --registry registry.home.local` from any developer
+laptop or in-cluster ARC runner:
+
+1. Builds the backend image via BuildKit (multi-stage frontend + backend)
+2. Pushes to `registry.home.local/holdfast-backend-dotnet:<git-sha>`
+3. `helm upgrade --install` against `infra/helm/holdfast/` with
+   `values.lab.yaml` overrides
+4. Polls `https://holdfast.brewingcoder.com/health` until 200 Healthy
+
+Steady-state full run: **3.3 seconds** (cache-warm). First run: ~14 minutes
+(cold image pull on each node + Postgres init on NFS).
+
+---
+
 ## 2026-03-18: Strip Marketing, Lead-Gen, and SaaS Billing
 
 Removed all components that served Highlight's SaaS business but have no value for self-hosted deployments. **1,056 files changed — ~82,800 lines deleted.**
