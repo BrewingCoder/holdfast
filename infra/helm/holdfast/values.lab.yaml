@@ -1,0 +1,26 @@
+# Lab-cluster overrides for the BrewingCoder microk8s QA environment.
+# Apply with: helm upgrade --install holdfast infra/helm/holdfast \
+#   -n holdfast --create-namespace \
+#   -f infra/helm/holdfast/values.lab.yaml \
+#   --set image.tag=<git-sha> \
+#   --set postgres.auth.password=<from-secret>
+
+image:
+  registry: localhost:32000
+  repository: holdfast-backend-dotnet
+  pullPolicy: Always       # tags overlap across builds in lab
+
+postgres:
+  persistence:
+    storageClassName: nfs-va-vm
+
+# Public URLs — Cloudflare tunnel terminates TLS at the edge; the backend
+# itself serves plain HTTP on :8080.
+publicUrl: https://holdfast.brewingcoder.com
+publicGraphUri: https://holdfast.brewingcoder.com/public
+privateGraphUri: https://holdfast.brewingcoder.com/private
+collectorOtlpEndpoint: https://holdfast.brewingcoder.com/otel
+
+# Auth handled at the CF Access edge in the lab; app stays in dev mode.
+auth:
+  mode: dev

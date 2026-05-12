@@ -1,0 +1,159 @@
+# Default values for the HoldFast helm chart.
+# Operators should override anything marked REQUIRED. Lab-specific defaults
+# live in values.lab.yaml; never edit values.yaml for environment-specific
+# overrides — author a values file or use --set on the command line.
+
+# ── Image -------------------------------------------------------------------
+image:
+  # Registry, repository, and tag for the HoldFast backend image.
+  # Lab cluster overrides registry to localhost:32000 via values.lab.yaml.
+  registry: ghcr.io
+  repository: brewingcoder/holdfast-backend-dotnet
+  # tag defaults to .Chart.AppVersion if empty
+  tag: ""
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+
+nameOverride: ""
+fullnameOverride: ""
+
+# ── ServiceAccount ---------------------------------------------------------
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+# ── Backend pod -----------------------------------------------------------
+backend:
+  replicaCount: 1
+
+  # The Service name microk8s's Cloudflare tunnel points at must stay stable.
+  # Don't rename without coordinating with the cluster operator.
+  service:
+    type: ClusterIP
+    port: 8080
+    annotations: {}
+
+  resources:
+    requests:
+      cpu: 200m
+      memory: 512Mi
+    limits:
+      cpu: 2000m
+      memory: 2Gi
+
+  podAnnotations: {}
+  podLabels: {}
+  podSecurityContext: {}
+  securityContext: {}
+
+  livenessProbe:
+    httpGet:
+      path: /health/live
+      port: 8080
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+
+  readinessProbe:
+    httpGet:
+      path: /health/ready
+      port: 8080
+    initialDelaySeconds: 10
+    periodSeconds: 5
+    timeoutSeconds: 5
+    failureThreshold: 3
+
+  # Extra environment for the backend container. Use this for operator-
+  # specific config not covered by the typed values above.
+  # Each entry: { name: FOO, value: "bar" } or { name: FOO, valueFrom: ... }
+  extraEnv: []
+
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+# ── Postgres (chart-managed) ----------------------------------------------
+# Set postgres.enabled = false to bring your own database via
+# externalPostgres.* below.
+postgres:
+  enabled: true
+
+  image:
+    repository: timescale/timescaledb-ha
+    tag: pg16
+    pullPolicy: IfNotPresent
+
+  service:
+    port: 5432
+
+  persistence:
+    enabled: true
+    size: 20Gi
+    # Empty storageClassName uses the cluster default. Lab cluster overrides
+    # to nfs-va-vm via values.lab.yaml.
+    storageClassName: ""
+    accessModes:
+      - ReadWriteOnce
+
+  resources:
+    requests:
+      cpu: 500m
+      memory: 1Gi
+    limits:
+      cpu: 2000m
+      memory: 4Gi
+
+  # TimescaleDB-HA stores data at /home/postgres/pgdata/data — NOT the
+  # upstream postgres /var/lib/postgresql/data. Don't change this unless
+  # you also change the image.
+  dataPath: /home/postgres/pgdata/data
+
+  auth:
+    user: postgres
+    # REQUIRED: set via --set postgres.auth.password=... or values file,
+    # OR reference an existing Secret via existingSecret/passwordKey.
+    password: ""
+    existingSecret: ""
+    passwordKey: password
+
+  podSecurityContext: {}
+  securityContext: {}
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+# ── External Postgres (alternative to chart-managed) ----------------------
+# Only used when postgres.enabled = false.
+externalPostgres:
+  host: ""
+  port: 5432
+  user: ""
+  passwordSecret:
+    name: ""
+    key: password
+
+# ── Storage backend selection ---------------------------------------------
+# Postgres = full analytics path via Postgres (no ClickHouse needed).
+# ClickHouse = OTeL-shaped columnar store (requires separate ClickHouse pod;
+# this chart does not yet manage one — bring your own).
+storage:
+  analytics: Postgres
+
+# ── External URLs ---------------------------------------------------------
+# REQUIRED — operators must set these to the publicly-reachable URLs of
+# their HoldFast deployment. No hardcoded domains per the HoldFast charter.
+publicUrl: ""              # e.g. https://holdfast.example.com
+publicGraphUri: ""         # e.g. https://holdfast.example.com/public
+privateGraphUri: ""        # e.g. https://holdfast.example.com/private
+collectorOtlpEndpoint: ""  # e.g. https://holdfast.example.com/otel
+
+# ── Auth ------------------------------------------------------------------
+# v1 of this chart only supports auth.mode=dev (no in-app authentication).
+# Operators wanting in-app auth should front the deployment with a
+# zero-trust proxy (Cloudflare Access, Authelia, oauth2-proxy, etc.) until
+# enterprise mode is wired into the chart (planned).
+auth:
+  mode: dev
