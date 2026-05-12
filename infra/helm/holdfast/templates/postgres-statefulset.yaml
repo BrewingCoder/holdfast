@@ -47,15 +47,18 @@ spec:
                   key: {{ include "holdfast.postgres.secretKey" . }}
             - name: PGDATA
               value: {{ .Values.postgres.dataPath | quote }}
+          # -h 127.0.0.1 forces a TCP-based check via the loopback. The
+          # default socket-based check looks at /var/run/postgresql which
+          # TimescaleDB-HA images don't reliably expose.
           livenessProbe:
             exec:
-              command: ["pg_isready", "-U", {{ .Values.postgres.auth.user | quote }}]
+              command: ["pg_isready", "-U", {{ .Values.postgres.auth.user | quote }}, "-h", "127.0.0.1"]
             initialDelaySeconds: 30
             periodSeconds: 10
             timeoutSeconds: 5
           readinessProbe:
             exec:
-              command: ["pg_isready", "-U", {{ .Values.postgres.auth.user | quote }}]
+              command: ["pg_isready", "-U", {{ .Values.postgres.auth.user | quote }}, "-h", "127.0.0.1"]
             initialDelaySeconds: 5
             periodSeconds: 5
             timeoutSeconds: 5

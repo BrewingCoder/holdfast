@@ -14,10 +14,10 @@ class Build : TampBuild
     Configuration Configuration = IsLocalBuild ? Configuration.Debug : Configuration.Release;
 
     [Parameter("Container registry for QA push")]
-    readonly string Registry = "localhost:32000";
+    string Registry = "localhost:32000";
 
     [Parameter("QA hostname (no trailing slash)")]
-    readonly string QaUrl = "https://holdfast.brewingcoder.com";
+    string QaUrl = "https://holdfast.brewingcoder.com";
 
     // HoldFast is a multi-solution monorepo (SDK + e2e scaffolds also carry
     // .sln/.slnx files), so the subtree search would be ambiguous. Pin explicitly.
@@ -128,6 +128,10 @@ class Build : TampBuild
 
     // Deploy the chart to the lab cluster. helm upgrade --install is idempotent;
     // --atomic rolls back automatically on a failed rollout.
+    // Atomic disabled for now so a failed deploy leaves the cluster state
+    // around for kubectl inspection. Re-enable once the chart has a few
+    // green runs under it. Timeout bumped to 10m to give cold image pulls
+    // (TimescaleDB-HA is 1.73 GB) headroom on first deploy to each node.
     Target DeployQa => _ => _
         .DependsOn(DockerPush)
         .Executes(() => Helm.Upgrade(HelmTool, s => s
@@ -138,8 +142,8 @@ class Build : TampBuild
             .AddValuesFile(HelmChart / "values.lab.yaml")
             .SetValue("image.tag", ImageTag)
             .SetWait(true)
-            .SetAtomic(true)
-            .SetTimeout(TimeSpan.FromMinutes(5))));
+            .SetAtomic(false)
+            .SetTimeout(TimeSpan.FromMinutes(10))));
 
     // Post-deploy smoke probe — polls /health/live until it returns 200 or
     // the timeout elapses. HttpProbe handles transient HttpRequestExceptions
