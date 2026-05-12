@@ -10,11 +10,13 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Tamp.Core" Version="1.2.0" />
-    <PackageReference Include="Tamp.NetCli.V10" Version="1.2.0" />
-    <PackageReference Include="Tamp.Yarn.V4" Version="0.1.0" />
+    <PackageReference Include="Tamp.Core" Version="1.3.0" />
+    <PackageReference Include="Tamp.NetCli.V10" Version="1.3.0" />
+    <PackageReference Include="Tamp.Helm.V3" Version="0.1.0" />
+    <PackageReference Include="Tamp.Http" Version="0.1.1" />
+    <PackageReference Include="Tamp.Yarn.V4" Version="0.1.1" />
     <PackageReference Include="Tamp.Turbo.V2" Version="0.2.0" />
-    <PackageReference Include="Tamp.Vite.V5" Version="0.1.0" />
+    <PackageReference Include="Tamp.Vite.V5" Version="0.1.1" />
     <PackageReference Include="Tamp.Docker.V27" Version="0.3.0" />
   </ItemGroup>
 
