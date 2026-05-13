@@ -1,0 +1,41 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>HoldFast.Build</RootNamespace>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Tamp framework + .NET SDK wrapper -->
+    <PackageReference Include="Tamp.Core" Version="1.7.0" />
+    <PackageReference Include="Tamp.NetCli.V10" Version="1.4.0" />
+
+    <!-- Container + deploy -->
+    <PackageReference Include="Tamp.Docker.V27" Version="0.3.1" />
+    <PackageReference Include="Tamp.Helm.V3" Version="0.1.0" />
+    <PackageReference Include="Tamp.Http" Version="0.1.1" />
+
+    <!-- Frontend toolchain -->
+    <PackageReference Include="Tamp.Yarn.V4" Version="0.1.1" />
+    <PackageReference Include="Tamp.Turbo.V2" Version="0.2.1" />
+    <PackageReference Include="Tamp.Vite.V5" Version="0.1.1" />
+    <PackageReference Include="Tamp.GraphQLCodegen.V5" Version="0.1.1" />
+
+    <!-- Coverage -->
+    <!-- Note: Tamp.GitVersion.V6 deferred until the [GitVersion] injection
+         attribute ships — short-SHA tags work fine in the meantime. -->
+
+    <PackageReference Include="Tamp.Coverlet.V6" Version="0.1.0" />
+    <PackageReference Include="Tamp.ReportGenerator.V5" Version="0.1.1" />
+
+    <!-- Supply-chain security -->
+    <PackageReference Include="Tamp.Syft" Version="0.1.0" />
+    <PackageReference Include="Tamp.Grype" Version="0.1.0" />
+    <PackageReference Include="Tamp.TruffleHog.V3" Version="0.1.1" />
+  </ItemGroup>
+
+</Project>

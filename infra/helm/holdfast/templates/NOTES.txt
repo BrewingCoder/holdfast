@@ -1,0 +1,38 @@
+HoldFast {{ .Chart.AppVersion }} installed as release "{{ .Release.Name }}" in namespace "{{ .Release.Namespace }}".
+
+1. Wait for the backend to become ready:
+
+   kubectl --namespace {{ .Release.Namespace }} \
+     rollout status deployment/{{ include "holdfast.fullname" . }}-backend
+
+2. Reach the dashboard:
+
+{{- if .Values.publicUrl }}
+   {{ .Values.publicUrl }}
+{{- else }}
+   (publicUrl was not set; expose the Service named "{{ include "holdfast.fullname" . }}-backend"
+   on port {{ .Values.backend.service.port }} through your ingress / tunnel of choice)
+{{- end }}
+
+3. Pre-deploy parity check:
+
+   helm --namespace {{ .Release.Namespace }} template {{ .Release.Name }} . \
+     -f values.yaml [-f values.lab.yaml] [--set image.tag=<sha>]
+
+Auth mode: {{ .Values.auth.mode }}
+  {{- if eq .Values.auth.mode "dev" }}
+  WARNING: dev mode has NO in-app authentication. Front the deployment with
+  a zero-trust proxy (Cloudflare Access, Authelia, oauth2-proxy) before
+  exposing to anything beyond a trusted network.
+  {{- end }}
+
+Storage backend: {{ .Values.storage.analytics }}
+  {{- if eq .Values.storage.analytics "ClickHouse" }}
+  NOTE: ClickHouse pod is NOT yet managed by this chart. Bring your own
+  ClickHouse instance and configure connection via extraEnv on the
+  backend.
+  {{- end }}
+
+Docs:
+  - https://github.com/BrewingCoder/holdfast
+  - https://github.com/BrewingCoder/holdfast/blob/main/docs/HOLDFAST-NOTES.md

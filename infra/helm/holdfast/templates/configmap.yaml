@@ -1,0 +1,42 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "holdfast.fullname" . }}-backend
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "holdfast.backend.labels" . | nindent 4 }}
+data:
+  # Postgres connection — read by HoldFast.Shared.Runtime.GoEnvCompat.
+  # Single-underscore names preserved from the legacy Go env-var contract.
+  PSQL_HOST: {{ include "holdfast.postgres.host" . | quote }}
+  PSQL_PORT: {{ include "holdfast.postgres.port" . | quote }}
+  PSQL_USER: {{ include "holdfast.postgres.user" . | quote }}
+
+  # Storage backend selector — the .NET host reads Configuration["Storage:Analytics"],
+  # which env-var-binds to STORAGE__ANALYTICS (double underscore is the .NET
+  # convention for nested config keys). Wrong name → defaultBackend falls back
+  # to "clickhouse" → ClickHouseMigrationService registers → backend crashes
+  # trying to connect to localhost:8123. Don't drop the second underscore.
+  STORAGE__ANALYTICS: {{ .Values.storage.analytics | quote }}
+
+  # Frontend URLs — REACT_APP_FRONTEND_URI is the only one the backend reads
+  # at runtime (via GoEnvCompat → Frontend:Uri). The graph URI vars are baked
+  # into the frontend bundle at build time and are kept here only as operator
+  # documentation of intent; they have no runtime effect on the backend.
+  REACT_APP_FRONTEND_URI: {{ .Values.publicUrl | quote }}
+  REACT_APP_PUBLIC_GRAPH_URI: {{ .Values.publicGraphUri | quote }}
+  REACT_APP_PRIVATE_GRAPH_URI: {{ .Values.privateGraphUri | quote }}
+
+  # Auth mode — backend GoEnvCompat maps REACT_APP_AUTH_MODE → Auth:Mode.
+  # Use REACT_APP_AUTH_MODE (not AUTH_MODE) so the value actually reaches the
+  # configuration.
+  REACT_APP_AUTH_MODE: {{ .Values.auth.mode | quote }}
+
+  # OTLP endpoint — for the backend to export its OWN telemetry to (it hosts
+  # the OTLP receivers itself for incoming data, that's separate). Gate on
+  # non-empty so empty-string disables self-tracing entirely; setting it to a
+  # URL the backend can't reach produces noisy 5xx errors with no value.
+  # The .NET host reads OTEL_EXPORTER_OTLP_ENDPOINT (OTel SDK convention).
+  {{- if .Values.collectorOtlpEndpoint }}
+  OTEL_EXPORTER_OTLP_ENDPOINT: {{ .Values.collectorOtlpEndpoint | quote }}
+  {{- end }}
