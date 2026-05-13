@@ -5,6 +5,12 @@ using Tamp.Turbo.V2;
 using Tamp.Docker.V27;
 using Tamp.Helm.V3;
 using Tamp.Http;
+using Tamp.GraphQLCodegen.V5;
+using Tamp.Coverlet.V6;
+using Tamp.ReportGenerator.V5;
+using Tamp.Syft;
+using Tamp.Grype;
+using Tamp.TruffleHog.V3;
 
 class Build : TampBuild
 {
@@ -19,6 +25,9 @@ class Build : TampBuild
     [Parameter("QA hostname (no trailing slash)")]
     string QaUrl = "https://holdfast.brewingcoder.com";
 
+    [Parameter("Override the computed image tag (defaults to short git SHA)")]
+    string? ImageTagOverride = null;
+
     // HoldFast is a multi-solution monorepo (SDK + e2e scaffolds also carry
     // .sln/.slnx files), so the subtree search would be ambiguous. Pin explicitly.
     [Solution("src/dotnet/HoldFast.Backend.slnx")] readonly Solution Solution = null!;
@@ -26,14 +35,30 @@ class Build : TampBuild
 
     [FromPath("yarn")] readonly Tool YarnTool = null!;
     [FromPath("helm")] readonly Tool HelmTool = null!;
+    // Compliance + coverage tools are operator-installed (one tool per axis;
+    // see Tamp's Module Catalog). Marked Optional so the target surface
+    // enumerates on machines without them — invocation will surface a
+    // targeted error then, not a global injection failure.
+    [FromPath("syft", Optional = true)] readonly Tool SyftTool = null!;
+    [FromPath("grype", Optional = true)] readonly Tool GrypeTool = null!;
+    [FromPath("trufflehog", Optional = true)] readonly Tool TruffleHogTool = null!;
+    [FromPath("reportgenerator", Optional = true)] readonly Tool ReportGeneratorTool = null!;
     [FromNodeModules("turbo")] readonly Tool TurboTool = null!;
+    [FromNodeModules("graphql-codegen", Optional = true)] readonly Tool GraphQLCodegenTool = null!;
 
     AbsolutePath Artifacts => RootDirectory / "artifacts";
     AbsolutePath PublishDir => Artifacts / "publish" / "HoldFast.Api";
+    AbsolutePath CoverageDir => Artifacts / "coverage";
+    AbsolutePath CoverageReportDir => Artifacts / "coverage-report";
+    AbsolutePath Sbom => Artifacts / $"holdfast-{Version}.cdx.json";
     AbsolutePath HelmChart => RootDirectory / "infra" / "helm" / "holdfast";
 
-    // Image tag = short git SHA. Canonical version lives in Chart.yaml.appVersion.
-    string ImageTag => Git!.Commit[..7];
+    // Image tag = short git SHA (CLI override wins). Canonical version lives
+    // in Chart.yaml.appVersion. GitVersion-derived semver is the future state
+    // but Tamp.GitVersion.V6 0.1.1 doesn't ship the [GitVersion] injection
+    // attribute yet — friction filed to airm5; revisit when that lands.
+    string Version => ImageTagOverride ?? Git!.Commit[..7];
+    string ImageTag => Version;
     string LocalImageRef => $"holdfast-backend-dotnet:{ImageTag}";
     string RegistryImageRef => $"{Registry}/holdfast-backend-dotnet:{ImageTag}";
 
@@ -47,6 +72,7 @@ class Build : TampBuild
             Console.WriteLine($"  Artifacts:      {Artifacts}");
             Console.WriteLine($"  Git branch:     {Git?.Branch}");
             Console.WriteLine($"  Git commit:     {Git?.Commit}");
+            Console.WriteLine($"  Version:        {Version}");
             Console.WriteLine($"  Image tag:      {ImageTag}");
             Console.WriteLine($"  Registry ref:   {RegistryImageRef}");
             Console.WriteLine($"  QA URL:         {QaUrl}");
@@ -75,6 +101,43 @@ class Build : TampBuild
             .SetResultsDirectory(Artifacts / "test-results")
             .AddLogger("trx;LogFileName=test-results.trx")));
 
+    // Coverage variant of Test — collects XPlat Code Coverage via the
+    // standard data collector. Coverlet config built via the satellite's
+    // Configure(...) helper, then handed to dotnet test as a runsettings
+    // file. Kept separate from Test so the fast Ci path doesn't pay
+    // coverage overhead on every run.
+    Target CoverageTest => _ => _
+        .DependsOn(Compile)
+        .Executes(() =>
+        {
+            var runSettings = Artifacts / "coverlet.runsettings";
+            System.IO.Directory.CreateDirectory(Artifacts);
+            var xml = Coverlet.Configure(s => s
+                .AddFormat(CoverletFormat.OpenCover)
+                .AddExclude("[xunit.*]*")
+                .AddExclude("[*.Tests]*")
+                .SetUseSourceLink(true)).ToRunSettingsXml();
+            System.IO.File.WriteAllText(runSettings, xml);
+
+            return DotNet.Test(s => s
+                .SetProject(Solution.Path)
+                .SetConfiguration(Configuration)
+                .SetNoBuild(true)
+                .SetNoRestore(true)
+                .SetResultsDirectory(CoverageDir)
+                .SetSettings(runSettings)
+                .AddLogger("trx;LogFileName=test-results.trx"));
+        });
+
+    Target CoverageReport => _ => _
+        .DependsOn(CoverageTest)
+        .Executes(() => ReportGenerator.Run(ReportGeneratorTool, s => s
+            .AddReport(CoverageDir / "**" / "coverage.opencover.xml")
+            .SetTargetDir(CoverageReportDir)
+            .AddReportType("Html")
+            .AddReportType("Badges")
+            .AddReportType("MarkdownSummaryGithub")));
+
     // CleanArtifacts(): framework-provided safe wipe — Solution.Projects only,
     // self-deletion guarded. Never use RootDirectory.GlobDirectories("**/bin")
     // — that's the friction-#12 footgun.
@@ -94,6 +157,16 @@ class Build : TampBuild
 
     Target YarnInstall => _ => _
         .Executes(() => Yarn.Install(YarnTool, s => s.SetImmutable(true)));
+
+    // Regenerate GraphQL TypeScript types from src/backend/private-graph schema.
+    // Generated files are checked in (src/frontend/src/graph/generated/) so
+    // day-to-day frontend work doesn't have to wait on codegen — this target
+    // runs on demand when *.gql or schema.graphqls drift.
+    Target FrontendCodegen => _ => _
+        .DependsOn(YarnInstall)
+        .Executes(() => GraphQLCodegen.Generate(GraphQLCodegenTool, s => s
+            .SetWorkingDirectory(RootDirectory / "src" / "frontend")
+            .SetConfig("codegen.yml")));
 
     // Workspace-local turbo only exists after YarnInstall populates
     // node_modules/.bin/turbo, so this DependsOn is mandatory.
@@ -124,6 +197,47 @@ class Build : TampBuild
         .Executes(() => Docker.Push(s => s
             .SetImage(RegistryImageRef)));
 
+    // ── Supply chain ─────────────────────────────────────────────────
+
+    // CycloneDX SBOM for the whole repo. Excludes the transitively-vendored
+    // node_modules / bin / obj noise so the SBOM reflects first-order deps
+    // an operator actually has to defend. Output is consumed by CveGate.
+    Target SbomScan => _ => _
+        .Executes(() => Syft.Scan(SyftTool, s => s
+            .SetDirectorySource(RootDirectory)
+            .SetSourceName("HoldFast")
+            .SetSourceVersion(Version)
+            .AddOutputCycloneDxJson(Sbom)
+            .AddExcludes("**/node_modules/**", "**/bin/**", "**/obj/**")));
+
+    // CVE gate — reads the SBOM, hits NVD + GitHub Advisory DB + KEV, applies
+    // EPSS-weighted composite risk scoring. Fails the build on >= high
+    // severity. Adopters tune severity via --fail-on on the CLI.
+    Target CveGate => _ => _
+        .DependsOn(SbomScan)
+        .Executes(() => Grype.Scan(GrypeTool, s => s
+            .SetSbomSource(Sbom)
+            .AddOutputJson()
+            .SetOutputFile(Artifacts / "vulns.json")
+            .SetFailOn("high")
+            .SetSortBy("risk")
+            .SetByCve(true)));
+
+    // Secret scan — TruffleHog over the filesystem. Verified-only so unverified
+    // pattern matches (often false positives in test fixtures) don't flap the
+    // build. Run as part of Compliance, not Ci, because verification hits live
+    // endpoints (slower than the no-network analyzers).
+    Target SecretScan => _ => _
+        .Executes(() => TruffleHog.Filesystem(TruffleHogTool, s => s
+            .AddPath(RootDirectory)
+            .SetOnlyVerified(true)
+            .SetFail(true)));
+
+    // Aggregate compliance gate — `dotnet tamp Compliance` runs the full
+    // supply-chain triplet for a release-prep snapshot.
+    Target Compliance => _ => _
+        .DependsOn(SbomScan, CveGate, SecretScan);
+
     // ── Deploy ──────────────────────────────────────────────────────
 
     // Deploy the chart to the lab cluster. helm upgrade --install is idempotent;
@@ -145,9 +259,9 @@ class Build : TampBuild
             .SetAtomic(false)
             .SetTimeout(TimeSpan.FromMinutes(10))));
 
-    // Post-deploy smoke probe — polls /health/live until it returns 200 or
-    // the timeout elapses. HttpProbe handles transient HttpRequestExceptions
-    // and per-request timeouts as expected during pod warmup.
+    // Post-deploy smoke probe — polls /health until it returns 200 or the
+    // timeout elapses. HttpProbe handles transient HttpRequestExceptions and
+    // per-request timeouts as expected during pod warmup.
     // Backend's MapHealthChecks lands on /health (single endpoint, no
     // live/ready split). Don't append /live or /ready — those fall through
     // the SPA fallback to index.html (HTTP 200) and lie about health.
@@ -161,6 +275,9 @@ class Build : TampBuild
 
     // `dotnet tamp` (no args) runs the full verification + artifact pipeline.
     // Tamp.Core 1.3.0's params Target[] overload makes the fan-out one-liner.
+    // Compliance (SBOM + CVE + secret scan) is deliberately NOT in Ci — it's
+    // a release-prep step run separately so iteration on the fast path stays
+    // fast. `dotnet tamp Compliance` runs it on demand.
     Target Ci => _ => _
         .Default()
         .DependsOn(Test, Publish, FrontendBuild, DockerBuildBackend);
