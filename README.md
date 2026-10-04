@@ -2,9 +2,9 @@
 
 > ## ⚠️ This project has been archived
 >
-> **HoldFast has been folded into Tamp's ecosystem.** Active development continues as **Tamp Observer** at **[github.com/tamb-build/tamp-observer](https://github.com/tamb-build/tamp-observer)**.
+> **HoldFast has been folded into Tamp's ecosystem.** Active development continues as **Tamp Observer** at **[github.com/tamp-build/tamp-observer](https://github.com/tamp-build/tamp-observer)**.
 >
-> This repository is no longer maintained and is kept available for historical reference only. No further issues, pull requests, or releases will be accepted here. Please direct all new work to [tamp-observer](https://github.com/tamb-build/tamp-observer).
+> This repository is no longer maintained and is kept available for historical reference only. No further issues, pull requests, or releases will be accepted here. Please direct all new work to [tamp-observer](https://github.com/tamp-build/tamp-observer).
 
 [![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL--3.0-blue.svg)](LICENSE)
 
